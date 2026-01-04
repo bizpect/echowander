@@ -8,11 +8,14 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    NSLog("AppDelegate didFinishLaunchingWithOptions 시작")
     if FirebaseApp.app() == nil {
       if let filePath = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
          let options = FirebaseOptions(contentsOfFile: filePath) {
+        NSLog("FirebaseApp.configure: plist 로드 성공")
         FirebaseApp.configure(options: options)
       } else {
+        NSLog("FirebaseApp.configure: plist 로드 실패, fallback 사용")
         let fallbackOptions = FirebaseOptions(
           googleAppID: "1:242212293972:ios:eec7b04b5b41cc642b4cc1",
           gcmSenderID: "242212293972"
@@ -27,6 +30,8 @@ import UIKit
           "242212293972-qi1759456v1g6url5ji2pnbmjakcss3u.apps.googleusercontent.com"
         FirebaseApp.configure(options: fallbackOptions)
       }
+    } else {
+      NSLog("FirebaseApp 이미 구성됨")
     }
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
