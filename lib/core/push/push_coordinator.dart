@@ -112,15 +112,9 @@ class PushCoordinator extends Notifier<PushState> {
   }
 
   Future<void> _registerToken() async {
-    if (Platform.isIOS) {
-      final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-      if (apnsToken == null || apnsToken.isEmpty) {
-        _scheduleApnsRetry();
-        return;
-      }
-    }
     final fcmToken = await FirebaseMessaging.instance.getToken();
     if (fcmToken == null || fcmToken.isEmpty) {
+      _scheduleApnsRetry();
       return;
     }
     final deviceId = await DeviceIdStore().getOrCreate();
