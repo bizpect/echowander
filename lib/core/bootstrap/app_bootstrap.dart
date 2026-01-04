@@ -3,6 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 
+import '../../firebase_options.dart';
 import '../config/app_config.dart';
 import '../push/fcm_background_handler.dart';
 
@@ -11,7 +12,9 @@ class AppBootstrap {
     await dotenv.load(fileName: '.env.local');
     final config = AppConfig.fromEnvironment();
     AppConfigStore.current = config;
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     FirebaseMessaging.onBackgroundMessage(fcmBackgroundHandler);
     if (config.kakaoNativeAppKey.isNotEmpty) {
       KakaoSdk.init(nativeAppKey: config.kakaoNativeAppKey);
