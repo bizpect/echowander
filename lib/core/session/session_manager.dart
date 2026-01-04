@@ -38,6 +38,7 @@ class SessionManager extends Notifier<SessionState> {
       state = state.copyWith(
         status: SessionStatus.unauthenticated,
         isBusy: false,
+        accessToken: null,
       );
       return;
     }
@@ -47,6 +48,7 @@ class SessionManager extends Notifier<SessionState> {
       state = state.copyWith(
         status: SessionStatus.authenticated,
         isBusy: false,
+        accessToken: tokens.accessToken,
       );
       return;
     } else {
@@ -56,6 +58,7 @@ class SessionManager extends Notifier<SessionState> {
         state = state.copyWith(
           status: SessionStatus.unauthenticated,
           isBusy: false,
+          accessToken: null,
           message: SessionMessage.sessionExpired,
         );
         return;
@@ -64,16 +67,27 @@ class SessionManager extends Notifier<SessionState> {
       state = state.copyWith(
         status: SessionStatus.authenticated,
         isBusy: false,
+        accessToken: refreshed.accessToken,
       );
     }
   }
 
   Future<void> signInWithTokens(SessionTokens tokens) async {
+    if (tokens.accessToken.isEmpty || tokens.refreshToken.isEmpty) {
+      state = state.copyWith(
+        status: SessionStatus.unauthenticated,
+        isBusy: false,
+        accessToken: null,
+        message: SessionMessage.loginFailed,
+      );
+      return;
+    }
     state = state.copyWith(isBusy: true);
     await _tokenStore.save(tokens);
     state = state.copyWith(
       status: SessionStatus.authenticated,
       isBusy: false,
+      accessToken: tokens.accessToken,
     );
   }
 
@@ -91,6 +105,7 @@ class SessionManager extends Notifier<SessionState> {
       state = state.copyWith(
         status: SessionStatus.unauthenticated,
         isBusy: false,
+        accessToken: null,
         message: _mapLoginError(result.error),
       );
       return;
@@ -104,6 +119,7 @@ class SessionManager extends Notifier<SessionState> {
     state = state.copyWith(
       status: SessionStatus.unauthenticated,
       isBusy: false,
+      accessToken: null,
     );
   }
 
@@ -111,6 +127,7 @@ class SessionManager extends Notifier<SessionState> {
     state = state.copyWith(
       status: SessionStatus.unauthenticated,
       isBusy: false,
+      accessToken: null,
       message: message,
     );
   }

@@ -193,6 +193,11 @@ class PushCoordinator extends Notifier<PushState> {
   }
 
   Future<String?> _readAccessToken() async {
+    final sessionAccessToken = ref.read(sessionManagerProvider).accessToken;
+    if (sessionAccessToken != null && sessionAccessToken.isNotEmpty) {
+      _cachedAccessToken = sessionAccessToken;
+      return sessionAccessToken;
+    }
     final tokenStore = ref.read(tokenStoreProvider);
     final tokens = await tokenStore.read();
     final accessToken = tokens?.accessToken;
