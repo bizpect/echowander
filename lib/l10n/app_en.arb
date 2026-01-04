@@ -1,0 +1,21 @@
+{
+  "@@locale": "en",
+  "appTitle": "EchoWander",
+  "splashTitle": "Starting up...",
+  "loginTitle": "Sign in",
+  "loginKakao": "Continue with Kakao",
+  "loginGoogle": "Continue with Google",
+  "loginApple": "Continue with Apple",
+  "homeTitle": "Home",
+  "homeGreeting": "Welcome back",
+  "errorTitle": "Notice",
+  "errorGeneric": "Something went wrong. Please try again.",
+  "errorLoginFailed": "Login failed. Please try again.",
+  "errorLoginCancelled": "Login was cancelled.",
+  "errorLoginNetwork": "Please check your network connection and try again.",
+  "errorLoginInvalidToken": "Login verification failed. Please try again.",
+  "errorLoginUnsupportedProvider": "This sign-in method is not supported.",
+  "errorLoginUserSyncFailed": "We couldn't save your account. Please try again.",
+  "errorLoginServiceUnavailable": "Sign-in is temporarily unavailable. Please try again later.",
+  "errorSessionExpired": "Your session expired. Please sign in again."
+}

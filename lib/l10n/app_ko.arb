@@ -1,0 +1,21 @@
+{
+  "@@locale": "ko",
+  "appTitle": "에코원더",
+  "splashTitle": "시작 중...",
+  "loginTitle": "로그인",
+  "loginKakao": "카카오로 계속",
+  "loginGoogle": "구글로 계속",
+  "loginApple": "애플로 계속",
+  "homeTitle": "홈",
+  "homeGreeting": "다시 오신 걸 환영합니다",
+  "errorTitle": "안내",
+  "errorGeneric": "문제가 발생했습니다. 다시 시도해주세요.",
+  "errorLoginFailed": "로그인에 실패했습니다. 다시 시도해주세요.",
+  "errorLoginCancelled": "로그인이 취소되었습니다.",
+  "errorLoginNetwork": "네트워크 상태를 확인한 뒤 다시 시도해주세요.",
+  "errorLoginInvalidToken": "로그인 검증에 실패했습니다. 다시 시도해주세요.",
+  "errorLoginUnsupportedProvider": "지원하지 않는 로그인 방식입니다.",
+  "errorLoginUserSyncFailed": "계정 정보를 저장하지 못했습니다. 다시 시도해주세요.",
+  "errorLoginServiceUnavailable": "로그인 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해주세요.",
+  "errorSessionExpired": "세션이 만료되었습니다. 다시 로그인해주세요."
+}

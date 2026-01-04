@@ -1,0 +1,3 @@
+#include "Generated.xcconfig"
+KAKAO_APP_KEY=
+GOOGLE_REVERSED_CLIENT_ID=
