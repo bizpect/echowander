@@ -112,8 +112,21 @@ class PushCoordinator extends Notifier<PushState> {
   }
 
   Future<void> _registerToken() async {
+    if (Platform.isIOS) {
+      final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+      if (apnsToken == null || apnsToken.isEmpty) {
+        // APNs 토큰이 아직 준비되지 않은 상태를 기록한다.
+        // ignore: avoid_print
+        print('APNs 토큰 없음: 토큰 등록 재시도 대기');
+      } else {
+        // ignore: avoid_print
+        print('APNs 토큰 확인 완료');
+      }
+    }
     final fcmToken = await FirebaseMessaging.instance.getToken();
     if (fcmToken == null || fcmToken.isEmpty) {
+      // ignore: avoid_print
+      print('FCM 토큰 없음: 토큰 등록 재시도 예약');
       _scheduleApnsRetry();
       return;
     }
@@ -151,6 +164,8 @@ class PushCoordinator extends Notifier<PushState> {
   Future<void> _upsertToken(String token, String deviceId) async {
     final accessToken = await _readAccessToken();
     if (accessToken == null || accessToken.isEmpty) {
+      // ignore: avoid_print
+      print('액세스 토큰 없음: 토큰 업서트 중단');
       return;
     }
     await PushTokenRepository(config: AppConfigStore.current).upsertToken(
