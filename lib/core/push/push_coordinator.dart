@@ -26,6 +26,9 @@ class PushCoordinator extends Notifier<PushState> {
   Timer? _apnsRetryTimer;
   int _apnsRetryCount = 0;
   static const int _apnsRetryLimit = 6;
+  Timer? _accessRetryTimer;
+  int _accessRetryCount = 0;
+  static const int _accessRetryLimit = 6;
 
   @override
   PushState build() {
@@ -58,6 +61,7 @@ class PushCoordinator extends Notifier<PushState> {
     _openSub?.cancel();
     _tokenSub?.cancel();
     _apnsRetryTimer?.cancel();
+    _accessRetryTimer?.cancel();
   }
 
   Future<void> _requestPermission() async {
@@ -148,6 +152,15 @@ class PushCoordinator extends Notifier<PushState> {
     _apnsRetryTimer = Timer(const Duration(seconds: 2), _registerToken);
   }
 
+  void _scheduleAccessRetry() {
+    if (_accessRetryCount >= _accessRetryLimit) {
+      return;
+    }
+    _accessRetryCount += 1;
+    _accessRetryTimer?.cancel();
+    _accessRetryTimer = Timer(const Duration(seconds: 2), _registerToken);
+  }
+
   Future<void> _deactivateToken() async {
     final fcmToken = await FirebaseMessaging.instance.getToken();
     if (fcmToken == null || fcmToken.isEmpty) {
@@ -166,6 +179,7 @@ class PushCoordinator extends Notifier<PushState> {
     if (accessToken == null || accessToken.isEmpty) {
       // ignore: avoid_print
       print('액세스 토큰 없음: 토큰 업서트 중단');
+      _scheduleAccessRetry();
       return;
     }
     await PushTokenRepository(config: AppConfigStore.current).upsertToken(
@@ -174,6 +188,8 @@ class PushCoordinator extends Notifier<PushState> {
       platform: Platform.isIOS ? 'ios' : 'android',
       deviceId: deviceId,
     );
+    _accessRetryTimer?.cancel();
+    _accessRetryCount = 0;
   }
 
   Future<String?> _readAccessToken() async {
