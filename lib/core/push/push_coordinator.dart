@@ -42,6 +42,11 @@ class PushCoordinator extends Notifier<PushState> {
     await _listenMessages();
     await _handleInitialMessage();
     _listenSession();
+    // 이미 로그인된 상태면 초기 실행 시에도 토큰을 등록한다.
+    final session = ref.read(sessionManagerProvider);
+    if (session.status == SessionStatus.authenticated) {
+      await _registerToken();
+    }
   }
 
   void clearForegroundMessage() {
