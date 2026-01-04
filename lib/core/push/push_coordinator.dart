@@ -112,6 +112,13 @@ class PushCoordinator extends Notifier<PushState> {
           next.status == SessionStatus.unauthenticated) {
         _deactivateToken();
       }
+      final previousAccessToken = previous?.accessToken;
+      final nextAccessToken = next.accessToken;
+      if (nextAccessToken != null &&
+          nextAccessToken.isNotEmpty &&
+          nextAccessToken != previousAccessToken) {
+        _registerToken();
+      }
     });
   }
 
@@ -195,13 +202,19 @@ class PushCoordinator extends Notifier<PushState> {
   Future<String?> _readAccessToken() async {
     final sessionAccessToken = ref.read(sessionManagerProvider).accessToken;
     if (sessionAccessToken != null && sessionAccessToken.isNotEmpty) {
+      // ignore: avoid_print
+      print('세션 상태 accessToken 확인: 길이 ${sessionAccessToken.length}');
       _cachedAccessToken = sessionAccessToken;
       return sessionAccessToken;
     }
+    // ignore: avoid_print
+    print('세션 상태 accessToken 없음: 저장소 조회 시도');
     final tokenStore = ref.read(tokenStoreProvider);
     final tokens = await tokenStore.read();
     final accessToken = tokens?.accessToken;
     if (accessToken != null && accessToken.isNotEmpty) {
+      // ignore: avoid_print
+      print('저장소 accessToken 확인: 길이 ${accessToken.length}');
       _cachedAccessToken = accessToken;
     }
     return accessToken;

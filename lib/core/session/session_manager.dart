@@ -42,6 +42,15 @@ class SessionManager extends Notifier<SessionState> {
       );
       return;
     }
+    if (tokens.accessToken.isEmpty || tokens.refreshToken.isEmpty) {
+      await _tokenStore.clear();
+      state = state.copyWith(
+        status: SessionStatus.unauthenticated,
+        isBusy: false,
+        accessToken: null,
+      );
+      return;
+    }
 
     final isValid = await _authRpcClient.validateSession(tokens);
     if (isValid) {
@@ -54,6 +63,16 @@ class SessionManager extends Notifier<SessionState> {
     } else {
       final refreshed = await _authRpcClient.refreshSession(tokens);
       if (refreshed == null) {
+        await _tokenStore.clear();
+        state = state.copyWith(
+          status: SessionStatus.unauthenticated,
+          isBusy: false,
+          accessToken: null,
+          message: SessionMessage.sessionExpired,
+        );
+        return;
+      }
+      if (refreshed.accessToken.isEmpty || refreshed.refreshToken.isEmpty) {
         await _tokenStore.clear();
         state = state.copyWith(
           status: SessionStatus.unauthenticated,
@@ -84,6 +103,8 @@ class SessionManager extends Notifier<SessionState> {
     }
     state = state.copyWith(isBusy: true);
     await _tokenStore.save(tokens);
+    // ignore: avoid_print
+    print('세션 토큰 저장 완료: accessToken 길이 ${tokens.accessToken.length}');
     state = state.copyWith(
       status: SessionStatus.authenticated,
       isBusy: false,
@@ -102,6 +123,8 @@ class SessionManager extends Notifier<SessionState> {
     );
     final tokens = result.tokens;
     if (tokens == null) {
+      // ignore: avoid_print
+      print('소셜 로그인 실패: 토큰 응답 없음');
       state = state.copyWith(
         status: SessionStatus.unauthenticated,
         isBusy: false,
@@ -110,6 +133,8 @@ class SessionManager extends Notifier<SessionState> {
       );
       return;
     }
+    // ignore: avoid_print
+    print('소셜 로그인 토큰 수신: access 길이 ${tokens.accessToken.length}');
     await signInWithTokens(tokens);
   }
 
