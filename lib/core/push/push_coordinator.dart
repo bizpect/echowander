@@ -103,6 +103,13 @@ class PushCoordinator extends Notifier<PushState> {
   }
 
   Future<void> _registerToken() async {
+    if (Platform.isIOS) {
+      // APNs 토큰이 준비되지 않으면 FCM 토큰 요청을 보류한다.
+      final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+      if (apnsToken == null || apnsToken.isEmpty) {
+        return;
+      }
+    }
     final fcmToken = await FirebaseMessaging.instance.getToken();
     if (fcmToken == null || fcmToken.isEmpty) {
       return;
