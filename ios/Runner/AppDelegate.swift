@@ -9,7 +9,12 @@ import UIKit
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     if FirebaseApp.app() == nil {
-      FirebaseApp.configure()
+      if let filePath = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+         let options = FirebaseOptions(contentsOfFile: filePath) {
+        FirebaseApp.configure(options: options)
+      } else {
+        FirebaseApp.configure()
+      }
     }
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
