@@ -4,6 +4,11 @@ import UIKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
+  override init() {
+    super.init()
+    configureFirebaseIfNeeded()
+  }
+
   override func application(
     _ application: UIApplication,
     willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
