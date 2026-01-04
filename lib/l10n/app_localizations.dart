@@ -146,6 +146,36 @@ abstract class AppLocalizations {
   /// **'Welcome back'**
   String get homeGreeting;
 
+  /// No description provided for @pushPreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification'**
+  String get pushPreviewTitle;
+
+  /// No description provided for @pushPreviewDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a preview screen for push deep links.'**
+  String get pushPreviewDescription;
+
+  /// No description provided for @notificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New message'**
+  String get notificationTitle;
+
+  /// No description provided for @notificationOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get notificationOpen;
+
+  /// No description provided for @notificationDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get notificationDismiss;
+
   /// No description provided for @errorTitle.
   ///
   /// In en, this message translates to:

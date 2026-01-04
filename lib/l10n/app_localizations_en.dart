@@ -33,6 +33,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeGreeting => 'Welcome back';
 
   @override
+  String get pushPreviewTitle => 'Notification';
+
+  @override
+  String get pushPreviewDescription =>
+      'This is a preview screen for push deep links.';
+
+  @override
+  String get notificationTitle => 'New message';
+
+  @override
+  String get notificationOpen => 'Open';
+
+  @override
+  String get notificationDismiss => 'Dismiss';
+
+  @override
   String get errorTitle => 'Notice';
 
   @override

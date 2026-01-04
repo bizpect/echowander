@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/app_config.dart';
@@ -70,21 +69,18 @@ class SessionManager extends Notifier<SessionState> {
   }
 
   Future<void> signInWithTokens(SessionTokens tokens) async {
-    debugPrint('SessionManager signInWithTokens start');
     state = state.copyWith(isBusy: true);
     await _tokenStore.save(tokens);
     state = state.copyWith(
       status: SessionStatus.authenticated,
       isBusy: false,
     );
-    debugPrint('SessionManager signInWithTokens done');
   }
 
   Future<void> signInWithSocialToken({
     required String provider,
     required String idToken,
   }) async {
-    debugPrint('SessionManager signInWithSocialToken start: $provider');
     state = state.copyWith(isBusy: true);
     final result = await _authRpcClient.exchangeSocialToken(
       provider: provider,
@@ -92,10 +88,6 @@ class SessionManager extends Notifier<SessionState> {
     );
     final tokens = result.tokens;
     if (tokens == null) {
-      final error = result.error ?? AuthRpcLoginError.unknown;
-      if (error != AuthRpcLoginError.unknown) {
-        debugPrint('Auth RPC login failed: $error');
-      }
       state = state.copyWith(
         status: SessionStatus.unauthenticated,
         isBusy: false,

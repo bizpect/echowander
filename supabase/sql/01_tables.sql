@@ -38,6 +38,22 @@ create table if not exists public.user_profiles (
     on delete cascade
 );
 
+create table if not exists public.device_tokens (
+  id bigserial primary key,
+  user_id uuid not null,
+  token text not null,
+  platform text not null,
+  device_id text not null,
+  is_active boolean not null default true,
+  last_seen_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint device_tokens_user_fk
+    foreign key (user_id)
+    references public.users (user_id)
+    on delete cascade
+);
+
 create unique index if not exists user_profiles_nickname_uk
   on public.user_profiles (nickname)
   where nickname is not null;

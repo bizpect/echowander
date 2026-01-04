@@ -5,12 +5,14 @@ import '../../core/session/session_manager.dart';
 import '../../core/session/session_state.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/push/presentation/push_preview_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 
 class AppRoutes {
   static const splash = '/splash';
   static const login = '/login';
   static const home = '/home';
+  static const pushPreview = '/push-preview';
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -31,6 +33,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.home,
         builder: (context, state) => const HomeScreen(),
       ),
+      GoRoute(
+        path: AppRoutes.pushPreview,
+        builder: (context, state) => const PushPreviewScreen(),
+      ),
     ],
     redirect: (context, state) {
       final status = sessionState.status;
@@ -45,6 +51,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (status == SessionStatus.authenticated) {
+        if (location == AppRoutes.pushPreview) {
+          return null;
+        }
         return location == AppRoutes.home ? null : AppRoutes.home;
       }
 

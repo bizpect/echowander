@@ -9,6 +9,8 @@ class AppConfig {
     required this.kakaoNativeAppKey,
     required this.googleServerClientId,
     required this.googleIosClientId,
+    required this.supabaseUrl,
+    required this.supabaseAnonKey,
   });
 
   final AppEnvironment environment;
@@ -16,6 +18,8 @@ class AppConfig {
   final String kakaoNativeAppKey;
   final String googleServerClientId;
   final String googleIosClientId;
+  final String supabaseUrl;
+  final String supabaseAnonKey;
 
   static AppConfig fromEnvironment() {
     final env = dotenv.env['APP_ENV'] ??
@@ -28,12 +32,18 @@ class AppConfig {
         const String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID', defaultValue: '');
     final googleIosClientId = dotenv.env['GOOGLE_IOS_CLIENT_ID'] ??
         const String.fromEnvironment('GOOGLE_IOS_CLIENT_ID', defaultValue: '');
+    final supabaseUrl = dotenv.env['APP_SUPABASE_URL'] ??
+        const String.fromEnvironment('APP_SUPABASE_URL', defaultValue: '');
+    final supabaseAnonKey = dotenv.env['APP_SUPABASE_ANON_KEY'] ??
+        const String.fromEnvironment('APP_SUPABASE_ANON_KEY', defaultValue: '');
     return AppConfig(
       environment: _parseEnv(env),
       authBaseUrl: authBaseUrl,
       kakaoNativeAppKey: kakaoNativeAppKey,
       googleServerClientId: googleServerClientId,
       googleIosClientId: googleIosClientId,
+      supabaseUrl: supabaseUrl,
+      supabaseAnonKey: supabaseAnonKey,
     );
   }
 

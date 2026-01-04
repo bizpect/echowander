@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
-
 import 'session_tokens.dart';
 
 abstract class AuthRpcClient {
@@ -120,8 +118,6 @@ class HttpAuthRpcClient implements AuthRpcClient {
       request.write(jsonEncode({'provider': provider, 'idToken': idToken}));
       final response = await request.close();
       final payloadText = await response.transform(utf8.decoder).join();
-      debugPrint('Auth RPC status: ${response.statusCode}');
-      debugPrint('Auth RPC body: $payloadText');
       if (response.statusCode != HttpStatus.ok) {
         final errorCode = _extractErrorCode(payloadText);
         return AuthRpcLoginResult.failure(_mapLoginError(errorCode));

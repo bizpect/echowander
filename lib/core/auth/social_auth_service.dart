@@ -1,7 +1,6 @@
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart' as kakao;
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../config/app_config.dart';
@@ -40,18 +39,14 @@ class SocialAuthService {
               _config.googleServerClientId.isEmpty ? null : _config.googleServerClientId,
         );
         _googleInitialized = true;
-        debugPrint('GoogleSignIn initialized');
       }
       final user = await GoogleSignIn.instance.authenticate();
       final token = user.authentication.idToken;
       if (token == null || token.isEmpty) {
-        debugPrint('GoogleSignIn token missing');
         return const SocialAuthResult.failed();
       }
-      debugPrint('GoogleSignIn success');
       return SocialAuthResult.success(token);
     } on GoogleSignInException catch (error) {
-      debugPrint('GoogleSignIn exception: ${error.code}');
       switch (error.code) {
         case GoogleSignInExceptionCode.canceled:
           return const SocialAuthResult.cancelled();
@@ -60,8 +55,7 @@ class SocialAuthService {
         default:
           return const SocialAuthResult.failed();
       }
-    } on PlatformException catch (error) {
-      debugPrint('GoogleSignIn platform exception: ${error.code}');
+    } on PlatformException {
       return const SocialAuthResult.failed();
     }
   }
@@ -76,19 +70,15 @@ class SocialAuthService {
       );
       final token = credential.identityToken;
       if (token == null || token.isEmpty) {
-        debugPrint('AppleSignIn token missing');
         return const SocialAuthResult.failed();
       }
-      debugPrint('AppleSignIn success');
       return SocialAuthResult.success(token);
     } on SignInWithAppleAuthorizationException catch (error) {
-      debugPrint('AppleSignIn exception: ${error.code}');
       if (error.code.toString().toLowerCase().contains('canceled')) {
         return const SocialAuthResult.cancelled();
       }
       return const SocialAuthResult.failed();
     } on PlatformException catch (error) {
-      debugPrint('AppleSignIn platform exception: ${error.code}');
       if (error.code == 'network_error') {
         return const SocialAuthResult.networkError();
       }
@@ -105,13 +95,10 @@ class SocialAuthService {
         token = await kakao.UserApi.instance.loginWithKakaoAccount();
       }
       if (token.accessToken.isEmpty) {
-        debugPrint('KakaoSignIn token missing');
         return const SocialAuthResult.failed();
       }
-      debugPrint('KakaoSignIn success');
       return SocialAuthResult.success(token.accessToken);
     } on kakao.KakaoClientException catch (error) {
-      debugPrint('KakaoSignIn client exception: ${error.toString()}');
       if (error.toString().toLowerCase().contains('cancel')) {
         return const SocialAuthResult.cancelled();
       }
@@ -120,7 +107,6 @@ class SocialAuthService {
       }
       return const SocialAuthResult.failed();
     } on kakao.KakaoApiException catch (_) {
-      debugPrint('KakaoSignIn api exception');
       return const SocialAuthResult.failed();
     }
   }

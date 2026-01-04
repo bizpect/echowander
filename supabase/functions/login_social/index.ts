@@ -173,6 +173,7 @@ async function logLoginAttempt(params: {
   accessToken?: string;
 }): Promise<void> {
   if (!supabaseUrl || !anonKey) {
+    console.error("logLoginAttempt missing supabase config");
     return;
   }
 
@@ -184,7 +185,7 @@ async function logLoginAttempt(params: {
     headers.authorization = `Bearer ${params.accessToken}`;
   }
 
-  await fetch(`${supabaseUrl}/rest/v1/rpc/log_login_attempt`, {
+  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/log_login_attempt`, {
     method: "POST",
     headers,
     body: JSON.stringify({
@@ -192,6 +193,10 @@ async function logLoginAttempt(params: {
       _result: params.result,
     }),
   });
+  if (!response.ok) {
+    const body = await response.text();
+    console.error("logLoginAttempt failed", response.status, body);
+  }
 }
 
 function jsonResponse(body: Record<string, unknown>, status: number) {

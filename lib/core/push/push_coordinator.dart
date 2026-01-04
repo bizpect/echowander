@@ -1,0 +1,195 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../config/app_config.dart';
+import '../session/session_manager.dart';
+import '../session/session_state.dart';
+import '../deeplink/deeplink_coordinator.dart';
+import 'device_id_store.dart';
+import 'push_payload.dart';
+import 'push_state.dart';
+import 'push_token_repository.dart';
+
+final pushCoordinatorProvider = NotifierProvider<PushCoordinator, PushState>(
+  PushCoordinator.new,
+);
+
+class PushCoordinator extends Notifier<PushState> {
+  bool _initialized = false;
+  String? _cachedAccessToken;
+  StreamSubscription<RemoteMessage>? _messageSub;
+  StreamSubscription<RemoteMessage>? _openSub;
+  StreamSubscription<String>? _tokenSub;
+
+  @override
+  PushState build() {
+    ref.onDispose(_dispose);
+    return const PushState();
+  }
+
+  Future<void> initialize() async {
+    if (_initialized) {
+      return;
+    }
+    _initialized = true;
+    await _requestPermission();
+    await _listenMessages();
+    await _handleInitialMessage();
+    _listenSession();
+  }
+
+  void clearForegroundMessage() {
+    state = state.copyWith(clearMessage: true);
+  }
+
+  void _dispose() {
+    _messageSub?.cancel();
+    _openSub?.cancel();
+    _tokenSub?.cancel();
+  }
+
+  Future<void> _requestPermission() async {
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+  }
+
+  Future<void> _listenMessages() async {
+    _messageSub = FirebaseMessaging.onMessage.listen((message) {
+      final payload = _toPayload(message);
+      if (payload == null) {
+        return;
+      }
+      state = state.copyWith(foregroundMessage: payload);
+    });
+
+    _openSub = FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      final route = _resolveRoute(message);
+      if (route == null) {
+        return;
+      }
+      ref.read(deepLinkCoordinatorProvider.notifier).enqueuePath(route);
+    });
+  }
+
+  Future<void> _handleInitialMessage() async {
+    final message = await FirebaseMessaging.instance.getInitialMessage();
+    final route = _resolveRoute(message);
+    if (route == null) {
+      return;
+    }
+    ref.read(deepLinkCoordinatorProvider.notifier).enqueuePath(route);
+  }
+
+  void _listenSession() {
+    ref.listen<SessionState>(sessionManagerProvider, (previous, next) {
+      if (next.status == SessionStatus.authenticated) {
+        _registerToken();
+      } else if (previous?.status == SessionStatus.authenticated &&
+          next.status == SessionStatus.unauthenticated) {
+        _deactivateToken();
+      }
+    });
+  }
+
+  Future<void> _registerToken() async {
+    final fcmToken = await FirebaseMessaging.instance.getToken();
+    if (fcmToken == null || fcmToken.isEmpty) {
+      return;
+    }
+    final deviceId = await DeviceIdStore().getOrCreate();
+    await _upsertToken(fcmToken, deviceId);
+    _tokenSub ??= FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      await _upsertToken(newToken, deviceId);
+    });
+  }
+
+  Future<void> _deactivateToken() async {
+    final fcmToken = await FirebaseMessaging.instance.getToken();
+    if (fcmToken == null || fcmToken.isEmpty) {
+      return;
+    }
+    final accessToken = await _readAccessToken() ?? _cachedAccessToken;
+    if (accessToken == null || accessToken.isEmpty) {
+      return;
+    }
+    await PushTokenRepository(config: AppConfigStore.current)
+        .deactivateToken(accessToken: accessToken, token: fcmToken);
+  }
+
+  Future<void> _upsertToken(String token, String deviceId) async {
+    final accessToken = await _readAccessToken();
+    if (accessToken == null || accessToken.isEmpty) {
+      return;
+    }
+    await PushTokenRepository(config: AppConfigStore.current).upsertToken(
+      accessToken: accessToken,
+      token: token,
+      platform: Platform.isIOS ? 'ios' : 'android',
+      deviceId: deviceId,
+    );
+  }
+
+  Future<String?> _readAccessToken() async {
+    final tokenStore = ref.read(tokenStoreProvider);
+    final tokens = await tokenStore.read();
+    final accessToken = tokens?.accessToken;
+    if (accessToken != null && accessToken.isNotEmpty) {
+      _cachedAccessToken = accessToken;
+    }
+    return accessToken;
+  }
+
+  PushPayload? _toPayload(RemoteMessage message) {
+    final notification = message.notification;
+    final data = message.data;
+    final title = notification?.title ?? (data['title'] as String? ?? '');
+    final body = notification?.body ?? (data['body'] as String? ?? '');
+    final route = _resolveRoute(message);
+    if (title.isEmpty && body.isEmpty && route == null) {
+      return null;
+    }
+    return PushPayload(
+      title: title,
+      body: body,
+      route: route,
+    );
+  }
+
+  String? _resolveRoute(RemoteMessage? message) {
+    if (message == null) {
+      return null;
+    }
+    final route = message.data['route'];
+    if (route is String && route.isNotEmpty) {
+      return route;
+    }
+    final deeplink = message.data['deeplink'];
+    if (deeplink is String && deeplink.isNotEmpty) {
+      final uri = Uri.tryParse(deeplink);
+      if (uri == null) {
+        return null;
+      }
+      if (uri.scheme.isEmpty) {
+        return deeplink;
+      }
+      if (uri.path.isNotEmpty) {
+        return uri.path;
+      }
+      if (uri.host.isNotEmpty) {
+        return '/${uri.host}';
+      }
+    }
+    return null;
+  }
+}

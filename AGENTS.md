@@ -34,6 +34,7 @@
 
 ## Agent Rules (강제)
 - 주석은 모두 한글로 작성합니다.
+- Android 디버그 키스토어 경로는 `C:\project\echowander\debug.keystore`로 고정하며 변경하지 않습니다.
 - 아키텍처는 Feature-first Clean Architecture를 고정으로 사용합니다: `lib/features/<feature>/presentation|application|domain|data`.
 - 공통 코드는 모두 `lib/core/`로 이동하며, feature 내부는 해당 기능 전용 코드만 둡니다.
 - 기술 스택은 Flutter + Riverpod + intl 고정이며, 플랫폼 차이는 어댑터로 격리합니다.

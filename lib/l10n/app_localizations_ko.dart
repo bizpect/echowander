@@ -33,6 +33,21 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeGreeting => '다시 오신 걸 환영합니다';
 
   @override
+  String get pushPreviewTitle => '알림';
+
+  @override
+  String get pushPreviewDescription => '푸시 딥링크 테스트 화면입니다.';
+
+  @override
+  String get notificationTitle => '새 알림';
+
+  @override
+  String get notificationOpen => '열기';
+
+  @override
+  String get notificationDismiss => '닫기';
+
+  @override
   String get errorTitle => '안내';
 
   @override

@@ -95,3 +95,39 @@ begin
   where p.user_id = auth.uid();
 end;
 $$;
+
+create or replace function public.upsert_device_token(
+  _token text,
+  _platform text,
+  _device_id text
+)
+returns void
+language plpgsql
+as $$
+begin
+  insert into public.device_tokens (user_id, token, platform, device_id)
+  values (auth.uid(), _token, _platform, _device_id)
+  on conflict (user_id, device_id)
+  do update set
+    token = excluded.token,
+    platform = excluded.platform,
+    is_active = true,
+    last_seen_at = now(),
+    updated_at = now();
+end;
+$$;
+
+create or replace function public.deactivate_device_token(
+  _token text
+)
+returns void
+language plpgsql
+as $$
+begin
+  update public.device_tokens
+  set is_active = false,
+      updated_at = now()
+  where user_id = auth.uid()
+    and token = _token;
+end;
+$$;
