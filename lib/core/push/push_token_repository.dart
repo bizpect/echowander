@@ -44,6 +44,8 @@ class PushTokenRepository {
     required Map<String, dynamic> payload,
   }) async {
     if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
+      // ignore: avoid_print
+      print('푸시 RPC 중단: Supabase 설정 누락');
       return;
     }
 
@@ -56,7 +58,11 @@ class PushTokenRepository {
     final response = await request.close();
     final body = await response.transform(utf8.decoder).join();
     if (response.statusCode >= 400) {
+      // ignore: avoid_print
+      print('푸시 RPC 실패: $rpc ${response.statusCode} $body');
       return;
     }
+    // ignore: avoid_print
+    print('푸시 RPC 성공: $rpc ${response.statusCode}');
   }
 }
