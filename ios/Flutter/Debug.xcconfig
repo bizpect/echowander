@@ -1,3 +1,4 @@
+#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
 #include "Generated.xcconfig"
-KAKAO_APP_KEY=
-GOOGLE_REVERSED_CLIENT_ID=
+KAKAO_APP_KEY=c17fad746615b58f888cf526344305eb
+GOOGLE_REVERSED_CLIENT_ID=com.googleusercontent.apps.242212293972-m5qsl1vt6rj9d06de53b4siuvkhpohk3
