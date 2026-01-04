@@ -77,4 +77,31 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get errorSessionExpired => '세션이 만료되었습니다. 다시 로그인해주세요.';
+
+  @override
+  String get languageSectionTitle => '언어';
+
+  @override
+  String get languageSystem => '시스템 기본';
+
+  @override
+  String get languageKorean => '한국어';
+
+  @override
+  String get languageEnglish => '영어';
+
+  @override
+  String get languageJapanese => '일본어';
+
+  @override
+  String get languageSpanish => '스페인어';
+
+  @override
+  String get languageFrench => '프랑스어';
+
+  @override
+  String get languagePortuguese => '포르투갈어';
+
+  @override
+  String get languageChinese => '중국어';
 }

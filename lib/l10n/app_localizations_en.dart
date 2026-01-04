@@ -83,4 +83,31 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorSessionExpired =>
       'Your session expired. Please sign in again.';
+
+  @override
+  String get languageSectionTitle => 'Language';
+
+  @override
+  String get languageSystem => 'System default';
+
+  @override
+  String get languageKorean => 'Korean';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageJapanese => 'Japanese';
+
+  @override
+  String get languageSpanish => 'Spanish';
+
+  @override
+  String get languageFrench => 'French';
+
+  @override
+  String get languagePortuguese => 'Portuguese';
+
+  @override
+  String get languageChinese => 'Chinese';
 }

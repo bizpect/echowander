@@ -22,5 +22,14 @@
   "errorLoginUnsupportedProvider": "Cette méthode de connexion n'est pas prise en charge.",
   "errorLoginUserSyncFailed": "Impossible d'enregistrer votre compte. Veuillez réessayer.",
   "errorLoginServiceUnavailable": "Le service de connexion est temporairement indisponible. Veuillez réessayer plus tard.",
-  "errorSessionExpired": "Votre session a expiré. Veuillez vous reconnecter."
+  "errorSessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+  "languageSectionTitle": "Langue",
+  "languageSystem": "Par défaut du système",
+  "languageKorean": "Coréen",
+  "languageEnglish": "Anglais",
+  "languageJapanese": "Japonais",
+  "languageSpanish": "Espagnol",
+  "languageFrench": "Français",
+  "languagePortuguese": "Portugais",
+  "languageChinese": "Chinois"
 }

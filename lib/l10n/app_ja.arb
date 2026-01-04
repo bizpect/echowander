@@ -22,5 +22,14 @@
   "errorLoginUnsupportedProvider": "このログイン方法はサポートされていません。",
   "errorLoginUserSyncFailed": "アカウント情報を保存できませんでした。もう一度お試しください。",
   "errorLoginServiceUnavailable": "ログインサービスを利用できません。しばらくしてから再試行してください。",
-  "errorSessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。"
+  "errorSessionExpired": "セッションの有効期限が切れました。もう一度ログインしてください。",
+  "languageSectionTitle": "言語",
+  "languageSystem": "システム設定",
+  "languageKorean": "韓国語",
+  "languageEnglish": "英語",
+  "languageJapanese": "日本語",
+  "languageSpanish": "スペイン語",
+  "languageFrench": "フランス語",
+  "languagePortuguese": "ポルトガル語",
+  "languageChinese": "中国語"
 }

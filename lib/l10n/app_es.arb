@@ -22,5 +22,14 @@
   "errorLoginUnsupportedProvider": "Este método de inicio de sesión no es compatible.",
   "errorLoginUserSyncFailed": "No pudimos guardar tu cuenta. Inténtalo de nuevo.",
   "errorLoginServiceUnavailable": "El servicio de inicio de sesión no está disponible temporalmente. Inténtalo más tarde.",
-  "errorSessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión."
+  "errorSessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión.",
+  "languageSectionTitle": "Idioma",
+  "languageSystem": "Predeterminado del sistema",
+  "languageKorean": "Coreano",
+  "languageEnglish": "Inglés",
+  "languageJapanese": "Japonés",
+  "languageSpanish": "Español",
+  "languageFrench": "Francés",
+  "languagePortuguese": "Portugués",
+  "languageChinese": "Chino"
 }

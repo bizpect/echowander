@@ -83,4 +83,31 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get errorSessionExpired =>
       'Votre session a expiré. Veuillez vous reconnecter.';
+
+  @override
+  String get languageSectionTitle => 'Langue';
+
+  @override
+  String get languageSystem => 'Par défaut du système';
+
+  @override
+  String get languageKorean => 'Coréen';
+
+  @override
+  String get languageEnglish => 'Anglais';
+
+  @override
+  String get languageJapanese => 'Japonais';
+
+  @override
+  String get languageSpanish => 'Espagnol';
+
+  @override
+  String get languageFrench => 'Français';
+
+  @override
+  String get languagePortuguese => 'Portugais';
+
+  @override
+  String get languageChinese => 'Chinois';
 }

@@ -22,5 +22,14 @@
   "errorLoginUnsupportedProvider": "지원하지 않는 로그인 방식입니다.",
   "errorLoginUserSyncFailed": "계정 정보를 저장하지 못했습니다. 다시 시도해주세요.",
   "errorLoginServiceUnavailable": "로그인 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해주세요.",
-  "errorSessionExpired": "세션이 만료되었습니다. 다시 로그인해주세요."
+  "errorSessionExpired": "세션이 만료되었습니다. 다시 로그인해주세요.",
+  "languageSectionTitle": "언어",
+  "languageSystem": "시스템 기본",
+  "languageKorean": "한국어",
+  "languageEnglish": "영어",
+  "languageJapanese": "일본어",
+  "languageSpanish": "스페인어",
+  "languageFrench": "프랑스어",
+  "languagePortuguese": "포르투갈어",
+  "languageChinese": "중국어"
 }

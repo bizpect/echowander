@@ -22,5 +22,14 @@
   "errorLoginUnsupportedProvider": "不支持此登录方式。",
   "errorLoginUserSyncFailed": "无法保存账号信息，请重试。",
   "errorLoginServiceUnavailable": "登录服务暂时不可用，请稍后再试。",
-  "errorSessionExpired": "会话已过期，请重新登录。"
+  "errorSessionExpired": "会话已过期，请重新登录。",
+  "languageSectionTitle": "语言",
+  "languageSystem": "系统默认",
+  "languageKorean": "韩语",
+  "languageEnglish": "英语",
+  "languageJapanese": "日语",
+  "languageSpanish": "西班牙语",
+  "languageFrench": "法语",
+  "languagePortuguese": "葡萄牙语",
+  "languageChinese": "中文"
 }

@@ -76,4 +76,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get errorSessionExpired => '会话已过期，请重新登录。';
+
+  @override
+  String get languageSectionTitle => '语言';
+
+  @override
+  String get languageSystem => '系统默认';
+
+  @override
+  String get languageKorean => '韩语';
+
+  @override
+  String get languageEnglish => '英语';
+
+  @override
+  String get languageJapanese => '日语';
+
+  @override
+  String get languageSpanish => '西班牙语';
+
+  @override
+  String get languageFrench => '法语';
+
+  @override
+  String get languagePortuguese => '葡萄牙语';
+
+  @override
+  String get languageChinese => '中文';
 }

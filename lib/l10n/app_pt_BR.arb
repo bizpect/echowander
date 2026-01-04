@@ -22,5 +22,14 @@
   "errorLoginUnsupportedProvider": "Este método de login não é compatível.",
   "errorLoginUserSyncFailed": "Não foi possível salvar sua conta. Tente novamente.",
   "errorLoginServiceUnavailable": "O serviço de login está temporariamente indisponível. Tente mais tarde.",
-  "errorSessionExpired": "Sua sessão expirou. Faça login novamente."
+  "errorSessionExpired": "Sua sessão expirou. Faça login novamente.",
+  "languageSectionTitle": "Idioma",
+  "languageSystem": "Padrão do sistema",
+  "languageKorean": "Coreano",
+  "languageEnglish": "Inglês",
+  "languageJapanese": "Japonês",
+  "languageSpanish": "Espanhol",
+  "languageFrench": "Francês",
+  "languagePortuguese": "Português",
+  "languageChinese": "Chinês"
 }

@@ -9,6 +9,7 @@ import '../core/push/push_state.dart';
 import '../core/session/session_manager.dart';
 import '../core/session/session_state.dart';
 import '../core/deeplink/deeplink_coordinator.dart';
+import '../core/locale/locale_controller.dart';
 import '../l10n/app_localizations.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
@@ -86,6 +87,7 @@ class _AppState extends ConsumerState<App> {
       theme: AppTheme.dark(),
       scaffoldMessengerKey: _messengerKey,
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+      locale: ref.watch(localeControllerProvider),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) {

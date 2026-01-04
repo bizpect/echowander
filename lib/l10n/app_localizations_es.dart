@@ -83,4 +83,31 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get errorSessionExpired =>
       'Tu sesión ha caducado. Vuelve a iniciar sesión.';
+
+  @override
+  String get languageSectionTitle => 'Idioma';
+
+  @override
+  String get languageSystem => 'Predeterminado del sistema';
+
+  @override
+  String get languageKorean => 'Coreano';
+
+  @override
+  String get languageEnglish => 'Inglés';
+
+  @override
+  String get languageJapanese => 'Japonés';
+
+  @override
+  String get languageSpanish => 'Español';
+
+  @override
+  String get languageFrench => 'Francés';
+
+  @override
+  String get languagePortuguese => 'Portugués';
+
+  @override
+  String get languageChinese => 'Chino';
 }

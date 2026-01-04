@@ -83,6 +83,33 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get errorSessionExpired =>
       'A sua sessão expirou. Inicie sessão novamente.';
+
+  @override
+  String get languageSectionTitle => 'Idioma';
+
+  @override
+  String get languageSystem => 'Padrão do sistema';
+
+  @override
+  String get languageKorean => 'Coreano';
+
+  @override
+  String get languageEnglish => 'Inglês';
+
+  @override
+  String get languageJapanese => 'Japonês';
+
+  @override
+  String get languageSpanish => 'Espanhol';
+
+  @override
+  String get languageFrench => 'Francês';
+
+  @override
+  String get languagePortuguese => 'Português';
+
+  @override
+  String get languageChinese => 'Chinês';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -163,4 +190,31 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get errorSessionExpired => 'Sua sessão expirou. Faça login novamente.';
+
+  @override
+  String get languageSectionTitle => 'Idioma';
+
+  @override
+  String get languageSystem => 'Padrão do sistema';
+
+  @override
+  String get languageKorean => 'Coreano';
+
+  @override
+  String get languageEnglish => 'Inglês';
+
+  @override
+  String get languageJapanese => 'Japonês';
+
+  @override
+  String get languageSpanish => 'Espanhol';
+
+  @override
+  String get languageFrench => 'Francês';
+
+  @override
+  String get languagePortuguese => 'Português';
+
+  @override
+  String get languageChinese => 'Chinês';
 }

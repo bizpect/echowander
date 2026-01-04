@@ -22,5 +22,14 @@
   "errorLoginUnsupportedProvider": "Este método de início de sessão não é suportado.",
   "errorLoginUserSyncFailed": "Não foi possível guardar a sua conta. Tente novamente.",
   "errorLoginServiceUnavailable": "O serviço de início de sessão está temporariamente indisponível. Tente mais tarde.",
-  "errorSessionExpired": "A sua sessão expirou. Inicie sessão novamente."
+  "errorSessionExpired": "A sua sessão expirou. Inicie sessão novamente.",
+  "languageSectionTitle": "Idioma",
+  "languageSystem": "Padrão do sistema",
+  "languageKorean": "Coreano",
+  "languageEnglish": "Inglês",
+  "languageJapanese": "Japonês",
+  "languageSpanish": "Espanhol",
+  "languageFrench": "Francês",
+  "languagePortuguese": "Português",
+  "languageChinese": "Chinês"
 }

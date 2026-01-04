@@ -22,5 +22,14 @@
   "errorLoginUnsupportedProvider": "This sign-in method is not supported.",
   "errorLoginUserSyncFailed": "We couldn't save your account. Please try again.",
   "errorLoginServiceUnavailable": "Sign-in is temporarily unavailable. Please try again later.",
-  "errorSessionExpired": "Your session expired. Please sign in again."
+  "errorSessionExpired": "Your session expired. Please sign in again.",
+  "languageSectionTitle": "Language",
+  "languageSystem": "System default",
+  "languageKorean": "Korean",
+  "languageEnglish": "English",
+  "languageJapanese": "Japanese",
+  "languageSpanish": "Spanish",
+  "languageFrench": "French",
+  "languagePortuguese": "Portuguese",
+  "languageChinese": "Chinese"
 }

@@ -77,4 +77,31 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get errorSessionExpired => 'セッションの有効期限が切れました。もう一度ログインしてください。';
+
+  @override
+  String get languageSectionTitle => '言語';
+
+  @override
+  String get languageSystem => 'システム設定';
+
+  @override
+  String get languageKorean => '韓国語';
+
+  @override
+  String get languageEnglish => '英語';
+
+  @override
+  String get languageJapanese => '日本語';
+
+  @override
+  String get languageSpanish => 'スペイン語';
+
+  @override
+  String get languageFrench => 'フランス語';
+
+  @override
+  String get languagePortuguese => 'ポルトガル語';
+
+  @override
+  String get languageChinese => '中国語';
 }
