@@ -23,6 +23,9 @@ class PushCoordinator extends Notifier<PushState> {
   StreamSubscription<RemoteMessage>? _messageSub;
   StreamSubscription<RemoteMessage>? _openSub;
   StreamSubscription<String>? _tokenSub;
+  Timer? _apnsRetryTimer;
+  int _apnsRetryCount = 0;
+  static const int _apnsRetryLimit = 6;
 
   @override
   PushState build() {
@@ -49,6 +52,7 @@ class PushCoordinator extends Notifier<PushState> {
     _messageSub?.cancel();
     _openSub?.cancel();
     _tokenSub?.cancel();
+    _apnsRetryTimer?.cancel();
   }
 
   Future<void> _requestPermission() async {
@@ -104,9 +108,9 @@ class PushCoordinator extends Notifier<PushState> {
 
   Future<void> _registerToken() async {
     if (Platform.isIOS) {
-      // APNs 토큰이 준비되지 않으면 FCM 토큰 요청을 보류한다.
       final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
       if (apnsToken == null || apnsToken.isEmpty) {
+        _scheduleApnsRetry();
         return;
       }
     }
@@ -116,9 +120,20 @@ class PushCoordinator extends Notifier<PushState> {
     }
     final deviceId = await DeviceIdStore().getOrCreate();
     await _upsertToken(fcmToken, deviceId);
+    _apnsRetryTimer?.cancel();
+    _apnsRetryCount = 0;
     _tokenSub ??= FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
       await _upsertToken(newToken, deviceId);
     });
+  }
+
+  void _scheduleApnsRetry() {
+    if (_apnsRetryCount >= _apnsRetryLimit) {
+      return;
+    }
+    _apnsRetryCount += 1;
+    _apnsRetryTimer?.cancel();
+    _apnsRetryTimer = Timer(const Duration(seconds: 2), _registerToken);
   }
 
   Future<void> _deactivateToken() async {
