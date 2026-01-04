@@ -13,7 +13,19 @@ import UIKit
          let options = FirebaseOptions(contentsOfFile: filePath) {
         FirebaseApp.configure(options: options)
       } else {
-        FirebaseApp.configure()
+        let fallbackOptions = FirebaseOptions(
+          googleAppID: "1:242212293972:ios:eec7b04b5b41cc642b4cc1",
+          gcmSenderID: "242212293972"
+        )
+        fallbackOptions.apiKey = "AIzaSyArB6uoPsPxqlnLOS7kPHxD2lOpbgu3sTo"
+        fallbackOptions.projectID = "echowander"
+        fallbackOptions.storageBucket = "echowander.firebasestorage.app"
+        fallbackOptions.bundleID = "com.bizpect.echowander"
+        fallbackOptions.clientID =
+          "242212293972-m5qsl1vt6rj9d06de53b4siuvkhpohk3.apps.googleusercontent.com"
+        fallbackOptions.androidClientID =
+          "242212293972-qi1759456v1g6url5ji2pnbmjakcss3u.apps.googleusercontent.com"
+        FirebaseApp.configure(options: fallbackOptions)
       }
     }
     GeneratedPluginRegistrant.register(with: self)
