@@ -74,12 +74,30 @@ serve(async (request) => {
   );
 
   const results = await Promise.allSettled(
-    targets.map((row) => sendFcm({
-      token: row.device_token as string,
-      journeyId: row.journey_id as string,
-      localeTag: normalizeLocaleTag(row.locale_tag as string | undefined),
-      projectId: fcmProjectId,
-    })),
+    targets.map(async (row) => {
+      const journeyId = row.journey_id as string;
+      const localeTag = normalizeLocaleTag(row.locale_tag as string | undefined);
+      const text = resolvePushText(localeTag);
+      const route = `/inbox?highlight=${encodeURIComponent(journeyId)}`;
+      await sendFcm({
+        token: row.device_token as string,
+        journeyId,
+        projectId: fcmProjectId,
+        title: text.title,
+        body: text.body,
+        route,
+      });
+      await insertNotificationLog({
+        userId: row.recipient_user_id as string,
+        title: text.title,
+        body: text.body,
+        route,
+        data: {
+          type: "journey_assigned",
+          journey_id: journeyId,
+        },
+      });
+    }),
   );
 
   const successCount = results.filter((item) => item.status === "fulfilled")
@@ -104,15 +122,18 @@ serve(async (request) => {
 async function sendFcm({
   token,
   journeyId,
-  localeTag,
   projectId,
+  title,
+  body,
+  route,
 }: {
   token: string;
   journeyId: string;
-  localeTag: string;
   projectId: string;
+  title: string;
+  body: string;
+  route: string;
 }) {
-  const text = resolvePushText(localeTag);
   const accessToken = await getAccessToken();
   const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
   const response = await fetch(url, {
@@ -125,11 +146,11 @@ async function sendFcm({
       message: {
         token,
         notification: {
-          title: text.title,
-          body: text.body,
+          title,
+          body,
         },
         data: {
-          route: "/inbox",
+          route,
           journey_id: journeyId,
           type: "journey_assigned",
         },
@@ -248,12 +269,30 @@ async function dispatchCompletion({
   const resultPushes = await Promise.allSettled(
     rows
       .filter((row) => row && typeof row.device_token === "string")
-      .map((row) => sendResultFcm({
-        token: row.device_token as string,
-        journeyId: row.journey_id as string,
-        localeTag: normalizeLocaleTag(row.locale_tag as string | undefined),
-        projectId,
-      })),
+      .map(async (row) => {
+        const journeyId = row.journey_id as string;
+        const localeTag = normalizeLocaleTag(row.locale_tag as string | undefined);
+        const text = resolveResultPushText(localeTag);
+        const route = `/results/${journeyId}?highlight=1`;
+        await sendResultFcm({
+          token: row.device_token as string,
+          journeyId,
+          projectId,
+          title: text.title,
+          body: text.body,
+          route,
+        });
+        await insertNotificationLog({
+          userId: row.user_id as string,
+          title: text.title,
+          body: text.body,
+          route,
+          data: {
+            type: "journey_result",
+            journey_id: journeyId,
+          },
+        });
+      }),
   );
   const resultSuccess = resultPushes.filter((item) => item.status === "fulfilled")
     .length;
@@ -263,15 +302,18 @@ async function dispatchCompletion({
 async function sendResultFcm({
   token,
   journeyId,
-  localeTag,
   projectId,
+  title,
+  body,
+  route,
 }: {
   token: string;
   journeyId: string;
-  localeTag: string;
   projectId: string;
+  title: string;
+  body: string;
+  route: string;
 }) {
-  const text = resolveResultPushText(localeTag);
   const accessToken = await getAccessToken();
   const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
   const response = await fetch(url, {
@@ -284,11 +326,11 @@ async function sendResultFcm({
       message: {
         token,
         notification: {
-          title: text.title,
-          body: text.body,
+          title,
+          body,
         },
         data: {
-          route: `/results/${journeyId}`,
+          route,
           journey_id: journeyId,
           type: "journey_result",
         },
@@ -380,4 +422,44 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
       "Content-Type": "application/json",
     },
   });
+}
+
+async function insertNotificationLog({
+  userId,
+  title,
+  body,
+  route,
+  data,
+}: {
+  userId: string;
+  title: string;
+  body: string;
+  route: string;
+  data: Record<string, unknown>;
+}) {
+  if (!serviceRoleKey) {
+    return;
+  }
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/rpc/insert_notification_log`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: anonKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({
+        _user_id: userId,
+        _title: title,
+        _body: body,
+        _route: route,
+        _data: data,
+      }),
+    },
+  );
+  if (!response.ok) {
+    const bodyText = await response.text();
+    throw new Error(`notification_log_failed:${response.status}:${bodyText}`);
+  }
 }

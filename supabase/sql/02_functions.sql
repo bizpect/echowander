@@ -239,6 +239,134 @@ begin
 end;
 $$;
 
+create or replace function public.insert_notification_log(
+  _user_id uuid,
+  _title text,
+  _body text,
+  _route text,
+  _data jsonb
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  new_id bigint;
+begin
+  if _user_id is null then
+    raise exception 'missing_user';
+  end if;
+  if _title is null or length(trim(_title)) = 0 then
+    raise exception 'missing_title';
+  end if;
+  if auth.uid() is not null and auth.uid() <> _user_id then
+    raise exception 'forbidden';
+  end if;
+  if auth.uid() is null and auth.role() <> 'service_role' then
+    raise exception 'unauthorized';
+  end if;
+
+  insert into public.notification_logs (user_id, title, body, route, data)
+  values (_user_id, _title, _body, _route, _data)
+  returning id into new_id;
+
+  return new_id;
+end;
+$$;
+
+create or replace function public.list_my_notifications(
+  page_size integer,
+  page_offset integer,
+  unread_only boolean default false
+)
+returns table (
+  id bigint,
+  title text,
+  body text,
+  route text,
+  data jsonb,
+  read_at timestamptz,
+  created_at timestamptz
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select logs.id,
+         logs.title,
+         logs.body,
+         logs.route,
+         logs.data,
+         logs.read_at,
+         logs.created_at
+  from public.notification_logs logs
+  where logs.user_id = auth.uid()
+    and logs.delete_yn = false
+    and logs.created_at >= now() - interval '7 days'
+    and (not coalesce(unread_only, false) or logs.read_at is null)
+  order by logs.created_at desc
+  limit least(coalesce(page_size, 20), 50)
+  offset greatest(coalesce(page_offset, 0), 0);
+$$;
+
+create or replace function public.count_my_unread_notifications()
+returns integer
+language sql
+security definer
+set search_path = public
+as $$
+  select count(*)
+  from public.notification_logs logs
+  where logs.user_id = auth.uid()
+    and logs.delete_yn = false
+    and logs.read_at is null
+    and logs.created_at >= now() - interval '7 days';
+$$;
+
+create or replace function public.mark_notification_read(
+  target_id bigint
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'unauthorized';
+  end if;
+
+  update public.notification_logs
+  set read_at = coalesce(read_at, now()),
+      updated_at = now()
+  where id = target_id
+    and user_id = auth.uid()
+    and delete_yn = false;
+end;
+$$;
+
+create or replace function public.delete_notification_log(
+  target_id bigint
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'unauthorized';
+  end if;
+
+  update public.notification_logs
+  set delete_yn = true,
+      updated_at = now()
+  where id = target_id
+    and user_id = auth.uid();
+end;
+$$;
+
 create or replace function public.report_journey_response(
   target_response_id bigint,
   reason_code text
@@ -916,6 +1044,7 @@ create or replace function public.complete_due_journeys(
 )
 returns table (
   journey_id uuid,
+  user_id uuid,
   device_token text,
   locale_tag text
 )
@@ -969,6 +1098,7 @@ begin
   tokens as (
     select
       notify_targets.journey_id,
+      notify_targets.user_id,
       device_tokens.token,
       user_profiles.locale_tag
     from notify_targets
@@ -980,6 +1110,7 @@ begin
   )
   select
     tokens.journey_id,
+    tokens.user_id,
     tokens.token,
     tokens.locale_tag
   from tokens;

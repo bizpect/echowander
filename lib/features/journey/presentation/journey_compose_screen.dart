@@ -64,7 +64,7 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
           return;
         }
@@ -134,7 +134,8 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<int>(
-                          value: state.recipientCount,
+                          key: ValueKey(state.recipientCount),
+                          initialValue: state.recipientCount,
                           items: List.generate(
                             5,
                             (index) => DropdownMenuItem(

@@ -10,6 +10,8 @@ import '../../../core/logging/server_error_logger.dart';
 import '../domain/journey_repository.dart';
 import '../domain/journey_storage_repository.dart';
 
+const _journeyImagesBucketId = 'journey-images';
+
 final journeyRepositoryProvider = Provider<JourneyRepository>((ref) {
   return SupabaseJourneyRepository(config: AppConfigStore.current);
 });
@@ -1168,8 +1170,9 @@ class SupabaseJourneyRepository implements JourneyRepository {
     required String storagePath,
     required String accessToken,
   }) async {
-    final uri =
-        Uri.parse('${_config.supabaseUrl}/storage/v1/object/sign/$_bucketId/$storagePath');
+    final uri = Uri.parse(
+      '${_config.supabaseUrl}/storage/v1/object/sign/$_journeyImagesBucketId/$storagePath',
+    );
     try {
       final request = await _client.postUrl(uri);
       request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
@@ -1311,7 +1314,6 @@ class SupabaseJourneyStorageRepository implements JourneyStorageRepository {
         _errorLogger = ServerErrorLogger(config: config),
         _client = HttpClient();
 
-  static const _bucketId = 'journey-images';
   final AppConfig _config;
   final ServerErrorLogger _errorLogger;
   final HttpClient _client;
@@ -1492,7 +1494,9 @@ class SupabaseJourneyStorageRepository implements JourneyStorageRepository {
   }
 
   Uri _storageUri(String storagePath) {
-    return Uri.parse('${_config.supabaseUrl}/storage/v1/object/$_bucketId/$storagePath');
+    return Uri.parse(
+      '${_config.supabaseUrl}/storage/v1/object/$_journeyImagesBucketId/$storagePath',
+    );
   }
 
   String _buildStoragePath(String path, int index) {

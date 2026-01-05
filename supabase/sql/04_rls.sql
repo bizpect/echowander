@@ -314,6 +314,11 @@ grant execute on function public.complete_due_journeys(integer) to authenticated
 grant execute on function public.list_my_blocks(integer, integer) to authenticated;
 grant execute on function public.block_user(uuid) to authenticated;
 grant execute on function public.unblock_user(uuid) to authenticated;
+grant execute on function public.insert_notification_log(uuid, text, text, text, jsonb) to service_role;
+grant execute on function public.list_my_notifications(integer, integer, boolean) to authenticated;
+grant execute on function public.count_my_unread_notifications() to authenticated;
+grant execute on function public.mark_notification_read(bigint) to authenticated;
+grant execute on function public.delete_notification_log(bigint) to authenticated;
 grant execute on function public.log_client_error(text, integer, text, jsonb, text) to anon, authenticated;
 
 grant usage, select on sequence public.login_logs_id_seq to anon, authenticated;

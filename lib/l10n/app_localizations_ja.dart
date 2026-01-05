@@ -36,6 +36,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsCta => '設定';
 
   @override
+  String get settingsNotificationInbox => '通知一覧';
+
+  @override
   String get pushPreviewTitle => '通知';
 
   @override
@@ -49,6 +52,30 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get notificationDismiss => '閉じる';
+
+  @override
+  String get notificationsTitle => '通知';
+
+  @override
+  String get notificationsEmpty => '通知はまだありません。';
+
+  @override
+  String get notificationsUnreadOnly => '未読のみ表示';
+
+  @override
+  String get notificationsRead => '既読';
+
+  @override
+  String get notificationsUnread => '新着';
+
+  @override
+  String get notificationsDeleteTitle => '通知を削除';
+
+  @override
+  String get notificationsDeleteMessage => 'この通知を削除しますか？';
+
+  @override
+  String get notificationsDeleteConfirm => '削除';
 
   @override
   String get pushJourneyAssignedTitle => '新しいメッセージ';

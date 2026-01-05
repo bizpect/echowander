@@ -36,6 +36,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsCta => 'Configuración';
 
   @override
+  String get settingsNotificationInbox => 'Bandeja de notificaciones';
+
+  @override
   String get pushPreviewTitle => 'Notificación';
 
   @override
@@ -50,6 +53,30 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get notificationDismiss => 'Cerrar';
+
+  @override
+  String get notificationsTitle => 'Notificaciones';
+
+  @override
+  String get notificationsEmpty => 'Aún no hay notificaciones.';
+
+  @override
+  String get notificationsUnreadOnly => 'Mostrar solo no leídas';
+
+  @override
+  String get notificationsRead => 'Leído';
+
+  @override
+  String get notificationsUnread => 'Nuevo';
+
+  @override
+  String get notificationsDeleteTitle => 'Eliminar notificación';
+
+  @override
+  String get notificationsDeleteMessage => '¿Eliminar esta notificación?';
+
+  @override
+  String get notificationsDeleteConfirm => 'Eliminar';
 
   @override
   String get pushJourneyAssignedTitle => 'Nuevo mensaje';

@@ -36,6 +36,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsCta => '设置';
 
   @override
+  String get settingsNotificationInbox => '通知列表';
+
+  @override
   String get pushPreviewTitle => '通知';
 
   @override
@@ -49,6 +52,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get notificationDismiss => '关闭';
+
+  @override
+  String get notificationsTitle => '通知';
+
+  @override
+  String get notificationsEmpty => '暂无通知。';
+
+  @override
+  String get notificationsUnreadOnly => '仅显示未读';
+
+  @override
+  String get notificationsRead => '已读';
+
+  @override
+  String get notificationsUnread => '新通知';
+
+  @override
+  String get notificationsDeleteTitle => '删除通知';
+
+  @override
+  String get notificationsDeleteMessage => '要删除这条通知吗？';
+
+  @override
+  String get notificationsDeleteConfirm => '删除';
 
   @override
   String get pushJourneyAssignedTitle => '新消息';

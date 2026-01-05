@@ -36,6 +36,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get settingsCta => 'Configurações';
 
   @override
+  String get settingsNotificationInbox => 'Caixa de notificações';
+
+  @override
   String get pushPreviewTitle => 'Notificação';
 
   @override
@@ -50,6 +53,30 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get notificationDismiss => 'Fechar';
+
+  @override
+  String get notificationsTitle => 'Notificações';
+
+  @override
+  String get notificationsEmpty => 'Ainda não há notificações.';
+
+  @override
+  String get notificationsUnreadOnly => 'Mostrar apenas não lidas';
+
+  @override
+  String get notificationsRead => 'Lida';
+
+  @override
+  String get notificationsUnread => 'Nova';
+
+  @override
+  String get notificationsDeleteTitle => 'Excluir notificação';
+
+  @override
+  String get notificationsDeleteMessage => 'Excluir esta notificação?';
+
+  @override
+  String get notificationsDeleteConfirm => 'Excluir';
 
   @override
   String get pushJourneyAssignedTitle => 'Nova mensagem';
@@ -632,6 +659,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get settingsCta => 'Configurações';
 
   @override
+  String get settingsNotificationInbox => 'Caixa de notificações';
+
+  @override
   String get pushPreviewTitle => 'Notificação';
 
   @override
@@ -646,6 +676,30 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get notificationDismiss => 'Fechar';
+
+  @override
+  String get notificationsTitle => 'Notificações';
+
+  @override
+  String get notificationsEmpty => 'Ainda não há notificações.';
+
+  @override
+  String get notificationsUnreadOnly => 'Mostrar apenas não lidas';
+
+  @override
+  String get notificationsRead => 'Lida';
+
+  @override
+  String get notificationsUnread => 'Nova';
+
+  @override
+  String get notificationsDeleteTitle => 'Excluir notificação';
+
+  @override
+  String get notificationsDeleteMessage => 'Excluir esta notificação?';
+
+  @override
+  String get notificationsDeleteConfirm => 'Excluir';
 
   @override
   String get pushJourneyAssignedTitle => 'Nova mensagem';

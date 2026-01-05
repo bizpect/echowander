@@ -17,10 +17,12 @@ class JourneySentDetailScreen extends ConsumerStatefulWidget {
     super.key,
     required this.journeyId,
     this.summary,
+    this.fromNotification = false,
   });
 
   final String journeyId;
   final JourneySummary? summary;
+  final bool fromNotification;
 
   @override
   ConsumerState<JourneySentDetailScreen> createState() => _JourneySentDetailScreenState();
@@ -112,7 +114,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
           return;
         }
@@ -179,6 +181,16 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
     final progress = _progress!;
     final dateFormat = DateFormat.yMMMd(l10n.localeName).add_Hm();
     final summary = widget.summary;
+    final highlightDecoration = widget.fromNotification
+        ? BoxDecoration(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary,
+              width: 1.2,
+            ),
+          )
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,59 +269,70 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
                 .toList(),
           ),
         const SizedBox(height: 20),
-        Text(
-          l10n.journeyDetailResultsTitle,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 12),
-        if (progress.statusCode != 'COMPLETED')
-          Text(l10n.journeyDetailResultsLocked)
-        else if (!_adUnlocked)
-          _buildAdGate(l10n)
-        else if (_resultLoadFailed)
-          Text(l10n.journeyDetailResultsLoadFailed)
-        else if (_results.isEmpty)
-          Text(l10n.journeyDetailResultsEmpty)
-        else
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _results.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final result = _results[index];
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      dateFormat.format(result.createdAt.toLocal()),
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      result.content,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                    const SizedBox(height: 12),
-                    if (result.responseId > 0)
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () => _handleReportResult(result.responseId),
-                          child: Text(l10n.journeyResultReportCta),
-                        ),
+        Container(
+          padding: widget.fromNotification
+              ? const EdgeInsets.fromLTRB(12, 12, 12, 16)
+              : EdgeInsets.zero,
+          decoration: highlightDecoration,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.journeyDetailResultsTitle,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 12),
+              if (progress.statusCode != 'COMPLETED')
+                Text(l10n.journeyDetailResultsLocked)
+              else if (!_adUnlocked)
+                _buildAdGate(l10n)
+              else if (_resultLoadFailed)
+                Text(l10n.journeyDetailResultsLoadFailed)
+              else if (_results.isEmpty)
+                Text(l10n.journeyDetailResultsEmpty)
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _results.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final result = _results[index];
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                  ],
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            dateFormat.format(result.createdAt.toLocal()),
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            result.content,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                          const SizedBox(height: 12),
+                          if (result.responseId > 0)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () => _handleReportResult(result.responseId),
+                                child: Text(l10n.journeyResultReportCta),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
+            ],
           ),
+        ),
       ],
     );
   }

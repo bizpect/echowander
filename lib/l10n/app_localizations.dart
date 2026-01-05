@@ -163,6 +163,12 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsCta;
 
+  /// No description provided for @settingsNotificationInbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification inbox'**
+  String get settingsNotificationInbox;
+
   /// No description provided for @pushPreviewTitle.
   ///
   /// In en, this message translates to:
@@ -192,6 +198,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dismiss'**
   String get notificationDismiss;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet.'**
+  String get notificationsEmpty;
+
+  /// No description provided for @notificationsUnreadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Show unread only'**
+  String get notificationsUnreadOnly;
+
+  /// No description provided for @notificationsRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get notificationsRead;
+
+  /// No description provided for @notificationsUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get notificationsUnread;
+
+  /// No description provided for @notificationsDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete notification'**
+  String get notificationsDeleteTitle;
+
+  /// No description provided for @notificationsDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this notification from your inbox?'**
+  String get notificationsDeleteMessage;
+
+  /// No description provided for @notificationsDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get notificationsDeleteConfirm;
 
   /// No description provided for @pushJourneyAssignedTitle.
   ///

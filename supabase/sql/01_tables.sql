@@ -77,6 +77,29 @@ create table if not exists public.device_tokens (
     on delete cascade
 );
 
+create table if not exists public.notification_logs (
+  id bigserial primary key,
+  user_id uuid not null,
+  title text not null,
+  body text,
+  route text,
+  data jsonb,
+  read_at timestamptz,
+  delete_yn boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint notification_logs_user_fk
+    foreign key (user_id)
+    references public.users (user_id)
+    on delete cascade
+);
+
+create index if not exists notification_logs_user_created_idx
+  on public.notification_logs (user_id, created_at desc);
+
+create index if not exists notification_logs_user_delete_idx
+  on public.notification_logs (user_id, delete_yn, created_at desc);
+
 create unique index if not exists user_profiles_nickname_uk
   on public.user_profiles (nickname)
   where nickname is not null;

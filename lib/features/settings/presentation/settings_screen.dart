@@ -40,7 +40,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
           return;
         }
@@ -71,6 +71,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   title: Text(l10n.settingsNotificationToggle),
                   subtitle: Text(l10n.settingsNotificationHint),
                   contentPadding: EdgeInsets.zero,
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.settingsNotificationInbox),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.go(AppRoutes.notifications),
                 ),
                 const SizedBox(height: 24),
                 Text(

@@ -42,7 +42,7 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
           return;
         }
@@ -75,7 +75,7 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                     itemCount: state.items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final item = state.items[index];
                       return Card(

@@ -5,16 +5,31 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router/app_router.dart';
 import '../../../core/locale/locale_controller.dart';
 import '../../../core/session/session_manager.dart';
+import '../../notifications/application/notification_inbox_controller.dart';
 import '../../../l10n/app_localizations.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(
+      () => ref.read(notificationInboxControllerProvider.notifier).loadUnreadCount(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final currentLocale = ref.watch(localeControllerProvider);
     final selectedTag = _localeTag(currentLocale);
+    final notificationState = ref.watch(notificationInboxControllerProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -49,6 +64,20 @@ class HomeScreen extends ConsumerWidget {
               OutlinedButton(
                 onPressed: () => context.go(AppRoutes.inbox),
                 child: Text(l10n.inboxCta),
+              ),
+              const SizedBox(height: 24),
+              OutlinedButton(
+                onPressed: () => context.go(AppRoutes.notifications),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(l10n.notificationsTitle),
+                    if (notificationState.unreadCount > 0) ...[
+                      const SizedBox(width: 8),
+                      _NotificationBadge(count: notificationState.unreadCount),
+                    ],
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
               OutlinedButton(
@@ -119,5 +148,29 @@ class HomeScreen extends ConsumerWidget {
       return 'pt_BR';
     }
     return locale.languageCode;
+  }
+}
+
+class _NotificationBadge extends StatelessWidget {
+  const _NotificationBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final display = count > 99 ? '99+' : count.toString();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        display,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(context).colorScheme.onPrimary,
+            ),
+      ),
+    );
   }
 }

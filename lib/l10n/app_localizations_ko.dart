@@ -36,6 +36,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsCta => '설정';
 
   @override
+  String get settingsNotificationInbox => '알림함';
+
+  @override
   String get pushPreviewTitle => '알림';
 
   @override
@@ -49,6 +52,30 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get notificationDismiss => '닫기';
+
+  @override
+  String get notificationsTitle => '알림함';
+
+  @override
+  String get notificationsEmpty => '아직 알림이 없어요.';
+
+  @override
+  String get notificationsUnreadOnly => '미읽음만 보기';
+
+  @override
+  String get notificationsRead => '읽음';
+
+  @override
+  String get notificationsUnread => '새 알림';
+
+  @override
+  String get notificationsDeleteTitle => '알림 삭제';
+
+  @override
+  String get notificationsDeleteMessage => '이 알림을 삭제할까요?';
+
+  @override
+  String get notificationsDeleteConfirm => '삭제';
 
   @override
   String get pushJourneyAssignedTitle => '새 메시지';

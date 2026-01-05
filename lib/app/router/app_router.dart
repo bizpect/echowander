@@ -17,6 +17,7 @@ import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/journey/domain/journey_repository.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/block/presentation/block_list_screen.dart';
+import '../../features/notifications/presentation/notification_inbox_screen.dart';
 
 class AppRoutes {
   static const splash = '/splash';
@@ -31,6 +32,7 @@ class AppRoutes {
   static const journeyResults = '/results/:journeyId';
   static const settings = '/settings';
   static const blockList = '/settings/blocks';
+  static const notifications = '/notifications';
   static const pushPreview = '/push-preview';
 }
 
@@ -74,7 +76,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.inbox,
-        builder: (context, state) => const JourneyInboxScreen(),
+        builder: (context, state) => JourneyInboxScreen(
+          highlightJourneyId: state.uri.queryParameters['highlight'],
+        ),
       ),
       GoRoute(
         path: AppRoutes.inboxDetail,
@@ -87,6 +91,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => JourneySentDetailScreen(
           journeyId: state.pathParameters['journeyId'] ?? '',
           summary: state.extra as JourneySummary?,
+          fromNotification:
+              state.uri.queryParameters['highlight'] == '1' ||
+              state.uri.queryParameters['highlight'] == 'true',
         ),
       ),
       GoRoute(
@@ -100,6 +107,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.pushPreview,
         builder: (context, state) => const PushPreviewScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        builder: (context, state) => const NotificationInboxScreen(),
       ),
     ],
     redirect: (context, state) {
@@ -129,7 +140,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             location.startsWith('/inbox/') ||
             location.startsWith('/results/') ||
             location == AppRoutes.settings ||
-            location == AppRoutes.blockList) {
+            location == AppRoutes.blockList ||
+            location == AppRoutes.notifications) {
           return null;
         }
         return location == AppRoutes.home ? null : AppRoutes.home;

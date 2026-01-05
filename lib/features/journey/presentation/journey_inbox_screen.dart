@@ -10,10 +10,11 @@ import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/fullscreen_loading.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/journey_inbox_controller.dart';
-import '../domain/journey_repository.dart';
 
 class JourneyInboxScreen extends ConsumerStatefulWidget {
-  const JourneyInboxScreen({super.key});
+  const JourneyInboxScreen({super.key, this.highlightJourneyId});
+
+  final String? highlightJourneyId;
 
   @override
   ConsumerState<JourneyInboxScreen> createState() => _JourneyInboxScreenState();
@@ -45,7 +46,7 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
           return;
         }
@@ -78,10 +79,26 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                     itemCount: state.items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final item = state.items[index];
+                      final isHighlighted = item.journeyId == widget.highlightJourneyId;
                       return Card(
+                        color: isHighlighted
+                            ? Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withValues(alpha: 0.12)
+                            : null,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: isHighlighted
+                              ? BorderSide(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 1.2,
+                                )
+                              : BorderSide.none,
+                        ),
                         child: ListTile(
                           title: Text(
                             item.content,
