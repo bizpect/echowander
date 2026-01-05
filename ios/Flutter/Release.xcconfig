@@ -2,3 +2,4 @@
 #include "Generated.xcconfig"
 KAKAO_APP_KEY=c17fad746615b58f888cf526344305eb
 GOOGLE_REVERSED_CLIENT_ID=com.googleusercontent.apps.242212293972-m5qsl1vt6rj9d06de53b4siuvkhpohk3
+ADMOB_APP_ID_IOS=ca-app-pub-3940256099942544~1458002511

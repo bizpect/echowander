@@ -8,6 +8,7 @@ import '../config/app_config.dart';
 import '../session/session_manager.dart';
 import '../session/session_state.dart';
 import '../deeplink/deeplink_coordinator.dart';
+import '../notifications/notification_preference_repository.dart';
 import 'device_id_store.dart';
 import 'push_payload.dart';
 import 'push_state.dart';
@@ -41,7 +42,6 @@ class PushCoordinator extends Notifier<PushState> {
       return;
     }
     _initialized = true;
-    await _requestPermission();
     await _listenMessages();
     await _handleInitialMessage();
     _listenSession();
@@ -62,19 +62,6 @@ class PushCoordinator extends Notifier<PushState> {
     _tokenSub?.cancel();
     _apnsRetryTimer?.cancel();
     _accessRetryTimer?.cancel();
-  }
-
-  Future<void> _requestPermission() async {
-    await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
   }
 
   Future<void> _listenMessages() async {
@@ -123,6 +110,19 @@ class PushCoordinator extends Notifier<PushState> {
   }
 
   Future<void> _registerToken() async {
+    final accessToken = await _readAccessToken();
+    if (accessToken == null || accessToken.isEmpty) {
+      // ignore: avoid_print
+      print('액세스 토큰 없음: 토큰 등록 중단');
+      _scheduleAccessRetry();
+      return;
+    }
+    final enabled = await _isNotificationsEnabled(accessToken);
+    if (!enabled) {
+      // ignore: avoid_print
+      print('알림 비활성화: 토큰 등록 건너뜀');
+      return;
+    }
     if (Platform.isIOS) {
       final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
       if (apnsToken == null || apnsToken.isEmpty) {
@@ -142,11 +142,19 @@ class PushCoordinator extends Notifier<PushState> {
       return;
     }
     final deviceId = await DeviceIdStore().getOrCreate();
-    await _upsertToken(fcmToken, deviceId);
+    await _upsertToken(fcmToken, deviceId, accessToken: accessToken);
     _apnsRetryTimer?.cancel();
     _apnsRetryCount = 0;
     _tokenSub ??= FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-      await _upsertToken(newToken, deviceId);
+      final accessToken = await _readAccessToken();
+      if (accessToken == null || accessToken.isEmpty) {
+        return;
+      }
+      final enabled = await _isNotificationsEnabled(accessToken);
+      if (!enabled) {
+        return;
+      }
+      await _upsertToken(newToken, deviceId, accessToken: accessToken);
     });
   }
 
@@ -181,16 +189,20 @@ class PushCoordinator extends Notifier<PushState> {
         .deactivateToken(accessToken: accessToken, token: fcmToken);
   }
 
-  Future<void> _upsertToken(String token, String deviceId) async {
-    final accessToken = await _readAccessToken();
-    if (accessToken == null || accessToken.isEmpty) {
+  Future<void> _upsertToken(
+    String token,
+    String deviceId, {
+    String? accessToken,
+  }) async {
+    final tokenToUse = accessToken ?? await _readAccessToken();
+    if (tokenToUse == null || tokenToUse.isEmpty) {
       // ignore: avoid_print
       print('액세스 토큰 없음: 토큰 업서트 중단');
       _scheduleAccessRetry();
       return;
     }
     await PushTokenRepository(config: AppConfigStore.current).upsertToken(
-      accessToken: accessToken,
+      accessToken: tokenToUse,
       token: token,
       platform: Platform.isIOS ? 'ios' : 'android',
       deviceId: deviceId,
@@ -218,6 +230,16 @@ class PushCoordinator extends Notifier<PushState> {
       _cachedAccessToken = accessToken;
     }
     return accessToken;
+  }
+
+  Future<bool> _isNotificationsEnabled(String accessToken) async {
+    try {
+      return await ref.read(notificationPreferenceRepositoryProvider).fetchEnabled(
+            accessToken: accessToken,
+          );
+    } catch (_) {
+      return true;
+    }
   }
 
   PushPayload? _toPayload(RemoteMessage message) {

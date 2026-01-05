@@ -33,6 +33,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeGreeting => 'Welcome back';
 
   @override
+  String get settingsCta => 'Settings';
+
+  @override
   String get pushPreviewTitle => 'Notification';
 
   @override
@@ -47,6 +50,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationDismiss => 'Dismiss';
+
+  @override
+  String get pushJourneyAssignedTitle => 'New message';
+
+  @override
+  String get pushJourneyAssignedBody => 'A new relay message has arrived.';
+
+  @override
+  String get pushJourneyResultTitle => 'Result ready';
+
+  @override
+  String get pushJourneyResultBody => 'Your relay result is ready.';
 
   @override
   String get errorTitle => 'Notice';
@@ -110,4 +125,466 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageChinese => 'Chinese';
+
+  @override
+  String get composeTitle => 'Write a message';
+
+  @override
+  String get composeLabel => 'Message';
+
+  @override
+  String get composeHint => 'Share your thoughts...';
+
+  @override
+  String composeCharacterCount(Object current, Object total) {
+    return '$current/$total';
+  }
+
+  @override
+  String get composeImagesTitle => 'Images';
+
+  @override
+  String get composeAddImage => 'Add photo';
+
+  @override
+  String get composeSubmit => 'Send';
+
+  @override
+  String get composeCta => 'Write a message';
+
+  @override
+  String get composeTooLong => 'Message is too long.';
+
+  @override
+  String get composeForbidden => 'Remove URLs or contact info.';
+
+  @override
+  String get composeEmpty => 'Please enter a message.';
+
+  @override
+  String get composeInvalid => 'Please fix the message content.';
+
+  @override
+  String get composeImageLimit => 'You can attach up to 3 images.';
+
+  @override
+  String get composePermissionDenied =>
+      'Photo access is needed to attach images.';
+
+  @override
+  String get composeSessionMissing => 'Please sign in again.';
+
+  @override
+  String get composeSubmitFailed =>
+      'We couldn\'t send your message. Try again.';
+
+  @override
+  String get composeServerMisconfigured =>
+      'Service setup is not ready yet. Please try again later.';
+
+  @override
+  String get composeSubmitSuccess => 'Your message was sent.';
+
+  @override
+  String get composeRecipientCountLabel => 'Relay count';
+
+  @override
+  String get composeRecipientCountHint => 'Select 1 to 5 people.';
+
+  @override
+  String composeRecipientCountOption(Object count) {
+    return '$count people';
+  }
+
+  @override
+  String get composeRecipientRequired => 'Select how many people to relay to.';
+
+  @override
+  String get composeRecipientInvalid =>
+      'You can select between 1 and 5 people.';
+
+  @override
+  String get composeErrorTitle => 'Notice';
+
+  @override
+  String get composeSuccessTitle => 'Done';
+
+  @override
+  String get composeOk => 'OK';
+
+  @override
+  String get composeCancel => 'Cancel';
+
+  @override
+  String get composePermissionTitle => 'Allow photo access';
+
+  @override
+  String get composePermissionMessage => 'Open Settings to allow photo access.';
+
+  @override
+  String get composeOpenSettings => 'Open settings';
+
+  @override
+  String get journeyListTitle => 'Sent Messages';
+
+  @override
+  String get journeyListEmpty => 'No messages yet.';
+
+  @override
+  String get journeyListCta => 'View sent messages';
+
+  @override
+  String get journeyListStatusLabel => 'Status:';
+
+  @override
+  String get journeyStatusCreated => 'Sent';
+
+  @override
+  String get journeyStatusWaiting => 'Waiting for match';
+
+  @override
+  String get journeyStatusCompleted => 'Completed';
+
+  @override
+  String get journeyStatusUnknown => 'Unknown';
+
+  @override
+  String get journeyFilterOk => 'Allowed';
+
+  @override
+  String get journeyFilterHeld => 'Held';
+
+  @override
+  String get journeyFilterRemoved => 'Removed';
+
+  @override
+  String get journeyFilterUnknown => 'Unknown';
+
+  @override
+  String get inboxTitle => 'Inbox';
+
+  @override
+  String get inboxEmpty => 'No messages received yet.';
+
+  @override
+  String get inboxCta => 'View inbox';
+
+  @override
+  String get inboxStatusLabel => 'Status:';
+
+  @override
+  String get inboxStatusAssigned => 'Waiting';
+
+  @override
+  String get inboxStatusResponded => 'Responded';
+
+  @override
+  String get inboxStatusPassed => 'Passed';
+
+  @override
+  String get inboxStatusReported => 'Reported';
+
+  @override
+  String get inboxStatusUnknown => 'Unknown';
+
+  @override
+  String get inboxDetailTitle => 'Inbox';
+
+  @override
+  String get inboxDetailMissing => 'We couldn\'t load this message.';
+
+  @override
+  String get inboxImagesLabel => 'Photos';
+
+  @override
+  String get inboxImagesLoadFailed => 'We couldn\'t load the photos.';
+
+  @override
+  String get inboxBlockCta => 'Block sender';
+
+  @override
+  String get inboxBlockTitle => 'Block user';
+
+  @override
+  String get inboxBlockMessage => 'Block this user from future relay messages?';
+
+  @override
+  String get inboxBlockConfirm => 'Block';
+
+  @override
+  String get inboxBlockSuccessTitle => 'Blocked';
+
+  @override
+  String get inboxBlockSuccessBody => 'The user has been blocked.';
+
+  @override
+  String get inboxBlockFailed => 'We couldn\'t block this user.';
+
+  @override
+  String get inboxBlockMissing => 'We couldn\'t identify the sender.';
+
+  @override
+  String get inboxRespondLabel => 'Reply';
+
+  @override
+  String get inboxRespondHint => 'Write your reply...';
+
+  @override
+  String get inboxRespondCta => 'Send reply';
+
+  @override
+  String get inboxRespondEmpty => 'Please enter a reply.';
+
+  @override
+  String get inboxRespondSuccessTitle => 'Reply sent';
+
+  @override
+  String get inboxRespondSuccessBody => 'Your reply was sent.';
+
+  @override
+  String get inboxPassCta => 'Pass';
+
+  @override
+  String get inboxPassSuccessTitle => 'Passed';
+
+  @override
+  String get inboxPassSuccessBody => 'You\'ve passed this message.';
+
+  @override
+  String get inboxReportCta => 'Report';
+
+  @override
+  String get inboxReportTitle => 'Report reason';
+
+  @override
+  String get inboxReportSpam => 'Spam';
+
+  @override
+  String get inboxReportAbuse => 'Abuse';
+
+  @override
+  String get inboxReportOther => 'Other';
+
+  @override
+  String get inboxReportSuccessTitle => 'Reported';
+
+  @override
+  String get inboxReportSuccessBody => 'Your report was submitted.';
+
+  @override
+  String get inboxActionFailed => 'We couldn\'t complete this action.';
+
+  @override
+  String get journeyDetailTitle => 'Message';
+
+  @override
+  String get journeyDetailMessageLabel => 'Message';
+
+  @override
+  String get journeyDetailMessageUnavailable => 'Message unavailable.';
+
+  @override
+  String get journeyDetailProgressTitle => 'Relay progress';
+
+  @override
+  String get journeyDetailStatusLabel => 'Status';
+
+  @override
+  String get journeyDetailDeadlineLabel => 'Relay deadline';
+
+  @override
+  String get journeyDetailResponseTargetLabel => 'Target replies';
+
+  @override
+  String get journeyDetailRespondedLabel => 'Replies';
+
+  @override
+  String get journeyDetailAssignedLabel => 'Assigned';
+
+  @override
+  String get journeyDetailPassedLabel => 'Passed';
+
+  @override
+  String get journeyDetailReportedLabel => 'Reported';
+
+  @override
+  String get journeyDetailCountriesLabel => 'Relay locations';
+
+  @override
+  String get journeyDetailCountriesEmpty => 'No locations yet.';
+
+  @override
+  String get journeyDetailResultsTitle => 'Results';
+
+  @override
+  String get journeyDetailResultsLocked =>
+      'Results will appear after completion.';
+
+  @override
+  String get journeyDetailResultsEmpty => 'No replies yet.';
+
+  @override
+  String get journeyDetailResultsLoadFailed => 'We couldn\'t load the results.';
+
+  @override
+  String get journeyDetailLoadFailed => 'We couldn\'t load the progress.';
+
+  @override
+  String get journeyDetailRetry => 'Retry';
+
+  @override
+  String get journeyDetailAdRequired => 'Watch a reward ad to view results.';
+
+  @override
+  String get journeyDetailAdCta => 'Watch ad and unlock';
+
+  @override
+  String get journeyDetailAdFailedTitle => 'Ad unavailable';
+
+  @override
+  String get journeyDetailAdFailedBody =>
+      'We couldn\'t load the ad. View results anyway?';
+
+  @override
+  String get journeyDetailAdFailedConfirm => 'View results';
+
+  @override
+  String get journeyResultReportCta => 'Report reply';
+
+  @override
+  String get journeyResultReportSuccessTitle => 'Reported';
+
+  @override
+  String get journeyResultReportSuccessBody => 'Your report was submitted.';
+
+  @override
+  String get journeyResultReportFailed => 'We couldn\'t submit your report.';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsSectionNotification => 'Notifications';
+
+  @override
+  String get settingsNotificationToggle => 'Allow notifications';
+
+  @override
+  String get settingsNotificationHint => 'Receive relay updates and results.';
+
+  @override
+  String get settingsSectionSafety => 'Safety';
+
+  @override
+  String get settingsBlockedUsers => 'Blocked users';
+
+  @override
+  String get settingsLoadFailed => 'We couldn\'t load settings.';
+
+  @override
+  String get settingsUpdateFailed => 'We couldn\'t update settings.';
+
+  @override
+  String get blockListTitle => 'Blocked users';
+
+  @override
+  String get blockListEmpty => 'No blocked users.';
+
+  @override
+  String get blockListUnknownUser => 'Unknown user';
+
+  @override
+  String get blockListLoadFailed => 'We couldn\'t load the block list.';
+
+  @override
+  String get blockListUnblock => 'Unblock';
+
+  @override
+  String get blockListUnblockTitle => 'Unblock user';
+
+  @override
+  String get blockListUnblockMessage => 'Allow messages from this user again?';
+
+  @override
+  String get blockListUnblockConfirm => 'Unblock';
+
+  @override
+  String get blockListUnblockFailed => 'We couldn\'t unblock this user.';
+
+  @override
+  String get onboardingTitle => 'Onboarding';
+
+  @override
+  String onboardingStepCounter(Object current, Object total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get onboardingNotificationTitle => 'Notification permission';
+
+  @override
+  String get onboardingNotificationDescription =>
+      'Stay updated on journey results and important updates.';
+
+  @override
+  String get onboardingNotificationNote =>
+      'We send only essential alerts. You can change this anytime in Settings.';
+
+  @override
+  String get onboardingAllowNotifications => 'Allow notifications';
+
+  @override
+  String get onboardingPhotoTitle => 'Photo access';
+
+  @override
+  String get onboardingPhotoDescription =>
+      'Allow access to attach images to your message.';
+
+  @override
+  String get onboardingPhotoNote =>
+      'You can attach up to three images. We only access selected items.';
+
+  @override
+  String get onboardingAllowPhotos => 'Allow photo access';
+
+  @override
+  String get onboardingGuidelineTitle => 'Community guidelines';
+
+  @override
+  String get onboardingGuidelineDescription =>
+      'Be respectful. No harassment, hate, or personal information.';
+
+  @override
+  String get onboardingAgreeGuidelines =>
+      'I agree to the community guidelines.';
+
+  @override
+  String get onboardingContentPolicyTitle => 'Content policy';
+
+  @override
+  String get onboardingContentPolicyDescription =>
+      'Prohibited or harmful content may be removed.';
+
+  @override
+  String get onboardingAgreeContentPolicy => 'I agree to the content policy.';
+
+  @override
+  String get onboardingSafetyTitle => 'Report and block';
+
+  @override
+  String get onboardingSafetyDescription =>
+      'You can report or block any time to keep the space safe.';
+
+  @override
+  String get onboardingConfirmSafety =>
+      'I understand the report and block policy.';
+
+  @override
+  String get onboardingSkip => 'Not now';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingStart => 'Start';
 }

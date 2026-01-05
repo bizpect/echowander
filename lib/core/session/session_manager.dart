@@ -13,7 +13,10 @@ final authRpcClientProvider = Provider<AuthRpcClient>((ref) {
   if (baseUrl.isEmpty) {
     return DevAuthRpcClient();
   }
-  return HttpAuthRpcClient(baseUrl: baseUrl);
+  return HttpAuthRpcClient(
+    baseUrl: baseUrl,
+    config: AppConfigStore.current,
+  );
 });
 
 final sessionManagerProvider = NotifierProvider<SessionManager, SessionState>(

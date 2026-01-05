@@ -10,6 +10,7 @@ import '../core/session/session_manager.dart';
 import '../core/session/session_state.dart';
 import '../core/deeplink/deeplink_coordinator.dart';
 import '../core/locale/locale_controller.dart';
+import '../core/locale/locale_sync_controller.dart';
 import '../l10n/app_localizations.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
@@ -51,6 +52,22 @@ class _AppState extends ConsumerState<App> {
           message: message,
         ).then((_) => ref.read(sessionManagerProvider.notifier).clearMessage());
       });
+    });
+    ref.listen<SessionState>(sessionManagerProvider, (previous, next) {
+      if (previous?.status == next.status) {
+        return;
+      }
+      if (next.status == SessionStatus.authenticated) {
+        ref
+            .read(localeSyncControllerProvider.notifier)
+            .sync(ref.read(localeControllerProvider));
+      }
+    });
+    ref.listen<Locale?>(localeControllerProvider, (previous, next) {
+      if (previous == next) {
+        return;
+      }
+      ref.read(localeSyncControllerProvider.notifier).sync(next);
     });
     ref.listen<PushState>(pushCoordinatorProvider, (previous, next) {
       if (next.foregroundMessage == null ||

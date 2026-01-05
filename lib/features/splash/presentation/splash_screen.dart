@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../onboarding/application/onboarding_controller.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -26,6 +27,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _pulse = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(sessionManagerProvider.notifier).restoreSession();
+      ref.read(onboardingControllerProvider.notifier).load();
     });
   }
 
@@ -40,51 +42,53 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FadeTransition(
-              opacity: Tween<double>(begin: 0.55, end: 1).animate(_pulse),
-              child: ScaleTransition(
-                scale: Tween<double>(begin: 0.92, end: 1.08).animate(_pulse),
-                child: Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Theme.of(context).colorScheme.primary,
-                        Theme.of(context).colorScheme.secondary,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FadeTransition(
+                opacity: Tween<double>(begin: 0.55, end: 1).animate(_pulse),
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.92, end: 1.08).animate(_pulse),
+                  child: Container(
+                    width: 96,
+                    height: 96,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Theme.of(context).colorScheme.primary,
+                          Theme.of(context).colorScheme.secondary,
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                          blurRadius: 24,
+                          spreadRadius: 4,
+                        ),
                       ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
-                        blurRadius: 24,
-                        spreadRadius: 4,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.explore,
-                    size: 40,
-                    color: Colors.white,
+                    child: const Icon(
+                      Icons.explore,
+                      size: 40,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 28),
-            Text(
-              l10n.splashTitle,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 24),
-            const CircularProgressIndicator(strokeWidth: 3),
-          ],
+              const SizedBox(height: 28),
+              Text(
+                l10n.splashTitle,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 24),
+              const CircularProgressIndicator(strokeWidth: 3),
+            ],
+          ),
         ),
       ),
     );

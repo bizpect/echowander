@@ -19,73 +19,15 @@ class LoginScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.loginTitle)),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            FilledButton(
-              onPressed: () async {
-                final result = await authService.signInWithKakao();
-                if (result.status == SocialAuthStatus.cancelled) {
-                  ref
-                      .read(sessionManagerProvider.notifier)
-                      .reportLoginMessage(SessionMessage.loginCancelled);
-                  return;
-                }
-                if (result.status == SocialAuthStatus.networkError) {
-                  ref
-                      .read(sessionManagerProvider.notifier)
-                      .reportLoginMessage(SessionMessage.loginNetworkError);
-                  return;
-                }
-                if (result.status != SocialAuthStatus.success || result.token == null) {
-                  ref
-                      .read(sessionManagerProvider.notifier)
-                      .reportLoginMessage(SessionMessage.loginFailed);
-                  return;
-                }
-                await ref.read(sessionManagerProvider.notifier).signInWithSocialToken(
-                      provider: 'kakao',
-                      idToken: result.token!,
-                    );
-              },
-              child: Text(l10n.loginKakao),
-            ),
-            const SizedBox(height: 12),
-            FilledButton.tonal(
-              onPressed: () async {
-                final result = await authService.signInWithGoogle();
-                if (result.status == SocialAuthStatus.cancelled) {
-                  ref
-                      .read(sessionManagerProvider.notifier)
-                      .reportLoginMessage(SessionMessage.loginCancelled);
-                  return;
-                }
-                if (result.status == SocialAuthStatus.networkError) {
-                  ref
-                      .read(sessionManagerProvider.notifier)
-                      .reportLoginMessage(SessionMessage.loginNetworkError);
-                  return;
-                }
-                if (result.status != SocialAuthStatus.success || result.token == null) {
-                  ref
-                      .read(sessionManagerProvider.notifier)
-                      .reportLoginMessage(SessionMessage.loginFailed);
-                  return;
-                }
-                await ref.read(sessionManagerProvider.notifier).signInWithSocialToken(
-                      provider: 'google',
-                      idToken: result.token!,
-                    );
-              },
-              child: Text(l10n.loginGoogle),
-            ),
-            const SizedBox(height: 12),
-            if (Platform.isIOS)
-              OutlinedButton(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FilledButton(
                 onPressed: () async {
-                  final result = await authService.signInWithApple();
+                  final result = await authService.signInWithKakao();
                   if (result.status == SocialAuthStatus.cancelled) {
                     ref
                         .read(sessionManagerProvider.notifier)
@@ -105,13 +47,73 @@ class LoginScreen extends ConsumerWidget {
                     return;
                   }
                   await ref.read(sessionManagerProvider.notifier).signInWithSocialToken(
-                        provider: 'apple',
+                        provider: 'kakao',
                         idToken: result.token!,
                       );
                 },
-                child: Text(l10n.loginApple),
+                child: Text(l10n.loginKakao),
               ),
-          ],
+              const SizedBox(height: 12),
+              FilledButton.tonal(
+                onPressed: () async {
+                  final result = await authService.signInWithGoogle();
+                  if (result.status == SocialAuthStatus.cancelled) {
+                    ref
+                        .read(sessionManagerProvider.notifier)
+                        .reportLoginMessage(SessionMessage.loginCancelled);
+                    return;
+                  }
+                  if (result.status == SocialAuthStatus.networkError) {
+                    ref
+                        .read(sessionManagerProvider.notifier)
+                        .reportLoginMessage(SessionMessage.loginNetworkError);
+                    return;
+                  }
+                  if (result.status != SocialAuthStatus.success || result.token == null) {
+                    ref
+                        .read(sessionManagerProvider.notifier)
+                        .reportLoginMessage(SessionMessage.loginFailed);
+                    return;
+                  }
+                  await ref.read(sessionManagerProvider.notifier).signInWithSocialToken(
+                        provider: 'google',
+                        idToken: result.token!,
+                      );
+                },
+                child: Text(l10n.loginGoogle),
+              ),
+              const SizedBox(height: 12),
+              if (Platform.isIOS)
+                OutlinedButton(
+                  onPressed: () async {
+                    final result = await authService.signInWithApple();
+                    if (result.status == SocialAuthStatus.cancelled) {
+                      ref
+                          .read(sessionManagerProvider.notifier)
+                          .reportLoginMessage(SessionMessage.loginCancelled);
+                      return;
+                    }
+                    if (result.status == SocialAuthStatus.networkError) {
+                      ref
+                          .read(sessionManagerProvider.notifier)
+                          .reportLoginMessage(SessionMessage.loginNetworkError);
+                      return;
+                    }
+                    if (result.status != SocialAuthStatus.success || result.token == null) {
+                      ref
+                          .read(sessionManagerProvider.notifier)
+                          .reportLoginMessage(SessionMessage.loginFailed);
+                      return;
+                    }
+                    await ref.read(sessionManagerProvider.notifier).signInWithSocialToken(
+                          provider: 'apple',
+                          idToken: result.token!,
+                        );
+                  },
+                  child: Text(l10n.loginApple),
+                ),
+            ],
+          ),
         ),
       ),
     );

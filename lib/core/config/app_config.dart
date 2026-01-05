@@ -11,6 +11,10 @@ class AppConfig {
     required this.googleIosClientId,
     required this.supabaseUrl,
     required this.supabaseAnonKey,
+    required this.admobAppIdAndroid,
+    required this.admobAppIdIos,
+    required this.admobRewardedUnitIdAndroid,
+    required this.admobRewardedUnitIdIos,
   });
 
   final AppEnvironment environment;
@@ -20,6 +24,10 @@ class AppConfig {
   final String googleIosClientId;
   final String supabaseUrl;
   final String supabaseAnonKey;
+  final String admobAppIdAndroid;
+  final String admobAppIdIos;
+  final String admobRewardedUnitIdAndroid;
+  final String admobRewardedUnitIdIos;
 
   static AppConfig fromEnvironment() {
     final env = dotenv.env['APP_ENV'] ??
@@ -36,6 +44,22 @@ class AppConfig {
         const String.fromEnvironment('APP_SUPABASE_URL', defaultValue: '');
     final supabaseAnonKey = dotenv.env['APP_SUPABASE_ANON_KEY'] ??
         const String.fromEnvironment('APP_SUPABASE_ANON_KEY', defaultValue: '');
+    final admobAppIdAndroid = dotenv.env['ADMOB_APP_ID_ANDROID'] ??
+        const String.fromEnvironment('ADMOB_APP_ID_ANDROID', defaultValue: '');
+    final admobAppIdIos = dotenv.env['ADMOB_APP_ID_IOS'] ??
+        const String.fromEnvironment('ADMOB_APP_ID_IOS', defaultValue: '');
+    final admobRewardedUnitIdAndroid =
+        dotenv.env['ADMOB_REWARDED_UNIT_ID_ANDROID'] ??
+            const String.fromEnvironment(
+              'ADMOB_REWARDED_UNIT_ID_ANDROID',
+              defaultValue: '',
+            );
+    final admobRewardedUnitIdIos =
+        dotenv.env['ADMOB_REWARDED_UNIT_ID_IOS'] ??
+            const String.fromEnvironment(
+              'ADMOB_REWARDED_UNIT_ID_IOS',
+              defaultValue: '',
+            );
     return AppConfig(
       environment: _parseEnv(env),
       authBaseUrl: authBaseUrl,
@@ -44,6 +68,10 @@ class AppConfig {
       googleIosClientId: googleIosClientId,
       supabaseUrl: supabaseUrl,
       supabaseAnonKey: supabaseAnonKey,
+      admobAppIdAndroid: admobAppIdAndroid,
+      admobAppIdIos: admobAppIdIos,
+      admobRewardedUnitIdAndroid: admobRewardedUnitIdAndroid,
+      admobRewardedUnitIdIos: admobRewardedUnitIdIos,
     );
   }
 

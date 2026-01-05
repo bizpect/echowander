@@ -43,8 +43,14 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We use your photo library to attach images to your messages.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We use your photo library to attach images to your messages.</string>
 	<key>KAKAO_APP_KEY</key>
 	<string>$(KAKAO_APP_KEY)</string>
+	<key>GADApplicationIdentifier</key>
+	<string>$(ADMOB_APP_ID_IOS)</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>kakaokompassauth</string>

@@ -1,3 +1,5 @@
+create extension if not exists "pgcrypto";
+
 create table if not exists public.common_codes (
   code_type text not null,
   code_value text not null,
@@ -15,6 +17,9 @@ create table if not exists public.users (
   login_type_code text not null,
   provider text not null,
   provider_subject text not null,
+  is_deleted boolean not null default false,
+  is_suspended boolean not null default false,
+  response_suspended_until timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint users_login_type_fk
@@ -30,10 +35,28 @@ create table if not exists public.user_profiles (
   nickname text,
   avatar_url text,
   bio text,
+  locale_tag text,
+  notifications_enabled boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint user_profiles_user_fk
     foreign key (user_id)
+    references public.users (user_id)
+    on delete cascade
+);
+
+create table if not exists public.user_blocks (
+  blocker_user_id uuid not null,
+  blocked_user_id uuid not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (blocker_user_id, blocked_user_id),
+  constraint user_blocks_blocker_fk
+    foreign key (blocker_user_id)
+    references public.users (user_id)
+    on delete cascade,
+  constraint user_blocks_blocked_fk
+    foreign key (blocked_user_id)
     references public.users (user_id)
     on delete cascade
 );
@@ -67,5 +90,157 @@ create table if not exists public.login_logs (
   created_at timestamptz not null default now(),
   constraint login_logs_login_type_fk
     foreign key (login_type_group, login_type_code)
+    references public.common_codes (code_type, code_value)
+);
+
+create table if not exists public.client_error_logs (
+  id bigserial primary key,
+  user_id uuid,
+  device_id text,
+  error_context text not null,
+  status_code integer,
+  error_message text,
+  meta jsonb,
+  created_at timestamptz not null default now(),
+  constraint client_error_logs_user_fk
+    foreign key (user_id)
+    references public.users (user_id)
+    on delete set null
+);
+
+create table if not exists public.journeys (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  status_group text not null default 'journey_status',
+  status_code text not null default 'CREATED',
+  filter_group text not null default 'journey_filter_status',
+  filter_code text not null default 'OK',
+  language_tag text not null,
+  content text not null,
+  requested_recipient_count integer not null default 1,
+  response_target integer not null default 1,
+  relay_deadline_at timestamptz not null default (now() + interval '72 hours'),
+  result_notified_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint journeys_user_fk
+    foreign key (user_id)
+    references public.users (user_id)
+    on delete cascade,
+  constraint journeys_status_fk
+    foreign key (status_group, status_code)
+    references public.common_codes (code_type, code_value),
+  constraint journeys_filter_fk
+    foreign key (filter_group, filter_code)
+    references public.common_codes (code_type, code_value),
+  constraint journeys_content_length
+    check (char_length(content) <= 500),
+  constraint journeys_recipient_count_range
+    check (requested_recipient_count between 1 and 5)
+);
+
+create table if not exists public.journey_images (
+  id bigserial primary key,
+  journey_id uuid not null,
+  user_id uuid not null,
+  storage_path text not null,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint journey_images_journey_fk
+    foreign key (journey_id)
+    references public.journeys (id)
+    on delete cascade,
+  constraint journey_images_user_fk
+    foreign key (user_id)
+    references public.users (user_id)
+    on delete cascade
+);
+
+create table if not exists public.journey_recipients (
+  id bigserial primary key,
+  journey_id uuid not null,
+  recipient_user_id uuid not null,
+  status_group text not null default 'journey_recipient_status',
+  status_code text not null default 'ASSIGNED',
+  recipient_locale_tag text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint journey_recipients_journey_fk
+    foreign key (journey_id)
+    references public.journeys (id)
+    on delete cascade,
+  constraint journey_recipients_user_fk
+    foreign key (recipient_user_id)
+    references public.users (user_id)
+    on delete cascade,
+  constraint journey_recipients_status_fk
+    foreign key (status_group, status_code)
+    references public.common_codes (code_type, code_value),
+  constraint journey_recipients_unique
+    unique (journey_id, recipient_user_id)
+);
+
+create table if not exists public.journey_responses (
+  id bigserial primary key,
+  journey_id uuid not null,
+  responder_user_id uuid not null,
+  content text not null,
+  is_hidden boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint journey_responses_journey_fk
+    foreign key (journey_id)
+    references public.journeys (id)
+    on delete cascade,
+  constraint journey_responses_user_fk
+    foreign key (responder_user_id)
+    references public.users (user_id)
+    on delete cascade,
+  constraint journey_responses_length
+    check (char_length(content) <= 500)
+);
+
+create table if not exists public.journey_reports (
+  id bigserial primary key,
+  journey_id uuid not null,
+  reporter_user_id uuid not null,
+  reason_group text not null default 'report_reason',
+  reason_code text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint journey_reports_journey_fk
+    foreign key (journey_id)
+    references public.journeys (id)
+    on delete cascade,
+  constraint journey_reports_user_fk
+    foreign key (reporter_user_id)
+    references public.users (user_id)
+    on delete cascade,
+  constraint journey_reports_reason_fk
+    foreign key (reason_group, reason_code)
+    references public.common_codes (code_type, code_value)
+);
+
+create table if not exists public.journey_response_reports (
+  id bigserial primary key,
+  response_id bigint not null,
+  reporter_user_id uuid not null,
+  reason_group text not null default 'report_reason',
+  reason_code text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint journey_response_reports_unique
+    unique (response_id, reporter_user_id),
+  constraint journey_response_reports_response_fk
+    foreign key (response_id)
+    references public.journey_responses (id)
+    on delete cascade,
+  constraint journey_response_reports_user_fk
+    foreign key (reporter_user_id)
+    references public.users (user_id)
+    on delete cascade,
+  constraint journey_response_reports_reason_fk
+    foreign key (reason_group, reason_code)
     references public.common_codes (code_type, code_value)
 );

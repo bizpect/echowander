@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import '../config/app_config.dart';
+import '../logging/server_error_logger.dart';
 import 'session_tokens.dart';
 
 abstract class AuthRpcClient {
@@ -57,36 +59,88 @@ class DevAuthRpcClient implements AuthRpcClient {
 }
 
 class HttpAuthRpcClient implements AuthRpcClient {
-  HttpAuthRpcClient({required String baseUrl})
-      : _baseUri = Uri.parse(baseUrl.endsWith('/') ? baseUrl : '$baseUrl/');
+  HttpAuthRpcClient({required String baseUrl, required AppConfig config})
+      : _baseUri = Uri.parse(baseUrl.endsWith('/') ? baseUrl : '$baseUrl/'),
+        _errorLogger = ServerErrorLogger(config: config);
 
   final Uri _baseUri;
+  final ServerErrorLogger _errorLogger;
 
   Uri _resolve(String path) => _baseUri.resolve(path);
 
-  Future<Map<String, dynamic>?> _postJson(Uri uri, Map<String, dynamic> body, String token) async {
-    final request = await HttpClient().postUrl(uri);
-    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
-    if (token.isNotEmpty) {
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
-    }
-    request.write(jsonEncode(body));
+  Future<Map<String, dynamic>?> _postJson({
+    required String context,
+    required Uri uri,
+    required Map<String, dynamic> body,
+    required String token,
+    Map<String, dynamic>? meta,
+  }) async {
+    try {
+      final request = await HttpClient().postUrl(uri);
+      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+      if (token.isNotEmpty) {
+        request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
+      }
+      request.add(utf8.encode(jsonEncode(body)));
 
-    final response = await request.close();
-    if (response.statusCode != HttpStatus.ok) {
+      final response = await request.close();
+      final payloadText = await response.transform(utf8.decoder).join();
+      if (response.statusCode != HttpStatus.ok) {
+        await _errorLogger.logHttpFailure(
+          context: context,
+          uri: uri,
+          method: 'POST',
+          statusCode: response.statusCode,
+          errorMessage: payloadText,
+          meta: meta,
+          accessToken: token,
+        );
+        return null;
+      }
+      try {
+        return jsonDecode(payloadText) as Map<String, dynamic>;
+      } on FormatException catch (error) {
+        await _errorLogger.logException(
+          context: context,
+          uri: uri,
+          method: 'POST',
+          error: error,
+          errorMessage: payloadText,
+          meta: meta,
+          accessToken: token,
+        );
+        return null;
+      }
+    } on SocketException catch (error) {
+      await _errorLogger.logException(
+        context: context,
+        uri: uri,
+        method: 'POST',
+        error: error,
+        meta: meta,
+        accessToken: token,
+      );
+      return null;
+    } on HttpException catch (error) {
+      await _errorLogger.logException(
+        context: context,
+        uri: uri,
+        method: 'POST',
+        error: error,
+        meta: meta,
+        accessToken: token,
+      );
       return null;
     }
-
-    final payload = await response.transform(utf8.decoder).join();
-    return jsonDecode(payload) as Map<String, dynamic>;
   }
 
   @override
   Future<bool> validateSession(SessionTokens tokens) async {
     final payload = await _postJson(
-      _resolve('validate_session'),
-      {'refreshToken': tokens.refreshToken},
-      tokens.accessToken,
+      context: 'auth_validate_session',
+      uri: _resolve('validate_session'),
+      body: {'refreshToken': tokens.refreshToken},
+      token: tokens.accessToken,
     );
     return payload?['valid'] == true;
   }
@@ -94,9 +148,10 @@ class HttpAuthRpcClient implements AuthRpcClient {
   @override
   Future<SessionTokens?> refreshSession(SessionTokens tokens) async {
     final payload = await _postJson(
-      _resolve('refresh_session'),
-      {'refreshToken': tokens.refreshToken},
-      tokens.accessToken,
+      context: 'auth_refresh_session',
+      uri: _resolve('refresh_session'),
+      body: {'refreshToken': tokens.refreshToken},
+      token: tokens.accessToken,
     );
     if (payload == null) {
       return null;
@@ -113,12 +168,24 @@ class HttpAuthRpcClient implements AuthRpcClient {
     required String idToken,
   }) async {
     try {
-      final request = await HttpClient().postUrl(_resolve('login_social'));
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
-      request.write(jsonEncode({'provider': provider, 'idToken': idToken}));
+      final uri = _resolve('login_social');
+      final request = await HttpClient().postUrl(uri);
+      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+      request.add(utf8.encode(jsonEncode({'provider': provider, 'idToken': idToken})));
       final response = await request.close();
       final payloadText = await response.transform(utf8.decoder).join();
       if (response.statusCode != HttpStatus.ok) {
+        await _errorLogger.logHttpFailure(
+          context: 'auth_login_social',
+          uri: uri,
+          method: 'POST',
+          statusCode: response.statusCode,
+          errorMessage: payloadText,
+          meta: {
+            'provider': provider,
+          },
+          accessToken: '',
+        );
         final errorCode = _extractErrorCode(payloadText);
         return AuthRpcLoginResult.failure(_mapLoginError(errorCode));
       }
@@ -129,10 +196,42 @@ class HttpAuthRpcClient implements AuthRpcClient {
           refreshToken: payload['refreshToken'] as String,
         ),
       );
-    } on SocketException {
+    } on SocketException catch (error) {
+      await _errorLogger.logException(
+        context: 'auth_login_social',
+        uri: _resolve('login_social'),
+        method: 'POST',
+        error: error,
+        meta: {
+          'provider': provider,
+        },
+        accessToken: '',
+      );
       return const AuthRpcLoginResult.failure(AuthRpcLoginError.network);
-    } on FormatException {
+    } on FormatException catch (error) {
+      await _errorLogger.logException(
+        context: 'auth_login_social',
+        uri: _resolve('login_social'),
+        method: 'POST',
+        error: error,
+        meta: {
+          'provider': provider,
+        },
+        accessToken: '',
+      );
       return const AuthRpcLoginResult.failure(AuthRpcLoginError.unknown);
+    } on HttpException catch (error) {
+      await _errorLogger.logException(
+        context: 'auth_login_social',
+        uri: _resolve('login_social'),
+        method: 'POST',
+        error: error,
+        meta: {
+          'provider': provider,
+        },
+        accessToken: '',
+      );
+      return const AuthRpcLoginResult.failure(AuthRpcLoginError.network);
     }
   }
 

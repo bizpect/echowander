@@ -50,6 +50,9 @@ android {
         versionName = flutter.versionName
         manifestPlaceholders["KAKAO_APP_KEY"] =
             (project.findProperty("KAKAO_APP_KEY") as String?) ?: ""
+        manifestPlaceholders["ADMOB_APP_ID"] =
+            (project.findProperty("ADMOB_APP_ID") as String?)
+                ?: "ca-app-pub-3940256099942544~3347511713"
     }
 
     buildTypes {

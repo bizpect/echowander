@@ -10,11 +10,13 @@ class PushPreviewScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.pushPreviewTitle)),
-      body: Center(
-        child: Text(
-          l10n.pushPreviewDescription,
-          style: Theme.of(context).textTheme.titleMedium,
-          textAlign: TextAlign.center,
+      body: SafeArea(
+        child: Center(
+          child: Text(
+            l10n.pushPreviewDescription,
+            style: Theme.of(context).textTheme.titleMedium,
+            textAlign: TextAlign.center,
+          ),
         ),
       ),
     );
