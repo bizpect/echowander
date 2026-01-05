@@ -8,6 +8,23 @@
   "loginApple": "Continuar con Apple",
   "homeTitle": "Inicio",
   "homeGreeting": "Bienvenido de nuevo",
+  "homeRecentJourneysTitle": "Mensajes recientes",
+  "homeActionsTitle": "Empezar",
+  "homeEmptyTitle": "Bienvenido a EchoWander",
+  "homeEmptyDescription": "Envía tu primer mensaje de relevo o revisa tu bandeja de entrada.",
+  "homeInboxCardTitle": "Bandeja de entrada",
+  "homeInboxCardDescription": "Revisa y responde los mensajes que has recibido.",
+  "homeCreateCardTitle": "Crear mensaje",
+  "homeCreateCardDescription": "Inicia un nuevo mensaje de relevo.",
+  "homeJourneyCardViewDetails": "Ver detalles",
+  "homeRefresh": "Actualizar",
+  "homeLoadFailed": "No pudimos cargar tus datos.",
+  "homeInboxCount": "{count} nuevo(s)",
+  "@homeInboxCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "settingsCta": "Configuración",
   "settingsNotificationInbox": "Bandeja de notificaciones",
   "pushPreviewTitle": "Notificación",
@@ -102,6 +119,14 @@
   "inboxTitle": "Bandeja de entrada",
   "inboxEmpty": "Aún no hay mensajes recibidos.",
   "inboxCta": "Ver bandeja de entrada",
+  "inboxRefresh": "Actualizar",
+  "inboxLoadFailed": "No pudimos cargar tu bandeja de entrada.",
+  "inboxImageCount": "{count} foto(s)",
+  "@inboxImageCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "inboxStatusLabel": "Estado:",
   "inboxStatusAssigned": "En espera",
   "inboxStatusResponded": "Respondido",
@@ -209,5 +234,19 @@
   "onboardingConfirmSafety": "Entiendo la política de reportes y bloqueo.",
   "onboardingSkip": "Ahora no",
   "onboardingNext": "Siguiente",
-  "onboardingStart": "Comenzar"
+  "onboardingStart": "Comenzar",
+  "exitConfirmTitle": "¿Cancelar escritura?",
+  "exitConfirmMessage": "Se perderá tu entrada.",
+  "exitConfirmContinue": "Seguir escribiendo",
+  "exitConfirmLeave": "Salir",
+  "tabHomeLabel": "Inicio",
+  "tabInboxLabel": "Bandeja de entrada",
+  "tabCreateLabel": "Crear mensaje",
+  "tabAlertsLabel": "Notificaciones",
+  "tabProfileLabel": "Perfil",
+  "profileSignOutCta": "Cerrar sesión",
+  "profileSignOutTitle": "Cerrar sesión",
+  "profileSignOutMessage": "¿Seguro que quieres cerrar sesión?",
+  "profileSignOutConfirm": "Cerrar sesión",
+  "profileUserIdLabel": "ID de usuario"
 }

@@ -8,6 +8,23 @@
   "loginApple": "Continuar com Apple",
   "homeTitle": "Início",
   "homeGreeting": "Bem-vindo de volta",
+  "homeRecentJourneysTitle": "Mensagens recentes",
+  "homeActionsTitle": "Começar",
+  "homeEmptyTitle": "Bem-vindo ao EchoWander",
+  "homeEmptyDescription": "Envie sua primeira mensagem de revezamento ou confira sua caixa de entrada.",
+  "homeInboxCardTitle": "Caixa de entrada",
+  "homeInboxCardDescription": "Confira e responda as mensagens que você recebeu.",
+  "homeCreateCardTitle": "Criar mensagem",
+  "homeCreateCardDescription": "Inicie uma nova mensagem de revezamento.",
+  "homeJourneyCardViewDetails": "Ver detalhes",
+  "homeRefresh": "Atualizar",
+  "homeLoadFailed": "Não conseguimos carregar seus dados.",
+  "homeInboxCount": "{count} nova(s)",
+  "@homeInboxCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "settingsCta": "Configurações",
   "settingsNotificationInbox": "Caixa de notificações",
   "pushPreviewTitle": "Notificação",
@@ -102,6 +119,14 @@
   "inboxTitle": "Caixa de entrada",
   "inboxEmpty": "Ainda não há mensagens recebidas.",
   "inboxCta": "Ver caixa de entrada",
+  "inboxRefresh": "Atualizar",
+  "inboxLoadFailed": "Não conseguimos carregar sua caixa de entrada.",
+  "inboxImageCount": "{count} foto(s)",
+  "@inboxImageCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "inboxStatusLabel": "Status:",
   "inboxStatusAssigned": "Em espera",
   "inboxStatusResponded": "Respondido",
@@ -209,5 +234,19 @@
   "onboardingConfirmSafety": "Entendo a política de denúncia e bloqueio.",
   "onboardingSkip": "Agora não",
   "onboardingNext": "Próximo",
-  "onboardingStart": "Começar"
+  "onboardingStart": "Começar",
+  "exitConfirmTitle": "Cancelar escrita?",
+  "exitConfirmMessage": "Sua entrada será perdida.",
+  "exitConfirmContinue": "Continuar escrevendo",
+  "exitConfirmLeave": "Sair",
+  "tabHomeLabel": "Início",
+  "tabInboxLabel": "Caixa de entrada",
+  "tabCreateLabel": "Criar mensagem",
+  "tabAlertsLabel": "Notificações",
+  "tabProfileLabel": "Perfil",
+  "profileSignOutCta": "Sair",
+  "profileSignOutTitle": "Sair",
+  "profileSignOutMessage": "Tem certeza de que deseja sair?",
+  "profileSignOutConfirm": "Sair",
+  "profileUserIdLabel": "ID de usuário"
 }

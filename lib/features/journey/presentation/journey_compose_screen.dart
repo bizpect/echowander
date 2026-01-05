@@ -8,12 +8,23 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../app/router/app_router.dart';
+import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_spacing.dart';
+import '../../../app/theme/app_radius.dart';
+import '../../../core/presentation/widgets/app_button.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
-import '../../../core/presentation/widgets/fullscreen_loading.dart';
+import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../core/validation/text_rules.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/journey_compose_controller.dart';
 
+/// Journey 작성 화면
+///
+/// 특징:
+/// - 텍스트 입력 + 이미지 최대 3장
+/// - 실시간 입력 검증 (금지 패턴, 글자수)
+/// - 이탈 방지 (입력 중 뒤로가기 확인)
+/// - LoadingOverlay로 전송 중 입력 차단
 class JourneyComposeScreen extends ConsumerStatefulWidget {
   const JourneyComposeScreen({super.key});
 
@@ -68,34 +79,36 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
         if (didPop) {
           return;
         }
-        _handleBack(context);
+        _handleBack(context, state);
       },
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.composeTitle),
           leading: IconButton(
-            onPressed: () => _handleBack(context),
-            icon: const Icon(Icons.arrow_back),
+            onPressed: () => _handleBack(context, state),
+            icon: const Icon(Icons.close),
+            tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
           ),
         ),
         resizeToAvoidBottomInset: true,
-        body: FullScreenLoadingOverlay(
+        body: LoadingOverlay(
           isLoading: state.isSubmitting,
           child: SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(
                   padding: EdgeInsets.fromLTRB(
-                    24,
-                    24,
-                    24,
-                    32 + MediaQuery.of(context).viewInsets.bottom,
+                    AppSpacing.spacing16,
+                    AppSpacing.spacing16,
+                    AppSpacing.spacing16,
+                    AppSpacing.spacing24 + MediaQuery.of(context).viewInsets.bottom,
                   ),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(minHeight: constraints.maxHeight),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // 텍스트 입력 필드
                         TextField(
                           controller: _controller,
                           onChanged: controller.updateContent,
@@ -116,26 +129,40 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
                             alignLabelWithHint: true,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpacing.spacing8),
+
+                        // 글자수 카운터
                         Text(
                           l10n.composeCharacterCount(
                             state.content.length,
                             journeyMaxLength,
                           ),
-                          style: Theme.of(context).textTheme.labelMedium,
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                color: state.content.length > journeyMaxLength
+                                    ? AppColors.error
+                                    : AppColors.onSurfaceVariant,
+                              ),
                           textAlign: TextAlign.end,
                         ),
-                        const SizedBox(height: 16),
-                        _buildImageSection(
-                          context: context,
-                          l10n: l10n,
-                          state: state,
-                          controller: controller,
+                        const SizedBox(height: AppSpacing.spacing16),
+
+                        // 이미지 섹션
+                        _ImageSection(
+                          images: state.images,
+                          onAddImage: () async {
+                            final status = await controller.pickImages();
+                            if (status.isPermanentlyDenied) {
+                              _showSettingsDialog(l10n);
+                            }
+                          },
+                          onRemoveImage: controller.removeImageAt,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.spacing16),
+
+                        // 릴레이 수 선택
                         DropdownButtonFormField<int>(
                           key: ValueKey(state.recipientCount),
-                          initialValue: state.recipientCount,
+                          value: state.recipientCount,
                           items: List.generate(
                             5,
                             (index) => DropdownMenuItem(
@@ -151,14 +178,17 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
                             hintText: l10n.composeRecipientCountHint,
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        FilledButton(
+                        const SizedBox(height: AppSpacing.spacing24),
+
+                        // 전송 버튼
+                        AppFilledButton(
                           onPressed: canSubmit
                               ? () => controller.submit(
                                     languageTag:
                                         Localizations.localeOf(context).toLanguageTag(),
                                   )
                               : null,
+                          isLoading: state.isSubmitting,
                           child: Text(l10n.composeSubmit),
                         ),
                       ],
@@ -170,45 +200,6 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildImageSection({
-    required BuildContext context,
-    required AppLocalizations l10n,
-    required JourneyComposeState state,
-    required JourneyComposeController controller,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.composeImagesTitle,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            for (var i = 0; i < state.images.length; i += 1)
-              _ImageTile(
-                file: state.images[i],
-                onRemove: () => controller.removeImageAt(i),
-              ),
-            if (state.images.length < journeyMaxImages)
-              _AddImageTile(
-                label: l10n.composeAddImage,
-                onPressed: () async {
-                  final status = await controller.pickImages();
-                  if (status.isPermanentlyDenied) {
-                    _showSettingsDialog(l10n);
-                  }
-                },
-              ),
-          ],
-        ),
-      ],
     );
   }
 
@@ -343,7 +334,30 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
     }
   }
 
-  void _handleBack(BuildContext context) {
+  Future<void> _handleBack(BuildContext context, JourneyComposeState state) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    // 입력이 있으면 확인 다이얼로그 표시
+    final hasInput = state.content.trim().isNotEmpty || state.images.isNotEmpty;
+
+    if (hasInput) {
+      final confirmed = await showAppConfirmDialog(
+        context: context,
+        title: l10n.exitConfirmTitle,
+        message: l10n.exitConfirmMessage,
+        confirmLabel: l10n.exitConfirmLeave,
+        cancelLabel: l10n.exitConfirmContinue,
+      );
+
+      if (confirmed != true) {
+        return;
+      }
+    }
+
+    // 뒤로가기 실행
+    if (!mounted) {
+      return;
+    }
     if (context.canPop()) {
       context.pop();
     } else {
@@ -352,6 +366,55 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
   }
 }
 
+/// 이미지 섹션
+class _ImageSection extends StatelessWidget {
+  const _ImageSection({
+    required this.images,
+    required this.onAddImage,
+    required this.onRemoveImage,
+  });
+
+  final List<XFile> images;
+  final VoidCallback onAddImage;
+  final void Function(int index) onRemoveImage;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.composeImagesTitle,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: AppColors.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        const SizedBox(height: AppSpacing.spacing8),
+        Wrap(
+          spacing: AppSpacing.spacing12,
+          runSpacing: AppSpacing.spacing12,
+          children: [
+            for (var i = 0; i < images.length; i += 1)
+              _ImageTile(
+                file: images[i],
+                onRemove: () => onRemoveImage(i),
+              ),
+            if (images.length < journeyMaxImages)
+              _AddImageTile(
+                label: l10n.composeAddImage,
+                onPressed: onAddImage,
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// 이미지 타일 (미리보기 + 제거 버튼)
 class _ImageTile extends StatelessWidget {
   const _ImageTile({
     required this.file,
@@ -366,7 +429,7 @@ class _ImageTile extends StatelessWidget {
     return Stack(
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppRadius.medium,
           child: Image.file(
             File(file.path),
             width: 96,
@@ -375,20 +438,25 @@ class _ImageTile extends StatelessWidget {
           ),
         ),
         Positioned(
-          top: 4,
-          right: 4,
-          child: InkWell(
-            onTap: onRemove,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.6),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.close,
-                size: 16,
-                color: Colors.white,
+          top: AppSpacing.spacing4,
+          right: AppSpacing.spacing4,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onRemove,
+              customBorder: const CircleBorder(),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.surface.withOpacity(0.9),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.close,
+                  size: 18,
+                  color: AppColors.onSurface,
+                ),
               ),
             ),
           ),
@@ -398,6 +466,7 @@ class _ImageTile extends StatelessWidget {
   }
 }
 
+/// 이미지 추가 타일
 class _AddImageTile extends StatelessWidget {
   const _AddImageTile({
     required this.label,
@@ -412,23 +481,23 @@ class _AddImageTile extends StatelessWidget {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: const EdgeInsets.all(AppSpacing.spacing12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppRadius.medium,
         ),
+        minimumSize: const Size(96, 96),
       ),
-      child: SizedBox(
-        width: 96,
-        child: Column(
-          children: [
-            const Icon(Icons.add_photo_alternate),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.add_photo_alternate, size: 32),
+          const SizedBox(height: AppSpacing.spacing4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall,
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

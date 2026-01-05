@@ -8,6 +8,23 @@
   "loginApple": "使用 Apple 继续",
   "homeTitle": "首页",
   "homeGreeting": "欢迎回来",
+  "homeRecentJourneysTitle": "最近消息",
+  "homeActionsTitle": "开始使用",
+  "homeEmptyTitle": "欢迎来到 EchoWander",
+  "homeEmptyDescription": "发送您的第一条接力消息或查看收件箱。",
+  "homeInboxCardTitle": "收件箱",
+  "homeInboxCardDescription": "查看并回复您收到的消息。",
+  "homeCreateCardTitle": "创建消息",
+  "homeCreateCardDescription": "开始新的接力消息。",
+  "homeJourneyCardViewDetails": "查看详情",
+  "homeRefresh": "刷新",
+  "homeLoadFailed": "无法加载您的数据。",
+  "homeInboxCount": "{count}条新消息",
+  "@homeInboxCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "settingsCta": "设置",
   "settingsNotificationInbox": "通知列表",
   "pushPreviewTitle": "通知",
@@ -102,6 +119,14 @@
   "inboxTitle": "收件箱",
   "inboxEmpty": "还没有收到消息。",
   "inboxCta": "查看收件箱",
+  "inboxRefresh": "刷新",
+  "inboxLoadFailed": "无法加载您的收件箱。",
+  "inboxImageCount": "{count}张照片",
+  "@inboxImageCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "inboxStatusLabel": "状态：",
   "inboxStatusAssigned": "等待中",
   "inboxStatusResponded": "已回复",
@@ -209,5 +234,19 @@
   "onboardingConfirmSafety": "我已了解举报与屏蔽政策。",
   "onboardingSkip": "稍后",
   "onboardingNext": "下一步",
-  "onboardingStart": "开始"
+  "onboardingStart": "开始",
+  "exitConfirmTitle": "取消编辑？",
+  "exitConfirmMessage": "您的输入将丢失。",
+  "exitConfirmContinue": "继续编辑",
+  "exitConfirmLeave": "离开",
+  "tabHomeLabel": "首页",
+  "tabInboxLabel": "收件箱",
+  "tabCreateLabel": "创建消息",
+  "tabAlertsLabel": "通知",
+  "tabProfileLabel": "个人资料",
+  "profileSignOutCta": "退出登录",
+  "profileSignOutTitle": "退出登录",
+  "profileSignOutMessage": "确定要退出登录吗？",
+  "profileSignOutConfirm": "退出登录",
+  "profileUserIdLabel": "用户 ID"
 }

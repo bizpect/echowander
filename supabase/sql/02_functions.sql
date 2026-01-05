@@ -1165,7 +1165,7 @@ begin
   select greatest(_journey.requested_recipient_count - count(*), 0)
   into _remaining
   from public.journey_recipients
-  where journey_id = _journey.id;
+  where journey_recipients.journey_id = _journey.id;
 
   if _remaining <= 0 then
     return;
@@ -1209,7 +1209,7 @@ begin
     )
     select _journey.id, candidates.user_id, candidates.locale_tag
     from candidates
-    returning recipient_user_id
+    returning journey_recipients.recipient_user_id
   ),
   tokens as (
     select
@@ -1237,7 +1237,7 @@ begin
   if exists (
     select 1
     from public.journey_recipients
-    where journey_id = _journey.id
+    where journey_recipients.journey_id = _journey.id
   ) then
     update public.journeys
     set status_code = 'CREATED',

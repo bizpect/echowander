@@ -5,11 +5,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/app_router.dart';
+import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_spacing.dart';
+import '../../../app/theme/app_radius.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
-import '../../../core/presentation/widgets/fullscreen_loading.dart';
+import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/settings_controller.dart';
 
+/// Settings 화면
+///
+/// 특징:
+/// - 알림 설정 토글
+/// - 차단 목록 관리 접근
+/// - 정책/가이드라인 링크
+/// - LoadingOverlay로 로딩 상태 처리
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -52,44 +62,119 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           leading: IconButton(
             onPressed: () => _handleBack(context),
             icon: const Icon(Icons.arrow_back),
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           ),
         ),
-        body: FullScreenLoadingOverlay(
+        body: LoadingOverlay(
           isLoading: state.isLoading,
           child: SafeArea(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+              padding: EdgeInsets.all(AppSpacing.spacing16),
               children: [
-                Text(
-                  l10n.settingsSectionNotification,
-                  style: Theme.of(context).textTheme.titleMedium,
+                // 알림 섹션
+                _SectionHeader(title: l10n.settingsSectionNotification),
+                SizedBox(height: AppSpacing.spacing12),
+
+                Card(
+                  color: AppColors.surface,
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: AppRadius.medium,
+                  ),
+                  child: Column(
+                    children: [
+                      SwitchListTile.adaptive(
+                        value: state.notificationsEnabled,
+                        onChanged: state.isLoading ? null : controller.updateNotifications,
+                        title: Text(
+                          l10n.settingsNotificationToggle,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: AppColors.onSurface,
+                              ),
+                        ),
+                        subtitle: Text(
+                          l10n.settingsNotificationHint,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.onSurfaceVariant,
+                              ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.spacing16,
+                          vertical: AppSpacing.spacing8,
+                        ),
+                      ),
+                      Divider(
+                        height: 1,
+                        color: AppColors.onSurface.withOpacity(0.12),
+                      ),
+                      ListTile(
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.inbox,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        title: Text(
+                          l10n.settingsNotificationInbox,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: AppColors.onSurface,
+                              ),
+                        ),
+                        trailing: Icon(
+                          Icons.chevron_right,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                        onTap: () => context.go(AppRoutes.notifications),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 12),
-                SwitchListTile.adaptive(
-                  value: state.notificationsEnabled,
-                  onChanged: state.isLoading ? null : controller.updateNotifications,
-                  title: Text(l10n.settingsNotificationToggle),
-                  subtitle: Text(l10n.settingsNotificationHint),
-                  contentPadding: EdgeInsets.zero,
-                ),
-                const SizedBox(height: 12),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l10n.settingsNotificationInbox),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.go(AppRoutes.notifications),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  l10n.settingsSectionSafety,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 12),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l10n.settingsBlockedUsers),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.go(AppRoutes.blockList),
+
+                SizedBox(height: AppSpacing.spacing24),
+
+                // 안전 섹션
+                _SectionHeader(title: l10n.settingsSectionSafety),
+                SizedBox(height: AppSpacing.spacing12),
+
+                Card(
+                  color: AppColors.surface,
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: AppRadius.medium,
+                  ),
+                  child: ListTile(
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.block,
+                        size: 20,
+                        color: AppColors.error,
+                      ),
+                    ),
+                    title: Text(
+                      l10n.settingsBlockedUsers,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: AppColors.onSurface,
+                          ),
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right,
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                    onTap: () => context.go(AppRoutes.blockList),
+                  ),
                 ),
               ],
             ),
@@ -134,5 +219,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     } else {
       context.go(AppRoutes.home);
     }
+  }
+}
+
+/// 섹션 헤더
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: AppColors.onSurface,
+            fontWeight: FontWeight.bold,
+          ),
+    );
   }
 }

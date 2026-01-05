@@ -8,6 +8,23 @@
   "loginApple": "Appleで続行",
   "homeTitle": "ホーム",
   "homeGreeting": "お帰りなさい",
+  "homeRecentJourneysTitle": "最近のメッセージ",
+  "homeActionsTitle": "はじめる",
+  "homeEmptyTitle": "EchoWanderへようこそ",
+  "homeEmptyDescription": "最初のリレーメッセージを作成するか、受信トレイを確認してください。",
+  "homeInboxCardTitle": "受信トレイ",
+  "homeInboxCardDescription": "受信したメッセージを確認して返信します。",
+  "homeCreateCardTitle": "メッセージ作成",
+  "homeCreateCardDescription": "新しいリレーメッセージを開始します。",
+  "homeJourneyCardViewDetails": "詳細を見る",
+  "homeRefresh": "更新",
+  "homeLoadFailed": "データを読み込めませんでした。",
+  "homeInboxCount": "{count}件の新着",
+  "@homeInboxCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "settingsCta": "設定",
   "settingsNotificationInbox": "通知一覧",
   "pushPreviewTitle": "通知",
@@ -102,6 +119,14 @@
   "inboxTitle": "受信箱",
   "inboxEmpty": "受け取ったメッセージはありません。",
   "inboxCta": "受信箱を見る",
+  "inboxRefresh": "更新",
+  "inboxLoadFailed": "受信箱を読み込めませんでした。",
+  "inboxImageCount": "{count}枚の写真",
+  "@inboxImageCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "inboxStatusLabel": "状態:",
   "inboxStatusAssigned": "待機中",
   "inboxStatusResponded": "返信済み",
@@ -209,5 +234,19 @@
   "onboardingConfirmSafety": "報告・ブロックの方針を確認しました。",
   "onboardingSkip": "あとで",
   "onboardingNext": "次へ",
-  "onboardingStart": "開始"
+  "onboardingStart": "開始",
+  "exitConfirmTitle": "作成をキャンセルしますか？",
+  "exitConfirmMessage": "入力した内容が失われます。",
+  "exitConfirmContinue": "作成を続ける",
+  "exitConfirmLeave": "終了",
+  "tabHomeLabel": "ホーム",
+  "tabInboxLabel": "受信トレイ",
+  "tabCreateLabel": "メッセージ作成",
+  "tabAlertsLabel": "通知",
+  "tabProfileLabel": "プロフィール",
+  "profileSignOutCta": "ログアウト",
+  "profileSignOutTitle": "ログアウト",
+  "profileSignOutMessage": "本当にログアウトしますか？",
+  "profileSignOutConfirm": "ログアウト",
+  "profileUserIdLabel": "ユーザーID"
 }

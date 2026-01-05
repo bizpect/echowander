@@ -157,6 +157,78 @@ abstract class AppLocalizations {
   /// **'Welcome back'**
   String get homeGreeting;
 
+  /// No description provided for @homeRecentJourneysTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Messages'**
+  String get homeRecentJourneysTitle;
+
+  /// No description provided for @homeActionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get homeActionsTitle;
+
+  /// No description provided for @homeEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to EchoWander'**
+  String get homeEmptyTitle;
+
+  /// No description provided for @homeEmptyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Send your first relay message or check your inbox.'**
+  String get homeEmptyDescription;
+
+  /// No description provided for @homeInboxCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox'**
+  String get homeInboxCardTitle;
+
+  /// No description provided for @homeInboxCardDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Check and reply to messages you\'ve received.'**
+  String get homeInboxCardDescription;
+
+  /// No description provided for @homeCreateCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Message'**
+  String get homeCreateCardTitle;
+
+  /// No description provided for @homeCreateCardDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a new relay message.'**
+  String get homeCreateCardDescription;
+
+  /// No description provided for @homeJourneyCardViewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View details'**
+  String get homeJourneyCardViewDetails;
+
+  /// No description provided for @homeRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get homeRefresh;
+
+  /// No description provided for @homeLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load your data.'**
+  String get homeLoadFailed;
+
+  /// No description provided for @homeInboxCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} new'**
+  String homeInboxCount(Object count);
+
   /// No description provided for @settingsCta.
   ///
   /// In en, this message translates to:
@@ -654,6 +726,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View inbox'**
   String get inboxCta;
+
+  /// No description provided for @inboxRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get inboxRefresh;
+
+  /// No description provided for @inboxLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load your inbox.'**
+  String get inboxLoadFailed;
+
+  /// No description provided for @inboxImageCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} photo(s)'**
+  String inboxImageCount(Object count);
 
   /// No description provided for @inboxStatusLabel.
   ///
@@ -1266,6 +1356,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start'**
   String get onboardingStart;
+
+  /// No description provided for @exitConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel writing?'**
+  String get exitConfirmTitle;
+
+  /// No description provided for @exitConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your input will be lost.'**
+  String get exitConfirmMessage;
+
+  /// No description provided for @exitConfirmContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep writing'**
+  String get exitConfirmContinue;
+
+  /// No description provided for @exitConfirmLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get exitConfirmLeave;
+
+  /// No description provided for @tabHomeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get tabHomeLabel;
+
+  /// No description provided for @tabInboxLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox'**
+  String get tabInboxLabel;
+
+  /// No description provided for @tabCreateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Create message'**
+  String get tabCreateLabel;
+
+  /// No description provided for @tabAlertsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get tabAlertsLabel;
+
+  /// No description provided for @tabProfileLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get tabProfileLabel;
+
+  /// No description provided for @profileSignOutCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get profileSignOutCta;
+
+  /// No description provided for @profileSignOutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get profileSignOutTitle;
+
+  /// No description provided for @profileSignOutMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to sign out?'**
+  String get profileSignOutMessage;
+
+  /// No description provided for @profileSignOutConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get profileSignOutConfirm;
+
+  /// No description provided for @profileUserIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'User ID'**
+  String get profileUserIdLabel;
 }
 
 class _AppLocalizationsDelegate

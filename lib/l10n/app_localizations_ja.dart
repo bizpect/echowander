@@ -33,6 +33,44 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeGreeting => 'お帰りなさい';
 
   @override
+  String get homeRecentJourneysTitle => '最近のメッセージ';
+
+  @override
+  String get homeActionsTitle => 'はじめる';
+
+  @override
+  String get homeEmptyTitle => 'EchoWanderへようこそ';
+
+  @override
+  String get homeEmptyDescription => '最初のリレーメッセージを作成するか、受信トレイを確認してください。';
+
+  @override
+  String get homeInboxCardTitle => '受信トレイ';
+
+  @override
+  String get homeInboxCardDescription => '受信したメッセージを確認して返信します。';
+
+  @override
+  String get homeCreateCardTitle => 'メッセージ作成';
+
+  @override
+  String get homeCreateCardDescription => '新しいリレーメッセージを開始します。';
+
+  @override
+  String get homeJourneyCardViewDetails => '詳細を見る';
+
+  @override
+  String get homeRefresh => '更新';
+
+  @override
+  String get homeLoadFailed => 'データを読み込めませんでした。';
+
+  @override
+  String homeInboxCount(Object count) {
+    return '$count件の新着';
+  }
+
+  @override
   String get settingsCta => '設定';
 
   @override
@@ -285,6 +323,17 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get inboxCta => '受信箱を見る';
+
+  @override
+  String get inboxRefresh => '更新';
+
+  @override
+  String get inboxLoadFailed => '受信箱を読み込めませんでした。';
+
+  @override
+  String inboxImageCount(Object count) {
+    return '$count枚の写真';
+  }
 
   @override
   String get inboxStatusLabel => '状態:';
@@ -593,4 +642,46 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get onboardingStart => '開始';
+
+  @override
+  String get exitConfirmTitle => '作成をキャンセルしますか？';
+
+  @override
+  String get exitConfirmMessage => '入力した内容が失われます。';
+
+  @override
+  String get exitConfirmContinue => '作成を続ける';
+
+  @override
+  String get exitConfirmLeave => '終了';
+
+  @override
+  String get tabHomeLabel => 'ホーム';
+
+  @override
+  String get tabInboxLabel => '受信トレイ';
+
+  @override
+  String get tabCreateLabel => 'メッセージ作成';
+
+  @override
+  String get tabAlertsLabel => '通知';
+
+  @override
+  String get tabProfileLabel => 'プロフィール';
+
+  @override
+  String get profileSignOutCta => 'ログアウト';
+
+  @override
+  String get profileSignOutTitle => 'ログアウト';
+
+  @override
+  String get profileSignOutMessage => '本当にログアウトしますか？';
+
+  @override
+  String get profileSignOutConfirm => 'ログアウト';
+
+  @override
+  String get profileUserIdLabel => 'ユーザーID';
 }

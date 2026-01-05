@@ -8,6 +8,23 @@
   "loginApple": "Continue with Apple",
   "homeTitle": "Home",
   "homeGreeting": "Welcome back",
+  "homeRecentJourneysTitle": "Recent Messages",
+  "homeActionsTitle": "Get Started",
+  "homeEmptyTitle": "Welcome to EchoWander",
+  "homeEmptyDescription": "Send your first relay message or check your inbox.",
+  "homeInboxCardTitle": "Inbox",
+  "homeInboxCardDescription": "Check and reply to messages you've received.",
+  "homeCreateCardTitle": "Create Message",
+  "homeCreateCardDescription": "Start a new relay message.",
+  "homeJourneyCardViewDetails": "View details",
+  "homeRefresh": "Refresh",
+  "homeLoadFailed": "We couldn't load your data.",
+  "homeInboxCount": "{count} new",
+  "@homeInboxCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "settingsCta": "Settings",
   "settingsNotificationInbox": "Notification inbox",
   "pushPreviewTitle": "Notification",
@@ -102,6 +119,14 @@
   "inboxTitle": "Inbox",
   "inboxEmpty": "No messages received yet.",
   "inboxCta": "View inbox",
+  "inboxRefresh": "Refresh",
+  "inboxLoadFailed": "We couldn't load your inbox.",
+  "inboxImageCount": "{count} photo(s)",
+  "@inboxImageCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "inboxStatusLabel": "Status:",
   "inboxStatusAssigned": "Waiting",
   "inboxStatusResponded": "Responded",
@@ -209,5 +234,19 @@
   "onboardingConfirmSafety": "I understand the report and block policy.",
   "onboardingSkip": "Not now",
   "onboardingNext": "Next",
-  "onboardingStart": "Start"
+  "onboardingStart": "Start",
+  "exitConfirmTitle": "Cancel writing?",
+  "exitConfirmMessage": "Your input will be lost.",
+  "exitConfirmContinue": "Keep writing",
+  "exitConfirmLeave": "Leave",
+  "tabHomeLabel": "Home",
+  "tabInboxLabel": "Inbox",
+  "tabCreateLabel": "Create message",
+  "tabAlertsLabel": "Notifications",
+  "tabProfileLabel": "Profile",
+  "profileSignOutCta": "Sign out",
+  "profileSignOutTitle": "Sign out",
+  "profileSignOutMessage": "Are you sure you want to sign out?",
+  "profileSignOutConfirm": "Sign out",
+  "profileUserIdLabel": "User ID"
 }

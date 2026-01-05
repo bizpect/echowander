@@ -33,6 +33,44 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeGreeting => '다시 오신 걸 환영합니다';
 
   @override
+  String get homeRecentJourneysTitle => '최근 보낸 메시지';
+
+  @override
+  String get homeActionsTitle => '시작하기';
+
+  @override
+  String get homeEmptyTitle => '에코원더에 오신 것을 환영합니다';
+
+  @override
+  String get homeEmptyDescription => '첫 릴레이 메시지를 작성하거나 받은 메시지를 확인해 보세요.';
+
+  @override
+  String get homeInboxCardTitle => '받은 편지함';
+
+  @override
+  String get homeInboxCardDescription => '받은 메시지를 확인하고 응답하세요.';
+
+  @override
+  String get homeCreateCardTitle => '메시지 작성';
+
+  @override
+  String get homeCreateCardDescription => '새로운 릴레이 메시지를 시작하세요.';
+
+  @override
+  String get homeJourneyCardViewDetails => '자세히 보기';
+
+  @override
+  String get homeRefresh => '새로고침';
+
+  @override
+  String get homeLoadFailed => '데이터를 불러올 수 없습니다.';
+
+  @override
+  String homeInboxCount(Object count) {
+    return '$count개의 새 메시지';
+  }
+
+  @override
   String get settingsCta => '설정';
 
   @override
@@ -286,6 +324,17 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get inboxCta => '받은 메시지 보기';
+
+  @override
+  String get inboxRefresh => '새로고침';
+
+  @override
+  String get inboxLoadFailed => '받은 메시지를 불러올 수 없습니다.';
+
+  @override
+  String inboxImageCount(Object count) {
+    return '사진 $count개';
+  }
 
   @override
   String get inboxStatusLabel => '상태:';
@@ -596,4 +645,46 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get onboardingStart => '시작하기';
+
+  @override
+  String get exitConfirmTitle => '작성을 취소하시겠어요?';
+
+  @override
+  String get exitConfirmMessage => '입력한 내용이 사라집니다.';
+
+  @override
+  String get exitConfirmContinue => '계속 작성';
+
+  @override
+  String get exitConfirmLeave => '나가기';
+
+  @override
+  String get tabHomeLabel => '홈';
+
+  @override
+  String get tabInboxLabel => '받은편지함';
+
+  @override
+  String get tabCreateLabel => '메시지 작성';
+
+  @override
+  String get tabAlertsLabel => '알림';
+
+  @override
+  String get tabProfileLabel => '프로필';
+
+  @override
+  String get profileSignOutCta => '로그아웃';
+
+  @override
+  String get profileSignOutTitle => '로그아웃';
+
+  @override
+  String get profileSignOutMessage => '정말 로그아웃하시겠습니까?';
+
+  @override
+  String get profileSignOutConfirm => '로그아웃';
+
+  @override
+  String get profileUserIdLabel => '사용자 ID';
 }

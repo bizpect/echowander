@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/session/session_manager.dart';
 import '../../core/session/session_state.dart';
 import '../../features/auth/presentation/login_screen.dart';
-import '../../features/home/presentation/home_screen.dart';
+import '../../core/presentation/scaffolds/main_scaffold.dart';
 import '../../features/journey/presentation/journey_compose_screen.dart';
 import '../../features/journey/presentation/journey_inbox_detail_screen.dart';
 import '../../features/journey/presentation/journey_inbox_screen.dart';
@@ -57,7 +57,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.home,
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) => const MainScaffold(),
       ),
       GoRoute(
         path: AppRoutes.compose,

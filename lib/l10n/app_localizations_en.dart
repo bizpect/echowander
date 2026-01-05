@@ -33,6 +33,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeGreeting => 'Welcome back';
 
   @override
+  String get homeRecentJourneysTitle => 'Recent Messages';
+
+  @override
+  String get homeActionsTitle => 'Get Started';
+
+  @override
+  String get homeEmptyTitle => 'Welcome to EchoWander';
+
+  @override
+  String get homeEmptyDescription =>
+      'Send your first relay message or check your inbox.';
+
+  @override
+  String get homeInboxCardTitle => 'Inbox';
+
+  @override
+  String get homeInboxCardDescription =>
+      'Check and reply to messages you\'ve received.';
+
+  @override
+  String get homeCreateCardTitle => 'Create Message';
+
+  @override
+  String get homeCreateCardDescription => 'Start a new relay message.';
+
+  @override
+  String get homeJourneyCardViewDetails => 'View details';
+
+  @override
+  String get homeRefresh => 'Refresh';
+
+  @override
+  String get homeLoadFailed => 'We couldn\'t load your data.';
+
+  @override
+  String homeInboxCount(Object count) {
+    return '$count new';
+  }
+
+  @override
   String get settingsCta => 'Settings';
 
   @override
@@ -296,6 +336,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inboxCta => 'View inbox';
+
+  @override
+  String get inboxRefresh => 'Refresh';
+
+  @override
+  String get inboxLoadFailed => 'We couldn\'t load your inbox.';
+
+  @override
+  String inboxImageCount(Object count) {
+    return '$count photo(s)';
+  }
 
   @override
   String get inboxStatusLabel => 'Status:';
@@ -615,4 +666,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingStart => 'Start';
+
+  @override
+  String get exitConfirmTitle => 'Cancel writing?';
+
+  @override
+  String get exitConfirmMessage => 'Your input will be lost.';
+
+  @override
+  String get exitConfirmContinue => 'Keep writing';
+
+  @override
+  String get exitConfirmLeave => 'Leave';
+
+  @override
+  String get tabHomeLabel => 'Home';
+
+  @override
+  String get tabInboxLabel => 'Inbox';
+
+  @override
+  String get tabCreateLabel => 'Create message';
+
+  @override
+  String get tabAlertsLabel => 'Notifications';
+
+  @override
+  String get tabProfileLabel => 'Profile';
+
+  @override
+  String get profileSignOutCta => 'Sign out';
+
+  @override
+  String get profileSignOutTitle => 'Sign out';
+
+  @override
+  String get profileSignOutMessage => 'Are you sure you want to sign out?';
+
+  @override
+  String get profileSignOutConfirm => 'Sign out';
+
+  @override
+  String get profileUserIdLabel => 'User ID';
 }

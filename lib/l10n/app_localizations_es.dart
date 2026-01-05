@@ -33,6 +33,46 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeGreeting => 'Bienvenido de nuevo';
 
   @override
+  String get homeRecentJourneysTitle => 'Mensajes recientes';
+
+  @override
+  String get homeActionsTitle => 'Empezar';
+
+  @override
+  String get homeEmptyTitle => 'Bienvenido a EchoWander';
+
+  @override
+  String get homeEmptyDescription =>
+      'Envía tu primer mensaje de relevo o revisa tu bandeja de entrada.';
+
+  @override
+  String get homeInboxCardTitle => 'Bandeja de entrada';
+
+  @override
+  String get homeInboxCardDescription =>
+      'Revisa y responde los mensajes que has recibido.';
+
+  @override
+  String get homeCreateCardTitle => 'Crear mensaje';
+
+  @override
+  String get homeCreateCardDescription => 'Inicia un nuevo mensaje de relevo.';
+
+  @override
+  String get homeJourneyCardViewDetails => 'Ver detalles';
+
+  @override
+  String get homeRefresh => 'Actualizar';
+
+  @override
+  String get homeLoadFailed => 'No pudimos cargar tus datos.';
+
+  @override
+  String homeInboxCount(Object count) {
+    return '$count nuevo(s)';
+  }
+
+  @override
   String get settingsCta => 'Configuración';
 
   @override
@@ -297,6 +337,17 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get inboxCta => 'Ver bandeja de entrada';
+
+  @override
+  String get inboxRefresh => 'Actualizar';
+
+  @override
+  String get inboxLoadFailed => 'No pudimos cargar tu bandeja de entrada.';
+
+  @override
+  String inboxImageCount(Object count) {
+    return '$count foto(s)';
+  }
 
   @override
   String get inboxStatusLabel => 'Estado:';
@@ -619,4 +670,46 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onboardingStart => 'Comenzar';
+
+  @override
+  String get exitConfirmTitle => '¿Cancelar escritura?';
+
+  @override
+  String get exitConfirmMessage => 'Se perderá tu entrada.';
+
+  @override
+  String get exitConfirmContinue => 'Seguir escribiendo';
+
+  @override
+  String get exitConfirmLeave => 'Salir';
+
+  @override
+  String get tabHomeLabel => 'Inicio';
+
+  @override
+  String get tabInboxLabel => 'Bandeja de entrada';
+
+  @override
+  String get tabCreateLabel => 'Crear mensaje';
+
+  @override
+  String get tabAlertsLabel => 'Notificaciones';
+
+  @override
+  String get tabProfileLabel => 'Perfil';
+
+  @override
+  String get profileSignOutCta => 'Cerrar sesión';
+
+  @override
+  String get profileSignOutTitle => 'Cerrar sesión';
+
+  @override
+  String get profileSignOutMessage => '¿Seguro que quieres cerrar sesión?';
+
+  @override
+  String get profileSignOutConfirm => 'Cerrar sesión';
+
+  @override
+  String get profileUserIdLabel => 'ID de usuario';
 }

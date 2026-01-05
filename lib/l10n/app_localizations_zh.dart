@@ -33,6 +33,44 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeGreeting => '欢迎回来';
 
   @override
+  String get homeRecentJourneysTitle => '最近消息';
+
+  @override
+  String get homeActionsTitle => '开始使用';
+
+  @override
+  String get homeEmptyTitle => '欢迎来到 EchoWander';
+
+  @override
+  String get homeEmptyDescription => '发送您的第一条接力消息或查看收件箱。';
+
+  @override
+  String get homeInboxCardTitle => '收件箱';
+
+  @override
+  String get homeInboxCardDescription => '查看并回复您收到的消息。';
+
+  @override
+  String get homeCreateCardTitle => '创建消息';
+
+  @override
+  String get homeCreateCardDescription => '开始新的接力消息。';
+
+  @override
+  String get homeJourneyCardViewDetails => '查看详情';
+
+  @override
+  String get homeRefresh => '刷新';
+
+  @override
+  String get homeLoadFailed => '无法加载您的数据。';
+
+  @override
+  String homeInboxCount(Object count) {
+    return '$count条新消息';
+  }
+
+  @override
   String get settingsCta => '设置';
 
   @override
@@ -284,6 +322,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get inboxCta => '查看收件箱';
+
+  @override
+  String get inboxRefresh => '刷新';
+
+  @override
+  String get inboxLoadFailed => '无法加载您的收件箱。';
+
+  @override
+  String inboxImageCount(Object count) {
+    return '$count张照片';
+  }
 
   @override
   String get inboxStatusLabel => '状态：';
@@ -592,4 +641,46 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get onboardingStart => '开始';
+
+  @override
+  String get exitConfirmTitle => '取消编辑？';
+
+  @override
+  String get exitConfirmMessage => '您的输入将丢失。';
+
+  @override
+  String get exitConfirmContinue => '继续编辑';
+
+  @override
+  String get exitConfirmLeave => '离开';
+
+  @override
+  String get tabHomeLabel => '首页';
+
+  @override
+  String get tabInboxLabel => '收件箱';
+
+  @override
+  String get tabCreateLabel => '创建消息';
+
+  @override
+  String get tabAlertsLabel => '通知';
+
+  @override
+  String get tabProfileLabel => '个人资料';
+
+  @override
+  String get profileSignOutCta => '退出登录';
+
+  @override
+  String get profileSignOutTitle => '退出登录';
+
+  @override
+  String get profileSignOutMessage => '确定要退出登录吗？';
+
+  @override
+  String get profileSignOutConfirm => '退出登录';
+
+  @override
+  String get profileUserIdLabel => '用户 ID';
 }

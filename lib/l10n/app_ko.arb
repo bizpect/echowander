@@ -8,6 +8,23 @@
   "loginApple": "애플로 계속",
   "homeTitle": "홈",
   "homeGreeting": "다시 오신 걸 환영합니다",
+  "homeRecentJourneysTitle": "최근 보낸 메시지",
+  "homeActionsTitle": "시작하기",
+  "homeEmptyTitle": "에코원더에 오신 것을 환영합니다",
+  "homeEmptyDescription": "첫 릴레이 메시지를 작성하거나 받은 메시지를 확인해 보세요.",
+  "homeInboxCardTitle": "받은 편지함",
+  "homeInboxCardDescription": "받은 메시지를 확인하고 응답하세요.",
+  "homeCreateCardTitle": "메시지 작성",
+  "homeCreateCardDescription": "새로운 릴레이 메시지를 시작하세요.",
+  "homeJourneyCardViewDetails": "자세히 보기",
+  "homeRefresh": "새로고침",
+  "homeLoadFailed": "데이터를 불러올 수 없습니다.",
+  "homeInboxCount": "{count}개의 새 메시지",
+  "@homeInboxCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "settingsCta": "설정",
   "settingsNotificationInbox": "알림함",
   "pushPreviewTitle": "알림",
@@ -102,6 +119,14 @@
   "inboxTitle": "받은 메시지",
   "inboxEmpty": "받은 메시지가 없어요.",
   "inboxCta": "받은 메시지 보기",
+  "inboxRefresh": "새로고침",
+  "inboxLoadFailed": "받은 메시지를 불러올 수 없습니다.",
+  "inboxImageCount": "사진 {count}개",
+  "@inboxImageCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "inboxStatusLabel": "상태:",
   "inboxStatusAssigned": "대기 중",
   "inboxStatusResponded": "응답 완료",
@@ -209,5 +234,19 @@
   "onboardingConfirmSafety": "신고/차단 안내를 확인했습니다.",
   "onboardingSkip": "나중에",
   "onboardingNext": "다음",
-  "onboardingStart": "시작하기"
+  "onboardingStart": "시작하기",
+  "exitConfirmTitle": "작성을 취소하시겠어요?",
+  "exitConfirmMessage": "입력한 내용이 사라집니다.",
+  "exitConfirmContinue": "계속 작성",
+  "exitConfirmLeave": "나가기",
+  "tabHomeLabel": "홈",
+  "tabInboxLabel": "받은편지함",
+  "tabCreateLabel": "메시지 작성",
+  "tabAlertsLabel": "알림",
+  "tabProfileLabel": "프로필",
+  "profileSignOutCta": "로그아웃",
+  "profileSignOutTitle": "로그아웃",
+  "profileSignOutMessage": "정말 로그아웃하시겠습니까?",
+  "profileSignOutConfirm": "로그아웃",
+  "profileUserIdLabel": "사용자 ID"
 }

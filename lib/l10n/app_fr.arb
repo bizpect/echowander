@@ -8,6 +8,23 @@
   "loginApple": "Continuer avec Apple",
   "homeTitle": "Accueil",
   "homeGreeting": "Bon retour",
+  "homeRecentJourneysTitle": "Messages récents",
+  "homeActionsTitle": "Commencer",
+  "homeEmptyTitle": "Bienvenue sur EchoWander",
+  "homeEmptyDescription": "Envoyez votre premier message relais ou consultez votre boîte de réception.",
+  "homeInboxCardTitle": "Boîte de réception",
+  "homeInboxCardDescription": "Consultez et répondez aux messages que vous avez reçus.",
+  "homeCreateCardTitle": "Créer un message",
+  "homeCreateCardDescription": "Démarrez un nouveau message relais.",
+  "homeJourneyCardViewDetails": "Voir les détails",
+  "homeRefresh": "Actualiser",
+  "homeLoadFailed": "Nous n'avons pas pu charger vos données.",
+  "homeInboxCount": "{count} nouveau(x)",
+  "@homeInboxCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "settingsCta": "Réglages",
   "settingsNotificationInbox": "Boîte de notifications",
   "pushPreviewTitle": "Notification",
@@ -102,6 +119,14 @@
   "inboxTitle": "Boîte de réception",
   "inboxEmpty": "Aucun message reçu pour le moment.",
   "inboxCta": "Voir la boîte de réception",
+  "inboxRefresh": "Actualiser",
+  "inboxLoadFailed": "Nous n'avons pas pu charger votre boîte de réception.",
+  "inboxImageCount": "{count} photo(s)",
+  "@inboxImageCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "inboxStatusLabel": "Statut :",
   "inboxStatusAssigned": "En attente",
   "inboxStatusResponded": "Répondu",
@@ -209,5 +234,19 @@
   "onboardingConfirmSafety": "Je comprends la politique de signalement et de blocage.",
   "onboardingSkip": "Plus tard",
   "onboardingNext": "Suivant",
-  "onboardingStart": "Commencer"
+  "onboardingStart": "Commencer",
+  "exitConfirmTitle": "Annuler l'écriture?",
+  "exitConfirmMessage": "Votre saisie sera perdue.",
+  "exitConfirmContinue": "Continuer à écrire",
+  "exitConfirmLeave": "Quitter",
+  "tabHomeLabel": "Accueil",
+  "tabInboxLabel": "Boîte de réception",
+  "tabCreateLabel": "Créer un message",
+  "tabAlertsLabel": "Notifications",
+  "tabProfileLabel": "Profil",
+  "profileSignOutCta": "Se déconnecter",
+  "profileSignOutTitle": "Se déconnecter",
+  "profileSignOutMessage": "Voulez-vous vraiment vous déconnecter ?",
+  "profileSignOutConfirm": "Se déconnecter",
+  "profileUserIdLabel": "ID utilisateur"
 }

@@ -33,6 +33,46 @@ class AppLocalizationsFr extends AppLocalizations {
   String get homeGreeting => 'Bon retour';
 
   @override
+  String get homeRecentJourneysTitle => 'Messages récents';
+
+  @override
+  String get homeActionsTitle => 'Commencer';
+
+  @override
+  String get homeEmptyTitle => 'Bienvenue sur EchoWander';
+
+  @override
+  String get homeEmptyDescription =>
+      'Envoyez votre premier message relais ou consultez votre boîte de réception.';
+
+  @override
+  String get homeInboxCardTitle => 'Boîte de réception';
+
+  @override
+  String get homeInboxCardDescription =>
+      'Consultez et répondez aux messages que vous avez reçus.';
+
+  @override
+  String get homeCreateCardTitle => 'Créer un message';
+
+  @override
+  String get homeCreateCardDescription => 'Démarrez un nouveau message relais.';
+
+  @override
+  String get homeJourneyCardViewDetails => 'Voir les détails';
+
+  @override
+  String get homeRefresh => 'Actualiser';
+
+  @override
+  String get homeLoadFailed => 'Nous n\'avons pas pu charger vos données.';
+
+  @override
+  String homeInboxCount(Object count) {
+    return '$count nouveau(x)';
+  }
+
+  @override
   String get settingsCta => 'Réglages';
 
   @override
@@ -296,6 +336,18 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get inboxCta => 'Voir la boîte de réception';
+
+  @override
+  String get inboxRefresh => 'Actualiser';
+
+  @override
+  String get inboxLoadFailed =>
+      'Nous n\'avons pas pu charger votre boîte de réception.';
+
+  @override
+  String inboxImageCount(Object count) {
+    return '$count photo(s)';
+  }
 
   @override
   String get inboxStatusLabel => 'Statut :';
@@ -627,4 +679,46 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get onboardingStart => 'Commencer';
+
+  @override
+  String get exitConfirmTitle => 'Annuler l\'écriture?';
+
+  @override
+  String get exitConfirmMessage => 'Votre saisie sera perdue.';
+
+  @override
+  String get exitConfirmContinue => 'Continuer à écrire';
+
+  @override
+  String get exitConfirmLeave => 'Quitter';
+
+  @override
+  String get tabHomeLabel => 'Accueil';
+
+  @override
+  String get tabInboxLabel => 'Boîte de réception';
+
+  @override
+  String get tabCreateLabel => 'Créer un message';
+
+  @override
+  String get tabAlertsLabel => 'Notifications';
+
+  @override
+  String get tabProfileLabel => 'Profil';
+
+  @override
+  String get profileSignOutCta => 'Se déconnecter';
+
+  @override
+  String get profileSignOutTitle => 'Se déconnecter';
+
+  @override
+  String get profileSignOutMessage => 'Voulez-vous vraiment vous déconnecter ?';
+
+  @override
+  String get profileSignOutConfirm => 'Se déconnecter';
+
+  @override
+  String get profileUserIdLabel => 'ID utilisateur';
 }

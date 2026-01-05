@@ -33,6 +33,46 @@ class AppLocalizationsPt extends AppLocalizations {
   String get homeGreeting => 'Bem-vindo de volta';
 
   @override
+  String get homeRecentJourneysTitle => 'Mensagens recentes';
+
+  @override
+  String get homeActionsTitle => 'Começar';
+
+  @override
+  String get homeEmptyTitle => 'Bem-vindo ao EchoWander';
+
+  @override
+  String get homeEmptyDescription =>
+      'Envie a sua primeira mensagem de relé ou verifique a sua caixa de entrada.';
+
+  @override
+  String get homeInboxCardTitle => 'Caixa de entrada';
+
+  @override
+  String get homeInboxCardDescription =>
+      'Veja e responda às mensagens que recebeu.';
+
+  @override
+  String get homeCreateCardTitle => 'Criar mensagem';
+
+  @override
+  String get homeCreateCardDescription => 'Inicie uma nova mensagem de relé.';
+
+  @override
+  String get homeJourneyCardViewDetails => 'Ver detalhes';
+
+  @override
+  String get homeRefresh => 'Atualizar';
+
+  @override
+  String get homeLoadFailed => 'Não conseguimos carregar os seus dados.';
+
+  @override
+  String homeInboxCount(Object count) {
+    return '$count nova(s)';
+  }
+
+  @override
   String get settingsCta => 'Configurações';
 
   @override
@@ -296,6 +336,18 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get inboxCta => 'Ver caixa de entrada';
+
+  @override
+  String get inboxRefresh => 'Atualizar';
+
+  @override
+  String get inboxLoadFailed =>
+      'Não conseguimos carregar a sua caixa de entrada.';
+
+  @override
+  String inboxImageCount(Object count) {
+    return '$count foto(s)';
+  }
 
   @override
   String get inboxStatusLabel => 'Estado:';
@@ -625,6 +677,49 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get onboardingStart => 'Começar';
+
+  @override
+  String get exitConfirmTitle => 'Cancelar escrita?';
+
+  @override
+  String get exitConfirmMessage => 'Sua entrada será perdida.';
+
+  @override
+  String get exitConfirmContinue => 'Continuar a escrever';
+
+  @override
+  String get exitConfirmLeave => 'Sair';
+
+  @override
+  String get tabHomeLabel => 'Início';
+
+  @override
+  String get tabInboxLabel => 'Caixa de entrada';
+
+  @override
+  String get tabCreateLabel => 'Criar mensagem';
+
+  @override
+  String get tabAlertsLabel => 'Notificações';
+
+  @override
+  String get tabProfileLabel => 'Perfil';
+
+  @override
+  String get profileSignOutCta => 'Terminar sessão';
+
+  @override
+  String get profileSignOutTitle => 'Terminar sessão';
+
+  @override
+  String get profileSignOutMessage =>
+      'Tem a certeza de que deseja terminar sessão?';
+
+  @override
+  String get profileSignOutConfirm => 'Terminar sessão';
+
+  @override
+  String get profileUserIdLabel => 'ID de utilizador';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -654,6 +749,47 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get homeGreeting => 'Bem-vindo de volta';
+
+  @override
+  String get homeRecentJourneysTitle => 'Mensagens recentes';
+
+  @override
+  String get homeActionsTitle => 'Começar';
+
+  @override
+  String get homeEmptyTitle => 'Bem-vindo ao EchoWander';
+
+  @override
+  String get homeEmptyDescription =>
+      'Envie sua primeira mensagem de revezamento ou confira sua caixa de entrada.';
+
+  @override
+  String get homeInboxCardTitle => 'Caixa de entrada';
+
+  @override
+  String get homeInboxCardDescription =>
+      'Confira e responda as mensagens que você recebeu.';
+
+  @override
+  String get homeCreateCardTitle => 'Criar mensagem';
+
+  @override
+  String get homeCreateCardDescription =>
+      'Inicie uma nova mensagem de revezamento.';
+
+  @override
+  String get homeJourneyCardViewDetails => 'Ver detalhes';
+
+  @override
+  String get homeRefresh => 'Atualizar';
+
+  @override
+  String get homeLoadFailed => 'Não conseguimos carregar seus dados.';
+
+  @override
+  String homeInboxCount(Object count) {
+    return '$count nova(s)';
+  }
 
   @override
   String get settingsCta => 'Configurações';
@@ -919,6 +1055,18 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get inboxCta => 'Ver caixa de entrada';
+
+  @override
+  String get inboxRefresh => 'Atualizar';
+
+  @override
+  String get inboxLoadFailed =>
+      'Não conseguimos carregar sua caixa de entrada.';
+
+  @override
+  String inboxImageCount(Object count) {
+    return '$count foto(s)';
+  }
 
   @override
   String get inboxStatusLabel => 'Status:';
@@ -1248,4 +1396,46 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get onboardingStart => 'Começar';
+
+  @override
+  String get exitConfirmTitle => 'Cancelar escrita?';
+
+  @override
+  String get exitConfirmMessage => 'Sua entrada será perdida.';
+
+  @override
+  String get exitConfirmContinue => 'Continuar escrevendo';
+
+  @override
+  String get exitConfirmLeave => 'Sair';
+
+  @override
+  String get tabHomeLabel => 'Início';
+
+  @override
+  String get tabInboxLabel => 'Caixa de entrada';
+
+  @override
+  String get tabCreateLabel => 'Criar mensagem';
+
+  @override
+  String get tabAlertsLabel => 'Notificações';
+
+  @override
+  String get tabProfileLabel => 'Perfil';
+
+  @override
+  String get profileSignOutCta => 'Sair';
+
+  @override
+  String get profileSignOutTitle => 'Sair';
+
+  @override
+  String get profileSignOutMessage => 'Tem certeza de que deseja sair?';
+
+  @override
+  String get profileSignOutConfirm => 'Sair';
+
+  @override
+  String get profileUserIdLabel => 'ID de usuário';
 }

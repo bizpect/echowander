@@ -201,6 +201,12 @@ class SupabaseJourneyRepository implements JourneyRepository {
       }
       return;
     }
+    if (_config.dispatchJobSecret.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('compose: dispatch secret 누락');
+      }
+      return;
+    }
     if (accessToken.isEmpty) {
       if (kDebugMode) {
         debugPrint('compose: dispatch accessToken 없음');
@@ -213,6 +219,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
       request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
       request.headers.set('apikey', _config.supabaseAnonKey);
       request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+      request.headers.set('x-dispatch-secret', _config.dispatchJobSecret);
       request.add(
         utf8.encode(
           jsonEncode({

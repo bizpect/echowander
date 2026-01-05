@@ -6,11 +6,22 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/router/app_router.dart';
+import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_spacing.dart';
+import '../../../app/theme/app_radius.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
-import '../../../core/presentation/widgets/fullscreen_loading.dart';
+import '../../../core/presentation/widgets/loading_overlay.dart';
+import '../../../core/presentation/widgets/empty_state.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/block_list_controller.dart';
 
+/// 차단 목록 화면
+///
+/// 특징:
+/// - 차단한 사용자 목록 표시
+/// - 차단 해제 기능 (확인 다이얼로그)
+/// - EmptyStateWidget로 빈 상태 처리
+/// - LoadingOverlay로 로딩 상태 처리
 class BlockListScreen extends ConsumerStatefulWidget {
   const BlockListScreen({super.key});
 
@@ -30,7 +41,6 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
     final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(blockListControllerProvider);
     final controller = ref.read(blockListControllerProvider.notifier);
-    final dateFormat = DateFormat.yMMMd(l10n.localeName).add_Hm();
 
     ref.listen<BlockListState>(blockListControllerProvider, (previous, next) {
       if (next.message == null || next.message == previous?.message) {
@@ -54,49 +64,109 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
           leading: IconButton(
             onPressed: () => _handleBack(context),
             icon: const Icon(Icons.arrow_back),
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           ),
           actions: [
             IconButton(
               onPressed: () => controller.load(),
               icon: const Icon(Icons.refresh),
+              tooltip: l10n.inboxRefresh,
             ),
           ],
         ),
-        body: FullScreenLoadingOverlay(
+        body: LoadingOverlay(
           isLoading: state.isLoading,
           child: SafeArea(
-            child: state.items.isEmpty
-                ? Center(
-                    child: Text(
-                      l10n.blockListEmpty,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                    itemCount: state.items.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final item = state.items[index];
-                      return Card(
-                        child: ListTile(
-                          leading: _Avatar(avatarUrl: item.avatarUrl),
-                          title: Text(
-                            item.nickname.isNotEmpty
-                                ? item.nickname
-                                : l10n.blockListUnknownUser,
-                          ),
-                          subtitle: Text(dateFormat.format(item.createdAt.toLocal())),
-                          trailing: TextButton(
-                            onPressed: () => _confirmUnblock(l10n, item.userId),
-                            child: Text(l10n.blockListUnblock),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+            child: _buildBody(context, l10n, state),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, AppLocalizations l10n, BlockListState state) {
+    // 빈 상태
+    if (state.items.isEmpty && !state.isLoading) {
+      return EmptyStateWidget(
+        icon: Icons.block,
+        title: l10n.blockListEmpty,
+        description: l10n.onboardingSafetyDescription,
+      );
+    }
+
+    // 정상 상태 - 차단 목록
+    final dateFormat = DateFormat.yMMMd(l10n.localeName).add_Hm();
+
+    return RefreshIndicator(
+      onRefresh: () => ref.read(blockListControllerProvider.notifier).load(),
+      child: ListView.separated(
+        padding: EdgeInsets.all(AppSpacing.spacing16),
+        itemCount: state.items.length,
+        separatorBuilder: (_, __) => SizedBox(height: AppSpacing.spacing12),
+        itemBuilder: (context, index) {
+          final item = state.items[index];
+          return Card(
+            color: AppColors.surface,
+            elevation: 1,
+            shape: RoundedRectangleBorder(
+              borderRadius: AppRadius.medium,
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(AppSpacing.spacing16),
+              child: Row(
+                children: [
+                  // 아바타
+                  _Avatar(avatarUrl: item.avatarUrl),
+                  SizedBox(width: AppSpacing.spacing12),
+
+                  // 사용자 정보
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.nickname.isNotEmpty
+                              ? item.nickname
+                              : l10n.blockListUnknownUser,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: AppColors.onSurface,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        SizedBox(height: AppSpacing.spacing4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.schedule,
+                              size: 14,
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                            SizedBox(width: AppSpacing.spacing4),
+                            Text(
+                              dateFormat.format(item.createdAt.toLocal()),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppColors.onSurfaceVariant,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // 차단 해제 버튼
+                  TextButton(
+                    onPressed: () => _confirmUnblock(l10n, item.userId),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                    ),
+                    child: Text(l10n.blockListUnblock),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -153,6 +223,7 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
   }
 }
 
+/// 아바타 위젯
 class _Avatar extends StatelessWidget {
   const _Avatar({required this.avatarUrl});
 
@@ -161,18 +232,43 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (avatarUrl.isEmpty) {
-      return const CircleAvatar(child: Icon(Icons.person));
+      return Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.person,
+          color: AppColors.primary,
+        ),
+      );
     }
-    return CircleAvatar(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        shape: BoxShape.circle,
+      ),
       child: ClipOval(
         child: Image.network(
           avatarUrl,
-          width: 40,
-          height: 40,
+          width: 48,
+          height: 48,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            return const Center(child: Icon(Icons.person));
+            return Container(
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.person,
+                color: AppColors.primary,
+              ),
+            );
           },
         ),
       ),

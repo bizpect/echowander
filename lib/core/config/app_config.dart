@@ -11,6 +11,7 @@ class AppConfig {
     required this.googleIosClientId,
     required this.supabaseUrl,
     required this.supabaseAnonKey,
+    required this.dispatchJobSecret,
     required this.admobAppIdAndroid,
     required this.admobAppIdIos,
     required this.admobRewardedUnitIdAndroid,
@@ -24,6 +25,7 @@ class AppConfig {
   final String googleIosClientId;
   final String supabaseUrl;
   final String supabaseAnonKey;
+  final String dispatchJobSecret;
   final String admobAppIdAndroid;
   final String admobAppIdIos;
   final String admobRewardedUnitIdAndroid;
@@ -44,6 +46,8 @@ class AppConfig {
         const String.fromEnvironment('APP_SUPABASE_URL', defaultValue: '');
     final supabaseAnonKey = dotenv.env['APP_SUPABASE_ANON_KEY'] ??
         const String.fromEnvironment('APP_SUPABASE_ANON_KEY', defaultValue: '');
+    final dispatchJobSecret = dotenv.env['APP_DISPATCH_JOB_SECRET'] ??
+        const String.fromEnvironment('APP_DISPATCH_JOB_SECRET', defaultValue: '');
     final admobAppIdAndroid = dotenv.env['ADMOB_APP_ID_ANDROID'] ??
         const String.fromEnvironment('ADMOB_APP_ID_ANDROID', defaultValue: '');
     final admobAppIdIos = dotenv.env['ADMOB_APP_ID_IOS'] ??
@@ -68,6 +72,7 @@ class AppConfig {
       googleIosClientId: googleIosClientId,
       supabaseUrl: supabaseUrl,
       supabaseAnonKey: supabaseAnonKey,
+      dispatchJobSecret: dispatchJobSecret,
       admobAppIdAndroid: admobAppIdAndroid,
       admobAppIdIos: admobAppIdIos,
       admobRewardedUnitIdAndroid: admobRewardedUnitIdAndroid,
