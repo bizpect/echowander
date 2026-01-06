@@ -248,5 +248,7 @@
   "profileSignOutTitle": "退出登录",
   "profileSignOutMessage": "确定要退出登录吗？",
   "profileSignOutConfirm": "退出登录",
-  "profileUserIdLabel": "用户 ID"
+  "profileUserIdLabel": "用户 ID",
+  "profileDefaultNickname": "用户",
+  "journeyDetailAnonymous": "匿名"
 }

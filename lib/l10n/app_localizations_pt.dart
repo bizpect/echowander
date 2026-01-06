@@ -720,6 +720,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get profileUserIdLabel => 'ID de utilizador';
+
+  @override
+  String get profileDefaultNickname => 'Utilizador';
+
+  @override
+  String get journeyDetailAnonymous => 'Anónimo';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -1438,4 +1444,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get profileUserIdLabel => 'ID de usuário';
+
+  @override
+  String get profileDefaultNickname => 'Usuário';
+
+  @override
+  String get journeyDetailAnonymous => 'Anônimo';
 }

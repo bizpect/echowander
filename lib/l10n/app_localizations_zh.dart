@@ -683,4 +683,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get profileUserIdLabel => '用户 ID';
+
+  @override
+  String get profileDefaultNickname => '用户';
+
+  @override
+  String get journeyDetailAnonymous => '匿名';
 }

@@ -1440,6 +1440,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'User ID'**
   String get profileUserIdLabel;
+
+  /// No description provided for @profileDefaultNickname.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get profileDefaultNickname;
+
+  /// No description provided for @journeyDetailAnonymous.
+  ///
+  /// In en, this message translates to:
+  /// **'Anonymous'**
+  String get journeyDetailAnonymous;
 }
 
 class _AppLocalizationsDelegate

@@ -687,4 +687,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get profileUserIdLabel => '사용자 ID';
+
+  @override
+  String get profileDefaultNickname => '사용자';
+
+  @override
+  String get journeyDetailAnonymous => '익명';
 }

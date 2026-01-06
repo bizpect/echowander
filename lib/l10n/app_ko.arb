@@ -248,5 +248,7 @@
   "profileSignOutTitle": "로그아웃",
   "profileSignOutMessage": "정말 로그아웃하시겠습니까?",
   "profileSignOutConfirm": "로그아웃",
-  "profileUserIdLabel": "사용자 ID"
+  "profileUserIdLabel": "사용자 ID",
+  "profileDefaultNickname": "사용자",
+  "journeyDetailAnonymous": "익명"
 }

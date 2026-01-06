@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../app/router/app_router.dart';
 import '../../../core/block/supabase_block_repository.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
-import '../../../core/presentation/widgets/fullscreen_loading.dart';
+import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/supabase_journey_repository.dart';
@@ -100,10 +100,11 @@ class _JourneyInboxDetailScreenState
           leading: IconButton(
             onPressed: () => _handleBack(context),
             icon: const Icon(Icons.arrow_back),
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           ),
         ),
         resizeToAvoidBottomInset: true,
-        body: FullScreenLoadingOverlay(
+        body: LoadingOverlay(
           isLoading: _isLoading || _isActionLoading,
           child: SafeArea(
             child: widget.item == null
@@ -162,11 +163,16 @@ class _JourneyInboxDetailScreenState
                                     final url = _imageUrls[index];
                                     return ClipRRect(
                                       borderRadius: BorderRadius.circular(12),
-                                      child: InkWell(
-                                        onTap: () => _openViewer(index),
-                                        child: Image.network(
-                                          url,
-                                          fit: BoxFit.cover,
+                                      child: Semantics(
+                                        label: '${l10n.inboxImagesLabel} ${index + 1}',
+                                        button: true,
+                                        child: InkWell(
+                                          onTap: () => _openViewer(index),
+                                          child: Image.network(
+                                            url,
+                                            semanticLabel: '${l10n.inboxImagesLabel} ${index + 1}',
+                                            fit: BoxFit.cover,
+                                          ),
                                         ),
                                       ),
                                     );
@@ -505,9 +511,10 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Dialog(
       insetPadding: const EdgeInsets.all(12),
-      backgroundColor: Colors.black,
+      backgroundColor: theme.colorScheme.surface,
       child: Stack(
         children: [
           PageView.builder(
@@ -522,6 +529,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog> {
               return InteractiveViewer(
                 child: Image.network(
                   widget.imageUrls[index],
+                  semanticLabel: widget.imageUrls.length > 1 ? "${index + 1} / ${widget.imageUrls.length}" : "",
                   fit: BoxFit.contain,
                 ),
               );
@@ -532,7 +540,8 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog> {
             right: 12,
             child: IconButton(
               onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.close, color: Colors.white),
+              icon: Icon(Icons.close, color: theme.colorScheme.onSurface),
+              tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
             ),
           ),
           Positioned(
@@ -542,7 +551,7 @@ class _ImageViewerDialogState extends State<_ImageViewerDialog> {
             child: Center(
               child: Text(
                 '${_currentIndex + 1} / ${widget.imageUrls.length}',
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: theme.colorScheme.onSurface),
               ),
             ),
           ),

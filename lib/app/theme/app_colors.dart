@@ -69,13 +69,10 @@ class AppColors {
       onError: onError,
       errorContainer: errorContainer,
       onErrorContainer: onErrorContainer,
-      // Background
-      background: background,
-      onBackground: onBackground,
       // Surface
       surface: surface,
       onSurface: onSurface,
-      surfaceVariant: surfaceVariant,
+      surfaceContainerHighest: surfaceVariant,
       onSurfaceVariant: onSurfaceVariant,
       // Outline
       outline: outline,

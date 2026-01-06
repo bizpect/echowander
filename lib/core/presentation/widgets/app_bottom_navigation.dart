@@ -5,17 +5,42 @@ import '../../../l10n/app_localizations.dart';
 
 /// 하단 네비게이션 탭 인덱스
 enum AppTab {
-  home(0),
-  inbox(1),
-  create(2),
-  alerts(3),
-  profile(4);
+  home,
+  inbox,
+  create,
+  alerts,
+  profile;
 
-  const AppTab(this.index);
-  final int index;
+  int get tabIndex {
+    switch (this) {
+      case AppTab.home:
+        return 0;
+      case AppTab.inbox:
+        return 1;
+      case AppTab.create:
+        return 2;
+      case AppTab.alerts:
+        return 3;
+      case AppTab.profile:
+        return 4;
+    }
+  }
 
   static AppTab fromIndex(int index) {
-    return AppTab.values.firstWhere((tab) => tab.index == index);
+    switch (index) {
+      case 0:
+        return AppTab.home;
+      case 1:
+        return AppTab.inbox;
+      case 2:
+        return AppTab.create;
+      case 3:
+        return AppTab.alerts;
+      case 4:
+        return AppTab.profile;
+      default:
+        return AppTab.home;
+    }
   }
 }
 
@@ -47,7 +72,7 @@ class AppBottomNavigation extends StatelessWidget {
         color: AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -64,8 +89,8 @@ class AppBottomNavigation extends StatelessWidget {
                 context: context,
                 icon: Icons.home_outlined,
                 selectedIcon: Icons.home,
-                isSelected: currentIndex == AppTab.home.index,
-                onTap: () => onTap(AppTab.home.index),
+                isSelected: currentIndex == AppTab.home.tabIndex,
+                onTap: () => onTap(AppTab.home.tabIndex),
                 semanticLabel: l10n.tabHomeLabel,
               ),
 
@@ -74,16 +99,16 @@ class AppBottomNavigation extends StatelessWidget {
                 context: context,
                 icon: Icons.inbox_outlined,
                 selectedIcon: Icons.inbox,
-                isSelected: currentIndex == AppTab.inbox.index,
-                onTap: () => onTap(AppTab.inbox.index),
+                isSelected: currentIndex == AppTab.inbox.tabIndex,
+                onTap: () => onTap(AppTab.inbox.tabIndex),
                 semanticLabel: l10n.tabInboxLabel,
               ),
 
               // Create 탭 (중앙, 강조)
               _buildCreateButton(
                 context: context,
-                isSelected: currentIndex == AppTab.create.index,
-                onTap: () => onTap(AppTab.create.index),
+                isSelected: currentIndex == AppTab.create.tabIndex,
+                onTap: () => onTap(AppTab.create.tabIndex),
                 semanticLabel: l10n.tabCreateLabel,
               ),
 
@@ -92,8 +117,8 @@ class AppBottomNavigation extends StatelessWidget {
                 context: context,
                 icon: Icons.notifications_outlined,
                 selectedIcon: Icons.notifications,
-                isSelected: currentIndex == AppTab.alerts.index,
-                onTap: () => onTap(AppTab.alerts.index),
+                isSelected: currentIndex == AppTab.alerts.tabIndex,
+                onTap: () => onTap(AppTab.alerts.tabIndex),
                 semanticLabel: l10n.tabAlertsLabel,
                 badgeCount: unreadAlertsCount,
               ),
@@ -103,8 +128,8 @@ class AppBottomNavigation extends StatelessWidget {
                 context: context,
                 icon: Icons.person_outline,
                 selectedIcon: Icons.person,
-                isSelected: currentIndex == AppTab.profile.index,
-                onTap: () => onTap(AppTab.profile.index),
+                isSelected: currentIndex == AppTab.profile.tabIndex,
+                onTap: () => onTap(AppTab.profile.tabIndex),
                 semanticLabel: l10n.tabProfileLabel,
               ),
             ],
@@ -207,7 +232,7 @@ class AppBottomNavigation extends StatelessWidget {
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),

@@ -114,7 +114,7 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
       child: ListView.separated(
         padding: const EdgeInsets.all(AppSpacing.spacing16),
         itemCount: state.items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.spacing12),
+        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.spacing12),
         itemBuilder: (context, index) {
           final item = state.items[index];
           final isHighlighted = item.journeyId == widget.highlightJourneyId;
@@ -185,7 +185,7 @@ class _InboxCard extends StatelessWidget {
 
     return Card(
       color: isHighlighted
-          ? AppColors.primary.withOpacity(0.12)
+          ? AppColors.primary.withValues(alpha: 0.12)
           : AppColors.surface,
       elevation: isHighlighted ? 2 : 1,
       shape: RoundedRectangleBorder(
@@ -210,7 +210,7 @@ class _InboxCard extends StatelessWidget {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: statusInfo.color.withOpacity(0.1),
+                      color: statusInfo.color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -266,7 +266,7 @@ class _InboxCard extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSpacing.spacing4),
                     Text(
-                      l10n.inboxImageCount.replaceAll('{count}', item.imageCount.toString()),
+                      l10n.inboxImageCount(item.imageCount),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppColors.onSurfaceVariant,
                           ),

@@ -341,7 +341,7 @@ class _ActionCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              l10n.homeInboxCount.replaceAll('{count}', badgeCount.toString()),
+                              l10n.homeInboxCount(badgeCount),
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                     color: AppColors.onError,
                                     fontWeight: FontWeight.bold,

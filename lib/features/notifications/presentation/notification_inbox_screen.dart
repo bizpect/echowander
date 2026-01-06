@@ -128,7 +128,7 @@ class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScree
                 AppSpacing.spacing24,
               ),
               itemCount: state.items.length,
-              separatorBuilder: (_, __) => SizedBox(height: AppSpacing.spacing12),
+              separatorBuilder: (context, index) => SizedBox(height: AppSpacing.spacing12),
               itemBuilder: (context, index) {
                 final item = state.items[index];
                 return _NotificationCard(
@@ -254,7 +254,7 @@ class _NotificationCard extends StatelessWidget {
     final isRead = item.isRead;
     final backgroundColor = isRead
         ? AppColors.surface
-        : AppColors.primary.withOpacity(0.08);
+        : AppColors.primary.withValues(alpha: 0.08);
     final elevation = isRead ? 1.0 : 2.0;
 
     // 알림 타입 정보 추출
@@ -279,7 +279,7 @@ class _NotificationCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: notificationInfo.color.withOpacity(0.1),
+                  color: notificationInfo.color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(

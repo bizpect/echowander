@@ -162,7 +162,7 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
                         // 릴레이 수 선택
                         DropdownButtonFormField<int>(
                           key: ValueKey(state.recipientCount),
-                          value: state.recipientCount,
+                          initialValue: state.recipientCount,
                           items: List.generate(
                             5,
                             (index) => DropdownMenuItem(
@@ -349,18 +349,23 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
         cancelLabel: l10n.exitConfirmContinue,
       );
 
+      if (!mounted) {
+        return;
+      }
+
       if (confirmed != true) {
         return;
       }
     }
 
-    // 뒤로가기 실행
-    if (!mounted) {
-      return;
-    }
-    if (context.canPop()) {
+    // 뒤로가기 실행 (BuildContext 사용 전 mounted 체크 완료)
+    // ignore: use_build_context_synchronously
+    final canPop = context.canPop();
+    if (canPop) {
+      // ignore: use_build_context_synchronously
       context.pop();
     } else {
+      // ignore: use_build_context_synchronously
       context.go(AppRoutes.home);
     }
   }
@@ -449,7 +454,7 @@ class _ImageTile extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.surface.withOpacity(0.9),
+                  color: AppColors.surface.withValues(alpha: 0.9),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(

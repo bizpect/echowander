@@ -248,5 +248,7 @@
   "profileSignOutTitle": "Sair",
   "profileSignOutMessage": "Tem certeza de que deseja sair?",
   "profileSignOutConfirm": "Sair",
-  "profileUserIdLabel": "ID de usuário"
+  "profileUserIdLabel": "ID de usuário",
+  "profileDefaultNickname": "Usuário",
+  "journeyDetailAnonymous": "Anônimo"
 }

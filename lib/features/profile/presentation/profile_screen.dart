@@ -6,7 +6,6 @@ import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
-import '../../../core/presentation/widgets/app_button.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../features/notifications/application/notification_inbox_controller.dart';
@@ -25,7 +24,6 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final session = ref.watch(sessionManagerProvider);
     final notificationState = ref.watch(notificationInboxControllerProvider);
 
     return Scaffold(
@@ -52,7 +50,7 @@ class ProfileScreen extends ConsumerWidget {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -65,7 +63,7 @@ class ProfileScreen extends ConsumerWidget {
 
                     // 닉네임
                     Text(
-                      session.user?.nickname ?? 'User',
+                      l10n.profileDefaultNickname,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             color: AppColors.onSurface,
                             fontWeight: FontWeight.bold,
@@ -84,7 +82,7 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                         SizedBox(width: AppSpacing.spacing4),
                         Text(
-                          '${l10n.profileUserIdLabel}: ${session.user?.id ?? 'N/A'}',
+                          l10n.profileUserIdLabel,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: AppColors.onSurfaceVariant,
                               ),
@@ -101,8 +99,8 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                       decoration: BoxDecoration(
                         color: notificationState.unreadCount > 0
-                            ? AppColors.warning.withOpacity(0.1)
-                            : AppColors.success.withOpacity(0.1),
+                            ? AppColors.warning.withValues(alpha: 0.1)
+                            : AppColors.success.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -153,7 +151,7 @@ class ProfileScreen extends ConsumerWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -176,14 +174,14 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   Divider(
                     height: 1,
-                    color: AppColors.onSurface.withOpacity(0.12),
+                    color: AppColors.onSurface.withValues(alpha: 0.12),
                   ),
                   ListTile(
                     leading: Container(
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -211,19 +209,22 @@ class ProfileScreen extends ConsumerWidget {
             SizedBox(height: AppSpacing.spacing24),
 
             // 로그아웃 버튼 (위험 행동 - 확인 다이얼로그)
-            AppFilledButton(
-              onPressed: () => _confirmSignOut(context, ref, l10n),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.error,
-                minimumSize: const Size(double.infinity, 48),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.logout, size: 18),
-                  SizedBox(width: AppSpacing.spacing8),
-                  Text(l10n.profileSignOutCta),
-                ],
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FilledButton(
+                onPressed: () => _confirmSignOut(context, ref, l10n),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.logout, size: 18),
+                    SizedBox(width: AppSpacing.spacing8),
+                    Text(l10n.profileSignOutCta),
+                  ],
+                ),
               ),
             ),
           ],

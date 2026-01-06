@@ -102,7 +102,7 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
       child: ListView.separated(
         padding: EdgeInsets.all(AppSpacing.spacing16),
         itemCount: state.items.length,
-        separatorBuilder: (_, __) => SizedBox(height: AppSpacing.spacing12),
+        separatorBuilder: (context, index) => SizedBox(height: AppSpacing.spacing12),
         itemBuilder: (context, index) {
           final item = state.items[index];
           return Card(
@@ -236,7 +236,7 @@ class _Avatar extends StatelessWidget {
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.1),
+          color: AppColors.primary.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(
@@ -261,7 +261,7 @@ class _Avatar extends StatelessWidget {
           errorBuilder: (context, error, stackTrace) {
             return Container(
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(

@@ -248,5 +248,7 @@
   "profileSignOutTitle": "ログアウト",
   "profileSignOutMessage": "本当にログアウトしますか？",
   "profileSignOutConfirm": "ログアウト",
-  "profileUserIdLabel": "ユーザーID"
+  "profileUserIdLabel": "ユーザーID",
+  "profileDefaultNickname": "ユーザー",
+  "journeyDetailAnonymous": "匿名"
 }

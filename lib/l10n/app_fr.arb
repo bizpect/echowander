@@ -248,5 +248,7 @@
   "profileSignOutTitle": "Se déconnecter",
   "profileSignOutMessage": "Voulez-vous vraiment vous déconnecter ?",
   "profileSignOutConfirm": "Se déconnecter",
-  "profileUserIdLabel": "ID utilisateur"
+  "profileUserIdLabel": "ID utilisateur",
+  "profileDefaultNickname": "Utilisateur",
+  "journeyDetailAnonymous": "Anonyme"
 }

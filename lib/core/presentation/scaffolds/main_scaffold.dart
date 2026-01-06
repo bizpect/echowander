@@ -21,7 +21,7 @@ class MainScaffold extends ConsumerStatefulWidget {
 
 class _MainScaffoldState extends ConsumerState<MainScaffold>
     with SingleTickerProviderStateMixin {
-  int _currentIndex = AppTab.home.index;
+  int _currentIndex = AppTab.home.tabIndex;
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
@@ -63,7 +63,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
     });
 
     // 탭 전환 시 해당 탭의 데이터 새로고침
-    if (index == AppTab.alerts.index) {
+    if (index == AppTab.alerts.tabIndex) {
       ref.read(notificationInboxControllerProvider.notifier).load();
     }
   }
@@ -76,12 +76,12 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
 
     return PopScope(
       // 루트 화면에서 뒤로가기 시 앱 종료 확인
-      canPop: _currentIndex != AppTab.home.index,
-      onPopInvoked: (didPop) {
-        if (!didPop && _currentIndex != AppTab.home.index) {
+      canPop: _currentIndex != AppTab.home.tabIndex,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _currentIndex != AppTab.home.tabIndex) {
           // 다른 탭에서 뒤로가기 시 Home으로 이동
           setState(() {
-            _currentIndex = AppTab.home.index;
+            _currentIndex = AppTab.home.tabIndex;
           });
         }
       },

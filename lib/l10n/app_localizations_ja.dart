@@ -684,4 +684,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get profileUserIdLabel => 'ユーザーID';
+
+  @override
+  String get profileDefaultNickname => 'ユーザー';
+
+  @override
+  String get journeyDetailAnonymous => '匿名';
 }

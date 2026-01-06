@@ -105,14 +105,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                       Divider(
                         height: 1,
-                        color: AppColors.onSurface.withOpacity(0.12),
+                        color: AppColors.onSurface.withValues(alpha: 0.12),
                       ),
                       ListTile(
                         leading: Container(
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
@@ -154,7 +154,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: AppColors.error.withOpacity(0.1),
+                        color: AppColors.error.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(

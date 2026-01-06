@@ -712,4 +712,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get profileUserIdLabel => 'ID de usuario';
+
+  @override
+  String get profileDefaultNickname => 'Usuario';
+
+  @override
+  String get journeyDetailAnonymous => 'Anónimo';
 }

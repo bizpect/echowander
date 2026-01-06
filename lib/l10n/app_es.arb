@@ -248,5 +248,7 @@
   "profileSignOutTitle": "Cerrar sesión",
   "profileSignOutMessage": "¿Seguro que quieres cerrar sesión?",
   "profileSignOutConfirm": "Cerrar sesión",
-  "profileUserIdLabel": "ID de usuario"
+  "profileUserIdLabel": "ID de usuario",
+  "profileDefaultNickname": "Usuario",
+  "journeyDetailAnonymous": "Anónimo"
 }

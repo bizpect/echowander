@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../../../app/router/app_router.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
-import '../../../core/presentation/widgets/fullscreen_loading.dart';
+import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/journey_list_controller.dart';
 
@@ -56,15 +56,17 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
           leading: IconButton(
             onPressed: () => _handleBack(context),
             icon: const Icon(Icons.arrow_back),
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           ),
           actions: [
             IconButton(
               onPressed: () => controller.load(),
               icon: const Icon(Icons.refresh),
+              tooltip: l10n.inboxRefresh,
             ),
           ],
         ),
-        body: FullScreenLoadingOverlay(
+        body: LoadingOverlay(
           isLoading: state.isLoading,
           child: SafeArea(
             child: state.items.isEmpty

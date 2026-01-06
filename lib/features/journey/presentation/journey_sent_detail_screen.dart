@@ -408,7 +408,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
             children: progress.countryCodes
                 .map((code) => Chip(
                       label: Text(code),
-                      backgroundColor: AppColors.primary.withOpacity(0.1),
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                       labelStyle: TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.bold,
@@ -423,7 +423,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
   Widget _buildResultsSection(AppLocalizations l10n, JourneyProgress progress, bool isCompleted) {
     final highlightDecoration = widget.fromNotification
         ? BoxDecoration(
-            color: AppColors.primary.withOpacity(0.08),
+            color: AppColors.primary.withValues(alpha: 0.08),
             borderRadius: AppRadius.medium,
             border: Border.all(
               color: AppColors.primary,
@@ -477,7 +477,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
 
   Widget _buildResultsLocked(AppLocalizations l10n) {
     return Card(
-      color: AppColors.warning.withOpacity(0.1),
+      color: AppColors.warning.withValues(alpha: 0.1),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: AppRadius.medium,
@@ -504,7 +504,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
 
   Widget _buildAdGate(AppLocalizations l10n) {
     return Card(
-      color: AppColors.primary.withOpacity(0.1),
+      color: AppColors.primary.withValues(alpha: 0.1),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: AppRadius.medium,
@@ -529,12 +529,13 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
               ],
             ),
             SizedBox(height: AppSpacing.spacing16),
-            AppFilledButton(
-              onPressed: _handleUnlockResults,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: AppFilledButton(
+                onPressed: _handleUnlockResults,
+                child: Text(l10n.journeyDetailAdCta),
               ),
-              child: Text(l10n.journeyDetailAdCta),
             ),
           ],
         ),
@@ -544,7 +545,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
 
   Widget _buildResultsError(AppLocalizations l10n) {
     return Card(
-      color: AppColors.error.withOpacity(0.1),
+      color: AppColors.error.withValues(alpha: 0.1),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: AppRadius.medium,
@@ -586,7 +587,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _results.length,
-      separatorBuilder: (_, __) => SizedBox(height: AppSpacing.spacing12),
+      separatorBuilder: (context, index) => SizedBox(height: AppSpacing.spacing12),
       itemBuilder: (context, index) {
         final result = _results[index];
         return Card(
@@ -610,7 +611,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
                     ),
                     SizedBox(width: AppSpacing.spacing4),
                     Text(
-                      'Anonymous',
+                      l10n.journeyDetailAnonymous,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: AppColors.onSurfaceVariant,
                           ),
@@ -726,7 +727,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.spam, color: AppColors.error),
+              leading: Icon(Icons.report_problem, color: AppColors.error),
               title: Text(l10n.inboxReportSpam),
               onTap: () => Navigator.of(context).pop('SPAM'),
             ),
@@ -820,8 +821,8 @@ class _StatusSummaryCard extends StatelessWidget {
 
     return Card(
       color: isHighlighted
-          ? AppColors.primary.withOpacity(0.12)
-          : statusColor.withOpacity(0.1),
+          ? AppColors.primary.withValues(alpha: 0.12)
+          : statusColor.withValues(alpha: 0.1),
       elevation: isHighlighted ? 3 : 2,
       shape: RoundedRectangleBorder(
         borderRadius: AppRadius.medium,
@@ -841,7 +842,7 @@ class _StatusSummaryCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.2),
+                    color: statusColor.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(

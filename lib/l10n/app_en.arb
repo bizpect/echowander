@@ -248,5 +248,7 @@
   "profileSignOutTitle": "Sign out",
   "profileSignOutMessage": "Are you sure you want to sign out?",
   "profileSignOutConfirm": "Sign out",
-  "profileUserIdLabel": "User ID"
+  "profileUserIdLabel": "User ID",
+  "profileDefaultNickname": "User",
+  "journeyDetailAnonymous": "Anonymous"
 }

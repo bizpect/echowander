@@ -708,4 +708,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileUserIdLabel => 'User ID';
+
+  @override
+  String get profileDefaultNickname => 'User';
+
+  @override
+  String get journeyDetailAnonymous => 'Anonymous';
 }
