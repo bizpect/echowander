@@ -587,55 +587,58 @@ class AppLocalizationsJa extends AppLocalizations {
   String get onboardingNotificationTitle => '通知の許可';
 
   @override
-  String get onboardingNotificationDescription => '結果や重要なお知らせを受け取れます。';
+  String get onboardingNotificationDescription => 'リレーメッセージの到着と結果の完了をお知らせします。';
 
   @override
-  String get onboardingNotificationNote => '広告の通知は送りません。設定でいつでも変更できます。';
+  String get onboardingNotificationNote => '設定でいつでも変更できます。このステップはスキップできます。';
 
   @override
-  String get onboardingAllowNotifications => '通知を許可する';
+  String get onboardingAllowNotifications => '許可する';
 
   @override
   String get onboardingPhotoTitle => '写真へのアクセス';
 
   @override
-  String get onboardingPhotoDescription => 'メッセージに画像を添付するために必要です。';
+  String get onboardingPhotoDescription => 'プロフィール画像設定とメッセージ画像添付の際にのみ使用します。';
 
   @override
-  String get onboardingPhotoNote => '最大3枚まで添付できます。選択した写真のみアクセスします。';
+  String get onboardingPhotoNote => '選択した写真のみアクセスします。このステップはスキップできます。';
 
   @override
-  String get onboardingAllowPhotos => '写真へのアクセスを許可する';
+  String get onboardingAllowPhotos => '許可する';
 
   @override
   String get onboardingGuidelineTitle => 'コミュニティガイドライン';
 
   @override
-  String get onboardingGuidelineDescription => '嫌がらせ、ヘイト、個人情報の共有は禁止です。';
+  String get onboardingGuidelineDescription =>
+      '安全な利用のため、嫌がらせ、ヘイトスピーチ、個人情報の共有などを禁止します。違反時にはコンテンツが制限される場合があります。';
 
   @override
-  String get onboardingAgreeGuidelines => 'ガイドラインに同意します。';
+  String get onboardingAgreeGuidelines => 'コミュニティガイドラインに同意します。';
 
   @override
   String get onboardingContentPolicyTitle => 'コンテンツポリシー';
 
   @override
-  String get onboardingContentPolicyDescription => '有害または禁止された内容は削除される場合があります。';
+  String get onboardingContentPolicyDescription =>
+      '違法、有害、暴力的なコンテンツは禁止されており、違反コンテンツは審査後に制限される場合があります。';
 
   @override
   String get onboardingAgreeContentPolicy => 'コンテンツポリシーに同意します。';
 
   @override
-  String get onboardingSafetyTitle => '報告・ブロック';
+  String get onboardingSafetyTitle => '報告とブロック';
 
   @override
-  String get onboardingSafetyDescription => 'いつでも報告やブロックができます。';
+  String get onboardingSafetyDescription =>
+      '不快または不適切なコンテンツを報告したり、特定のユーザーをブロックしてメッセージを受信しないようにできます。';
 
   @override
-  String get onboardingConfirmSafety => '報告・ブロックの方針を確認しました。';
+  String get onboardingConfirmSafety => '報告とブロックのポリシーを確認しました。';
 
   @override
-  String get onboardingSkip => 'あとで';
+  String get onboardingSkip => 'スキップ';
 
   @override
   String get onboardingNext => '次へ';

@@ -586,40 +586,42 @@ class AppLocalizationsZh extends AppLocalizations {
   String get onboardingNotificationTitle => '通知权限';
 
   @override
-  String get onboardingNotificationDescription => '接收结果和重要通知。';
+  String get onboardingNotificationDescription => '当接力消息到达和结果准备好时,我们会通知您。';
 
   @override
-  String get onboardingNotificationNote => '不会发送推广通知，可在设置中更改。';
+  String get onboardingNotificationNote => '您可以随时在设置中更改。此步骤为可选。';
 
   @override
-  String get onboardingAllowNotifications => '允许通知';
+  String get onboardingAllowNotifications => '允许';
 
   @override
   String get onboardingPhotoTitle => '照片访问';
 
   @override
-  String get onboardingPhotoDescription => '用于给消息添加图片。';
+  String get onboardingPhotoDescription => '仅用于设置个人资料图片和向消息附加图片。';
 
   @override
-  String get onboardingPhotoNote => '最多可添加 3 张，仅访问已选择的照片。';
+  String get onboardingPhotoNote => '我们仅访问您选择的照片。此步骤为可选。';
 
   @override
-  String get onboardingAllowPhotos => '允许访问照片';
+  String get onboardingAllowPhotos => '允许';
 
   @override
-  String get onboardingGuidelineTitle => '社区规范';
+  String get onboardingGuidelineTitle => '社区准则';
 
   @override
-  String get onboardingGuidelineDescription => '禁止骚扰、仇恨或泄露个人信息。';
+  String get onboardingGuidelineDescription =>
+      '为了安全使用，禁止骚扰、仇恨言论和分享个人信息。违规行为可能导致内容限制。';
 
   @override
-  String get onboardingAgreeGuidelines => '我同意社区规范。';
+  String get onboardingAgreeGuidelines => '我同意社区准则。';
 
   @override
   String get onboardingContentPolicyTitle => '内容政策';
 
   @override
-  String get onboardingContentPolicyDescription => '违规或有害内容可能被移除。';
+  String get onboardingContentPolicyDescription =>
+      '禁止非法、有害和暴力内容。违规内容经审核后可能会被限制。';
 
   @override
   String get onboardingAgreeContentPolicy => '我同意内容政策。';
@@ -628,13 +630,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get onboardingSafetyTitle => '举报与屏蔽';
 
   @override
-  String get onboardingSafetyDescription => '可随时举报或屏蔽。';
+  String get onboardingSafetyDescription => '您可以举报冒犯性或不当内容，或屏蔽特定用户以停止接收其消息。';
 
   @override
-  String get onboardingConfirmSafety => '我已了解举报与屏蔽政策。';
+  String get onboardingConfirmSafety => '我了解举报与屏蔽政策。';
 
   @override
-  String get onboardingSkip => '稍后';
+  String get onboardingSkip => '跳过';
 
   @override
   String get onboardingNext => '下一步';

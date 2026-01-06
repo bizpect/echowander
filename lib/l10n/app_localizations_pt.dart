@@ -613,35 +613,35 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get onboardingNotificationDescription =>
-      'Receba resultados e avisos importantes.';
+      'Notificaremos quando as mensagens de revezamento chegarem e os resultados estiverem prontos.';
 
   @override
   String get onboardingNotificationNote =>
-      'Não enviamos notificações promocionais. Pode alterar nas Definições.';
+      'Pode alterar isto a qualquer momento nas Definições. Esta etapa é opcional.';
 
   @override
-  String get onboardingAllowNotifications => 'Permitir notificações';
+  String get onboardingAllowNotifications => 'Permitir';
 
   @override
   String get onboardingPhotoTitle => 'Acesso a fotos';
 
   @override
   String get onboardingPhotoDescription =>
-      'Necessário para anexar imagens à mensagem.';
+      'Usado apenas para definir imagens de perfil e anexar imagens às mensagens.';
 
   @override
   String get onboardingPhotoNote =>
-      'Até 3 imagens. Acedemos apenas às selecionadas.';
+      'Acedemos apenas às fotos que selecionar. Esta etapa é opcional.';
 
   @override
-  String get onboardingAllowPhotos => 'Permitir acesso a fotos';
+  String get onboardingAllowPhotos => 'Permitir';
 
   @override
   String get onboardingGuidelineTitle => 'Diretrizes da comunidade';
 
   @override
   String get onboardingGuidelineDescription =>
-      'Sem assédio, ódio ou dados pessoais.';
+      'Para uma utilização segura, são proibidos o assédio, o discurso de ódio e a partilha de informações pessoais. As violações podem resultar em restrições de conteúdo.';
 
   @override
   String get onboardingAgreeGuidelines =>
@@ -652,7 +652,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get onboardingContentPolicyDescription =>
-      'Conteúdo proibido ou prejudicial pode ser removido.';
+      'Conteúdo ilegal, prejudicial e violento é proibido. O conteúdo em violação pode ser restringido após análise.';
 
   @override
   String get onboardingAgreeContentPolicy =>
@@ -663,14 +663,14 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get onboardingSafetyDescription =>
-      'Pode denunciar ou bloquear a qualquer momento.';
+      'Pode denunciar conteúdo ofensivo ou inadequado, ou bloquear utilizadores específicos para deixar de receber as suas mensagens.';
 
   @override
   String get onboardingConfirmSafety =>
       'Compreendo a política de denúncia e bloqueio.';
 
   @override
-  String get onboardingSkip => 'Agora não';
+  String get onboardingSkip => 'Ignorar';
 
   @override
   String get onboardingNext => 'Seguinte';
@@ -1338,35 +1338,35 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get onboardingNotificationDescription =>
-      'Receba resultados e avisos importantes.';
+      'Notificaremos quando as mensagens de revezamento chegarem e os resultados estiverem prontos.';
 
   @override
   String get onboardingNotificationNote =>
-      'Não enviamos notificações promocionais. Dá para mudar em Ajustes.';
+      'Você pode alterar isso a qualquer momento em Ajustes. Esta etapa é opcional.';
 
   @override
-  String get onboardingAllowNotifications => 'Permitir notificações';
+  String get onboardingAllowNotifications => 'Permitir';
 
   @override
   String get onboardingPhotoTitle => 'Acesso às fotos';
 
   @override
   String get onboardingPhotoDescription =>
-      'Necessário para anexar imagens à mensagem.';
+      'Usado apenas para definir imagens de perfil e anexar imagens às mensagens.';
 
   @override
   String get onboardingPhotoNote =>
-      'Até 3 imagens. Acessamos apenas as selecionadas.';
+      'Acessamos apenas as fotos que você selecionar. Esta etapa é opcional.';
 
   @override
-  String get onboardingAllowPhotos => 'Permitir acesso às fotos';
+  String get onboardingAllowPhotos => 'Permitir';
 
   @override
   String get onboardingGuidelineTitle => 'Diretrizes da comunidade';
 
   @override
   String get onboardingGuidelineDescription =>
-      'Sem assédio, ódio ou dados pessoais.';
+      'Para um uso seguro, são proibidos o assédio, o discurso de ódio e o compartilhamento de informações pessoais. As violações podem resultar em restrições de conteúdo.';
 
   @override
   String get onboardingAgreeGuidelines =>
@@ -1377,7 +1377,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get onboardingContentPolicyDescription =>
-      'Conteúdo proibido ou nocivo pode ser removido.';
+      'Conteúdo ilegal, prejudicial e violento é proibido. O conteúdo em violação pode ser restringido após análise.';
 
   @override
   String get onboardingAgreeContentPolicy =>
@@ -1388,14 +1388,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get onboardingSafetyDescription =>
-      'Você pode denunciar ou bloquear a qualquer momento.';
+      'Você pode denunciar conteúdo ofensivo ou inadequado, ou bloquear usuários específicos para não receber mais suas mensagens.';
 
   @override
   String get onboardingConfirmSafety =>
       'Entendo a política de denúncia e bloqueio.';
 
   @override
-  String get onboardingSkip => 'Agora não';
+  String get onboardingSkip => 'Pular';
 
   @override
   String get onboardingNext => 'Próximo';

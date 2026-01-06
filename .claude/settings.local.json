@@ -3,7 +3,14 @@
     "allow": [
       "Bash(flutter gen-l10n:*)",
       "Bash(flutter analyze:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "WebFetch(domain:code.claude.com)",
+      "Bash(/mnt/c/Users/me/dev/flutter/bin/flutter analyze)",
+      "Bash(/mnt/c/etc/flutter/bin/flutter analyze)",
+      "Bash(/usr/bin/flutter gen-l10n)",
+      "Bash(/mnt/c/etc/flutter/bin/flutter gen-l10n)",
+      "Bash(/usr/bin/flutter analyze)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

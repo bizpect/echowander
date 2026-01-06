@@ -588,57 +588,59 @@ class AppLocalizationsKo extends AppLocalizations {
   String get onboardingNotificationTitle => '알림 권한';
 
   @override
-  String get onboardingNotificationDescription =>
-      '메시지 결과와 중요한 소식을 놓치지 않게 알려드려요.';
+  String get onboardingNotificationDescription => '릴레이 메시지 도착과 결과 완료를 알려드립니다.';
 
   @override
   String get onboardingNotificationNote =>
-      '광고성 알림은 보내지 않아요. 설정에서 언제든 바꿀 수 있어요.';
+      '설정에서 언제든 변경할 수 있으며, 이 단계는 건너뛸 수 있습니다.';
 
   @override
-  String get onboardingAllowNotifications => '알림 권한 허용하기';
+  String get onboardingAllowNotifications => '허용';
 
   @override
   String get onboardingPhotoTitle => '사진 접근 권한';
 
   @override
-  String get onboardingPhotoDescription => '메시지에 사진을 첨부하려면 필요해요.';
+  String get onboardingPhotoDescription => '프로필 이미지 설정 및 메시지 이미지 첨부 시에만 사용됩니다.';
 
   @override
-  String get onboardingPhotoNote => '최대 3장까지 첨부할 수 있어요. 선택한 사진만 접근해요.';
+  String get onboardingPhotoNote => '선택한 사진만 접근하며, 이 단계는 건너뛸 수 있습니다.';
 
   @override
-  String get onboardingAllowPhotos => '사진 접근 허용하기';
+  String get onboardingAllowPhotos => '허용';
 
   @override
   String get onboardingGuidelineTitle => '커뮤니티 가이드라인';
 
   @override
-  String get onboardingGuidelineDescription => '혐오, 괴롭힘, 개인정보 노출은 금지예요.';
+  String get onboardingGuidelineDescription =>
+      '안전한 이용을 위해 혐오, 괴롭힘, 개인정보 노출 등의 행위를 금지합니다. 위반 시 콘텐츠가 제한될 수 있습니다.';
 
   @override
-  String get onboardingAgreeGuidelines => '가이드라인에 동의합니다.';
+  String get onboardingAgreeGuidelines => '커뮤니티 가이드라인에 동의합니다.';
 
   @override
   String get onboardingContentPolicyTitle => '콘텐츠 정책';
 
   @override
-  String get onboardingContentPolicyDescription => '유해하거나 금지된 콘텐츠는 삭제될 수 있어요.';
+  String get onboardingContentPolicyDescription =>
+      '불법, 유해, 폭력적 콘텐츠는 금지되며, 위반 콘텐츠는 검토 후 제한될 수 있습니다.';
 
   @override
   String get onboardingAgreeContentPolicy => '콘텐츠 정책에 동의합니다.';
 
   @override
-  String get onboardingSafetyTitle => '신고/차단 안내';
+  String get onboardingSafetyTitle => '신고 및 차단';
 
   @override
-  String get onboardingSafetyDescription => '불쾌한 콘텐츠는 신고하거나 차단할 수 있어요.';
+  String get onboardingSafetyDescription =>
+      '불쾌하거나 부적절한 콘텐츠를 신고하거나, 특정 사용자를 차단하여 메시지를 받지 않을 수 있습니다.';
 
   @override
-  String get onboardingConfirmSafety => '신고/차단 안내를 확인했습니다.';
+  String get onboardingConfirmSafety => '신고 및 차단 정책을 확인했습니다.';
 
   @override
-  String get onboardingSkip => '나중에';
+  String get onboardingSkip => '건너뛰기';
 
   @override
   String get onboardingNext => '다음';

@@ -69,11 +69,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           isLoading: state.isLoading,
           child: SafeArea(
             child: ListView(
-              padding: EdgeInsets.all(AppSpacing.spacing16),
+              padding: const EdgeInsets.all(AppSpacing.spacing16),
               children: [
                 // 알림 섹션
                 _SectionHeader(title: l10n.settingsSectionNotification),
-                SizedBox(height: AppSpacing.spacing12),
+                const SizedBox(height: AppSpacing.spacing12),
 
                 Card(
                   color: AppColors.surface,
@@ -98,7 +98,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 color: AppColors.onSurfaceVariant,
                               ),
                         ),
-                        contentPadding: EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.spacing16,
                           vertical: AppSpacing.spacing8,
                         ),
@@ -137,11 +137,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
 
-                SizedBox(height: AppSpacing.spacing24),
+                const SizedBox(height: AppSpacing.spacing24),
 
                 // 안전 섹션
                 _SectionHeader(title: l10n.settingsSectionSafety),
-                SizedBox(height: AppSpacing.spacing12),
+                const SizedBox(height: AppSpacing.spacing12),
 
                 Card(
                   color: AppColors.surface,

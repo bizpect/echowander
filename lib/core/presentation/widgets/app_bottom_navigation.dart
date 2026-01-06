@@ -51,7 +51,8 @@ enum AppTab {
 /// - 아이콘만 표시, 텍스트 라벨 없음
 /// - Create는 중앙에 Floating 느낌으로 강조
 /// - Alerts에는 읽지 않은 알림 카운트 뱃지 표시
-class AppBottomNavigation extends StatelessWidget {
+/// - 탭 전환 시 subtle scale & opacity 애니메이션
+class AppBottomNavigation extends StatefulWidget {
   const AppBottomNavigation({
     super.key,
     required this.currentIndex,
@@ -62,6 +63,53 @@ class AppBottomNavigation extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
   final int unreadAlertsCount;
+
+  @override
+  State<AppBottomNavigation> createState() => _AppBottomNavigationState();
+}
+
+class _AppBottomNavigationState extends State<AppBottomNavigation>
+    with TickerProviderStateMixin {
+  late Map<int, AnimationController> _controllers;
+
+  @override
+  void initState() {
+    super.initState();
+    // 각 탭마다 독립적인 AnimationController 생성
+    _controllers = {
+      for (var i = 0; i < 5; i++)
+        i: AnimationController(
+          duration: const Duration(milliseconds: 150),
+          vsync: this,
+        ),
+    };
+    // 현재 선택된 탭은 애니메이션 완료 상태로 시작
+    _controllers[widget.currentIndex]?.value = 1.0;
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _controllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(AppBottomNavigation oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 탭이 변경되었을 때 애니메이션 실행
+    if (oldWidget.currentIndex != widget.currentIndex) {
+      // 이전 탭은 축소 (reverse)
+      _controllers[oldWidget.currentIndex]?.reverse();
+      // 새 탭은 확대 (forward)
+      _controllers[widget.currentIndex]?.forward();
+    }
+  }
+
+  int get currentIndex => widget.currentIndex;
+  ValueChanged<int> get onTap => widget.onTap;
+  int get unreadAlertsCount => widget.unreadAlertsCount;
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +140,7 @@ class AppBottomNavigation extends StatelessWidget {
                 isSelected: currentIndex == AppTab.home.tabIndex,
                 onTap: () => onTap(AppTab.home.tabIndex),
                 semanticLabel: l10n.tabHomeLabel,
+                tabIndex: AppTab.home.tabIndex,
               ),
 
               // Inbox 탭
@@ -102,6 +151,7 @@ class AppBottomNavigation extends StatelessWidget {
                 isSelected: currentIndex == AppTab.inbox.tabIndex,
                 onTap: () => onTap(AppTab.inbox.tabIndex),
                 semanticLabel: l10n.tabInboxLabel,
+                tabIndex: AppTab.inbox.tabIndex,
               ),
 
               // Create 탭 (중앙, 강조)
@@ -121,6 +171,7 @@ class AppBottomNavigation extends StatelessWidget {
                 onTap: () => onTap(AppTab.alerts.tabIndex),
                 semanticLabel: l10n.tabAlertsLabel,
                 badgeCount: unreadAlertsCount,
+                tabIndex: AppTab.alerts.tabIndex,
               ),
 
               // Profile 탭
@@ -131,6 +182,7 @@ class AppBottomNavigation extends StatelessWidget {
                 isSelected: currentIndex == AppTab.profile.tabIndex,
                 onTap: () => onTap(AppTab.profile.tabIndex),
                 semanticLabel: l10n.tabProfileLabel,
+                tabIndex: AppTab.profile.tabIndex,
               ),
             ],
           ),
@@ -148,7 +200,11 @@ class AppBottomNavigation extends StatelessWidget {
     required VoidCallback onTap,
     required String semanticLabel,
     int badgeCount = 0,
+    int? tabIndex,
   }) {
+    // 해당 탭의 AnimationController 가져오기
+    final controller = tabIndex != null ? _controllers[tabIndex] : null;
+
     return Expanded(
       child: Semantics(
         label: semanticLabel,
@@ -164,11 +220,33 @@ class AppBottomNavigation extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Icon(
-                  isSelected ? selectedIcon : icon,
-                  size: 28,
-                  color: isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
-                ),
+                // 애니메이션 래퍼: scale 0.95 → 1.0, opacity 0.6 → 1.0
+                if (controller != null)
+                  AnimatedBuilder(
+                    animation: controller,
+                    builder: (context, child) {
+                      final scale = 0.95 + (0.05 * controller.value);
+                      final opacity = 0.6 + (0.4 * controller.value);
+                      return Transform.scale(
+                        scale: scale,
+                        child: Opacity(
+                          opacity: opacity,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Icon(
+                      isSelected ? selectedIcon : icon,
+                      size: 28,
+                      color: isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
+                    ),
+                  )
+                else
+                  Icon(
+                    isSelected ? selectedIcon : icon,
+                    size: 28,
+                    color: isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
+                  ),
                 // 뱃지 (Alerts 탭 전용)
                 if (badgeCount > 0)
                   Positioned(
@@ -214,6 +292,9 @@ class AppBottomNavigation extends StatelessWidget {
     required VoidCallback onTap,
     required String semanticLabel,
   }) {
+    // Create 탭의 AnimationController 가져오기 (index = 2)
+    final controller = _controllers[AppTab.create.tabIndex];
+
     return Expanded(
       child: Semantics(
         label: semanticLabel,
@@ -224,24 +305,38 @@ class AppBottomNavigation extends StatelessWidget {
             onTap: onTap,
             borderRadius: BorderRadius.circular(28),
             customBorder: const CircleBorder(),
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primaryContainer : AppColors.primary,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
+            child: AnimatedBuilder(
+              animation: controller!,
+              builder: (context, child) {
+                final scale = 0.95 + (0.05 * controller.value);
+                final opacity = 0.6 + (0.4 * controller.value);
+                return Transform.scale(
+                  scale: scale,
+                  child: Opacity(
+                    opacity: opacity,
+                    child: child,
                   ),
-                ],
-              ),
-              child: Icon(
-                isSelected ? Icons.edit : Icons.add,
-                size: 28,
-                color: isSelected ? AppColors.onPrimaryContainer : AppColors.onPrimary,
+                );
+              },
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primaryContainer : AppColors.primary,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  isSelected ? Icons.edit : Icons.add,
+                  size: 28,
+                  color: isSelected ? AppColors.onPrimaryContainer : AppColors.onPrimary,
+                ),
               ),
             ),
           ),

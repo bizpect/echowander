@@ -26,15 +26,68 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with TickerProviderStateMixin {
+  late List<AnimationController> _controllers;
+  late List<Animation<double>> _fadeAnimations;
+  late List<Animation<Offset>> _slideAnimations;
+
   @override
   void initState() {
     super.initState();
+
+    // 3개 카드를 위한 애니메이션 컨트롤러 생성 (최근 Journey, Inbox, Create)
+    _controllers = List.generate(
+      3,
+      (index) => AnimationController(
+        duration: const Duration(milliseconds: 300),
+        vsync: this,
+      ),
+    );
+
+    // Fade 애니메이션
+    _fadeAnimations = _controllers
+        .map((controller) => CurvedAnimation(
+              parent: controller,
+              curve: Curves.easeOut,
+            ))
+        .toList();
+
+    // Slide Up 애니메이션
+    _slideAnimations = _controllers
+        .map((controller) => Tween<Offset>(
+              begin: const Offset(0, 0.1), // 약간 아래에서 시작
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: controller,
+              curve: Curves.easeOut,
+            )))
+        .toList();
+
+    // Staggered 애니메이션 시작 (50ms 간격)
+    Future.microtask(() {
+      for (var i = 0; i < _controllers.length; i++) {
+        Future.delayed(Duration(milliseconds: i * 50), () {
+          if (mounted) {
+            _controllers[i].forward();
+          }
+        });
+      }
+    });
+
     // 데이터 초기 로드
     Future.microtask(() {
       ref.read(journeyListControllerProvider.notifier).load(limit: 3);
       ref.read(journeyInboxControllerProvider.notifier).load(limit: 20);
     });
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   @override
@@ -64,11 +117,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: ListView(
               padding: const EdgeInsets.all(AppSpacing.spacing16),
               children: [
-                // 최근 보낸 Journey 섹션
-                _RecentJourneysSection(
-                  items: journeyListState.items,
-                  hasError: journeyListState.message != null,
-                  onRetry: _handleRefresh,
+                // 최근 보낸 Journey 섹션 (애니메이션 index 0)
+                _buildAnimatedCard(
+                  index: 0,
+                  child: _RecentJourneysSection(
+                    items: journeyListState.items,
+                    hasError: journeyListState.message != null,
+                    onRetry: _handleRefresh,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.spacing24),
 
@@ -82,24 +138,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 const SizedBox(height: AppSpacing.spacing12),
 
-                // Inbox 액션 카드
-                _ActionCard(
-                  icon: Icons.inbox,
-                  title: l10n.homeInboxCardTitle,
-                  description: l10n.homeInboxCardDescription,
-                  badgeCount: inboxState.items.length,
-                  onTap: () => context.go(AppRoutes.inbox),
-                  isPrimary: false,
+                // Inbox 액션 카드 (애니메이션 index 1)
+                _buildAnimatedCard(
+                  index: 1,
+                  child: _ActionCard(
+                    icon: Icons.inbox,
+                    title: l10n.homeInboxCardTitle,
+                    description: l10n.homeInboxCardDescription,
+                    badgeCount: inboxState.items.length,
+                    onTap: () => context.go(AppRoutes.inbox),
+                    isPrimary: false,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.spacing12),
 
-                // Create 액션 카드
-                _ActionCard(
-                  icon: Icons.edit,
-                  title: l10n.homeCreateCardTitle,
-                  description: l10n.homeCreateCardDescription,
-                  onTap: () => context.go(AppRoutes.compose),
-                  isPrimary: true,
+                // Create 액션 카드 (애니메이션 index 2)
+                _buildAnimatedCard(
+                  index: 2,
+                  child: _ActionCard(
+                    icon: Icons.edit,
+                    title: l10n.homeCreateCardTitle,
+                    description: l10n.homeCreateCardDescription,
+                    onTap: () => context.go(AppRoutes.compose),
+                    isPrimary: true,
+                  ),
                 ),
               ],
             ),
@@ -114,6 +176,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ref.read(journeyListControllerProvider.notifier).load(limit: 3),
       ref.read(journeyInboxControllerProvider.notifier).load(limit: 20),
     ]);
+  }
+
+  /// Staggered 애니메이션이 적용된 카드 래퍼
+  Widget _buildAnimatedCard({required int index, required Widget child}) {
+    if (index >= _controllers.length) {
+      return child; // 범위 초과 시 애니메이션 없이 반환
+    }
+
+    return FadeTransition(
+      opacity: _fadeAnimations[index],
+      child: SlideTransition(
+        position: _slideAnimations[index],
+        child: child,
+      ),
+    );
   }
 }
 

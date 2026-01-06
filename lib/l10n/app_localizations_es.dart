@@ -608,35 +608,35 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onboardingNotificationDescription =>
-      'Recibe resultados y avisos importantes.';
+      'Te notificaremos cuando lleguen mensajes de relevo y los resultados estén listos.';
 
   @override
   String get onboardingNotificationNote =>
-      'No enviamos notificaciones promocionales. Puedes cambiarlo en Ajustes.';
+      'Puedes cambiar esto en cualquier momento en Ajustes. Este paso es opcional.';
 
   @override
-  String get onboardingAllowNotifications => 'Permitir notificaciones';
+  String get onboardingAllowNotifications => 'Permitir';
 
   @override
   String get onboardingPhotoTitle => 'Acceso a fotos';
 
   @override
   String get onboardingPhotoDescription =>
-      'Necesario para adjuntar imágenes a tu mensaje.';
+      'Se usa solo para configurar imágenes de perfil y adjuntar imágenes a mensajes.';
 
   @override
   String get onboardingPhotoNote =>
-      'Puedes adjuntar hasta 3 fotos. Solo accedemos a las seleccionadas.';
+      'Solo accedemos a las fotos que selecciones. Este paso es opcional.';
 
   @override
-  String get onboardingAllowPhotos => 'Permitir acceso a fotos';
+  String get onboardingAllowPhotos => 'Permitir';
 
   @override
   String get onboardingGuidelineTitle => 'Normas de la comunidad';
 
   @override
   String get onboardingGuidelineDescription =>
-      'Prohibido el acoso, el odio y compartir datos personales.';
+      'Para un uso seguro, están prohibidos el acoso, el discurso de odio y compartir información personal. Las violaciones pueden resultar en restricciones de contenido.';
 
   @override
   String get onboardingAgreeGuidelines => 'Acepto las normas de la comunidad.';
@@ -646,7 +646,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onboardingContentPolicyDescription =>
-      'El contenido prohibido o dañino puede eliminarse.';
+      'El contenido ilegal, dañino y violento está prohibido. El contenido que viole las normas puede ser restringido tras revisión.';
 
   @override
   String get onboardingAgreeContentPolicy => 'Acepto la política de contenido.';
@@ -656,14 +656,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onboardingSafetyDescription =>
-      'Puedes reportar o bloquear en cualquier momento.';
+      'Puedes reportar contenido ofensivo o inapropiado, o bloquear usuarios específicos para dejar de recibir sus mensajes.';
 
   @override
   String get onboardingConfirmSafety =>
       'Entiendo la política de reportes y bloqueo.';
 
   @override
-  String get onboardingSkip => 'Ahora no';
+  String get onboardingSkip => 'Omitir';
 
   @override
   String get onboardingNext => 'Siguiente';

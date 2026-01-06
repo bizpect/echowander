@@ -100,9 +100,9 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
     return RefreshIndicator(
       onRefresh: () => ref.read(blockListControllerProvider.notifier).load(),
       child: ListView.separated(
-        padding: EdgeInsets.all(AppSpacing.spacing16),
+        padding: const EdgeInsets.all(AppSpacing.spacing16),
         itemCount: state.items.length,
-        separatorBuilder: (context, index) => SizedBox(height: AppSpacing.spacing12),
+        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.spacing12),
         itemBuilder: (context, index) {
           final item = state.items[index];
           return Card(
@@ -112,12 +112,12 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
               borderRadius: AppRadius.medium,
             ),
             child: Padding(
-              padding: EdgeInsets.all(AppSpacing.spacing16),
+              padding: const EdgeInsets.all(AppSpacing.spacing16),
               child: Row(
                 children: [
                   // 아바타
                   _Avatar(avatarUrl: item.avatarUrl),
-                  SizedBox(width: AppSpacing.spacing12),
+                  const SizedBox(width: AppSpacing.spacing12),
 
                   // 사용자 정보
                   Expanded(
@@ -133,15 +133,15 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                         ),
-                        SizedBox(height: AppSpacing.spacing4),
+                        const SizedBox(height: AppSpacing.spacing4),
                         Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.schedule,
                               size: 14,
                               color: AppColors.onSurfaceVariant,
                             ),
-                            SizedBox(width: AppSpacing.spacing4),
+                            const SizedBox(width: AppSpacing.spacing4),
                             Text(
                               dateFormat.format(item.createdAt.toLocal()),
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -239,7 +239,7 @@ class _Avatar extends StatelessWidget {
           color: AppColors.primary.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
-        child: Icon(
+        child: const Icon(
           Icons.person,
           color: AppColors.primary,
         ),
@@ -264,7 +264,7 @@ class _Avatar extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.person,
                 color: AppColors.primary,
               ),

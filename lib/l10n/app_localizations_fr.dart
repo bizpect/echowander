@@ -615,35 +615,35 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get onboardingNotificationDescription =>
-      'Recevez les résultats et les infos importantes.';
+      'Nous vous informerons de l\'arrivée des messages relais et de la disponibilité des résultats.';
 
   @override
   String get onboardingNotificationNote =>
-      'Aucune notification promotionnelle. Modifiable dans Réglages.';
+      'Vous pouvez modifier ceci à tout moment dans Réglages. Cette étape est facultative.';
 
   @override
-  String get onboardingAllowNotifications => 'Autoriser les notifications';
+  String get onboardingAllowNotifications => 'Autoriser';
 
   @override
   String get onboardingPhotoTitle => 'Accès aux photos';
 
   @override
   String get onboardingPhotoDescription =>
-      'Nécessaire pour joindre des images.';
+      'Utilisé uniquement pour définir des images de profil et joindre des images aux messages.';
 
   @override
   String get onboardingPhotoNote =>
-      'Jusqu\'à 3 images. Nous n\'accédons qu\'aux éléments sélectionnés.';
+      'Nous n\'accédons qu\'aux photos que vous sélectionnez. Cette étape est facultative.';
 
   @override
-  String get onboardingAllowPhotos => 'Autoriser l\'accès aux photos';
+  String get onboardingAllowPhotos => 'Autoriser';
 
   @override
   String get onboardingGuidelineTitle => 'Règles de la communauté';
 
   @override
   String get onboardingGuidelineDescription =>
-      'Pas de harcèlement, de haine ni d\'informations personnelles.';
+      'Pour une utilisation sûre, le harcèlement, les discours haineux et le partage d\'informations personnelles sont interdits. Les violations peuvent entraîner des restrictions de contenu.';
 
   @override
   String get onboardingAgreeGuidelines =>
@@ -654,7 +654,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get onboardingContentPolicyDescription =>
-      'Le contenu interdit ou nuisible peut être supprimé.';
+      'Le contenu illégal, nuisible et violent est interdit. Le contenu en violation peut être restreint après examen.';
 
   @override
   String get onboardingAgreeContentPolicy =>
@@ -665,14 +665,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get onboardingSafetyDescription =>
-      'Vous pouvez signaler ou bloquer à tout moment.';
+      'Vous pouvez signaler du contenu offensant ou inapproprié, ou bloquer des utilisateurs spécifiques pour ne plus recevoir leurs messages.';
 
   @override
   String get onboardingConfirmSafety =>
       'Je comprends la politique de signalement et de blocage.';
 
   @override
-  String get onboardingSkip => 'Plus tard';
+  String get onboardingSkip => 'Ignorer';
 
   @override
   String get onboardingNext => 'Suivant';

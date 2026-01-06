@@ -603,35 +603,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingNotificationDescription =>
-      'Stay updated on journey results and important updates.';
+      'We\'ll notify you when relay messages arrive and results are ready.';
 
   @override
   String get onboardingNotificationNote =>
-      'We send only essential alerts. You can change this anytime in Settings.';
+      'You can change this anytime in Settings. This step is optional.';
 
   @override
-  String get onboardingAllowNotifications => 'Allow notifications';
+  String get onboardingAllowNotifications => 'Allow';
 
   @override
   String get onboardingPhotoTitle => 'Photo access';
 
   @override
   String get onboardingPhotoDescription =>
-      'Allow access to attach images to your message.';
+      'Used only for setting profile images and attaching images to messages.';
 
   @override
   String get onboardingPhotoNote =>
-      'You can attach up to three images. We only access selected items.';
+      'We only access photos you select. This step is optional.';
 
   @override
-  String get onboardingAllowPhotos => 'Allow photo access';
+  String get onboardingAllowPhotos => 'Allow';
 
   @override
   String get onboardingGuidelineTitle => 'Community guidelines';
 
   @override
   String get onboardingGuidelineDescription =>
-      'Be respectful. No harassment, hate, or personal information.';
+      'For safe use, harassment, hate speech, and sharing personal information are prohibited. Violations may result in content restrictions.';
 
   @override
   String get onboardingAgreeGuidelines =>
@@ -642,7 +642,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingContentPolicyDescription =>
-      'Prohibited or harmful content may be removed.';
+      'Illegal, harmful, and violent content is prohibited. Violating content may be restricted after review.';
 
   @override
   String get onboardingAgreeContentPolicy => 'I agree to the content policy.';
@@ -652,14 +652,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingSafetyDescription =>
-      'You can report or block any time to keep the space safe.';
+      'You can report offensive or inappropriate content, or block specific users to stop receiving their messages.';
 
   @override
   String get onboardingConfirmSafety =>
       'I understand the report and block policy.';
 
   @override
-  String get onboardingSkip => 'Not now';
+  String get onboardingSkip => 'Skip';
 
   @override
   String get onboardingNext => 'Next';

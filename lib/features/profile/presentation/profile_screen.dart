@@ -32,7 +32,7 @@ class ProfileScreen extends ConsumerWidget {
       ),
       body: SafeArea(
         child: ListView(
-          padding: EdgeInsets.all(AppSpacing.spacing16),
+          padding: const EdgeInsets.all(AppSpacing.spacing16),
           children: [
             // 사용자 정보 카드
             Card(
@@ -42,7 +42,7 @@ class ProfileScreen extends ConsumerWidget {
                 borderRadius: AppRadius.medium,
               ),
               child: Padding(
-                padding: EdgeInsets.all(AppSpacing.spacing20),
+                padding: const EdgeInsets.all(AppSpacing.spacing20),
                 child: Column(
                   children: [
                     // 프로필 아이콘
@@ -53,13 +53,13 @@ class ProfileScreen extends ConsumerWidget {
                         color: AppColors.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.person,
                         size: 40,
                         color: AppColors.primary,
                       ),
                     ),
-                    SizedBox(height: AppSpacing.spacing16),
+                    const SizedBox(height: AppSpacing.spacing16),
 
                     // 닉네임
                     Text(
@@ -69,18 +69,18 @@ class ProfileScreen extends ConsumerWidget {
                             fontWeight: FontWeight.bold,
                           ),
                     ),
-                    SizedBox(height: AppSpacing.spacing8),
+                    const SizedBox(height: AppSpacing.spacing8),
 
                     // User ID (익명 식별)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.fingerprint,
                           size: 16,
                           color: AppColors.onSurfaceVariant,
                         ),
-                        SizedBox(width: AppSpacing.spacing4),
+                        const SizedBox(width: AppSpacing.spacing4),
                         Text(
                           l10n.profileUserIdLabel,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -89,11 +89,11 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    SizedBox(height: AppSpacing.spacing16),
+                    const SizedBox(height: AppSpacing.spacing16),
 
                     // 알림 상태 요약
                     Container(
-                      padding: EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.spacing12,
                         vertical: AppSpacing.spacing8,
                       ),
@@ -115,7 +115,7 @@ class ProfileScreen extends ConsumerWidget {
                                 ? AppColors.warning
                                 : AppColors.success,
                           ),
-                          SizedBox(width: AppSpacing.spacing8),
+                          const SizedBox(width: AppSpacing.spacing8),
                           Text(
                             notificationState.unreadCount > 0
                                 ? '${notificationState.unreadCount} ${l10n.notificationsUnread}'
@@ -135,7 +135,7 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
 
-            SizedBox(height: AppSpacing.spacing24),
+            const SizedBox(height: AppSpacing.spacing24),
 
             // 메뉴 카드
             Card(
@@ -154,7 +154,7 @@ class ProfileScreen extends ConsumerWidget {
                         color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.send,
                         size: 20,
                         color: AppColors.primary,
@@ -166,7 +166,7 @@ class ProfileScreen extends ConsumerWidget {
                             color: AppColors.onSurface,
                           ),
                     ),
-                    trailing: Icon(
+                    trailing: const Icon(
                       Icons.chevron_right,
                       color: AppColors.onSurfaceVariant,
                     ),
@@ -184,7 +184,7 @@ class ProfileScreen extends ConsumerWidget {
                         color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.settings,
                         size: 20,
                         color: AppColors.primary,
@@ -196,7 +196,7 @@ class ProfileScreen extends ConsumerWidget {
                             color: AppColors.onSurface,
                           ),
                     ),
-                    trailing: Icon(
+                    trailing: const Icon(
                       Icons.chevron_right,
                       color: AppColors.onSurfaceVariant,
                     ),
@@ -206,7 +206,7 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
 
-            SizedBox(height: AppSpacing.spacing24),
+            const SizedBox(height: AppSpacing.spacing24),
 
             // 로그아웃 버튼 (위험 행동 - 확인 다이얼로그)
             SizedBox(
@@ -220,8 +220,8 @@ class ProfileScreen extends ConsumerWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.logout, size: 18),
-                    SizedBox(width: AppSpacing.spacing8),
+                    const Icon(Icons.logout, size: 18),
+                    const SizedBox(width: AppSpacing.spacing8),
                     Text(l10n.profileSignOutCta),
                   ],
                 ),

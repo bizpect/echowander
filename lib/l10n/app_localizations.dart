@@ -1246,19 +1246,19 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingNotificationDescription.
   ///
   /// In en, this message translates to:
-  /// **'Stay updated on journey results and important updates.'**
+  /// **'We\'ll notify you when relay messages arrive and results are ready.'**
   String get onboardingNotificationDescription;
 
   /// No description provided for @onboardingNotificationNote.
   ///
   /// In en, this message translates to:
-  /// **'We send only essential alerts. You can change this anytime in Settings.'**
+  /// **'You can change this anytime in Settings. This step is optional.'**
   String get onboardingNotificationNote;
 
   /// No description provided for @onboardingAllowNotifications.
   ///
   /// In en, this message translates to:
-  /// **'Allow notifications'**
+  /// **'Allow'**
   String get onboardingAllowNotifications;
 
   /// No description provided for @onboardingPhotoTitle.
@@ -1270,19 +1270,19 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingPhotoDescription.
   ///
   /// In en, this message translates to:
-  /// **'Allow access to attach images to your message.'**
+  /// **'Used only for setting profile images and attaching images to messages.'**
   String get onboardingPhotoDescription;
 
   /// No description provided for @onboardingPhotoNote.
   ///
   /// In en, this message translates to:
-  /// **'You can attach up to three images. We only access selected items.'**
+  /// **'We only access photos you select. This step is optional.'**
   String get onboardingPhotoNote;
 
   /// No description provided for @onboardingAllowPhotos.
   ///
   /// In en, this message translates to:
-  /// **'Allow photo access'**
+  /// **'Allow'**
   String get onboardingAllowPhotos;
 
   /// No description provided for @onboardingGuidelineTitle.
@@ -1294,7 +1294,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingGuidelineDescription.
   ///
   /// In en, this message translates to:
-  /// **'Be respectful. No harassment, hate, or personal information.'**
+  /// **'For safe use, harassment, hate speech, and sharing personal information are prohibited. Violations may result in content restrictions.'**
   String get onboardingGuidelineDescription;
 
   /// No description provided for @onboardingAgreeGuidelines.
@@ -1312,7 +1312,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingContentPolicyDescription.
   ///
   /// In en, this message translates to:
-  /// **'Prohibited or harmful content may be removed.'**
+  /// **'Illegal, harmful, and violent content is prohibited. Violating content may be restricted after review.'**
   String get onboardingContentPolicyDescription;
 
   /// No description provided for @onboardingAgreeContentPolicy.
@@ -1330,7 +1330,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingSafetyDescription.
   ///
   /// In en, this message translates to:
-  /// **'You can report or block any time to keep the space safe.'**
+  /// **'You can report offensive or inappropriate content, or block specific users to stop receiving their messages.'**
   String get onboardingSafetyDescription;
 
   /// No description provided for @onboardingConfirmSafety.
@@ -1342,7 +1342,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingSkip.
   ///
   /// In en, this message translates to:
-  /// **'Not now'**
+  /// **'Skip'**
   String get onboardingSkip;
 
   /// No description provided for @onboardingNext.

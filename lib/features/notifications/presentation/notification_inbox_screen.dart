@@ -113,7 +113,7 @@ class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScree
           value: state.unreadOnly,
           onChanged: controller.toggleUnreadOnly,
           title: Text(l10n.notificationsUnreadOnly),
-          contentPadding: EdgeInsets.symmetric(
+          contentPadding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.spacing16,
           ),
         ),
@@ -121,14 +121,14 @@ class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScree
           child: RefreshIndicator(
             onRefresh: () => controller.load(),
             child: ListView.separated(
-              padding: EdgeInsets.fromLTRB(
+              padding: const EdgeInsets.fromLTRB(
                 AppSpacing.spacing16,
                 AppSpacing.spacing8,
                 AppSpacing.spacing16,
                 AppSpacing.spacing24,
               ),
               itemCount: state.items.length,
-              separatorBuilder: (context, index) => SizedBox(height: AppSpacing.spacing12),
+              separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.spacing12),
               itemBuilder: (context, index) {
                 final item = state.items[index];
                 return _NotificationCard(
@@ -270,7 +270,7 @@ class _NotificationCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: AppRadius.medium,
         child: Padding(
-          padding: EdgeInsets.all(AppSpacing.spacing16),
+          padding: const EdgeInsets.all(AppSpacing.spacing16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -288,7 +288,7 @@ class _NotificationCard extends StatelessWidget {
                   color: notificationInfo.color,
                 ),
               ),
-              SizedBox(width: AppSpacing.spacing12),
+              const SizedBox(width: AppSpacing.spacing12),
 
               // 알림 내용
               Expanded(
@@ -313,8 +313,8 @@ class _NotificationCard extends StatelessWidget {
                           Container(
                             width: 8,
                             height: 8,
-                            margin: EdgeInsets.only(left: AppSpacing.spacing8),
-                            decoration: BoxDecoration(
+                            margin: const EdgeInsets.only(left: AppSpacing.spacing8),
+                            decoration: const BoxDecoration(
                               color: AppColors.primary,
                               shape: BoxShape.circle,
                             ),
@@ -322,7 +322,7 @@ class _NotificationCard extends StatelessWidget {
                       ],
                     ),
                     if (item.body.isNotEmpty) ...[
-                      SizedBox(height: AppSpacing.spacing4),
+                      const SizedBox(height: AppSpacing.spacing4),
                       Text(
                         item.body,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -332,31 +332,31 @@ class _NotificationCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                    SizedBox(height: AppSpacing.spacing8),
+                    const SizedBox(height: AppSpacing.spacing8),
 
                     // 하단 정보 (날짜 + 읽음 상태 라벨)
                     Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.schedule,
                           size: 14,
                           color: AppColors.onSurfaceVariant,
                         ),
-                        SizedBox(width: AppSpacing.spacing4),
+                        const SizedBox(width: AppSpacing.spacing4),
                         Text(
                           dateFormat.format(item.createdAt.toLocal()),
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: AppColors.onSurfaceVariant,
                               ),
                         ),
-                        SizedBox(width: AppSpacing.spacing8),
+                        const SizedBox(width: AppSpacing.spacing8),
                         Text(
                           '•',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: AppColors.onSurfaceVariant,
                               ),
                         ),
-                        SizedBox(width: AppSpacing.spacing8),
+                        const SizedBox(width: AppSpacing.spacing8),
                         Text(
                           isRead ? l10n.notificationsRead : l10n.notificationsUnread,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(

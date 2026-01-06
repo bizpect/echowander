@@ -5,6 +5,7 @@ import '../../../app/theme/app_spacing.dart';
 /// 빈 상태 표시 위젯
 ///
 /// 데이터가 없을 때 사용자에게 명확한 피드백을 제공합니다.
+/// 등장 시 fade in 애니메이션이 적용됩니다.
 ///
 /// 사용 예시:
 /// ```dart
@@ -16,7 +17,7 @@ import '../../../app/theme/app_spacing.dart';
 ///   onAction: () => controller.refresh(),
 /// )
 /// ```
-class EmptyStateWidget extends StatelessWidget {
+class EmptyStateWidget extends StatefulWidget {
   const EmptyStateWidget({
     super.key,
     required this.icon,
@@ -33,51 +34,84 @@ class EmptyStateWidget extends StatelessWidget {
   final VoidCallback? onAction;
 
   @override
+  State<EmptyStateWidget> createState() => _EmptyStateWidgetState();
+}
+
+class _EmptyStateWidgetState extends State<EmptyStateWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+    // 위젯 등장 시 애니메이션 시작
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.spacing32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 아이콘
-            Icon(
-              icon,
-              size: 80,
-              color: AppColors.onSurfaceVariant, // 가시성 개선 (기존: surfaceVariant)
-            ),
-            const SizedBox(height: AppSpacing.spacing16),
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.spacing32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 아이콘
+              Icon(
+                widget.icon,
+                size: 80,
+                color: AppColors.onSurfaceVariant, // 가시성 개선 (기존: surfaceVariant)
+              ),
+              const SizedBox(height: AppSpacing.spacing16),
 
-            // 타이틀
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.onSurface,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-
-            // 설명 (선택적)
-            if (description != null) ...[
-              const SizedBox(height: AppSpacing.spacing8),
+              // 타이틀
               Text(
-                description!,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                widget.title,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: AppColors.onSurface,
                     ),
                 textAlign: TextAlign.center,
               ),
-            ],
 
-            // 액션 버튼 (선택적)
-            if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: AppSpacing.spacing24),
-              FilledButton(
-                onPressed: onAction,
-                child: Text(actionLabel!),
-              ),
+              // 설명 (선택적)
+              if (widget.description != null) ...[
+                const SizedBox(height: AppSpacing.spacing8),
+                Text(
+                  widget.description!,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+
+              // 액션 버튼 (선택적)
+              if (widget.actionLabel != null && widget.onAction != null) ...[
+                const SizedBox(height: AppSpacing.spacing24),
+                FilledButton(
+                  onPressed: widget.onAction,
+                  child: Text(widget.actionLabel!),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
