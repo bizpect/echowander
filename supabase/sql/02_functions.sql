@@ -735,6 +735,8 @@ returns table (
   completed boolean
 )
 language plpgsql
+security definer
+set search_path = public
 as $$
 declare
   _response_count integer;
@@ -839,6 +841,8 @@ create or replace function public.pass_journey(
 )
 returns void
 language plpgsql
+security definer
+set search_path = public
 as $$
 begin
   if auth.uid() is null then

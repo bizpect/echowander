@@ -4,9 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../features/home/presentation/home_screen.dart';
 import '../../../features/journey/presentation/journey_compose_screen.dart';
 import '../../../features/journey/presentation/journey_inbox_screen.dart';
+import '../../../features/journey/presentation/journey_list_screen.dart';
 import '../../../features/journey/application/journey_inbox_controller.dart';
-import '../../../features/notifications/presentation/notification_inbox_screen.dart';
-import '../../../features/notifications/application/notification_inbox_controller.dart';
 import '../../../features/profile/presentation/profile_screen.dart';
 import '../widgets/app_bottom_navigation.dart';
 
@@ -40,11 +39,6 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
       parent: _fadeController,
       curve: Curves.easeIn,
     );
-
-    // 알림 카운트 초기 로드
-    Future.microtask(() {
-      ref.read(notificationInboxControllerProvider.notifier).load();
-    });
   }
 
   @override
@@ -66,17 +60,11 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
     // 탭 전환 시 해당 탭의 데이터 새로고침
     if (index == AppTab.inbox.tabIndex) {
       ref.read(journeyInboxControllerProvider.notifier).load();
-    } else if (index == AppTab.alerts.tabIndex) {
-      ref.read(notificationInboxControllerProvider.notifier).load();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // 알림 카운트 구독
-    final unreadCount =
-        ref.watch(notificationInboxControllerProvider.select((state) => state.unreadCount));
-
     return PopScope(
       // 루트 화면에서 뒤로가기 시 앱 종료 확인
       canPop: _currentIndex != AppTab.home.tabIndex,
@@ -100,19 +88,19 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
                 key: const ValueKey('home_navigator'),
               ),
 
-              // Inbox 탭 (Nested Navigator)
+              // Sent 탭 (Nested Navigator)
               _buildTabNavigator(
-                const JourneyInboxScreen(),
-                key: const ValueKey('inbox_navigator'),
+                const JourneyListScreen(),
+                key: const ValueKey('sent_navigator'),
               ),
 
               // Create 탭 (단일 화면, Navigator 불필요)
               const JourneyComposeScreen(),
 
-              // Alerts 탭 (Nested Navigator)
+              // Inbox 탭 (Nested Navigator)
               _buildTabNavigator(
-                const NotificationInboxScreen(),
-                key: const ValueKey('alerts_navigator'),
+                const JourneyInboxScreen(),
+                key: const ValueKey('inbox_navigator'),
               ),
 
               // Profile 탭 (Nested Navigator)
@@ -126,7 +114,6 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
         bottomNavigationBar: AppBottomNavigation(
           currentIndex: _currentIndex,
           onTap: _onTabTapped,
-          unreadAlertsCount: unreadCount,
         ),
       ),
     );

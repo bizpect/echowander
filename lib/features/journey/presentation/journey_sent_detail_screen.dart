@@ -139,8 +139,12 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
         _handleBack(context);
       },
       child: Scaffold(
+        backgroundColor: AppColors.background,
         appBar: AppBar(
           title: Text(l10n.journeyDetailTitle),
+          backgroundColor: AppColors.background,
+          elevation: 0,
+          scrolledUnderElevation: 0,
           leading: IconButton(
             onPressed: () => _handleBack(context),
             icon: const Icon(Icons.arrow_back),

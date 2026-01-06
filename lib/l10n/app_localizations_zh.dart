@@ -306,7 +306,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get journeyStatusCompleted => '已完成';
 
   @override
+  String get journeyStatusInProgress => '进行中';
+
+  @override
   String get journeyStatusUnknown => '未知';
+
+  @override
+  String get journeyInProgressHint => '完成后可在详情中查看回复';
 
   @override
   String get journeyFilterOk => '允许';
@@ -685,6 +691,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tabHomeLabel => '首页';
+
+  @override
+  String get tabSentLabel => '已发送';
 
   @override
   String get tabInboxLabel => '收件箱';

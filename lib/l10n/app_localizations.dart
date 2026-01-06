@@ -691,11 +691,23 @@ abstract class AppLocalizations {
   /// **'Completed'**
   String get journeyStatusCompleted;
 
+  /// No description provided for @journeyStatusInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In Progress'**
+  String get journeyStatusInProgress;
+
   /// No description provided for @journeyStatusUnknown.
   ///
   /// In en, this message translates to:
   /// **'Unknown'**
   String get journeyStatusUnknown;
+
+  /// No description provided for @journeyInProgressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You can view responses after completion'**
+  String get journeyInProgressHint;
 
   /// No description provided for @journeyFilterOk.
   ///
@@ -1440,6 +1452,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Home'**
   String get tabHomeLabel;
+
+  /// No description provided for @tabSentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent'**
+  String get tabSentLabel;
 
   /// No description provided for @tabInboxLabel.
   ///

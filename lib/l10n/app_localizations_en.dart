@@ -321,7 +321,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get journeyStatusCompleted => 'Completed';
 
   @override
+  String get journeyStatusInProgress => 'In Progress';
+
+  @override
   String get journeyStatusUnknown => 'Unknown';
+
+  @override
+  String get journeyInProgressHint => 'You can view responses after completion';
 
   @override
   String get journeyFilterOk => 'Allowed';
@@ -709,6 +715,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tabHomeLabel => 'Home';
+
+  @override
+  String get tabSentLabel => 'Sent';
 
   @override
   String get tabInboxLabel => 'Inbox';

@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -243,13 +246,28 @@ class _JourneyInboxDetailScreenState
   }
 
   Future<void> _handleRespond() async {
+    if (kDebugMode) {
+      debugPrint('[InboxReplyTrace][UI] _handleRespond - START');
+    }
     final l10n = AppLocalizations.of(context)!;
     final item = widget.item;
     if (item == null) {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][UI] _handleRespond - ABORT: item is null');
+      }
       return;
     }
+    if (kDebugMode) {
+      debugPrint('[InboxReplyTrace][UI] _handleRespond - item.journeyId: ${item.journeyId}');
+    }
     final text = _responseController.text.trim();
+    if (kDebugMode) {
+      debugPrint('[InboxReplyTrace][UI] _handleRespond - text length: ${text.length}');
+    }
     if (text.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][UI] _handleRespond - ABORT: text is empty, showing validation dialog');
+      }
       await showAppAlertDialog(
         context: context,
         title: l10n.composeErrorTitle,
@@ -259,31 +277,71 @@ class _JourneyInboxDetailScreenState
       return;
     }
     final accessToken = ref.read(sessionManagerProvider).accessToken;
+    if (kDebugMode) {
+      debugPrint('[InboxReplyTrace][UI] _handleRespond - accessToken exists: ${accessToken != null && accessToken.isNotEmpty}');
+      if (accessToken != null && accessToken.isNotEmpty) {
+        debugPrint('[InboxReplyTrace][UI] _handleRespond - accessToken length: ${accessToken.length}');
+        debugPrint('[InboxReplyTrace][UI] _handleRespond - accessToken starts with: ${accessToken.substring(0, min(20, accessToken.length))}...');
+      }
+    }
     if (accessToken == null || accessToken.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][UI] _handleRespond - ABORT: no accessToken');
+      }
       return;
+    }
+    if (kDebugMode) {
+      debugPrint('[InboxReplyTrace][UI] _handleRespond - setting isActionLoading = true');
     }
     setState(() {
       _isActionLoading = true;
     });
     try {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][UI] _handleRespond - calling repository.respondJourney...');
+      }
       await ref.read(journeyRepositoryProvider).respondJourney(
             journeyId: item.journeyId,
             content: text,
             accessToken: accessToken,
           );
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][UI] _handleRespond - repository.respondJourney completed successfully');
+      }
       if (!mounted) {
+        if (kDebugMode) {
+          debugPrint('[InboxReplyTrace][UI] _handleRespond - widget not mounted, aborting UI update');
+        }
         return;
       }
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][UI] _handleRespond - clearing text field');
+      }
       _responseController.clear();
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][UI] _handleRespond - showing success dialog');
+      }
       await showAppAlertDialog(
         context: context,
         title: l10n.inboxRespondSuccessTitle,
         message: l10n.inboxRespondSuccessBody,
         confirmLabel: l10n.composeOk,
       );
-    } on JourneyActionException {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][UI] _handleRespond - SUCCESS: dialog closed');
+      }
+    } on JourneyActionException catch (e) {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][UI] _handleRespond - EXCEPTION: JourneyActionException ${e.error}');
+      }
       if (!mounted) {
+        if (kDebugMode) {
+          debugPrint('[InboxReplyTrace][UI] _handleRespond - widget not mounted, skipping error dialog');
+        }
         return;
+      }
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][UI] _handleRespond - showing error dialog');
       }
       await showAppAlertDialog(
         context: context,
@@ -291,11 +349,29 @@ class _JourneyInboxDetailScreenState
         message: l10n.inboxActionFailed,
         confirmLabel: l10n.composeOk,
       );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][UI] _handleRespond - UNEXPECTED EXCEPTION: $e');
+      }
+      if (mounted) {
+        await showAppAlertDialog(
+          context: context,
+          title: l10n.composeErrorTitle,
+          message: l10n.inboxActionFailed,
+          confirmLabel: l10n.composeOk,
+        );
+      }
     } finally {
       if (mounted) {
+        if (kDebugMode) {
+          debugPrint('[InboxReplyTrace][UI] _handleRespond - setting isActionLoading = false');
+        }
         setState(() {
           _isActionLoading = false;
         });
+      }
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][UI] _handleRespond - END');
       }
     }
   }

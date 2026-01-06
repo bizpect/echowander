@@ -6,6 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/router/app_router.dart';
+import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_spacing.dart';
+import '../../../app/theme/app_radius.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../l10n/app_localizations.dart';
@@ -42,80 +45,160 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
       controller.clearMessage();
     });
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) {
-          return;
-        }
-        _handleBack(context);
-      },
-      child: Scaffold(
+    return Scaffold(
+        backgroundColor: AppColors.background,
         appBar: AppBar(
           title: Text(l10n.journeyListTitle),
-          leading: IconButton(
-            onPressed: () => _handleBack(context),
-            icon: const Icon(Icons.arrow_back),
-            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          ),
-          actions: [
-            IconButton(
-              onPressed: () => controller.load(),
-              icon: const Icon(Icons.refresh),
-              tooltip: l10n.inboxRefresh,
-            ),
-          ],
+          backgroundColor: AppColors.background,
+          elevation: 0,
+          scrolledUnderElevation: 0,
         ),
         body: LoadingOverlay(
           isLoading: state.isLoading,
           child: SafeArea(
             child: state.items.isEmpty
                 ? Center(
-                    child: Text(
-                      l10n.journeyListEmpty,
-                      style: Theme.of(context).textTheme.bodyLarge,
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSpacing.spacing24),
+                      child: Text(
+                        l10n.journeyListEmpty,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                      ),
                     ),
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                     itemCount: state.items.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 16),
                     itemBuilder: (context, index) {
                       final item = state.items[index];
+                      final isCompleted = item.statusCode == 'COMPLETED';
+
                       return Card(
-                        child: ListTile(
-                          title: Text(
-                            item.content,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(dateFormat.format(item.createdAt.toLocal())),
-                              const SizedBox(height: 4),
-                              Text(
-                                _statusLine(
+                        color: AppColors.surface,
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: AppRadius.medium,
+                        ),
+                        child: InkWell(
+                          onTap: isCompleted
+                              ? () {
+                                  context.go(
+                                    '${AppRoutes.journeyList}/${item.journeyId}',
+                                    extra: item,
+                                  );
+                                }
+                              : null,
+                          borderRadius: AppRadius.medium,
+                          child: Padding(
+                            padding: EdgeInsets.all(AppSpacing.spacing20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // 상태 배지
+                                _buildStatusBadge(
                                   l10n: l10n,
                                   statusCode: item.statusCode,
                                   filterCode: item.filterCode,
                                 ),
-                              ),
-                            ],
+                                SizedBox(height: AppSpacing.spacing12),
+
+                                // 메시지 내용
+                                Text(
+                                  item.content,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        color: AppColors.onSurface,
+                                        fontWeight: FontWeight.w500,
+                                        height: 1.5,
+                                      ),
+                                ),
+                                SizedBox(height: AppSpacing.spacing12),
+
+                                // 날짜 + 이미지 수
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.schedule,
+                                      size: 14,
+                                      color: AppColors.onSurfaceVariant,
+                                    ),
+                                    SizedBox(width: AppSpacing.spacing4),
+                                    Text(
+                                      dateFormat.format(item.createdAt.toLocal()),
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: AppColors.onSurfaceVariant,
+                                          ),
+                                    ),
+                                    if (item.imageCount > 0) ...[
+                                      SizedBox(width: AppSpacing.spacing8),
+                                      Text('•', style: TextStyle(color: AppColors.onSurfaceVariant)),
+                                      SizedBox(width: AppSpacing.spacing8),
+                                      Icon(
+                                        Icons.image,
+                                        size: 14,
+                                        color: AppColors.onSurfaceVariant,
+                                      ),
+                                      SizedBox(width: AppSpacing.spacing4),
+                                      Text(
+                                        '${item.imageCount}',
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                              color: AppColors.onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+
+                                // 진행중 안내 (미완료일 때만)
+                                if (!isCompleted) ...[
+                                  SizedBox(height: AppSpacing.spacing12),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.spacing12,
+                                      vertical: AppSpacing.spacing8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.warning.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: AppColors.warning.withValues(alpha: 0.3),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.info_outline,
+                                          size: 16,
+                                          color: AppColors.warning,
+                                        ),
+                                        SizedBox(width: AppSpacing.spacing8),
+                                        Expanded(
+                                          child: Text(
+                                            l10n.journeyInProgressHint,
+                                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                  color: AppColors.onSurface,
+                                                  fontSize: 12,
+                                                ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
-                          onTap: () {
-                            context.go(
-                              '${AppRoutes.journeyList}/${item.journeyId}',
-                              extra: item,
-                            );
-                          },
                         ),
                       );
                     },
                   ),
           ),
         ),
-      ),
     );
   }
 
@@ -140,32 +223,82 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
     }
   }
 
-  void _handleBack(BuildContext context) {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go(AppRoutes.home);
-    }
-  }
-
-  String _statusLine({
+  Widget _buildStatusBadge({
     required AppLocalizations l10n,
     required String statusCode,
     required String filterCode,
   }) {
+    final isCompleted = statusCode == 'COMPLETED';
     final statusLabel = _statusLabel(l10n, statusCode);
-    final filterLabel = _filterLabel(l10n, filterCode);
-    final combined =
-        filterCode == 'OK' ? statusLabel : '$statusLabel / $filterLabel';
-    return '${l10n.journeyListStatusLabel} $combined';
+    final statusColor = isCompleted ? AppColors.success : AppColors.warning;
+    final statusIcon = isCompleted ? Icons.check_circle : Icons.schedule;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.spacing12,
+            vertical: AppSpacing.spacing4,
+          ),
+          decoration: BoxDecoration(
+            color: statusColor.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: statusColor.withValues(alpha: 0.4),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                statusIcon,
+                size: 14,
+                color: statusColor,
+              ),
+              SizedBox(width: AppSpacing.spacing4),
+              Text(
+                statusLabel,
+                style: TextStyle(
+                  color: statusColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (filterCode != 'OK') ...[
+          SizedBox(width: AppSpacing.spacing8),
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.spacing8,
+              vertical: AppSpacing.spacing4,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              _filterLabel(l10n, filterCode),
+              style: TextStyle(
+                color: AppColors.error,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
   }
 
   String _statusLabel(AppLocalizations l10n, String code) {
     switch (code) {
       case 'CREATED':
-        return l10n.journeyStatusCreated;
       case 'WAITING':
-        return l10n.journeyStatusWaiting;
+        return l10n.journeyStatusInProgress;
       case 'COMPLETED':
         return l10n.journeyStatusCompleted;
       default:

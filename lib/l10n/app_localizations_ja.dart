@@ -307,7 +307,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get journeyStatusCompleted => '完了';
 
   @override
+  String get journeyStatusInProgress => '進行中';
+
+  @override
   String get journeyStatusUnknown => '不明';
+
+  @override
+  String get journeyInProgressHint => '完了後に詳細で返信を確認できます';
 
   @override
   String get journeyFilterOk => '許可';
@@ -687,6 +693,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get tabHomeLabel => 'ホーム';
+
+  @override
+  String get tabSentLabel => '送信済み';
 
   @override
   String get tabInboxLabel => '受信トレイ';

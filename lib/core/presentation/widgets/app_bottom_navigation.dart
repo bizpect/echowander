@@ -6,20 +6,20 @@ import '../../../l10n/app_localizations.dart';
 /// 하단 네비게이션 탭 인덱스
 enum AppTab {
   home,
-  inbox,
+  sent,
   create,
-  alerts,
+  inbox,
   profile;
 
   int get tabIndex {
     switch (this) {
       case AppTab.home:
         return 0;
-      case AppTab.inbox:
+      case AppTab.sent:
         return 1;
       case AppTab.create:
         return 2;
-      case AppTab.alerts:
+      case AppTab.inbox:
         return 3;
       case AppTab.profile:
         return 4;
@@ -31,11 +31,11 @@ enum AppTab {
       case 0:
         return AppTab.home;
       case 1:
-        return AppTab.inbox;
+        return AppTab.sent;
       case 2:
         return AppTab.create;
       case 3:
-        return AppTab.alerts;
+        return AppTab.inbox;
       case 4:
         return AppTab.profile;
       default:
@@ -47,22 +47,19 @@ enum AppTab {
 /// 5탭 하단 네비게이션 바
 ///
 /// 특징:
-/// - Home / Inbox / Create(중앙) / Alerts(뱃지) / Profile
+/// - Home / Sent / Create(중앙) / Inbox / Profile
 /// - 아이콘만 표시, 텍스트 라벨 없음
 /// - Create는 중앙에 Floating 느낌으로 강조
-/// - Alerts에는 읽지 않은 알림 카운트 뱃지 표시
 /// - 탭 전환 시 subtle scale & opacity 애니메이션
 class AppBottomNavigation extends StatefulWidget {
   const AppBottomNavigation({
     super.key,
     required this.currentIndex,
     required this.onTap,
-    this.unreadAlertsCount = 0,
   });
 
   final int currentIndex;
   final ValueChanged<int> onTap;
-  final int unreadAlertsCount;
 
   @override
   State<AppBottomNavigation> createState() => _AppBottomNavigationState();
@@ -109,7 +106,6 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
 
   int get currentIndex => widget.currentIndex;
   ValueChanged<int> get onTap => widget.onTap;
-  int get unreadAlertsCount => widget.unreadAlertsCount;
 
   @override
   Widget build(BuildContext context) {
@@ -143,15 +139,15 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
                 tabIndex: AppTab.home.tabIndex,
               ),
 
-              // Inbox 탭
+              // Sent 탭
               _buildNavItem(
                 context: context,
-                icon: Icons.inbox_outlined,
-                selectedIcon: Icons.inbox,
-                isSelected: currentIndex == AppTab.inbox.tabIndex,
-                onTap: () => onTap(AppTab.inbox.tabIndex),
-                semanticLabel: l10n.tabInboxLabel,
-                tabIndex: AppTab.inbox.tabIndex,
+                icon: Icons.send_outlined,
+                selectedIcon: Icons.send,
+                isSelected: currentIndex == AppTab.sent.tabIndex,
+                onTap: () => onTap(AppTab.sent.tabIndex),
+                semanticLabel: l10n.tabSentLabel,
+                tabIndex: AppTab.sent.tabIndex,
               ),
 
               // Create 탭 (중앙, 강조)
@@ -162,16 +158,15 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
                 semanticLabel: l10n.tabCreateLabel,
               ),
 
-              // Alerts 탭 (뱃지 포함)
+              // Inbox 탭
               _buildNavItem(
                 context: context,
-                icon: Icons.notifications_outlined,
-                selectedIcon: Icons.notifications,
-                isSelected: currentIndex == AppTab.alerts.tabIndex,
-                onTap: () => onTap(AppTab.alerts.tabIndex),
-                semanticLabel: l10n.tabAlertsLabel,
-                badgeCount: unreadAlertsCount,
-                tabIndex: AppTab.alerts.tabIndex,
+                icon: Icons.inbox_outlined,
+                selectedIcon: Icons.inbox,
+                isSelected: currentIndex == AppTab.inbox.tabIndex,
+                onTap: () => onTap(AppTab.inbox.tabIndex),
+                semanticLabel: l10n.tabInboxLabel,
+                tabIndex: AppTab.inbox.tabIndex,
               ),
 
               // Profile 탭
@@ -199,7 +194,6 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
     required bool isSelected,
     required VoidCallback onTap,
     required String semanticLabel,
-    int badgeCount = 0,
     int? tabIndex,
   }) {
     // 해당 탭의 AnimationController 가져오기
@@ -246,36 +240,6 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
                     isSelected ? selectedIcon : icon,
                     size: 28,
                     color: isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
-                  ),
-                // 뱃지 (Alerts 탭 전용)
-                if (badgeCount > 0)
-                  Positioned(
-                    top: AppSpacing.spacing4,
-                    right: AppSpacing.spacing12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.error,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 18,
-                        minHeight: 18,
-                      ),
-                      child: Text(
-                        badgeCount > 99 ? '99+' : '$badgeCount',
-                        style: const TextStyle(
-                          color: AppColors.onError,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          height: 1.0,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
                   ),
               ],
             ),

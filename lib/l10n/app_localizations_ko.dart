@@ -308,7 +308,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get journeyStatusCompleted => '처리 완료';
 
   @override
+  String get journeyStatusInProgress => '진행중';
+
+  @override
   String get journeyStatusUnknown => '알 수 없음';
+
+  @override
+  String get journeyInProgressHint => '완료 후 상세에서 답변을 확인할 수 있어요';
 
   @override
   String get journeyFilterOk => '정상';
@@ -689,6 +695,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get tabHomeLabel => '홈';
+
+  @override
+  String get tabSentLabel => '보낸 메시지';
 
   @override
   String get tabInboxLabel => '받은편지함';

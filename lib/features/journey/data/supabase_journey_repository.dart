@@ -613,29 +613,65 @@ class SupabaseJourneyRepository implements JourneyRepository {
     required String content,
     required String accessToken,
   }) async {
+    if (kDebugMode) {
+      debugPrint('[InboxReplyTrace][Repo] respondJourney - START');
+      debugPrint('[InboxReplyTrace][Repo] respondJourney - journeyId: $journeyId');
+      debugPrint('[InboxReplyTrace][Repo] respondJourney - content length: ${content.length}');
+      debugPrint('[InboxReplyTrace][Repo] respondJourney - accessToken length: ${accessToken.length}');
+    }
     if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - ABORT: missing config');
+      }
       throw JourneyActionException(JourneyActionError.missingConfig);
     }
     if (accessToken.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - ABORT: empty accessToken');
+      }
       throw JourneyActionException(JourneyActionError.unauthorized);
     }
     final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/respond_journey');
+    if (kDebugMode) {
+      debugPrint('[InboxReplyTrace][Repo] respondJourney - URI: $uri');
+    }
+    int? responseStatusCode;
+    String? responseBody;
     try {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - creating HTTP request...');
+      }
       final request = await _client.postUrl(uri);
       request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
       request.headers.set('apikey', _config.supabaseAnonKey);
       request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+      final requestBody = {
+        'target_journey_id': journeyId,
+        'response_content': content,
+      };
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - request body: ${jsonEncode(requestBody)}');
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - sending HTTP request...');
+      }
       request.add(
         utf8.encode(
-          jsonEncode({
-            'target_journey_id': journeyId,
-            'response_content': content,
-          }),
+          jsonEncode(requestBody),
         ),
       );
       final response = await request.close();
+      responseStatusCode = response.statusCode;
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - HTTP response status: $responseStatusCode');
+      }
       final body = await response.transform(utf8.decoder).join();
+      responseBody = body;
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - HTTP response body: $body');
+      }
       if (response.statusCode != HttpStatus.ok) {
+        if (kDebugMode) {
+          debugPrint('[InboxReplyTrace][Repo] respondJourney - ERROR: non-200 status code ${response.statusCode}');
+        }
         await _errorLogger.logHttpFailure(
           context: 'respond_journey',
           uri: uri,
@@ -649,11 +685,23 @@ class SupabaseJourneyRepository implements JourneyRepository {
         );
         if (response.statusCode == HttpStatus.unauthorized ||
             response.statusCode == HttpStatus.forbidden) {
+          if (kDebugMode) {
+            debugPrint('[InboxReplyTrace][Repo] respondJourney - throwing JourneyActionError.unauthorized');
+          }
           throw JourneyActionException(JourneyActionError.unauthorized);
+        }
+        if (kDebugMode) {
+          debugPrint('[InboxReplyTrace][Repo] respondJourney - throwing JourneyActionError.serverRejected');
         }
         throw JourneyActionException(JourneyActionError.serverRejected);
       }
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - SUCCESS: respond_journey completed');
+      }
     } on SocketException catch (error) {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - NETWORK ERROR: SocketException $error');
+      }
       await _errorLogger.logException(
         context: 'respond_journey',
         uri: uri,
@@ -666,6 +714,9 @@ class SupabaseJourneyRepository implements JourneyRepository {
       );
       throw JourneyActionException(JourneyActionError.network);
     } on HttpException catch (error) {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - HTTP ERROR: HttpException $error');
+      }
       await _errorLogger.logException(
         context: 'respond_journey',
         uri: uri,
@@ -678,6 +729,11 @@ class SupabaseJourneyRepository implements JourneyRepository {
       );
       throw JourneyActionException(JourneyActionError.network);
     } on FormatException catch (error) {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - FORMAT ERROR: FormatException $error');
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - responseStatusCode: $responseStatusCode');
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - responseBody: $responseBody');
+      }
       await _errorLogger.logException(
         context: 'respond_journey',
         uri: uri,
@@ -685,10 +741,40 @@ class SupabaseJourneyRepository implements JourneyRepository {
         error: error,
         meta: {
           'journey_id': journeyId,
+          'response_status': responseStatusCode,
+          'response_body': responseBody,
         },
         accessToken: accessToken,
       );
       throw JourneyActionException(JourneyActionError.invalidPayload);
+    } on JourneyActionException {
+      // 이미 throw된 JourneyActionException은 그대로 다시 throw
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - rethrowing JourneyActionException');
+      }
+      rethrow;
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - UNEXPECTED ERROR: $error');
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - responseStatusCode: $responseStatusCode');
+        debugPrint('[InboxReplyTrace][Repo] respondJourney - responseBody: $responseBody');
+      }
+      await _errorLogger.logException(
+        context: 'respond_journey',
+        uri: uri,
+        method: 'POST',
+        error: error,
+        meta: {
+          'journey_id': journeyId,
+          'response_status': responseStatusCode,
+          'response_body': responseBody,
+        },
+        accessToken: accessToken,
+      );
+      throw JourneyActionException(JourneyActionError.unknown);
+    }
+    if (kDebugMode) {
+      debugPrint('[InboxReplyTrace][Repo] respondJourney - END');
     }
   }
 

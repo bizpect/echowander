@@ -321,7 +321,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get journeyStatusCompleted => 'Concluída';
 
   @override
+  String get journeyStatusInProgress => 'Em andamento';
+
+  @override
   String get journeyStatusUnknown => 'Desconhecido';
+
+  @override
+  String get journeyInProgressHint =>
+      'Poderá ver as respostas após a conclusão';
 
   @override
   String get journeyFilterOk => 'Permitido';
@@ -722,6 +729,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tabHomeLabel => 'Início';
 
   @override
+  String get tabSentLabel => 'Enviados';
+
+  @override
   String get tabInboxLabel => 'Caixa de entrada';
 
   @override
@@ -1074,7 +1084,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get journeyStatusCompleted => 'Concluído';
 
   @override
+  String get journeyStatusInProgress => 'Em andamento';
+
+  @override
   String get journeyStatusUnknown => 'Desconhecido';
+
+  @override
+  String get journeyInProgressHint =>
+      'Você poderá ver as respostas após a conclusão';
 
   @override
   String get journeyFilterOk => 'Permitido';
@@ -1473,6 +1490,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get tabHomeLabel => 'Início';
+
+  @override
+  String get tabSentLabel => 'Enviados';
 
   @override
   String get tabInboxLabel => 'Caixa de entrada';

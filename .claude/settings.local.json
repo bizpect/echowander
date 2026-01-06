@@ -11,7 +11,9 @@
       "Bash(/mnt/c/etc/flutter/bin/flutter gen-l10n)",
       "Bash(/usr/bin/flutter analyze)",
       "mcp__ide__getDiagnostics",
-      "Bash(supabase db execute:*)"
+      "Bash(supabase db execute:*)",
+      "Bash(/mnt/c/etc/flutter/bin/flutter analyze --no-pub)",
+      "Bash(cat:*)"
     ]
   }
 }
