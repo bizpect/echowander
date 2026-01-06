@@ -649,6 +649,7 @@ $$;
 
 drop function if exists public.list_inbox_journeys(integer, integer);
 
+-- 인박스 조회: journey_recipients 스냅샷 필드 사용 (journeys JOIN 제거, RLS 유지)
 create or replace function public.list_inbox_journeys(
   page_size integer,
   page_offset integer
@@ -661,27 +662,29 @@ returns table (
   image_count integer,
   recipient_status text
 )
-language sql
+language plpgsql
 as $$
+begin
+  if auth.uid() is null then
+    raise exception 'unauthorized';
+  end if;
+
+  return query
   select
-    journeys.id as journey_id,
-    journeys.user_id as sender_user_id,
-    journeys.content,
-    journeys.created_at,
-    (
-      select count(*)
-      from public.journey_images
-      where journey_images.journey_id = journeys.id
-    )::integer as image_count,
-    journey_recipients.status_code as recipient_status
-  from public.journey_recipients
-  join public.journeys
-    on journeys.id = journey_recipients.journey_id
-  where journey_recipients.recipient_user_id = auth.uid()
-    and journeys.filter_code = 'OK'
-  order by journey_recipients.created_at desc
+    jr.journey_id,
+    jr.sender_user_id,
+    jr.snapshot_content as content,
+    jr.created_at,
+    jr.snapshot_image_count as image_count,
+    jr.status_code as recipient_status
+  from public.journey_recipients jr
+  where jr.recipient_user_id = auth.uid()
+    -- 스냅샷 필드가 존재하는 경우만 (마이그레이션 이전 데이터 제외)
+    and jr.sender_user_id is not null
+  order by jr.created_at desc
   limit least(coalesce(page_size, 20), 50)
   offset greatest(coalesce(page_offset, 0), 0);
+end;
 $$;
 
 create or replace function public.list_inbox_journey_images(
@@ -1096,7 +1099,7 @@ begin
     returning id
   ),
   tokens as (
-    select
+    select distinct on (notify_targets.user_id)
       notify_targets.journey_id,
       notify_targets.user_id,
       device_tokens.token,
@@ -1107,6 +1110,7 @@ begin
     left join public.user_profiles
       on user_profiles.user_id = notify_targets.user_id
     where device_tokens.is_active = true
+    order by notify_targets.user_id, device_tokens.last_seen_at desc
   )
   select
     tokens.journey_id,
@@ -1201,18 +1205,34 @@ begin
     order by random()
     limit _remaining
   ),
+  -- 스냅샷용 이미지 개수 계산
+  journey_image_count as (
+    select count(*)::integer as cnt
+    from public.journey_images
+    where journey_images.journey_id = _journey.id
+  ),
   inserted as (
     insert into public.journey_recipients (
       journey_id,
       recipient_user_id,
-      recipient_locale_tag
+      recipient_locale_tag,
+      -- 스냅샷 필드: journeys JOIN 없이 인박스 조회 가능 (RLS 유지)
+      sender_user_id,
+      snapshot_content,
+      snapshot_image_count
     )
-    select _journey.id, candidates.user_id, candidates.locale_tag
+    select
+      _journey.id,
+      candidates.user_id,
+      candidates.locale_tag,
+      _journey.user_id,
+      _journey.content,
+      (select cnt from journey_image_count)
     from candidates
     returning journey_recipients.recipient_user_id
   ),
   tokens as (
-    select
+    select distinct on (inserted.recipient_user_id)
       inserted.recipient_user_id,
       device_tokens.token,
       device_tokens.platform,
@@ -1224,6 +1244,7 @@ begin
     left join public.user_profiles
       on user_profiles.user_id = inserted.recipient_user_id
     where device_tokens.is_active = true
+    order by inserted.recipient_user_id, device_tokens.last_seen_at desc
   )
   select
     _journey.id as journey_id,
@@ -1324,5 +1345,28 @@ begin
     error_message,
     meta
   );
+end;
+$$;
+
+-- UNREGISTERED FCM 토큰 무효화 (Edge Function에서 호출)
+create or replace function public.invalidate_device_token(
+  p_token text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- service_role만 호출 가능 (Edge Function에서만 호출)
+  if auth.role() <> 'service_role' then
+    raise exception 'unauthorized';
+  end if;
+
+  -- 토큰을 비활성화
+  update public.device_tokens
+  set is_active = false,
+      updated_at = now()
+  where token = p_token;
 end;
 $$;

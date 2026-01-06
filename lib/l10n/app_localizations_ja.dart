@@ -18,6 +18,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get loginTitle => 'ログイン';
 
   @override
+  String get loginDescription => '匿名リレーメッセージを始めましょう';
+
+  @override
   String get loginKakao => 'Kakaoで続行';
 
   @override
@@ -25,6 +28,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get loginApple => 'Appleで続行';
+
+  @override
+  String get loginTerms => 'ログインすることで、利用規約およびプライバシーポリシーに同意したことになります';
 
   @override
   String get homeTitle => 'ホーム';
@@ -645,6 +651,27 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get onboardingStart => '開始';
+
+  @override
+  String get onboardingAgreeAndDisagree => '同意と不同意';
+
+  @override
+  String get onboardingPrevious => '前へ';
+
+  @override
+  String get ctaPermissionChoice => '権限を選択';
+
+  @override
+  String get onboardingExitTitle => 'オンボーディングを終了しますか？';
+
+  @override
+  String get onboardingExitMessage => '後で再開できます。';
+
+  @override
+  String get onboardingExitConfirm => '終了';
+
+  @override
+  String get onboardingExitCancel => '続ける';
 
   @override
   String get exitConfirmTitle => '作成をキャンセルしますか？';

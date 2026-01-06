@@ -7,6 +7,7 @@ import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
+import '../../../app/theme/app_typography.dart';
 import '../../../core/presentation/widgets/empty_state.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../l10n/app_localizations.dart';
@@ -36,9 +37,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void initState() {
     super.initState();
 
-    // 3개 카드를 위한 애니메이션 컨트롤러 생성 (최근 Journey, Inbox, Create)
+    // 2개 카드를 위한 애니메이션 컨트롤러 생성 (최근 Journey, Inbox)
     _controllers = List.generate(
-      3,
+      2,
       (index) => AnimationController(
         duration: const Duration(milliseconds: 300),
         vsync: this,
@@ -99,83 +100,76 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final isLoading = journeyListState.isLoading || inboxState.isLoading;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.homeTitle),
-        actions: [
-          IconButton(
-            onPressed: _handleRefresh,
-            icon: const Icon(Icons.refresh),
-            tooltip: l10n.homeRefresh,
-          ),
-        ],
-      ),
+      backgroundColor: AppColors.black,
+      // AppBar 제거, 상단 헤더는 body 내부에 얇게 배치
       body: LoadingOverlay(
         isLoading: isLoading,
         child: SafeArea(
-          child: RefreshIndicator(
-            onRefresh: _handleRefresh,
-            child: ListView(
-              padding: const EdgeInsets.all(AppSpacing.spacing16),
-              children: [
-                // 최근 보낸 Journey 섹션 (애니메이션 index 0)
-                _buildAnimatedCard(
-                  index: 0,
-                  child: _RecentJourneysSection(
-                    items: journeyListState.items,
-                    hasError: journeyListState.message != null,
-                    onRetry: _handleRefresh,
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              // 상단 헤더 (얇고 밀도 높은 헤더)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screenPaddingHorizontal,
+                  AppSpacing.screenPaddingTop,
+                  AppSpacing.screenPaddingHorizontal,
+                  AppSpacing.spacing16,
+                ),
+                child: Text(
+                  l10n.homeTitle,
+                  style: AppTypography.headlineMedium.copyWith(
+                    color: AppColors.onSurface,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.spacing24),
-
-                // 주요 액션 섹션
-                Text(
-                  l10n.homeActionsTitle,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.onSurface,
-                        fontWeight: FontWeight.bold,
+              ),
+              // 컨텐츠 영역 (정보 밀도 높게)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.screenPaddingHorizontal,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 최근 보낸 Journey 섹션 (애니메이션 index 0)
+                    _buildAnimatedCard(
+                      index: 0,
+                      child: _RecentJourneysSection(
+                        items: journeyListState.items,
+                        hasError: journeyListState.message != null,
                       ),
-                ),
-                const SizedBox(height: AppSpacing.spacing12),
+                    ),
+                    const SizedBox(height: AppSpacing.spacing16),
 
-                // Inbox 액션 카드 (애니메이션 index 1)
-                _buildAnimatedCard(
-                  index: 1,
-                  child: _ActionCard(
-                    icon: Icons.inbox,
-                    title: l10n.homeInboxCardTitle,
-                    description: l10n.homeInboxCardDescription,
-                    badgeCount: inboxState.items.length,
-                    onTap: () => context.go(AppRoutes.inbox),
-                    isPrimary: false,
-                  ),
+                    // Inbox 액션 카드 (애니메이션 index 1)
+                    _buildAnimatedCard(
+                      index: 1,
+                      child: _ActionCard(
+                        icon: Icons.inbox,
+                        title: l10n.homeInboxCardTitle,
+                        description: l10n.homeInboxCardDescription,
+                        badgeCount: inboxState.items.length,
+                        onTap: () => context.go(AppRoutes.inbox),
+                      ),
+                    ),
+                    // 하단 여백 (FAB 공간 확보)
+                    SizedBox(height: AppSpacing.screenPaddingBottom + 80),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.spacing12),
-
-                // Create 액션 카드 (애니메이션 index 2)
-                _buildAnimatedCard(
-                  index: 2,
-                  child: _ActionCard(
-                    icon: Icons.edit,
-                    title: l10n.homeCreateCardTitle,
-                    description: l10n.homeCreateCardDescription,
-                    onTap: () => context.go(AppRoutes.compose),
-                    isPrimary: true,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
+      // 작성 버튼: 독립적으로 떠 있는 FAB
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.go(AppRoutes.compose),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.onPrimary,
+        icon: const Icon(Icons.edit),
+        label: Text(l10n.homeCreateCardTitle),
+      ),
     );
-  }
-
-  Future<void> _handleRefresh() async {
-    await Future.wait([
-      ref.read(journeyListControllerProvider.notifier).load(limit: 3),
-      ref.read(journeyInboxControllerProvider.notifier).load(limit: 20),
-    ]);
   }
 
   /// Staggered 애니메이션이 적용된 카드 래퍼
@@ -199,24 +193,20 @@ class _RecentJourneysSection extends StatelessWidget {
   const _RecentJourneysSection({
     required this.items,
     required this.hasError,
-    required this.onRetry,
   });
 
   final List<dynamic> items;
   final bool hasError;
-  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    // 에러 상태
+    // 에러 상태 (새로고침 버튼 제거)
     if (hasError) {
       return EmptyStateWidget(
         icon: Icons.error_outline,
         title: l10n.homeLoadFailed,
-        actionLabel: l10n.homeRefresh,
-        onAction: onRetry,
       );
     }
 
@@ -237,10 +227,9 @@ class _RecentJourneysSection extends StatelessWidget {
       children: [
         Text(
           l10n.homeRecentJourneysTitle,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColors.onSurface,
-                fontWeight: FontWeight.bold,
-              ),
+          style: AppTypography.titleLarge.copyWith(
+            color: AppColors.onSurface,
+          ),
         ),
         const SizedBox(height: AppSpacing.spacing12),
         _JourneyCard(journey: recentJourney),
@@ -264,6 +253,7 @@ class _JourneyCard extends StatelessWidget {
     final statusLabel = _getStatusLabel(l10n, journey.statusCode);
 
     return Card(
+      color: AppColors.surface,
       child: InkWell(
         onTap: () => context.go('${AppRoutes.journeyList}/${journey.journeyId}'),
         borderRadius: AppRadius.medium,
@@ -272,16 +262,16 @@ class _JourneyCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 메시지 내용
+              // 메시지 내용 (정보 밀도 높게: maxLines 증가)
               Text(
                 journey.content,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.onSurface,
-                    ),
-                maxLines: 2,
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppColors.onSurface,
+                ),
+                maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: AppSpacing.spacing8),
+              const SizedBox(height: AppSpacing.spacing12),
 
               // 상태 및 날짜
               Row(
@@ -298,9 +288,9 @@ class _JourneyCard extends StatelessWidget {
                     ),
                     child: Text(
                       statusLabel,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppColors.onPrimaryContainer,
-                          ),
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.onPrimaryContainer,
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.spacing8),
@@ -309,9 +299,9 @@ class _JourneyCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       dateFormat.format(journey.createdAt.toLocal()),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.onSurfaceVariant,
-                          ),
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
                     ),
                   ),
 
@@ -344,7 +334,7 @@ class _JourneyCard extends StatelessWidget {
   }
 }
 
-/// 액션 카드 (Inbox / Create)
+/// 액션 카드 (Inbox)
 class _ActionCard extends StatelessWidget {
   const _ActionCard({
     required this.icon,
@@ -352,7 +342,6 @@ class _ActionCard extends StatelessWidget {
     required this.description,
     required this.onTap,
     this.badgeCount = 0,
-    this.isPrimary = false,
   });
 
   final IconData icon;
@@ -360,15 +349,13 @@ class _ActionCard extends StatelessWidget {
   final String description;
   final VoidCallback onTap;
   final int badgeCount;
-  final bool isPrimary;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     return Card(
-      elevation: isPrimary ? 2 : 1,
-      color: isPrimary ? AppColors.primaryContainer : AppColors.surface,
+      color: AppColors.surface,
       child: InkWell(
         onTap: onTap,
         borderRadius: AppRadius.medium,
@@ -381,12 +368,12 @@ class _ActionCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: isPrimary ? AppColors.primary : AppColors.primaryContainer,
+                  color: AppColors.primaryContainer,
                   borderRadius: AppRadius.small,
                 ),
                 child: Icon(
                   icon,
-                  color: isPrimary ? AppColors.onPrimary : AppColors.onPrimaryContainer,
+                  color: AppColors.onPrimaryContainer,
                   size: 24,
                 ),
               ),
@@ -399,12 +386,15 @@ class _ActionCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          title,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: isPrimary ? AppColors.onPrimaryContainer : AppColors.onSurface,
-                                fontWeight: FontWeight.bold,
-                              ),
+                        Flexible(
+                          child: Text(
+                            title,
+                            style: AppTypography.titleMedium.copyWith(
+                              color: AppColors.onSurface,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         if (badgeCount > 0) ...[
                           const SizedBox(width: AppSpacing.spacing8),
@@ -415,14 +405,14 @@ class _ActionCard extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.error,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: AppRadius.small,
                             ),
                             child: Text(
                               l10n.homeInboxCount(badgeCount),
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: AppColors.onError,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              style: AppTypography.labelSmall.copyWith(
+                                color: AppColors.onError,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
@@ -431,9 +421,11 @@ class _ActionCard extends StatelessWidget {
                     const SizedBox(height: AppSpacing.spacing4),
                     Text(
                       description,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: isPrimary ? AppColors.onPrimaryContainer : AppColors.onSurfaceVariant,
-                          ),
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -443,7 +435,7 @@ class _ActionCard extends StatelessWidget {
               Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: isPrimary ? AppColors.onPrimaryContainer : AppColors.onSurfaceVariant,
+                color: AppColors.onSurfaceVariant,
               ),
             ],
           ),

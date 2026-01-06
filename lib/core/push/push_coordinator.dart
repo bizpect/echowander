@@ -9,6 +9,7 @@ import '../session/session_manager.dart';
 import '../session/session_state.dart';
 import '../deeplink/deeplink_coordinator.dart';
 import '../notifications/notification_preference_repository.dart';
+import '../../features/journey/application/journey_inbox_controller.dart';
 import 'device_id_store.dart';
 import 'push_payload.dart';
 import 'push_state.dart';
@@ -71,6 +72,8 @@ class PushCoordinator extends Notifier<PushState> {
         return;
       }
       state = state.copyWith(foregroundMessage: payload);
+      // 포그라운드 푸시 수신 시 Inbox 갱신 (새 메시지 수신 가능성)
+      _refreshInboxIfNeeded();
     });
 
     _openSub = FirebaseMessaging.onMessageOpenedApp.listen((message) {
@@ -209,6 +212,15 @@ class PushCoordinator extends Notifier<PushState> {
     );
     _accessRetryTimer?.cancel();
     _accessRetryCount = 0;
+  }
+
+  /// 포그라운드 푸시 수신 시 Inbox 갱신
+  /// 세션이 인증된 상태에서만 실행
+  void _refreshInboxIfNeeded() {
+    final session = ref.read(sessionManagerProvider);
+    if (session.status == SessionStatus.authenticated) {
+      ref.read(journeyInboxControllerProvider.notifier).load();
+    }
   }
 
   Future<String?> _readAccessToken() async {

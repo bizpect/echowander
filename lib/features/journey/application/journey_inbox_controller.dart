@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -47,6 +49,9 @@ class JourneyInboxController extends Notifier<JourneyInboxState> {
 
   @override
   JourneyInboxState build() {
+    if (kDebugMode) {
+      debugPrint('[InboxTrace][Provider] build - initializing controller');
+    }
     _journeyRepository = ref.read(journeyRepositoryProvider);
     return const JourneyInboxState(
       items: [],
@@ -56,25 +61,66 @@ class JourneyInboxController extends Notifier<JourneyInboxState> {
   }
 
   Future<void> load({int limit = _defaultLimit, int offset = 0}) async {
+    if (kDebugMode) {
+      debugPrint('[InboxTrace][Provider] load - start, limit: $limit, offset: $offset');
+    }
     final accessToken = ref.read(sessionManagerProvider).accessToken;
     if (accessToken == null || accessToken.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('[InboxTrace][Provider] load - missing accessToken');
+      }
       state = state.copyWith(message: JourneyInboxMessage.missingSession);
       return;
     }
+    if (kDebugMode) {
+      debugPrint('[InboxTrace][Provider] load - accessToken exists (length: ${accessToken.length})');
+      // accessToken 시작 부분 확인 (JWT는 eyJ로 시작해야 함)
+      final tokenStart = accessToken.length > 20 ? accessToken.substring(0, 20) : accessToken;
+      debugPrint('[InboxTrace][Provider] load - accessToken starts with: $tokenStart...');
+      // JWT 전체 payload 출력
+      try {
+        final parts = accessToken.split('.');
+        debugPrint('[InboxTrace][Provider] load - JWT parts count: ${parts.length}');
+        if (parts.length == 3) {
+          final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+          debugPrint('[InboxTrace][Provider] load - JWT payload: $payload');
+        } else {
+          debugPrint('[InboxTrace][Provider] load - INVALID JWT: expected 3 parts, got ${parts.length}');
+        }
+      } catch (e) {
+        debugPrint('[InboxTrace][Provider] load - JWT decode error: $e');
+      }
+    }
     state = state.copyWith(isLoading: true, clearMessage: true);
     try {
+      // 디버그: auth.uid() 값 확인
+      if (kDebugMode) {
+        try {
+          final debugResult = await _journeyRepository.debugAuth(accessToken: accessToken);
+          debugPrint('[InboxTrace][Provider] load - debug_auth result: $debugResult');
+        } catch (e) {
+          debugPrint('[InboxTrace][Provider] load - debug_auth error: $e');
+        }
+        debugPrint('[InboxTrace][Provider] load - calling fetchInboxJourneys');
+      }
       final items = await _journeyRepository.fetchInboxJourneys(
         limit: limit,
         offset: offset,
         accessToken: accessToken,
       );
+      if (kDebugMode) {
+        debugPrint('[InboxTrace][Provider] load - fetchInboxJourneys completed, items: ${items.length}');
+      }
       state = state.copyWith(
         items: items,
         isLoading: false,
       );
+      if (kDebugMode) {
+        debugPrint('[InboxTrace][Provider] load - state updated, items: ${state.items.length}, isLoading: ${state.isLoading}');
+      }
     } on JourneyInboxException catch (error) {
       if (kDebugMode) {
-        debugPrint('inbox: 목록 로드 실패 (${error.error})');
+        debugPrint('[InboxTrace][Provider] load - JourneyInboxException: ${error.error}');
       }
       final message = error.error == JourneyInboxError.unauthorized
           ? JourneyInboxMessage.missingSession
@@ -83,9 +129,9 @@ class JourneyInboxController extends Notifier<JourneyInboxState> {
         isLoading: false,
         message: message,
       );
-    } catch (_) {
+    } catch (error) {
       if (kDebugMode) {
-        debugPrint('inbox: 목록 로드 알 수 없는 오류');
+        debugPrint('[InboxTrace][Provider] load - unknown error: $error');
       }
       state = state.copyWith(
         isLoading: false,

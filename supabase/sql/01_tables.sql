@@ -74,7 +74,9 @@ create table if not exists public.device_tokens (
   constraint device_tokens_user_fk
     foreign key (user_id)
     references public.users (user_id)
-    on delete cascade
+    on delete cascade,
+  constraint device_tokens_user_device_unique
+    unique (user_id, device_id)
 );
 
 create table if not exists public.notification_logs (
@@ -187,6 +189,10 @@ create table if not exists public.journey_recipients (
   status_group text not null default 'journey_recipient_status',
   status_code text not null default 'ASSIGNED',
   recipient_locale_tag text,
+  -- 스냅샷 필드: journeys JOIN 없이 인박스 조회 가능 (RLS 유지)
+  sender_user_id uuid,
+  snapshot_content text,
+  snapshot_image_count integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint journey_recipients_journey_fk

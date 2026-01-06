@@ -18,6 +18,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get loginTitle => '登录';
 
   @override
+  String get loginDescription => '开始您的匿名接力消息';
+
+  @override
   String get loginKakao => '使用 Kakao 继续';
 
   @override
@@ -25,6 +28,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get loginApple => '使用 Apple 继续';
+
+  @override
+  String get loginTerms => '登录即表示您同意我们的服务条款和隐私政策';
 
   @override
   String get homeTitle => '首页';
@@ -643,6 +649,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get onboardingStart => '开始';
+
+  @override
+  String get onboardingAgreeAndDisagree => '同意和不同意';
+
+  @override
+  String get onboardingPrevious => '上一步';
+
+  @override
+  String get ctaPermissionChoice => '选择权限';
+
+  @override
+  String get onboardingExitTitle => '退出新手引导？';
+
+  @override
+  String get onboardingExitMessage => '您可以稍后重新开始。';
+
+  @override
+  String get onboardingExitConfirm => '退出';
+
+  @override
+  String get onboardingExitCancel => '继续';
 
   @override
   String get exitConfirmTitle => '取消编辑？';

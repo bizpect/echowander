@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -70,6 +71,7 @@ final onboardingControllerProvider =
 );
 
 class OnboardingController extends Notifier<OnboardingState> {
+  static const String _logPrefix = '[OnboardingController]';
   late final OnboardingLocalStore _store;
   late final AppPermissionService _permissionService;
 
@@ -82,8 +84,42 @@ class OnboardingController extends Notifier<OnboardingState> {
 
   Future<void> load() async {
     final completed = await _store.readCompleted();
-    state = state.copyWith(
-      status: completed ? OnboardingStatus.completed : OnboardingStatus.required,
+    if (completed) {
+      state = state.copyWith(status: OnboardingStatus.completed);
+      return;
+    }
+
+    // 진행 상태 복원
+    final progress = await _store.readProgress();
+    if (progress != null) {
+      if (kDebugMode) {
+        debugPrint(
+          '$_logPrefix load() - 복원된 진행 상태: stepIndex=${progress.stepIndex}, '
+          'guideline=${progress.guidelineAgreed}, '
+          'content=${progress.contentAgreed}, '
+          'safety=${progress.safetyAgreed}',
+        );
+      }
+      state = state.copyWith(
+        status: OnboardingStatus.required,
+        stepIndex: progress.stepIndex,
+        guidelineAgreed: progress.guidelineAgreed,
+        contentAgreed: progress.contentAgreed,
+        safetyAgreed: progress.safetyAgreed,
+      );
+    } else {
+      state = state.copyWith(status: OnboardingStatus.required);
+    }
+  }
+
+  Future<void> _saveProgress() async {
+    await _store.saveProgress(
+      OnboardingProgress(
+        stepIndex: state.stepIndex,
+        guidelineAgreed: state.guidelineAgreed,
+        contentAgreed: state.contentAgreed,
+        safetyAgreed: state.safetyAgreed,
+      ),
     );
   }
 
@@ -109,14 +145,17 @@ class OnboardingController extends Notifier<OnboardingState> {
 
   void updateGuidelineAgreement(bool value) {
     state = state.copyWith(guidelineAgreed: value);
+    _saveProgress();
   }
 
   void updateContentAgreement(bool value) {
     state = state.copyWith(contentAgreed: value);
+    _saveProgress();
   }
 
   void updateSafetyAgreement(bool value) {
     state = state.copyWith(safetyAgreed: value);
+    _saveProgress();
   }
 
   void nextStep() {
@@ -129,10 +168,12 @@ class OnboardingController extends Notifier<OnboardingState> {
       return;
     }
     state = state.copyWith(stepIndex: nextIndex);
+    _saveProgress();
   }
 
   Future<void> complete() async {
     await _store.saveCompleted();
+    await _store.clearProgress();
     state = state.copyWith(status: OnboardingStatus.completed);
   }
 
@@ -142,5 +183,6 @@ class OnboardingController extends Notifier<OnboardingState> {
       return;
     }
     state = state.copyWith(stepIndex: nextIndex);
+    _saveProgress();
   }
 }

@@ -18,6 +18,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get loginTitle => '로그인';
 
   @override
+  String get loginDescription => '익명 릴레이 메시지를 시작하세요';
+
+  @override
   String get loginKakao => '카카오로 계속';
 
   @override
@@ -25,6 +28,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get loginApple => '애플로 계속';
+
+  @override
+  String get loginTerms => '로그인 시 서비스 약관 및 개인정보 처리방침에 동의하게 됩니다';
 
   @override
   String get homeTitle => '홈';
@@ -647,6 +653,27 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get onboardingStart => '시작하기';
+
+  @override
+  String get onboardingAgreeAndDisagree => '동의 및 미동의';
+
+  @override
+  String get onboardingPrevious => '이전';
+
+  @override
+  String get ctaPermissionChoice => '권한 선택';
+
+  @override
+  String get onboardingExitTitle => '온보딩을 종료하시겠어요?';
+
+  @override
+  String get onboardingExitMessage => '나중에 다시 시작할 수 있어요.';
+
+  @override
+  String get onboardingExitConfirm => '종료';
+
+  @override
+  String get onboardingExitCancel => '계속하기';
 
   @override
   String get exitConfirmTitle => '작성을 취소하시겠어요?';

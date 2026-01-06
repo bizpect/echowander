@@ -218,6 +218,11 @@ abstract class JourneyRepository {
     required String accessToken,
   });
 
+  /// 디버그용: auth.uid() 값 확인
+  Future<String> debugAuth({
+    required String accessToken,
+  });
+
   Future<List<String>> fetchInboxJourneyImageUrls({
     required String journeyId,
     required String accessToken,

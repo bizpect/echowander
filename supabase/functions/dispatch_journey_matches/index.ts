@@ -36,11 +36,14 @@ serve(async (request) => {
     ? { target_journey_id: journeyId }
     : { batch_size: batchSize };
 
+  console.log(`[dispatch] Starting: rpc=${rpcName}, journey_id=${journeyId || 'batch'}, batch_size=${batchSize}`);
+
   const authHeader = request.headers.get("Authorization") ?? "";
   const authToUse =
     authHeader || (serviceRoleKey ? `Bearer ${serviceRoleKey}` : "");
 
   if (!authToUse) {
+    console.error(`[dispatch] Missing auth header and service_role key`);
     return jsonResponse({ error: "missing_auth" }, 401);
   }
 
@@ -56,6 +59,7 @@ serve(async (request) => {
 
   const rpcText = await rpcResponse.text();
   if (!rpcResponse.ok) {
+    console.error(`[dispatch] RPC ${rpcName} failed: status=${rpcResponse.status}, body=${rpcText}`);
     return jsonResponse(
       {
         error: "match_failed",
@@ -73,50 +77,77 @@ serve(async (request) => {
     row.device_token.length > 0
   );
 
+  console.log(`[dispatch] Match completed: matched=${rows.length}, with_tokens=${targets.length}`);
+
   const results = await Promise.allSettled(
     targets.map(async (row) => {
       const journeyId = row.journey_id as string;
+      const recipientUserId = row.recipient_user_id as string;
       const localeTag = normalizeLocaleTag(row.locale_tag as string | undefined);
       const text = resolvePushText(localeTag);
       const route = `/inbox?highlight=${encodeURIComponent(journeyId)}`;
-      await sendFcm({
-        token: row.device_token as string,
-        journeyId,
-        projectId: fcmProjectId,
-        title: text.title,
-        body: text.body,
-        route,
-      });
-      await insertNotificationLog({
-        userId: row.recipient_user_id as string,
-        title: text.title,
-        body: text.body,
-        route,
-        data: {
-          type: "journey_assigned",
-          journey_id: journeyId,
-        },
-      });
+      try {
+        await sendFcm({
+          token: row.device_token as string,
+          journeyId,
+          projectId: fcmProjectId,
+          title: text.title,
+          body: text.body,
+          route,
+        });
+        await insertNotificationLog({
+          userId: recipientUserId,
+          title: text.title,
+          body: text.body,
+          route,
+          data: {
+            type: "journey_assigned",
+            journey_id: journeyId,
+            fcm_status: "success",
+          },
+        });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`[dispatch] FCM failed for journey=${journeyId}, user=${recipientUserId}: ${errorMessage}`);
+        await insertNotificationLog({
+          userId: recipientUserId,
+          title: text.title,
+          body: text.body,
+          route,
+          data: {
+            type: "journey_assigned",
+            journey_id: journeyId,
+            fcm_status: "failed",
+            fcm_error: errorMessage,
+          },
+        });
+        throw error;
+      }
     }),
   );
 
   const successCount = results.filter((item) => item.status === "fulfilled")
     .length;
+  const failedResults = results.filter((item) => item.status === "rejected");
+  if (failedResults.length > 0) {
+    console.error(`[dispatch] ${failedResults.length} FCM push(es) failed`);
+  }
 
   const completionResult = await dispatchCompletion({
     batchSize: completeBatchSize,
     projectId: fcmProjectId,
   });
 
-  return jsonResponse(
-    {
-      matched: rows.length,
-      pushTargets: targets.length,
-      pushSuccess: successCount,
-      completion: completionResult,
-    },
-    200,
-  );
+  const responseData = {
+    matched: rows.length,
+    pushTargets: targets.length,
+    pushSuccess: successCount,
+    completion: completionResult,
+  };
+
+  console.log(`[dispatch] Completed: ${JSON.stringify(responseData)}`);
+
+  return jsonResponse(responseData, 200);
 });
 
 async function sendFcm({
@@ -160,6 +191,11 @@ async function sendFcm({
 
   if (!response.ok) {
     const body = await response.text();
+    // UNREGISTERED 토큰 무효화 처리
+    if (response.status === 404 && body.includes("UNREGISTERED")) {
+      console.log(`[dispatch] Invalidating UNREGISTERED token: ${token.substring(0, 20)}...`);
+      await invalidateDeviceToken(token);
+    }
     throw new Error(`fcm_error:${response.status}:${body}`);
   }
 }
@@ -271,31 +307,55 @@ async function dispatchCompletion({
       .filter((row) => row && typeof row.device_token === "string")
       .map(async (row) => {
         const journeyId = row.journey_id as string;
+        const userId = row.user_id as string;
         const localeTag = normalizeLocaleTag(row.locale_tag as string | undefined);
         const text = resolveResultPushText(localeTag);
         const route = `/results/${journeyId}?highlight=1`;
-        await sendResultFcm({
-          token: row.device_token as string,
-          journeyId,
-          projectId,
-          title: text.title,
-          body: text.body,
-          route,
-        });
-        await insertNotificationLog({
-          userId: row.user_id as string,
-          title: text.title,
-          body: text.body,
-          route,
-          data: {
-            type: "journey_result",
-            journey_id: journeyId,
-          },
-        });
+        try {
+          await sendResultFcm({
+            token: row.device_token as string,
+            journeyId,
+            projectId,
+            title: text.title,
+            body: text.body,
+            route,
+          });
+          await insertNotificationLog({
+            userId,
+            title: text.title,
+            body: text.body,
+            route,
+            data: {
+              type: "journey_result",
+              journey_id: journeyId,
+              fcm_status: "success",
+            },
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.error(`[dispatch] Result FCM failed for journey=${journeyId}, user=${userId}: ${errorMessage}`);
+          await insertNotificationLog({
+            userId,
+            title: text.title,
+            body: text.body,
+            route,
+            data: {
+              type: "journey_result",
+              journey_id: journeyId,
+              fcm_status: "failed",
+              fcm_error: errorMessage,
+            },
+          });
+          throw error;
+        }
       }),
   );
   const resultSuccess = resultPushes.filter((item) => item.status === "fulfilled")
     .length;
+  const resultFailed = resultPushes.filter((item) => item.status === "rejected").length;
+  if (resultFailed > 0) {
+    console.error(`[dispatch] ${resultFailed} result FCM push(es) failed`);
+  }
   return { skipped: false, success: true, notified: resultSuccess };
 }
 
@@ -340,6 +400,11 @@ async function sendResultFcm({
 
   if (!response.ok) {
     const body = await response.text();
+    // UNREGISTERED 토큰 무효화 처리
+    if (response.status === 404 && body.includes("UNREGISTERED")) {
+      console.log(`[dispatch] Invalidating UNREGISTERED token: ${token.substring(0, 20)}...`);
+      await invalidateDeviceToken(token);
+    }
     throw new Error(`fcm_result_error:${response.status}:${body}`);
   }
 }
@@ -353,26 +418,32 @@ async function getAccessToken(): Promise<string> {
     iat: now,
     exp: now + 3600,
   };
-  const key = await importPrivateKey(fcmPrivateKey);
-  const jwt = await new SignJWT(payload)
-    .setProtectedHeader({ alg: "RS256", typ: "JWT" })
-    .sign(key);
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: jwt,
-    }),
-  });
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`oauth_error:${response.status}:${body}`);
+  try {
+    const key = await importPrivateKey(fcmPrivateKey);
+    const jwt = await new SignJWT(payload)
+      .setProtectedHeader({ alg: "RS256", typ: "JWT" })
+      .sign(key);
+    const response = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: jwt,
+      }),
+    });
+    if (!response.ok) {
+      const body = await response.text();
+      console.error(`[dispatch] OAuth2 token request failed: status=${response.status}, body=${body}`);
+      throw new Error(`oauth_error:${response.status}:${body}`);
+    }
+    const data = await response.json();
+    return data.access_token as string;
+  } catch (error) {
+    console.error(`[dispatch] getAccessToken failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
   }
-  const data = await response.json();
-  return data.access_token as string;
 }
 
 async function importPrivateKey(pem: string) {
@@ -446,7 +517,7 @@ async function insertNotificationLog({
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        apikey: anonKey,
+        apikey: serviceRoleKey,
         Authorization: `Bearer ${serviceRoleKey}`,
       },
       body: JSON.stringify({
@@ -460,6 +531,39 @@ async function insertNotificationLog({
   );
   if (!response.ok) {
     const bodyText = await response.text();
+    console.error(`[dispatch] notification_log insert failed: ${response.status} - ${bodyText}`);
     throw new Error(`notification_log_failed:${response.status}:${bodyText}`);
+  }
+}
+
+async function invalidateDeviceToken(token: string) {
+  if (!serviceRoleKey) {
+    console.warn(`[dispatch] Cannot invalidate token: missing service_role key`);
+    return;
+  }
+  try {
+    // RPC 호출로 변경 (RLS 우회)
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/rpc/invalidate_device_token`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+        },
+        body: JSON.stringify({
+          p_token: token,
+        }),
+      },
+    );
+    if (!response.ok) {
+      const bodyText = await response.text();
+      console.error(`[dispatch] Token invalidation RPC failed: ${response.status} - ${bodyText}`);
+    } else {
+      console.log(`[dispatch] Token invalidated successfully: ${token.substring(0, 20)}...`);
+    }
+  } catch (error) {
+    console.error(`[dispatch] Token invalidation error: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

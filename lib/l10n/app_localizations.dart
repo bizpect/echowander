@@ -127,6 +127,12 @@ abstract class AppLocalizations {
   /// **'Sign in'**
   String get loginTitle;
 
+  /// No description provided for @loginDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Start your anonymous relay message'**
+  String get loginDescription;
+
   /// No description provided for @loginKakao.
   ///
   /// In en, this message translates to:
@@ -144,6 +150,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Continue with Apple'**
   String get loginApple;
+
+  /// No description provided for @loginTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'By signing in, you agree to our Terms of Service and Privacy Policy'**
+  String get loginTerms;
 
   /// No description provided for @homeTitle.
   ///
@@ -1356,6 +1368,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start'**
   String get onboardingStart;
+
+  /// No description provided for @onboardingAgreeAndDisagree.
+  ///
+  /// In en, this message translates to:
+  /// **'Agree and Disagree'**
+  String get onboardingAgreeAndDisagree;
+
+  /// No description provided for @onboardingPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get onboardingPrevious;
+
+  /// No description provided for @ctaPermissionChoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Permission'**
+  String get ctaPermissionChoice;
+
+  /// No description provided for @onboardingExitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit onboarding?'**
+  String get onboardingExitTitle;
+
+  /// No description provided for @onboardingExitMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You can start again later.'**
+  String get onboardingExitMessage;
+
+  /// No description provided for @onboardingExitConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit'**
+  String get onboardingExitConfirm;
+
+  /// No description provided for @onboardingExitCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get onboardingExitCancel;
 
   /// No description provided for @exitConfirmTitle.
   ///

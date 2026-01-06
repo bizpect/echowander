@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +13,7 @@ import '../../../app/theme/app_radius.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/empty_state.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
+import '../../../core/session/session_manager.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/journey_inbox_controller.dart';
 import '../domain/journey_repository.dart';
@@ -33,9 +35,17 @@ class JourneyInboxScreen extends ConsumerStatefulWidget {
 }
 
 class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
+  bool _initLogged = false;
+
   @override
   void initState() {
     super.initState();
+    if (kDebugMode && !_initLogged) {
+      _initLogged = true;
+      final session = ref.read(sessionManagerProvider);
+      final hasSession = session.accessToken != null && session.accessToken!.isNotEmpty;
+      debugPrint('[InboxTrace][UI] initState - highlightJourneyId: ${widget.highlightJourneyId}, hasSession: $hasSession');
+    }
     Future.microtask(
       () => ref.read(journeyInboxControllerProvider.notifier).load(),
     );
@@ -46,6 +56,10 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
     final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(journeyInboxControllerProvider);
     final controller = ref.read(journeyInboxControllerProvider.notifier);
+
+    if (kDebugMode) {
+      debugPrint('[InboxTrace][UI] build - isLoading: ${state.isLoading}, items: ${state.items.length}, message: ${state.message}');
+    }
 
     ref.listen<JourneyInboxState>(journeyInboxControllerProvider, (previous, next) {
       if (next.message == null || next.message == previous?.message) {
@@ -90,8 +104,19 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
   }
 
   Widget _buildBody(BuildContext context, AppLocalizations l10n, JourneyInboxState state) {
+    if (kDebugMode) {
+      final hasMessage = state.message != null;
+      final isEmpty = state.items.isEmpty;
+      final isLoading = state.isLoading;
+      final emptyStateCondition = isEmpty && !isLoading;
+      debugPrint('[InboxTrace][UI] _buildBody - hasMessage: $hasMessage, isEmpty: $isEmpty, isLoading: $isLoading, emptyStateCondition: $emptyStateCondition');
+    }
+
     // 에러 상태
     if (state.message != null) {
+      if (kDebugMode) {
+        debugPrint('[InboxTrace][UI] _buildBody - showing error state');
+      }
       return EmptyStateWidget(
         icon: Icons.error_outline,
         title: l10n.inboxLoadFailed,
@@ -102,6 +127,9 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
 
     // 빈 상태
     if (state.items.isEmpty && !state.isLoading) {
+      if (kDebugMode) {
+        debugPrint('[InboxTrace][UI] _buildBody - showing empty state');
+      }
       return EmptyStateWidget(
         icon: Icons.inbox_outlined,
         title: l10n.inboxEmpty,
@@ -109,6 +137,9 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
     }
 
     // 정상 상태 - 리스트 표시
+    if (kDebugMode) {
+      debugPrint('[InboxTrace][UI] _buildBody - showing list, itemCount: ${state.items.length}');
+    }
     return RefreshIndicator(
       onRefresh: () => ref.read(journeyInboxControllerProvider.notifier).load(),
       child: ListView.separated(

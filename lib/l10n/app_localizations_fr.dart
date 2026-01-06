@@ -18,6 +18,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get loginTitle => 'Se connecter';
 
   @override
+  String get loginDescription => 'Commencez votre message relais anonyme';
+
+  @override
   String get loginKakao => 'Continuer avec Kakao';
 
   @override
@@ -25,6 +28,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get loginApple => 'Continuer avec Apple';
+
+  @override
+  String get loginTerms =>
+      'En vous connectant, vous acceptez nos Conditions d\'utilisation et notre Politique de confidentialité';
 
   @override
   String get homeTitle => 'Accueil';
@@ -679,6 +686,27 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get onboardingStart => 'Commencer';
+
+  @override
+  String get onboardingAgreeAndDisagree => 'Accepter et Refuser';
+
+  @override
+  String get onboardingPrevious => 'Précédent';
+
+  @override
+  String get ctaPermissionChoice => 'Choisir Permission';
+
+  @override
+  String get onboardingExitTitle => 'Quitter l\'intégration ?';
+
+  @override
+  String get onboardingExitMessage => 'Vous pourrez recommencer plus tard.';
+
+  @override
+  String get onboardingExitConfirm => 'Quitter';
+
+  @override
+  String get onboardingExitCancel => 'Continuer';
 
   @override
   String get exitConfirmTitle => 'Annuler l\'écriture?';

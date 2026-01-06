@@ -18,6 +18,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginTitle => 'Sign in';
 
   @override
+  String get loginDescription => 'Start your anonymous relay message';
+
+  @override
   String get loginKakao => 'Continue with Kakao';
 
   @override
@@ -25,6 +28,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loginApple => 'Continue with Apple';
+
+  @override
+  String get loginTerms =>
+      'By signing in, you agree to our Terms of Service and Privacy Policy';
 
   @override
   String get homeTitle => 'Home';
@@ -666,6 +673,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingStart => 'Start';
+
+  @override
+  String get onboardingAgreeAndDisagree => 'Agree and Disagree';
+
+  @override
+  String get onboardingPrevious => 'Previous';
+
+  @override
+  String get ctaPermissionChoice => 'Choose Permission';
+
+  @override
+  String get onboardingExitTitle => 'Exit onboarding?';
+
+  @override
+  String get onboardingExitMessage => 'You can start again later.';
+
+  @override
+  String get onboardingExitConfirm => 'Exit';
+
+  @override
+  String get onboardingExitCancel => 'Continue';
 
   @override
   String get exitConfirmTitle => 'Cancel writing?';

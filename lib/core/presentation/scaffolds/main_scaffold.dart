@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../features/home/presentation/home_screen.dart';
 import '../../../features/journey/presentation/journey_compose_screen.dart';
 import '../../../features/journey/presentation/journey_inbox_screen.dart';
+import '../../../features/journey/application/journey_inbox_controller.dart';
 import '../../../features/notifications/presentation/notification_inbox_screen.dart';
 import '../../../features/notifications/application/notification_inbox_controller.dart';
 import '../../../features/profile/presentation/profile_screen.dart';
@@ -63,7 +64,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
     });
 
     // 탭 전환 시 해당 탭의 데이터 새로고침
-    if (index == AppTab.alerts.tabIndex) {
+    if (index == AppTab.inbox.tabIndex) {
+      ref.read(journeyInboxControllerProvider.notifier).load();
+    } else if (index == AppTab.alerts.tabIndex) {
       ref.read(notificationInboxControllerProvider.notifier).load();
     }
   }

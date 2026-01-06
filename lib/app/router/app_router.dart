@@ -38,7 +38,11 @@ class AppRoutes {
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final sessionState = ref.watch(sessionManagerProvider);
-  final onboardingState = ref.watch(onboardingControllerProvider);
+  // redirect에 필요한 onboardingStatus만 select로 watch
+  // 체크 토글 시 전체 state 변경이 router 재생성을 유발하지 않도록 방지
+  final onboardingStatus = ref.watch(
+    onboardingControllerProvider.select((state) => state.status),
+  );
 
   return GoRouter(
     initialLocation: AppRoutes.splash,
@@ -116,7 +120,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final status = sessionState.status;
       final location = state.matchedLocation;
-      final onboardingStatus = onboardingState.status;
 
       if (status == SessionStatus.unknown ||
           onboardingStatus == OnboardingStatus.unknown) {

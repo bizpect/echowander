@@ -72,7 +72,7 @@ serve(async (request) => {
   const now = Math.floor(Date.now() / 1000);
 
   const accessToken = await new SignJWT({ typ: "access", role: "authenticated" })
-    .setProtectedHeader({ alg: "HS256" })
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setIssuer(jwtIssuer)
     .setAudience(jwtAudience)
     .setSubject(userId)
@@ -81,7 +81,7 @@ serve(async (request) => {
     .sign(encoder.encode(jwtSecret));
 
   const refreshToken = await new SignJWT({ typ: "refresh", role: "authenticated" })
-    .setProtectedHeader({ alg: "HS256" })
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setIssuer(jwtIssuer)
     .setAudience(jwtAudience)
     .setSubject(userId)

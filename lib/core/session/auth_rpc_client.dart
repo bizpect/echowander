@@ -1,9 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
 import '../config/app_config.dart';
 import '../logging/server_error_logger.dart';
 import 'session_tokens.dart';
+
+const _logPrefix = '[AuthRpcClient]';
 
 abstract class AuthRpcClient {
   Future<bool> validateSession(SessionTokens tokens);
@@ -136,17 +140,31 @@ class HttpAuthRpcClient implements AuthRpcClient {
 
   @override
   Future<bool> validateSession(SessionTokens tokens) async {
+    if (kDebugMode) {
+      debugPrint('$_logPrefix validateSession 시작');
+    }
     final payload = await _postJson(
       context: 'auth_validate_session',
       uri: _resolve('validate_session'),
       body: {'refreshToken': tokens.refreshToken},
       token: tokens.accessToken,
     );
-    return payload?['valid'] == true;
+    final isValid = payload?['valid'] == true;
+    if (kDebugMode) {
+      if (payload == null) {
+        debugPrint('$_logPrefix validateSession 실패: 네트워크/서버 오류 (payload=null)');
+      } else {
+        debugPrint('$_logPrefix validateSession 결과: valid=$isValid');
+      }
+    }
+    return isValid;
   }
 
   @override
   Future<SessionTokens?> refreshSession(SessionTokens tokens) async {
+    if (kDebugMode) {
+      debugPrint('$_logPrefix refreshSession 시작');
+    }
     final payload = await _postJson(
       context: 'auth_refresh_session',
       uri: _resolve('refresh_session'),
@@ -154,7 +172,13 @@ class HttpAuthRpcClient implements AuthRpcClient {
       token: tokens.accessToken,
     );
     if (payload == null) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix refreshSession 실패: 네트워크/서버 오류 또는 인증 실패');
+      }
       return null;
+    }
+    if (kDebugMode) {
+      debugPrint('$_logPrefix refreshSession 성공');
     }
     return SessionTokens(
       accessToken: payload['accessToken'] as String,

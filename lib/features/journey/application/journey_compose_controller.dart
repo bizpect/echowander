@@ -193,16 +193,17 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
       if (kDebugMode) {
         debugPrint('compose: RPC 호출 시작');
       }
-      final result = await _journeyRepository.createJourney(
+      final result = await _createJourneyWithRetry(
         content: content,
         languageTag: languageTag,
         imagePaths: uploadedPaths,
         recipientCount: recipientCount,
-        accessToken: accessToken,
       );
+      // dispatch도 동일한 방식으로 재시도 가능하도록 새 토큰 가져오기
+      final currentAccessToken = ref.read(sessionManagerProvider).accessToken ?? accessToken;
       await _journeyRepository.dispatchJourneyMatch(
         journeyId: result.journeyId,
-        accessToken: accessToken,
+        accessToken: currentAccessToken,
       );
       if (kDebugMode) {
         debugPrint('compose: RPC 호출 완료');
@@ -294,5 +295,56 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
 
   void clearMessage() {
     state = state.copyWith(clearMessage: true);
+  }
+
+  // JWT 만료 시 자동 갱신 후 재시도
+  Future<JourneyCreationResult> _createJourneyWithRetry({
+    required String content,
+    required String languageTag,
+    required List<String> imagePaths,
+    required int recipientCount,
+  }) async {
+    var accessToken = ref.read(sessionManagerProvider).accessToken;
+    if (accessToken == null || accessToken.isEmpty) {
+      throw JourneyCreationException(JourneyCreationError.unauthorized);
+    }
+
+    try {
+      return await _journeyRepository.createJourney(
+        content: content,
+        languageTag: languageTag,
+        imagePaths: imagePaths,
+        recipientCount: recipientCount,
+        accessToken: accessToken,
+      );
+    } on JourneyCreationException catch (e) {
+      // 401 Unauthorized 에러 시 토큰 갱신 후 재시도
+      if (e.error == JourneyCreationError.unauthorized) {
+        if (kDebugMode) {
+          debugPrint('compose: JWT 만료, 토큰 갱신 시도');
+        }
+        await ref.read(sessionManagerProvider.notifier).restoreSession();
+
+        final newAccessToken = ref.read(sessionManagerProvider).accessToken;
+        if (newAccessToken == null || newAccessToken.isEmpty) {
+          if (kDebugMode) {
+            debugPrint('compose: 토큰 갱신 실패, 재로그인 필요');
+          }
+          rethrow;
+        }
+
+        if (kDebugMode) {
+          debugPrint('compose: 토큰 갱신 성공, 재시도');
+        }
+        return await _journeyRepository.createJourney(
+          content: content,
+          languageTag: languageTag,
+          imagePaths: imagePaths,
+          recipientCount: recipientCount,
+          accessToken: newAccessToken,
+        );
+      }
+      rethrow;
+    }
   }
 }

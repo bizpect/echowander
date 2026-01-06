@@ -18,6 +18,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get loginTitle => 'Iniciar sesión';
 
   @override
+  String get loginDescription => 'Comienza tu mensaje de relevo anónimo';
+
+  @override
   String get loginKakao => 'Continuar con Kakao';
 
   @override
@@ -25,6 +28,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get loginApple => 'Continuar con Apple';
+
+  @override
+  String get loginTerms =>
+      'Al iniciar sesión, aceptas nuestros Términos de Servicio y Política de Privacidad';
 
   @override
   String get homeTitle => 'Inicio';
@@ -670,6 +677,27 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onboardingStart => 'Comenzar';
+
+  @override
+  String get onboardingAgreeAndDisagree => 'Aceptar y Rechazar';
+
+  @override
+  String get onboardingPrevious => 'Anterior';
+
+  @override
+  String get ctaPermissionChoice => 'Elegir Permiso';
+
+  @override
+  String get onboardingExitTitle => '¿Salir de la introducción?';
+
+  @override
+  String get onboardingExitMessage => 'Puedes comenzar de nuevo más tarde.';
+
+  @override
+  String get onboardingExitConfirm => 'Salir';
+
+  @override
+  String get onboardingExitCancel => 'Continuar';
 
   @override
   String get exitConfirmTitle => '¿Cancelar escritura?';

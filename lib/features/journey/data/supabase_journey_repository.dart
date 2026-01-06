@@ -407,19 +407,25 @@ class SupabaseJourneyRepository implements JourneyRepository {
     required int offset,
     required String accessToken,
   }) async {
+    if (kDebugMode) {
+      debugPrint('[InboxTrace][Repo] fetchInboxJourneys - start, limit: $limit, offset: $offset, accessToken length: ${accessToken.length}');
+    }
     if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
       if (kDebugMode) {
-        debugPrint('inbox: supabase 설정 누락');
+        debugPrint('[InboxTrace][Repo] fetchInboxJourneys - missing config');
       }
       throw JourneyInboxException(JourneyInboxError.missingConfig);
     }
     if (accessToken.isEmpty) {
       if (kDebugMode) {
-        debugPrint('inbox: accessToken 없음');
+        debugPrint('[InboxTrace][Repo] fetchInboxJourneys - empty accessToken');
       }
       throw JourneyInboxException(JourneyInboxError.unauthorized);
     }
     final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/list_inbox_journeys');
+    if (kDebugMode) {
+      debugPrint('[InboxTrace][Supabase] fetchInboxJourneys - calling RPC: $uri');
+    }
     try {
       final request = await _client.postUrl(uri);
       request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
@@ -433,11 +439,17 @@ class SupabaseJourneyRepository implements JourneyRepository {
           }),
         ),
       );
+      if (kDebugMode) {
+        debugPrint('[InboxTrace][Supabase] fetchInboxJourneys - request sent, waiting for response');
+      }
       final response = await request.close();
       final body = await response.transform(utf8.decoder).join();
+      if (kDebugMode) {
+        debugPrint('[InboxTrace][Supabase] fetchInboxJourneys - response received, statusCode: ${response.statusCode}, body length: ${body.length}');
+      }
       if (response.statusCode != HttpStatus.ok) {
         if (kDebugMode) {
-          debugPrint('inbox: list 실패 ${response.statusCode} $body');
+          debugPrint('[InboxTrace][Supabase] fetchInboxJourneys - error response: ${response.statusCode} $body');
         }
         await _errorLogger.logHttpFailure(
           context: 'list_inbox_journeys',
@@ -459,21 +471,46 @@ class SupabaseJourneyRepository implements JourneyRepository {
       }
       final payload = jsonDecode(body);
       if (payload is! List) {
+        if (kDebugMode) {
+          debugPrint('[InboxTrace][Repo] fetchInboxJourneys - invalid payload type: ${payload.runtimeType}');
+        }
         throw JourneyInboxException(JourneyInboxError.invalidPayload);
       }
-      return payload
-          .whereType<Map<String, dynamic>>()
-          .map(
-            (row) => JourneyInboxItem(
-              journeyId: row['journey_id'] as String,
-              senderUserId: row['sender_user_id'] as String? ?? '',
-              content: row['content'] as String,
-              createdAt: DateTime.parse(row['created_at'] as String),
-              imageCount: (row['image_count'] as num?)?.toInt() ?? 0,
-              recipientStatus: row['recipient_status'] as String? ?? 'ASSIGNED',
-            ),
-          )
-          .toList();
+      if (kDebugMode) {
+        debugPrint('[InboxTrace][Supabase] fetchInboxJourneys - response row count: ${payload.length}');
+      }
+      final items = <JourneyInboxItem>[];
+      for (var i = 0; i < payload.length; i++) {
+        final row = payload[i];
+        if (row is! Map<String, dynamic>) {
+          if (kDebugMode) {
+            debugPrint('[InboxTrace][Repo] fetchInboxJourneys - row $i is not Map, skipping');
+          }
+          continue;
+        }
+        try {
+          final item = JourneyInboxItem(
+            journeyId: row['journey_id'] as String,
+            senderUserId: row['sender_user_id'] as String? ?? '',
+            content: row['content'] as String,
+            createdAt: DateTime.parse(row['created_at'] as String),
+            imageCount: (row['image_count'] as num?)?.toInt() ?? 0,
+            recipientStatus: row['recipient_status'] as String? ?? 'ASSIGNED',
+          );
+          if (kDebugMode && i == 0) {
+            debugPrint('[InboxTrace][Repo] fetchInboxJourneys - first item mapped: journeyId=${item.journeyId}, createdAt=${item.createdAt}, status=${item.recipientStatus}');
+          }
+          items.add(item);
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('[InboxTrace][Repo] fetchInboxJourneys - mapping failed for row $i: $e');
+          }
+        }
+      }
+      if (kDebugMode) {
+        debugPrint('[InboxTrace][Repo] fetchInboxJourneys - completed, mapped items: ${items.length}');
+      }
+      return items;
     } on SocketException catch (error) {
       await _errorLogger.logException(
         context: 'list_inbox_journeys',
@@ -513,6 +550,29 @@ class SupabaseJourneyRepository implements JourneyRepository {
         accessToken: accessToken,
       );
       throw JourneyInboxException(JourneyInboxError.invalidPayload);
+    }
+  }
+
+  @override
+  Future<String> debugAuth({
+    required String accessToken,
+  }) async {
+    if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
+      return 'missing_config';
+    }
+    // debug_inbox 함수 호출 (auth.uid()와 쿼리 결과 확인)
+    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/debug_inbox');
+    try {
+      final request = await _client.postUrl(uri);
+      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+      request.headers.set('apikey', _config.supabaseAnonKey);
+      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+      request.add(utf8.encode('{}'));
+      final response = await request.close();
+      final body = await response.transform(utf8.decoder).join();
+      return 'status: ${response.statusCode}, body: $body';
+    } catch (e) {
+      return 'error: $e';
     }
   }
 

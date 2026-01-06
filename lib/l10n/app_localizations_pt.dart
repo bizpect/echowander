@@ -18,6 +18,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get loginTitle => 'Iniciar sessão';
 
   @override
+  String get loginDescription => 'Comece a sua mensagem de relé anónima';
+
+  @override
   String get loginKakao => 'Continuar com Kakao';
 
   @override
@@ -25,6 +28,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get loginApple => 'Continuar com Apple';
+
+  @override
+  String get loginTerms =>
+      'Ao iniciar sessão, concorda com os nossos Termos de Serviço e Política de Privacidade';
 
   @override
   String get homeTitle => 'Início';
@@ -679,6 +686,27 @@ class AppLocalizationsPt extends AppLocalizations {
   String get onboardingStart => 'Começar';
 
   @override
+  String get onboardingAgreeAndDisagree => 'Concordar e Discordar';
+
+  @override
+  String get onboardingPrevious => 'Anterior';
+
+  @override
+  String get ctaPermissionChoice => 'Escolher Permissão';
+
+  @override
+  String get onboardingExitTitle => 'Sair da integração?';
+
+  @override
+  String get onboardingExitMessage => 'Pode começar novamente mais tarde.';
+
+  @override
+  String get onboardingExitConfirm => 'Sair';
+
+  @override
+  String get onboardingExitCancel => 'Continuar';
+
+  @override
   String get exitConfirmTitle => 'Cancelar escrita?';
 
   @override
@@ -742,6 +770,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get loginTitle => 'Entrar';
 
   @override
+  String get loginDescription => 'Comece sua mensagem de revezamento anônima';
+
+  @override
   String get loginKakao => 'Continuar com Kakao';
 
   @override
@@ -749,6 +780,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get loginApple => 'Continuar com Apple';
+
+  @override
+  String get loginTerms =>
+      'Ao entrar, você concorda com nossos Termos de Serviço e Política de Privacidade';
 
   @override
   String get homeTitle => 'Início';
@@ -1402,6 +1437,27 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get onboardingStart => 'Começar';
+
+  @override
+  String get onboardingAgreeAndDisagree => 'Concordar e Discordar';
+
+  @override
+  String get onboardingPrevious => 'Anterior';
+
+  @override
+  String get ctaPermissionChoice => 'Escolher Permissão';
+
+  @override
+  String get onboardingExitTitle => 'Sair da introdução?';
+
+  @override
+  String get onboardingExitMessage => 'Você pode começar novamente mais tarde.';
+
+  @override
+  String get onboardingExitConfirm => 'Sair';
+
+  @override
+  String get onboardingExitCancel => 'Continuar';
 
   @override
   String get exitConfirmTitle => 'Cancelar escrita?';

@@ -23,8 +23,7 @@ class SecureTokenStore implements TokenStore {
       final access = await _storage.read(key: _accessKey);
       final refresh = await _storage.read(key: _refreshKey);
       if (access == null || refresh == null) {
-        // ignore: avoid_print
-        print('토큰 저장소 읽기 실패: access 또는 refresh 없음');
+        // 토큰이 없는 것은 로그인 전 정상 상태이므로 로그 출력 불필요
         return null;
       }
       return SessionTokens(accessToken: access, refreshToken: refresh);

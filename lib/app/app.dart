@@ -24,6 +24,8 @@ class App extends ConsumerStatefulWidget {
 
 class _AppState extends ConsumerState<App> {
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
+  // 세션 만료 다이얼로그 중복 표시 방지 플래그
+  SessionMessage? _lastShownMessage;
 
   @override
   void initState() {
@@ -37,6 +39,10 @@ class _AppState extends ConsumerState<App> {
       if (next.message == null || next.message == previous?.message) {
         return;
       }
+      // 동일한 메시지를 이미 표시한 경우 중복 방지
+      if (_lastShownMessage == next.message) {
+        return;
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) {
           return;
@@ -46,11 +52,15 @@ class _AppState extends ConsumerState<App> {
           return;
         }
         final message = _resolveMessage(l10n, next.message!);
+        _lastShownMessage = next.message;
         showAppAlertDialog(
           context: context,
           title: l10n.errorTitle,
           message: message,
-        ).then((_) => ref.read(sessionManagerProvider.notifier).clearMessage());
+        ).then((_) {
+          ref.read(sessionManagerProvider.notifier).clearMessage();
+          _lastShownMessage = null;
+        });
       });
     });
     ref.listen<SessionState>(sessionManagerProvider, (previous, next) {

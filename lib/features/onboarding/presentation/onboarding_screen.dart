@@ -19,83 +19,102 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   static const String _logPrefix = '[OnboardingScreen]';
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
     if (kDebugMode) {
-      debugPrint('$_logPrefix build()');
+      debugPrint(
+        '$_logPrefix initState() - identityHashCode: ${identityHashCode(this)}',
+      );
     }
+  }
 
+  @override
+  void dispose() {
+    if (kDebugMode) {
+      debugPrint(
+        '$_logPrefix dispose() - identityHashCode: ${identityHashCode(this)}',
+      );
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // stepIndex만 watch하여 체크 상태 변경 시 rebuild 방지
     final stepIndex = ref.watch(
       onboardingControllerProvider.select((state) => state.stepIndex),
     );
-    final controller = ref.read(onboardingControllerProvider.notifier);
+
+    if (kDebugMode) {
+      debugPrint(
+        '$_logPrefix build() - stepIndex: $stepIndex',
+      );
+    }
 
     const totalSteps = 5;
 
-    return Scaffold(
-      backgroundColor: AppColors.black,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 상단: 시각적 단계 네비게이터 + 뒤로가기
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.screenPaddingHorizontal,
-                AppSpacing.screenPaddingTop,
-                AppSpacing.screenPaddingHorizontal,
-                AppSpacing.spacing32,
+    // 시스템 뒤로가기 완전 차단: 물리키/제스처 모두 무반응
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        // 시스템 back 완전 차단: 아무 동작도 하지 않음
+        // 이전 단계 이동은 오직 하단 "이전" 버튼으로만 가능
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.black,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // 상단: 시각적 단계 네비게이터 (뒤로가기 아이콘 제거)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screenPaddingHorizontal,
+                  AppSpacing.screenPaddingTop,
+                  AppSpacing.screenPaddingHorizontal,
+                  AppSpacing.spacing32,
+                ),
+                child: _VisualStepNavigator(
+                  currentStep: stepIndex,
+                  totalSteps: totalSteps,
+                ),
               ),
-              child: Row(
-                children: [
-                  if (stepIndex > 0)
-                    SizedBox(
-                      width: AppSpacing.minTouchTarget,
-                      height: AppSpacing.minTouchTarget,
-                      child: IconButton(
-                        onPressed: controller.previousStep,
-                        icon: const Icon(Icons.arrow_back),
-                        color: AppColors.onSurface,
-                        padding: EdgeInsets.zero,
-                      ),
-                    ),
-                  Expanded(
-                    child: _VisualStepNavigator(
-                      currentStep: stepIndex,
-                      totalSteps: totalSteps,
-                    ),
-                  ),
-                  if (stepIndex > 0)
-                    SizedBox(width: AppSpacing.minTouchTarget),
-                ],
-              ),
-            ),
             // 중앙: 아이콘 중심 카드 (애니메이션 래퍼로 분리)
+            // 고정 key로 트리에서 절대 제거되지 않도록 보장
             Expanded(
               child: _AnimatedStepCard(
+                key: const ValueKey('step-card'),
                 stepIndex: stepIndex,
-                childBuilder: (context, l10n) => _buildStepCard(
-                  context: context,
-                  l10n: l10n,
-                  stepIndex: stepIndex,
+                child: Builder(
+                  builder: (context) {
+                    final l10n = AppLocalizations.of(context)!;
+                    return _buildStepCard(
+                      context: context,
+                      l10n: l10n,
+                      stepIndex: stepIndex,
+                    );
+                  },
                 ),
               ),
             ),
             // 하단: 단일 CTA (애니메이션 래퍼로 분리)
-            _AnimatedStepCard(
-              stepIndex: stepIndex,
-              childBuilder: (context, l10n) => Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.screenPaddingHorizontal,
-                  AppSpacing.spacing24,
-                  AppSpacing.screenPaddingHorizontal,
-                  AppSpacing.screenPaddingBottom,
-                ),
+            // 고정 key로 트리에서 절대 제거되지 않도록 보장
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screenPaddingHorizontal,
+                AppSpacing.spacing24,
+                AppSpacing.screenPaddingHorizontal,
+                AppSpacing.screenPaddingBottom,
+              ),
+              child: _AnimatedStepCard(
+                key: const ValueKey('step-actions'),
+                stepIndex: stepIndex,
                 child: _OnboardingActions(stepIndex: stepIndex),
               ),
             ),
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -159,12 +178,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 /// 체크 토글로 인한 rebuild에서는 애니메이션이 재시작되지 않도록 구조적으로 차단
 class _AnimatedStepCard extends StatefulWidget {
   const _AnimatedStepCard({
+    super.key,
     required this.stepIndex,
-    required this.childBuilder,
+    required this.child,
   });
 
   final int stepIndex;
-  final Widget Function(BuildContext context, AppLocalizations l10n) childBuilder;
+  final Widget child;
 
   @override
   State<_AnimatedStepCard> createState() => _AnimatedStepCardState();
@@ -183,7 +203,10 @@ class _AnimatedStepCardState extends State<_AnimatedStepCard>
   void initState() {
     super.initState();
     if (kDebugMode) {
-      debugPrint('$_logPrefix initState() - stepIndex: ${widget.stepIndex}');
+      debugPrint(
+        '$_logPrefix initState() - stepIndex: ${widget.stepIndex}, '
+        'key: ${widget.key}, identityHashCode: ${identityHashCode(this)}',
+      );
     }
 
     _animationController = AnimationController(
@@ -256,7 +279,10 @@ class _AnimatedStepCardState extends State<_AnimatedStepCard>
   @override
   void dispose() {
     if (kDebugMode) {
-      debugPrint('$_logPrefix dispose()');
+      debugPrint(
+        '$_logPrefix dispose() - stepIndex: ${widget.stepIndex}, '
+        'key: ${widget.key}, identityHashCode: ${identityHashCode(this)}',
+      );
     }
     _animationController.dispose();
     super.dispose();
@@ -265,10 +291,11 @@ class _AnimatedStepCardState extends State<_AnimatedStepCard>
   @override
   Widget build(BuildContext context) {
     if (kDebugMode) {
-      debugPrint('$_logPrefix build() - stepIndex: ${widget.stepIndex}');
+      debugPrint(
+        '$_logPrefix build() - stepIndex: ${widget.stepIndex}, '
+        'key: ${widget.key}, identityHashCode: ${identityHashCode(this)}',
+      );
     }
-
-    final l10n = AppLocalizations.of(context)!;
 
     return FadeTransition(
       opacity: _fadeAnimation,
@@ -280,7 +307,7 @@ class _AnimatedStepCardState extends State<_AnimatedStepCard>
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.screenPaddingHorizontal,
             ),
-            child: widget.childBuilder(context, l10n),
+            child: widget.child,
           ),
         ),
       ),
@@ -510,32 +537,57 @@ class _OnboardingActions extends ConsumerWidget {
 
     switch (stepIndex) {
       case 0:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            FilledButton(
-              onPressed: controller.requestNotificationPermission,
-              child: Text(l10n.onboardingAllowNotifications),
+        // 1단계: 버튼 1개 full-width
+        return SizedBox(
+          height: 56,
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: () async {
+              // 권한 요청 시도 (거부 시 자동으로 _nextStep 호출됨)
+              await controller.requestNotificationPermission();
+            },
+            child: Text(
+              l10n.ctaPermissionChoice,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.spacing16),
-            OutlinedButton(
-              onPressed: controller.skipNotificationPermission,
-              child: Text(l10n.onboardingSkip),
-            ),
-          ],
+          ),
         );
       case 1:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        // 2단계: 버튼 2개 5:5 비율
+        return Row(
           children: [
-            FilledButton(
-              onPressed: controller.requestPhotoPermission,
-              child: Text(l10n.onboardingAllowPhotos),
+            Expanded(
+              child: SizedBox(
+                height: 56,
+                child: OutlinedButton(
+                  onPressed: controller.previousStep,
+                  child: Text(
+                    l10n.onboardingPrevious,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: AppSpacing.spacing16),
-            OutlinedButton(
-              onPressed: controller.skipPhotoPermission,
-              child: Text(l10n.onboardingSkip),
+            SizedBox(width: AppSpacing.spacing16),
+            Expanded(
+              child: SizedBox(
+                height: 56,
+                child: FilledButton(
+                  onPressed: () async {
+                    await controller.requestPhotoPermission();
+                  },
+                  child: Text(
+                    l10n.ctaPermissionChoice,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
             ),
           ],
         );
@@ -544,27 +596,114 @@ class _OnboardingActions extends ConsumerWidget {
         final isAgreed = ref.watch(
           onboardingControllerProvider.select((state) => state.guidelineAgreed),
         );
-        return FilledButton(
-          onPressed: isAgreed ? controller.nextStep : null,
-          child: Text(l10n.onboardingNext),
+        return Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 56,
+                child: OutlinedButton(
+                  onPressed: controller.previousStep,
+                  child: Text(
+                    l10n.onboardingPrevious,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: AppSpacing.spacing16),
+            Expanded(
+              child: SizedBox(
+                height: 56,
+                child: FilledButton(
+                  onPressed: isAgreed ? controller.nextStep : null,
+                  child: Text(
+                    l10n.onboardingNext,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+          ],
         );
       case 3:
         // 체크 상태만 watch
         final isAgreed = ref.watch(
           onboardingControllerProvider.select((state) => state.contentAgreed),
         );
-        return FilledButton(
-          onPressed: isAgreed ? controller.nextStep : null,
-          child: Text(l10n.onboardingNext),
+        return Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 56,
+                child: OutlinedButton(
+                  onPressed: controller.previousStep,
+                  child: Text(
+                    l10n.onboardingPrevious,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: AppSpacing.spacing16),
+            Expanded(
+              child: SizedBox(
+                height: 56,
+                child: FilledButton(
+                  onPressed: isAgreed ? controller.nextStep : null,
+                  child: Text(
+                    l10n.onboardingNext,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+          ],
         );
       case 4:
         // 체크 상태만 watch
         final isAgreed = ref.watch(
           onboardingControllerProvider.select((state) => state.safetyAgreed),
         );
-        return FilledButton(
-          onPressed: isAgreed ? controller.complete : null,
-          child: Text(l10n.onboardingStart),
+        return Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 56,
+                child: OutlinedButton(
+                  onPressed: controller.previousStep,
+                  child: Text(
+                    l10n.onboardingPrevious,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: AppSpacing.spacing16),
+            Expanded(
+              child: SizedBox(
+                height: 56,
+                child: FilledButton(
+                  onPressed: isAgreed ? controller.complete : null,
+                  child: Text(
+                    l10n.onboardingStart,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+          ],
         );
       default:
         return const SizedBox.shrink();

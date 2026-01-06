@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/app_config.dart';
@@ -5,6 +6,8 @@ import 'auth_rpc_client.dart';
 import 'session_state.dart';
 import 'session_tokens.dart';
 import 'token_store.dart';
+
+const _logPrefix = '[SessionManager]';
 
 final tokenStoreProvider = Provider<TokenStore>((ref) => SecureTokenStore());
 
@@ -35,9 +38,16 @@ class SessionManager extends Notifier<SessionState> {
   }
 
   Future<void> restoreSession() async {
+    if (kDebugMode) {
+      debugPrint('$_logPrefix 세션 복원 시작 (현재 상태: ${state.status})');
+    }
     state = state.copyWith(isBusy: true);
+
     final tokens = await _tokenStore.read();
     if (tokens == null) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 저장된 토큰 없음 → unauthenticated');
+      }
       state = state.copyWith(
         status: SessionStatus.unauthenticated,
         isBusy: false,
@@ -46,6 +56,9 @@ class SessionManager extends Notifier<SessionState> {
       return;
     }
     if (tokens.accessToken.isEmpty || tokens.refreshToken.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 빈 토큰 발견 → 저장소 정리 → unauthenticated');
+      }
       await _tokenStore.clear();
       state = state.copyWith(
         status: SessionStatus.unauthenticated,
@@ -55,47 +68,73 @@ class SessionManager extends Notifier<SessionState> {
       return;
     }
 
+    if (kDebugMode) {
+      debugPrint('$_logPrefix 토큰 로드 성공 (access=${tokens.accessToken.length}자, refresh=${tokens.refreshToken.length}자)');
+      debugPrint('$_logPrefix 세션 검증 시작');
+    }
+
     final isValid = await _authRpcClient.validateSession(tokens);
     if (isValid) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 세션 검증 성공 → authenticated');
+      }
       state = state.copyWith(
         status: SessionStatus.authenticated,
         isBusy: false,
         accessToken: tokens.accessToken,
       );
       return;
-    } else {
-      final refreshed = await _authRpcClient.refreshSession(tokens);
-      if (refreshed == null) {
-        await _tokenStore.clear();
-        state = state.copyWith(
-          status: SessionStatus.unauthenticated,
-          isBusy: false,
-          accessToken: null,
-          message: SessionMessage.sessionExpired,
-        );
-        return;
+    }
+
+    if (kDebugMode) {
+      debugPrint('$_logPrefix 세션 검증 실패 → 리프레시 시도');
+    }
+
+    final refreshed = await _authRpcClient.refreshSession(tokens);
+    if (refreshed == null) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 리프레시 실패 → 네트워크 오류 가능성, 기존 토큰 유지');
+        debugPrint('$_logPrefix 다음 API 호출 시 401 에러 발생 시 재검증됨');
       }
-      if (refreshed.accessToken.isEmpty || refreshed.refreshToken.isEmpty) {
-        await _tokenStore.clear();
-        state = state.copyWith(
-          status: SessionStatus.unauthenticated,
-          isBusy: false,
-          accessToken: null,
-          message: SessionMessage.sessionExpired,
-        );
-        return;
-      }
-      await _tokenStore.save(refreshed);
+      // 네트워크 오류일 수 있으므로 바로 세션 clear하지 않음
+      // 기존 토큰으로 계속 사용, 실제 API 호출 시 401 에러가 발생하면 그때 재시도
       state = state.copyWith(
         status: SessionStatus.authenticated,
         isBusy: false,
-        accessToken: refreshed.accessToken,
+        accessToken: tokens.accessToken, // 기존 토큰 유지
       );
+      return;
     }
+    if (refreshed.accessToken.isEmpty || refreshed.refreshToken.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 리프레시 응답에 빈 토큰 → 저장소 정리 → unauthenticated');
+      }
+      await _tokenStore.clear();
+      state = state.copyWith(
+        status: SessionStatus.unauthenticated,
+        isBusy: false,
+        accessToken: null,
+        message: SessionMessage.sessionExpired,
+      );
+      return;
+    }
+
+    if (kDebugMode) {
+      debugPrint('$_logPrefix 리프레시 성공 → 토큰 저장 → authenticated');
+    }
+    await _tokenStore.save(refreshed);
+    state = state.copyWith(
+      status: SessionStatus.authenticated,
+      isBusy: false,
+      accessToken: refreshed.accessToken,
+    );
   }
 
   Future<void> signInWithTokens(SessionTokens tokens) async {
     if (tokens.accessToken.isEmpty || tokens.refreshToken.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 로그인 실패: 빈 토큰');
+      }
       state = state.copyWith(
         status: SessionStatus.unauthenticated,
         isBusy: false,
@@ -106,8 +145,9 @@ class SessionManager extends Notifier<SessionState> {
     }
     state = state.copyWith(isBusy: true);
     await _tokenStore.save(tokens);
-    // ignore: avoid_print
-    print('세션 토큰 저장 완료: accessToken 길이 ${tokens.accessToken.length}');
+    if (kDebugMode) {
+      debugPrint('$_logPrefix 로그인 성공: 토큰 저장 완료 (access=${tokens.accessToken.length}자)');
+    }
     state = state.copyWith(
       status: SessionStatus.authenticated,
       isBusy: false,
@@ -119,6 +159,9 @@ class SessionManager extends Notifier<SessionState> {
     required String provider,
     required String idToken,
   }) async {
+    if (kDebugMode) {
+      debugPrint('$_logPrefix 소셜 로그인 시작: provider=$provider');
+    }
     state = state.copyWith(isBusy: true);
     final result = await _authRpcClient.exchangeSocialToken(
       provider: provider,
@@ -126,8 +169,9 @@ class SessionManager extends Notifier<SessionState> {
     );
     final tokens = result.tokens;
     if (tokens == null) {
-      // ignore: avoid_print
-      print('소셜 로그인 실패: 토큰 응답 없음');
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 소셜 로그인 실패: 토큰 응답 없음 (error=${result.error})');
+      }
       state = state.copyWith(
         status: SessionStatus.unauthenticated,
         isBusy: false,
@@ -136,8 +180,9 @@ class SessionManager extends Notifier<SessionState> {
       );
       return;
     }
-    // ignore: avoid_print
-    print('소셜 로그인 토큰 수신: access 길이 ${tokens.accessToken.length}');
+    if (kDebugMode) {
+      debugPrint('$_logPrefix 소셜 로그인 토큰 수신: access=${tokens.accessToken.length}자');
+    }
     await signInWithTokens(tokens);
   }
 
