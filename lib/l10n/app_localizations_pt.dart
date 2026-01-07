@@ -764,6 +764,26 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get journeyDetailAnonymous => 'Anónimo';
+
+  @override
+  String get errorNetwork => 'Por favor, verifique a sua ligação de rede.';
+
+  @override
+  String get errorTimeout =>
+      'Tempo limite excedido. Por favor, tente novamente.';
+
+  @override
+  String get errorServerUnavailable =>
+      'O servidor está temporariamente indisponível. Por favor, tente mais tarde.';
+
+  @override
+  String get errorUnauthorized => 'Por favor, inicie sessão novamente.';
+
+  @override
+  String get errorRetry => 'Tentar novamente';
+
+  @override
+  String get errorCancel => 'Cancelar';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -1526,4 +1546,24 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get journeyDetailAnonymous => 'Anônimo';
+
+  @override
+  String get errorNetwork => 'Por favor, verifique sua conexão de rede.';
+
+  @override
+  String get errorTimeout =>
+      'Tempo limite excedido. Por favor, tente novamente.';
+
+  @override
+  String get errorServerUnavailable =>
+      'O servidor está temporariamente indisponível. Por favor, tente mais tarde.';
+
+  @override
+  String get errorUnauthorized => 'Por favor, faça login novamente.';
+
+  @override
+  String get errorRetry => 'Tentar novamente';
+
+  @override
+  String get errorCancel => 'Cancelar';
 }

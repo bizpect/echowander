@@ -152,22 +152,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         onTap: () => context.go(AppRoutes.inbox),
                       ),
                     ),
-                    // 하단 여백 (FAB 공간 확보)
-                    SizedBox(height: AppSpacing.screenPaddingBottom + 80),
+                    // 하단 여백
+                    SizedBox(height: AppSpacing.screenPaddingBottom),
                   ],
                 ),
               ),
             ],
           ),
         ),
-      ),
-      // 작성 버튼: 독립적으로 떠 있는 FAB
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.go(AppRoutes.compose),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.onPrimary,
-        icon: const Icon(Icons.edit),
-        label: Text(l10n.homeCreateCardTitle),
       ),
     );
   }

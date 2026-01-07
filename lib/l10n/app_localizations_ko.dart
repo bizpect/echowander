@@ -731,4 +731,22 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get journeyDetailAnonymous => '익명';
+
+  @override
+  String get errorNetwork => '네트워크 연결을 확인해 주세요.';
+
+  @override
+  String get errorTimeout => '요청 시간이 초과되었습니다. 다시 시도해 주세요.';
+
+  @override
+  String get errorServerUnavailable => '서버에 일시적인 문제가 있습니다. 잠시 후 다시 시도해 주세요.';
+
+  @override
+  String get errorUnauthorized => '다시 로그인해 주세요.';
+
+  @override
+  String get errorRetry => '다시 시도';
+
+  @override
+  String get errorCancel => '취소';
 }

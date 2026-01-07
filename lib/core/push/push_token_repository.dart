@@ -1,16 +1,26 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
 import '../config/app_config.dart';
 import '../logging/server_error_logger.dart';
+import '../network/network_error.dart';
+import '../network/network_guard.dart';
+
+const _logPrefix = '[PushToken]';
 
 class PushTokenRepository {
   PushTokenRepository({required AppConfig config})
       : _config = config,
-        _errorLogger = ServerErrorLogger(config: config);
+        _errorLogger = ServerErrorLogger(config: config),
+        _networkGuard = NetworkGuard(errorLogger: ServerErrorLogger(config: config)),
+        _client = HttpClient();
 
   final AppConfig _config;
   final ServerErrorLogger _errorLogger;
+  final NetworkGuard _networkGuard;
+  final HttpClient _client;
 
   Future<void> upsertToken({
     required String accessToken,
@@ -47,60 +57,76 @@ class PushTokenRepository {
     required String accessToken,
     required Map<String, dynamic> payload,
   }) async {
+    // 백그라운드 작업: 설정 누락 시 조용히 실패
     if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
-      // ignore: avoid_print
-      print('푸시 RPC 중단: Supabase 설정 누락');
+      if (kDebugMode) {
+        debugPrint('$_logPrefix RPC 중단: Supabase 설정 누락');
+      }
       return;
     }
 
     final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/$rpc');
+
     try {
-      final request = await HttpClient().postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-      request.add(utf8.encode(jsonEncode(payload)));
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      if (response.statusCode >= 400) {
-        await _errorLogger.logHttpFailure(
-          context: 'push_token_$rpc',
+      // NetworkGuard를 통한 요청 실행 (백그라운드: 짧은 재시도)
+      await _networkGuard.execute<void>(
+        operation: () => _executeRpcPost(
           uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: {
-            'rpc': rpc,
-          },
+          rpc: rpc,
+          payload: payload,
           accessToken: accessToken,
-        );
-        // ignore: avoid_print
-        print('푸시 RPC 실패: $rpc ${response.statusCode} $body');
-        return;
-      }
-      // ignore: avoid_print
-      print('푸시 RPC 성공: $rpc ${response.statusCode}');
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
+        ),
+        retryPolicy: RetryPolicy.short,
         context: 'push_token_$rpc',
         uri: uri,
         method: 'POST',
-        error: error,
-        meta: {
-          'rpc': rpc,
-        },
+        meta: {'rpc': rpc},
         accessToken: accessToken,
       );
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
+
+      if (kDebugMode) {
+        debugPrint('$_logPrefix RPC 성공: $rpc');
+      }
+    } on NetworkRequestException catch (_) {
+      // 백그라운드 푸시 토큰 동기화 실패는 조용히 무시 (이미 로깅됨, UX 방해 금지)
+      if (kDebugMode) {
+        debugPrint('$_logPrefix RPC 실패: $rpc - 무시됨');
+      }
+      return;
+    }
+  }
+
+  /// RPC POST 요청 실제 실행 (NetworkGuard가 호출)
+  Future<void> _executeRpcPost({
+    required Uri uri,
+    required String rpc,
+    required Map<String, dynamic> payload,
+    required String accessToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(utf8.encode(jsonEncode(payload)));
+
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode >= HttpStatus.badRequest) {
+      await _errorLogger.logHttpFailure(
         context: 'push_token_$rpc',
         uri: uri,
         method: 'POST',
-        error: error,
-        meta: {
-          'rpc': rpc,
-        },
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: {'rpc': rpc},
         accessToken: accessToken,
+      );
+
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'push_token_$rpc',
       );
     }
   }

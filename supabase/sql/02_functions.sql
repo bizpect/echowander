@@ -776,25 +776,21 @@ begin
     raise exception 'response_suspended';
   end if;
 
-  select user_id, status_code, response_target
+  -- RLS 우회를 위해 journey_recipients 조인으로 조회 (recipient가 ASSIGNED 상태인 journey만 조회 가능)
+  select j.user_id, j.status_code, j.response_target
     into _journey_owner, _status, _target
-  from public.journeys
-  where id = target_journey_id;
+  from public.journeys j
+  inner join public.journey_recipients jr
+    on j.id = jr.journey_id
+  where j.id = target_journey_id
+    and jr.recipient_user_id = auth.uid()
+    and jr.status_code = 'ASSIGNED';
 
   if _journey_owner is null then
     raise exception 'journey_not_found';
   end if;
   if _status = 'COMPLETED' then
     raise exception 'already_completed';
-  end if;
-  if not exists (
-    select 1
-    from public.journey_recipients
-    where journey_recipients.journey_id = target_journey_id
-      and journey_recipients.recipient_user_id = auth.uid()
-      and journey_recipients.status_code = 'ASSIGNED'
-  ) then
-    raise exception 'unauthorized';
   end if;
 
   insert into public.journey_responses (
@@ -811,20 +807,20 @@ begin
   update public.journey_recipients
   set status_code = 'RESPONDED',
       updated_at = now()
-  where journey_id = target_journey_id
-    and recipient_user_id = auth.uid();
+  where journey_recipients.journey_id = target_journey_id
+    and journey_recipients.recipient_user_id = auth.uid();
 
   select count(*)
   into _response_count
   from public.journey_responses
-  where journey_id = target_journey_id;
+  where journey_responses.journey_id = target_journey_id;
 
   if _response_count >= _target then
     update public.journeys
     set status_code = 'COMPLETED',
         updated_at = now()
-    where id = target_journey_id
-      and status_code <> 'COMPLETED';
+    where journeys.id = target_journey_id
+      and journeys.status_code <> 'COMPLETED';
     return query
     select target_journey_id, true;
   end if;

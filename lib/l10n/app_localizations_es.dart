@@ -756,4 +756,24 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get journeyDetailAnonymous => 'Anónimo';
+
+  @override
+  String get errorNetwork => 'Por favor, verifica tu conexión de red.';
+
+  @override
+  String get errorTimeout =>
+      'Tiempo de espera agotado. Por favor, inténtalo de nuevo.';
+
+  @override
+  String get errorServerUnavailable =>
+      'El servidor no está disponible temporalmente. Por favor, inténtalo más tarde.';
+
+  @override
+  String get errorUnauthorized => 'Por favor, inicia sesión de nuevo.';
+
+  @override
+  String get errorRetry => 'Reintentar';
+
+  @override
+  String get errorCancel => 'Cancelar';
 }

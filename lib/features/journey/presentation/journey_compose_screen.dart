@@ -1,22 +1,23 @@
 import 'dart:async';
-import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
-import '../../../app/theme/app_radius.dart';
-import '../../../core/presentation/widgets/app_button.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../core/validation/text_rules.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/journey_compose_controller.dart';
+import 'widgets/compose_attachment_grid.dart';
+import 'widgets/compose_bottom_bar.dart';
+import 'widgets/compose_message_card.dart';
+import 'widgets/compose_recipient_card.dart';
 
 /// Journey 작성 화면
 ///
@@ -34,38 +35,100 @@ class JourneyComposeScreen extends ConsumerStatefulWidget {
 
 class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
   late final TextEditingController _controller;
+  ProviderSubscription<JourneyComposeState>? _messageSubscription;
+  ProviderSubscription<String>? _contentSubscription;
+  bool _isUpdatingController = false;
+  bool _allowPop = false;
+  bool _isHandlingBack = false;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController();
+    // TextEditingController 변경 시 provider state 업데이트
+    _controller.addListener(_onControllerChanged);
   }
 
   @override
   void dispose() {
+    // 리스너 구독 해제
+    _messageSubscription?.close();
+    _contentSubscription?.close();
+    _controller.removeListener(_onControllerChanged);
+    // 화면 이탈 시 작성 상태 초기화 (방어적 처리)
+    final controller = ref.read(journeyComposeControllerProvider.notifier);
+    controller.reset();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (_isUpdatingController) {
+      return;
+    }
+    final currentText = _controller.text;
+    final currentState = ref.read(journeyComposeControllerProvider);
+    if (currentText != currentState.content) {
+      ref.read(journeyComposeControllerProvider.notifier).updateContent(currentText);
+    }
+  }
+
+  void _setupListeners(AppLocalizations l10n) {
+    // 메시지 이벤트 처리 리스너 (1회만 등록)
+    _messageSubscription?.close();
+    _messageSubscription = ref.listenManual<JourneyComposeState>(
+      journeyComposeControllerProvider,
+      (previous, next) {
+        if (next.message == null || next.message == previous?.message) {
+          return;
+        }
+        if (!mounted) {
+          return;
+        }
+        unawaited(_handleMessage(l10n, next.message!));
+        ref.read(journeyComposeControllerProvider.notifier).clearMessage();
+      },
+    );
+
+    // content 동기화 리스너 (provider → controller)
+    _contentSubscription?.close();
+    _contentSubscription = ref.listenManual<String>(
+      journeyComposeControllerProvider.select((state) => state.content),
+      (previous, next) {
+        if (!mounted) {
+          return;
+        }
+        if (_isUpdatingController) {
+          return;
+        }
+        if (_controller.text != next) {
+          _isUpdatingController = true;
+          final max = next.length;
+          final oldOffset = _controller.selection.baseOffset;
+          // selection을 항상 clamp하여 out-of-range 방지
+          final clampedOffset = oldOffset.clamp(0, max);
+          _controller.value = _controller.value.copyWith(
+            text: next,
+            selection: TextSelection.collapsed(offset: clampedOffset),
+          );
+          _isUpdatingController = false;
+        }
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(journeyComposeControllerProvider);
-    final controller = ref.read(journeyComposeControllerProvider.notifier);
 
-    ref.listen<JourneyComposeState>(journeyComposeControllerProvider, (previous, next) {
-      if (next.message == null || next.message == previous?.message) {
-        return;
-      }
-      unawaited(_handleMessage(l10n, next.message!));
-      controller.clearMessage();
-    });
-
-    if (_controller.text != state.content) {
-      _controller.value = _controller.value.copyWith(
-        text: state.content,
-        selection: TextSelection.collapsed(offset: state.content.length),
-      );
+    // 리스너 설정 (1회만 등록되도록 보장)
+    if (_messageSubscription == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _setupListeners(l10n);
+        }
+      });
     }
 
     final validationError = _validationError(l10n, state.content);
@@ -74,128 +137,109 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
         state.recipientCount != null;
 
     return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, result) async {
+        // didPop이 true면 이미 pop이 일어났으므로 처리 불필요
         if (didPop) {
           return;
         }
-        _handleBack(context, state);
+        // 중복 실행 방지
+        if (_isHandlingBack) {
+          if (kDebugMode) {
+            debugPrint('[ComposeBackTrace] PopScope 중복 실행 방지');
+          }
+          return;
+        }
+        // pop이 막혔으므로 confirm 후 처리
+        _isHandlingBack = true;
+        try {
+          await _handleBack(context, state);
+        } finally {
+          _isHandlingBack = false;
+        }
       },
       child: Scaffold(
+        backgroundColor: AppColors.background,
         appBar: AppBar(
           title: Text(l10n.composeTitle),
-          leading: IconButton(
-            onPressed: () => _handleBack(context, state),
-            icon: const Icon(Icons.close),
-            tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+          leading: Semantics(
+            label: MaterialLocalizations.of(context).closeButtonTooltip,
+            button: true,
+            child: IconButton(
+              onPressed: () => _handleBack(context, state),
+              icon: const Icon(Icons.close),
+            ),
           ),
         ),
         resizeToAvoidBottomInset: true,
         body: LoadingOverlay(
           isLoading: state.isSubmitting,
           child: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    AppSpacing.spacing16,
-                    AppSpacing.spacing16,
-                    AppSpacing.spacing16,
-                    AppSpacing.spacing24 + MediaQuery.of(context).viewInsets.bottom,
-                  ),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              children: [
+                // 스크롤 가능한 본문 영역
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.screenPaddingHorizontal,
+                      AppSpacing.screenPaddingTop,
+                      AppSpacing.screenPaddingHorizontal,
+                      AppSpacing.sectionGap,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // 텍스트 입력 필드
-                        TextField(
+                        // 수신자 선택 카드
+                        ComposeRecipientCard(
+                          recipientCount: state.recipientCount,
+                          onChanged: (count) => ref
+                              .read(journeyComposeControllerProvider.notifier)
+                              .updateRecipientCount(count),
+                        ),
+                        const SizedBox(height: AppSpacing.sectionGap),
+
+                        // 메시지 입력 카드
+                        ComposeMessageCard(
                           controller: _controller,
-                          onChanged: controller.updateContent,
-                          maxLength: journeyMaxLength,
-                          maxLines: 6,
-                          textInputAction: TextInputAction.newline,
-                          buildCounter: (
-                            context, {
-                            required currentLength,
-                            required isFocused,
-                            required maxLength,
-                          }) =>
-                              null,
-                          decoration: InputDecoration(
-                            labelText: l10n.composeLabel,
-                            hintText: l10n.composeHint,
-                            errorText: validationError,
-                            alignLabelWithHint: true,
-                          ),
+                          content: state.content,
+                          onChanged: (value) => ref
+                              .read(journeyComposeControllerProvider.notifier)
+                              .updateContent(value),
                         ),
-                        const SizedBox(height: AppSpacing.spacing8),
+                        const SizedBox(height: AppSpacing.sectionGap),
 
-                        // 글자수 카운터
-                        Text(
-                          l10n.composeCharacterCount(
-                            state.content.length,
-                            journeyMaxLength,
-                          ),
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                color: state.content.length > journeyMaxLength
-                                    ? AppColors.error
-                                    : AppColors.onSurfaceVariant,
-                              ),
-                          textAlign: TextAlign.end,
-                        ),
-                        const SizedBox(height: AppSpacing.spacing16),
-
-                        // 이미지 섹션
-                        _ImageSection(
+                        // 첨부 이미지 그리드
+                        ComposeAttachmentGrid(
                           images: state.images,
                           onAddImage: () async {
-                            final status = await controller.pickImages();
+                            final status = await ref
+                                .read(journeyComposeControllerProvider.notifier)
+                                .pickImages();
                             if (status.isPermanentlyDenied) {
                               _showSettingsDialog(l10n);
                             }
                           },
-                          onRemoveImage: controller.removeImageAt,
-                        ),
-                        const SizedBox(height: AppSpacing.spacing16),
-
-                        // 릴레이 수 선택
-                        DropdownButtonFormField<int>(
-                          key: ValueKey(state.recipientCount),
-                          initialValue: state.recipientCount,
-                          items: List.generate(
-                            5,
-                            (index) => DropdownMenuItem(
-                              value: index + 1,
-                              child: Text(
-                                l10n.composeRecipientCountOption(index + 1),
-                              ),
-                            ),
-                          ),
-                          onChanged: controller.updateRecipientCount,
-                          decoration: InputDecoration(
-                            labelText: l10n.composeRecipientCountLabel,
-                            hintText: l10n.composeRecipientCountHint,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.spacing24),
-
-                        // 전송 버튼
-                        AppFilledButton(
-                          onPressed: canSubmit
-                              ? () => controller.submit(
-                                    languageTag:
-                                        Localizations.localeOf(context).toLanguageTag(),
-                                  )
-                              : null,
-                          isLoading: state.isSubmitting,
-                          child: Text(l10n.composeSubmit),
+                          onRemoveImage: (index) => ref
+                              .read(journeyComposeControllerProvider.notifier)
+                              .removeImageAt(index),
                         ),
                       ],
                     ),
                   ),
-                );
-              },
+                ),
+
+                // 고정 하단 액션 바
+                ComposeBottomBar(
+                  canSubmit: canSubmit,
+                  isSubmitting: state.isSubmitting,
+                  onSubmit: () => ref
+                      .read(journeyComposeControllerProvider.notifier)
+                      .submit(
+                        languageTag:
+                            Localizations.localeOf(context).toLanguageTag(),
+                      ),
+                ),
+              ],
             ),
           ),
         ),
@@ -335,12 +379,24 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
   }
 
   Future<void> _handleBack(BuildContext context, JourneyComposeState state) async {
+    if (kDebugMode) {
+      debugPrint('[ComposeBackTrace] _handleBack 시작');
+    }
+
+    // await 이전에 navigator 참조 확보 (lint 회피)
+    final navigator = Navigator.of(context);
+    final router = GoRouter.of(context);
     final l10n = AppLocalizations.of(context)!;
+    final controller = ref.read(journeyComposeControllerProvider.notifier);
 
     // 입력이 있으면 확인 다이얼로그 표시
     final hasInput = state.content.trim().isNotEmpty || state.images.isNotEmpty;
 
     if (hasInput) {
+      if (kDebugMode) {
+        debugPrint('[ComposeBackTrace] 입력 있음, confirm 다이얼로그 표시');
+      }
+
       final confirmed = await showAppConfirmDialog(
         context: context,
         title: l10n.exitConfirmTitle,
@@ -349,161 +405,85 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
         cancelLabel: l10n.exitConfirmContinue,
       );
 
+      if (kDebugMode) {
+        debugPrint('[ComposeBackTrace] confirm 결과: $confirmed');
+      }
+
       if (!mounted) {
+        if (kDebugMode) {
+          debugPrint('[ComposeBackTrace] mounted 아님, 종료');
+        }
         return;
       }
 
+      // 취소(계속 작성) 선택 시 화면 유지
       if (confirmed != true) {
+        if (kDebugMode) {
+          debugPrint('[ComposeBackTrace] 취소 선택, 화면 유지');
+        }
         return;
+      }
+
+      if (kDebugMode) {
+        debugPrint('[ComposeBackTrace] 나가기 확정, reset 및 navigate 시작');
       }
     }
 
-    // 뒤로가기 실행 (BuildContext 사용 전 mounted 체크 완료)
-    // ignore: use_build_context_synchronously
-    final canPop = context.canPop();
-    if (canPop) {
-      // ignore: use_build_context_synchronously
-      context.pop();
-    } else {
-      // ignore: use_build_context_synchronously
-      context.go(AppRoutes.home);
+    // 나가기 확정: 순서 중요!
+    // 1) Focus/Keyboard 먼저 끊기
+    if (kDebugMode) {
+      debugPrint('[ComposeBackTrace] Focus unfocus 시작');
     }
-  }
-}
+    FocusManager.instance.primaryFocus?.unfocus();
 
-/// 이미지 섹션
-class _ImageSection extends StatelessWidget {
-  const _ImageSection({
-    required this.images,
-    required this.onAddImage,
-    required this.onRemoveImage,
-  });
-
-  final List<XFile> images;
-  final VoidCallback onAddImage;
-  final void Function(int index) onRemoveImage;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.composeImagesTitle,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColors.onSurface,
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: AppSpacing.spacing8),
-        Wrap(
-          spacing: AppSpacing.spacing12,
-          runSpacing: AppSpacing.spacing12,
-          children: [
-            for (var i = 0; i < images.length; i += 1)
-              _ImageTile(
-                file: images[i],
-                onRemove: () => onRemoveImage(i),
-              ),
-            if (images.length < journeyMaxImages)
-              _AddImageTile(
-                label: l10n.composeAddImage,
-                onPressed: onAddImage,
-              ),
-          ],
-        ),
-      ],
+    // 2) Controller를 안전하게 비움 (text='' + selection=0)
+    if (kDebugMode) {
+      debugPrint('[ComposeBackTrace] Controller 안전하게 비우기');
+    }
+    _isUpdatingController = true;
+    _controller.value = const TextEditingValue(
+      text: '',
+      selection: TextSelection.collapsed(offset: 0),
     );
-  }
-}
+    _isUpdatingController = false;
 
-/// 이미지 타일 (미리보기 + 제거 버튼)
-class _ImageTile extends StatelessWidget {
-  const _ImageTile({
-    required this.file,
-    required this.onRemove,
-  });
+    // 3) Provider reset
+    if (kDebugMode) {
+      debugPrint('[ComposeBackTrace] Provider reset 시작');
+    }
+    controller.reset();
 
-  final XFile file;
-  final VoidCallback onRemove;
+    if (kDebugMode) {
+      debugPrint('[ComposeBackTrace] reset 완료, mounted 체크');
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        ClipRRect(
-          borderRadius: AppRadius.medium,
-          child: Image.file(
-            File(file.path),
-            width: 96,
-            height: 96,
-            fit: BoxFit.cover,
-          ),
-        ),
-        Positioned(
-          top: AppSpacing.spacing4,
-          right: AppSpacing.spacing4,
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onRemove,
-              customBorder: const CircleBorder(),
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: AppColors.surface.withValues(alpha: 0.9),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.close,
-                  size: 18,
-                  color: AppColors.onSurface,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
+    if (!mounted) {
+      if (kDebugMode) {
+        debugPrint('[ComposeBackTrace] reset 후 mounted 아님, 종료');
+      }
+      return;
+    }
 
-/// 이미지 추가 타일
-class _AddImageTile extends StatelessWidget {
-  const _AddImageTile({
-    required this.label,
-    required this.onPressed,
-  });
+    // 4) PopScope가 pop을 통과하도록 허용
+    if (kDebugMode) {
+      debugPrint('[ComposeBackTrace] _allowPop = true 설정');
+    }
+    setState(() {
+      _allowPop = true;
+    });
 
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.all(AppSpacing.spacing12),
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.medium,
-        ),
-        minimumSize: const Size(96, 96),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.add_photo_alternate, size: 32),
-          const SizedBox(height: AppSpacing.spacing4),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelSmall,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
+    // 5) Navigator.pop() 직접 호출 (maybePop 금지)
+    if (kDebugMode) {
+      debugPrint('[ComposeBackTrace] Navigator.pop() 시도');
+    }
+    // pop이 불가능한 경우를 대비해 fallback
+    if (navigator.canPop()) {
+      navigator.pop();
+    } else {
+      if (kDebugMode) {
+        debugPrint('[ComposeBackTrace] pop 불가, router.go(home) 실행');
+      }
+      router.go(AppRoutes.home);
+    }
   }
 }

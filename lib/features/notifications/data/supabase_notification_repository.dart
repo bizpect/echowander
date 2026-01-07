@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/logging/server_error_logger.dart';
+import '../../../core/network/network_error.dart';
+import '../../../core/network/network_guard.dart';
 import '../domain/notification_item.dart';
 import '../domain/notification_repository.dart';
 
@@ -31,89 +33,100 @@ class SupabaseNotificationRepository implements NotificationRepository {
   }) async {
     _validateConfig(accessToken);
     final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/list_my_notifications');
+
     try {
-      final request = await _client.postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-      request.add(
-        utf8.encode(
-          jsonEncode({
-            'page_size': limit,
-            'page_offset': offset,
-            'unread_only': unreadOnly,
-          }),
-        ),
-      );
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      if (response.statusCode != HttpStatus.ok) {
-        await _errorLogger.logHttpFailure(
-          context: 'list_my_notifications',
+      // NetworkGuard를 통한 요청 실행 (조회용 짧은 재시도)
+      final result = await NetworkGuard(errorLogger: _errorLogger).execute<List<NotificationItem>>(
+        operation: () => _executeFetchNotifications(
           uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: {
-            'limit': limit,
-            'offset': offset,
-          },
+          limit: limit,
+          offset: offset,
+          unreadOnly: unreadOnly,
           accessToken: accessToken,
-        );
-        if (response.statusCode == HttpStatus.unauthorized ||
-            response.statusCode == HttpStatus.forbidden) {
+        ),
+        retryPolicy: RetryPolicy.short,
+        context: 'list_my_notifications',
+        uri: uri,
+        method: 'POST',
+        meta: {
+          'limit': limit,
+          'offset': offset,
+        },
+        accessToken: accessToken,
+      );
+      return result;
+    } on NetworkRequestException catch (error) {
+      switch (error.type) {
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+          throw NotificationInboxException(NotificationInboxError.network);
+        case NetworkErrorType.unauthorized:
           throw NotificationInboxException(NotificationInboxError.unauthorized);
-        }
-        throw NotificationInboxException(NotificationInboxError.serverRejected);
+        case NetworkErrorType.invalidPayload:
+          throw NotificationInboxException(NotificationInboxError.invalidPayload);
+        case NetworkErrorType.serverUnavailable:
+        case NetworkErrorType.serverRejected:
+        case NetworkErrorType.missingConfig:
+        case NetworkErrorType.unknown:
+          throw NotificationInboxException(NotificationInboxError.serverRejected);
       }
-      final payload = jsonDecode(body);
-      if (payload is! List) {
-        throw NotificationInboxException(NotificationInboxError.invalidPayload);
-      }
-      return payload
-          .whereType<Map<String, dynamic>>()
-          .map(NotificationItem.fromJson)
-          .toList();
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
-        context: 'list_my_notifications',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'limit': limit,
-          'offset': offset,
-        },
-        accessToken: accessToken,
-      );
-      throw NotificationInboxException(NotificationInboxError.network);
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
-        context: 'list_my_notifications',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'limit': limit,
-          'offset': offset,
-        },
-        accessToken: accessToken,
-      );
-      throw NotificationInboxException(NotificationInboxError.network);
-    } on FormatException catch (error) {
-      await _errorLogger.logException(
-        context: 'list_my_notifications',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'limit': limit,
-          'offset': offset,
-        },
-        accessToken: accessToken,
-      );
-      throw NotificationInboxException(NotificationInboxError.invalidPayload);
     }
+  }
+
+  /// fetchNotifications RPC 실제 실행 (NetworkGuard가 호출)
+  Future<List<NotificationItem>> _executeFetchNotifications({
+    required Uri uri,
+    required int limit,
+    required int offset,
+    required bool unreadOnly,
+    required String accessToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(
+      utf8.encode(
+        jsonEncode({
+          'page_size': limit,
+          'page_offset': offset,
+          'unread_only': unreadOnly,
+        }),
+      ),
+    );
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      await _errorLogger.logHttpFailure(
+        context: 'list_my_notifications',
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: {
+          'limit': limit,
+          'offset': offset,
+        },
+        accessToken: accessToken,
+      );
+
+      throw NetworkGuard(errorLogger: _errorLogger).statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'list_my_notifications',
+      );
+    }
+
+    final payload = jsonDecode(body);
+    if (payload is! List) {
+      throw const FormatException('Invalid payload format');
+    }
+
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map(NotificationItem.fromJson)
+        .toList();
   }
 
   @override
@@ -123,69 +136,79 @@ class SupabaseNotificationRepository implements NotificationRepository {
     _validateConfig(accessToken);
     final uri =
         Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/count_my_unread_notifications');
+
     try {
-      final request = await _client.postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-      request.add(utf8.encode(jsonEncode({})));
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      if (response.statusCode != HttpStatus.ok) {
-        await _errorLogger.logHttpFailure(
-          context: 'count_my_unread_notifications',
+      // NetworkGuard를 통한 요청 실행 (조회용 짧은 재시도)
+      final result = await NetworkGuard(errorLogger: _errorLogger).execute<int>(
+        operation: () => _executeFetchUnreadCount(
           uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: const {},
           accessToken: accessToken,
-        );
-        if (response.statusCode == HttpStatus.unauthorized ||
-            response.statusCode == HttpStatus.forbidden) {
+        ),
+        retryPolicy: RetryPolicy.short,
+        context: 'count_my_unread_notifications',
+        uri: uri,
+        method: 'POST',
+        meta: const {},
+        accessToken: accessToken,
+      );
+      return result;
+    } on NetworkRequestException catch (error) {
+      switch (error.type) {
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+          throw NotificationInboxException(NotificationInboxError.network);
+        case NetworkErrorType.unauthorized:
           throw NotificationInboxException(NotificationInboxError.unauthorized);
-        }
-        throw NotificationInboxException(NotificationInboxError.serverRejected);
+        case NetworkErrorType.invalidPayload:
+          throw NotificationInboxException(NotificationInboxError.invalidPayload);
+        case NetworkErrorType.serverUnavailable:
+        case NetworkErrorType.serverRejected:
+        case NetworkErrorType.missingConfig:
+        case NetworkErrorType.unknown:
+          throw NotificationInboxException(NotificationInboxError.serverRejected);
       }
-      final payload = jsonDecode(body);
-      if (payload is num) {
-        return payload.toInt();
-      }
-      if (payload is List && payload.isNotEmpty && payload.first is num) {
-        return (payload.first as num).toInt();
-      }
-      return 0;
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
-        context: 'count_my_unread_notifications',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: const {},
-        accessToken: accessToken,
-      );
-      throw NotificationInboxException(NotificationInboxError.network);
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
-        context: 'count_my_unread_notifications',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: const {},
-        accessToken: accessToken,
-      );
-      throw NotificationInboxException(NotificationInboxError.network);
-    } on FormatException catch (error) {
-      await _errorLogger.logException(
-        context: 'count_my_unread_notifications',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: const {},
-        accessToken: accessToken,
-      );
-      throw NotificationInboxException(NotificationInboxError.invalidPayload);
     }
+  }
+
+  /// fetchUnreadCount RPC 실제 실행 (NetworkGuard가 호출)
+  Future<int> _executeFetchUnreadCount({
+    required Uri uri,
+    required String accessToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(utf8.encode(jsonEncode({})));
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      await _errorLogger.logHttpFailure(
+        context: 'count_my_unread_notifications',
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: const {},
+        accessToken: accessToken,
+      );
+
+      throw NetworkGuard(errorLogger: _errorLogger).statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'count_my_unread_notifications',
+      );
+    }
+
+    final payload = jsonDecode(body);
+    if (payload is num) {
+      return payload.toInt();
+    }
+    if (payload is List && payload.isNotEmpty && payload.first is num) {
+      return (payload.first as num).toInt();
+    }
+    return 0;
   }
 
   @override
@@ -193,16 +216,44 @@ class SupabaseNotificationRepository implements NotificationRepository {
     required int notificationId,
     required String accessToken,
   }) async {
-    await _postRpc(
-      rpc: 'mark_notification_read',
-      payload: {
-        'target_id': notificationId,
-      },
-      accessToken: accessToken,
-      meta: {
-        'notification_id': notificationId,
-      },
-    );
+    // 사전 검증
+    _validateConfig(accessToken);
+
+    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/mark_notification_read');
+
+    try {
+      // NetworkGuard를 통한 요청 실행 (재시도 없음: 커밋 액션)
+      await NetworkGuard(errorLogger: _errorLogger).execute<void>(
+        operation: () => _executeRpcPost(
+          uri: uri,
+          rpc: 'mark_notification_read',
+          payload: {'target_id': notificationId},
+          accessToken: accessToken,
+        ),
+        retryPolicy: RetryPolicy.none,
+        context: 'mark_notification_read',
+        uri: uri,
+        method: 'POST',
+        meta: {'notification_id': notificationId},
+        accessToken: accessToken,
+      );
+    } on NetworkRequestException catch (error) {
+      // NetworkRequestException을 NotificationInboxException으로 변환
+      switch (error.type) {
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+          throw NotificationInboxException(NotificationInboxError.network);
+        case NetworkErrorType.unauthorized:
+          throw NotificationInboxException(NotificationInboxError.unauthorized);
+        case NetworkErrorType.invalidPayload:
+          throw NotificationInboxException(NotificationInboxError.invalidPayload);
+        case NetworkErrorType.serverUnavailable:
+        case NetworkErrorType.serverRejected:
+        case NetworkErrorType.missingConfig:
+        case NetworkErrorType.unknown:
+          throw NotificationInboxException(NotificationInboxError.serverRejected);
+      }
+    }
   }
 
   @override
@@ -210,16 +261,44 @@ class SupabaseNotificationRepository implements NotificationRepository {
     required int notificationId,
     required String accessToken,
   }) async {
-    await _postRpc(
-      rpc: 'delete_notification_log',
-      payload: {
-        'target_id': notificationId,
-      },
-      accessToken: accessToken,
-      meta: {
-        'notification_id': notificationId,
-      },
-    );
+    // 사전 검증
+    _validateConfig(accessToken);
+
+    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/delete_notification_log');
+
+    try {
+      // NetworkGuard를 통한 요청 실행 (재시도 없음: 커밋 액션)
+      await NetworkGuard(errorLogger: _errorLogger).execute<void>(
+        operation: () => _executeRpcPost(
+          uri: uri,
+          rpc: 'delete_notification_log',
+          payload: {'target_id': notificationId},
+          accessToken: accessToken,
+        ),
+        retryPolicy: RetryPolicy.none,
+        context: 'delete_notification_log',
+        uri: uri,
+        method: 'POST',
+        meta: {'notification_id': notificationId},
+        accessToken: accessToken,
+      );
+    } on NetworkRequestException catch (error) {
+      // NetworkRequestException을 NotificationInboxException으로 변환
+      switch (error.type) {
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+          throw NotificationInboxException(NotificationInboxError.network);
+        case NetworkErrorType.unauthorized:
+          throw NotificationInboxException(NotificationInboxError.unauthorized);
+        case NetworkErrorType.invalidPayload:
+          throw NotificationInboxException(NotificationInboxError.invalidPayload);
+        case NetworkErrorType.serverUnavailable:
+        case NetworkErrorType.serverRejected:
+        case NetworkErrorType.missingConfig:
+        case NetworkErrorType.unknown:
+          throw NotificationInboxException(NotificationInboxError.serverRejected);
+      }
+    }
   }
 
   void _validateConfig(String accessToken) {
@@ -231,68 +310,39 @@ class SupabaseNotificationRepository implements NotificationRepository {
     }
   }
 
-  Future<void> _postRpc({
+  /// RPC POST 요청 실제 실행 (NetworkGuard가 호출)
+  Future<void> _executeRpcPost({
+    required Uri uri,
     required String rpc,
     required Map<String, dynamic> payload,
     required String accessToken,
-    Map<String, dynamic>? meta,
   }) async {
-    _validateConfig(accessToken);
-    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/$rpc');
-    try {
-      final request = await _client.postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-      request.add(utf8.encode(jsonEncode(payload)));
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      if (response.statusCode != HttpStatus.ok) {
-        await _errorLogger.logHttpFailure(
-          context: rpc,
-          uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: meta ?? const {},
-          accessToken: accessToken,
-        );
-        if (response.statusCode == HttpStatus.unauthorized ||
-            response.statusCode == HttpStatus.forbidden) {
-          throw NotificationInboxException(NotificationInboxError.unauthorized);
-        }
-        throw NotificationInboxException(NotificationInboxError.serverRejected);
-      }
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(utf8.encode(jsonEncode(payload)));
+
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      await _errorLogger.logHttpFailure(
         context: rpc,
         uri: uri,
         method: 'POST',
-        error: error,
-        meta: meta ?? const {},
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: payload,
         accessToken: accessToken,
       );
-      throw NotificationInboxException(NotificationInboxError.network);
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
+
+      final networkGuard = NetworkGuard(errorLogger: _errorLogger);
+      throw networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
         context: rpc,
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: meta ?? const {},
-        accessToken: accessToken,
       );
-      throw NotificationInboxException(NotificationInboxError.network);
-    } on FormatException catch (error) {
-      await _errorLogger.logException(
-        context: rpc,
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: meta ?? const {},
-        accessToken: accessToken,
-      );
-      throw NotificationInboxException(NotificationInboxError.invalidPayload);
     }
   }
 }

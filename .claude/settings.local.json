@@ -13,7 +13,15 @@
       "mcp__ide__getDiagnostics",
       "Bash(supabase db execute:*)",
       "Bash(/mnt/c/etc/flutter/bin/flutter analyze --no-pub)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(chmod:*)",
+      "Bash(./analyze.sh:*)",
+      "Bash(dart analyze:*)",
+      "Bash(/usr/local/flutter/bin/flutter analyze)",
+      "Bash(/mnt/c/etc/flutter/bin/cache/dart-sdk/bin/dart analyze --no-fatal-infos lib)",
+      "Bash(/mnt/c/etc/flutter/bin/cache/dart-sdk/bin/dart analyze --no-fatal-infos)",
+      "Bash(/mnt/c/etc/flutter/bin/dart analyze:*)",
+      "Bash(/usr/bin/flutter analyze:*)"
     ]
   }
 }

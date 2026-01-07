@@ -262,5 +262,11 @@
   "profileSignOutConfirm": "Se déconnecter",
   "profileUserIdLabel": "ID utilisateur",
   "profileDefaultNickname": "Utilisateur",
-  "journeyDetailAnonymous": "Anonyme"
+  "journeyDetailAnonymous": "Anonyme",
+  "errorNetwork": "Veuillez vérifier votre connexion réseau.",
+  "errorTimeout": "Délai d'attente dépassé. Veuillez réessayer.",
+  "errorServerUnavailable": "Le serveur est temporairement indisponible. Veuillez réessayer plus tard.",
+  "errorUnauthorized": "Veuillez vous reconnecter.",
+  "errorRetry": "Réessayer",
+  "errorCancel": "Annuler"
 }

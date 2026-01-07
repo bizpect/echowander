@@ -262,5 +262,11 @@
   "profileSignOutConfirm": "ログアウト",
   "profileUserIdLabel": "ユーザーID",
   "profileDefaultNickname": "ユーザー",
-  "journeyDetailAnonymous": "匿名"
+  "journeyDetailAnonymous": "匿名",
+  "errorNetwork": "ネットワーク接続を確認してください。",
+  "errorTimeout": "リクエストがタイムアウトしました。もう一度お試しください。",
+  "errorServerUnavailable": "サーバーに一時的な問題があります。しばらくしてからもう一度お試しください。",
+  "errorUnauthorized": "再度ログインしてください。",
+  "errorRetry": "再試行",
+  "errorCancel": "キャンセル"
 }

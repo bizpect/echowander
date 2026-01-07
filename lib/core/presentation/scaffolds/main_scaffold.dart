@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/router/app_router.dart';
 import '../../../features/home/presentation/home_screen.dart';
-import '../../../features/journey/presentation/journey_compose_screen.dart';
 import '../../../features/journey/presentation/journey_inbox_screen.dart';
 import '../../../features/journey/presentation/journey_list_screen.dart';
 import '../../../features/journey/application/journey_inbox_controller.dart';
@@ -48,6 +49,12 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
   }
 
   void _onTabTapped(int index) {
+    // Create 탭(index 2)은 GoRouter로 navigate
+    if (index == AppTab.create.tabIndex) {
+      context.go(AppRoutes.compose);
+      return;
+    }
+
     // 다른 탭으로 전환 시에만 fade 애니메이션 실행
     if (_currentIndex != index) {
       _fadeController.forward(from: 0.0);
@@ -94,8 +101,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
                 key: const ValueKey('sent_navigator'),
               ),
 
-              // Create 탭 (단일 화면, Navigator 불필요)
-              const JourneyComposeScreen(),
+              // Create 탭은 GoRouter로 navigate하므로 빈 위젯
+              const SizedBox.shrink(),
 
               // Inbox 탭 (Nested Navigator)
               _buildTabNavigator(

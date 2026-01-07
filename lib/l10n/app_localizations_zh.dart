@@ -727,4 +727,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get journeyDetailAnonymous => '匿名';
+
+  @override
+  String get errorNetwork => '请检查网络连接。';
+
+  @override
+  String get errorTimeout => '请求超时。请重试。';
+
+  @override
+  String get errorServerUnavailable => '服务器暂时不可用。请稍后再试。';
+
+  @override
+  String get errorUnauthorized => '请重新登录。';
+
+  @override
+  String get errorRetry => '重试';
+
+  @override
+  String get errorCancel => '取消';
 }

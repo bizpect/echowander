@@ -262,5 +262,11 @@
   "profileSignOutConfirm": "退出登录",
   "profileUserIdLabel": "用户 ID",
   "profileDefaultNickname": "用户",
-  "journeyDetailAnonymous": "匿名"
+  "journeyDetailAnonymous": "匿名",
+  "errorNetwork": "请检查网络连接。",
+  "errorTimeout": "请求超时。请重试。",
+  "errorServerUnavailable": "服务器暂时不可用。请稍后再试。",
+  "errorUnauthorized": "请重新登录。",
+  "errorRetry": "重试",
+  "errorCancel": "取消"
 }

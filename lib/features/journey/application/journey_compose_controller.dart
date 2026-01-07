@@ -44,12 +44,12 @@ class JourneyComposeState {
   final int? recipientCount;
 
   factory JourneyComposeState.initial() => const JourneyComposeState(
-        content: '',
-        images: [],
-        isSubmitting: false,
-        message: null,
-        recipientCount: null,
-      );
+    content: '',
+    images: [],
+    isSubmitting: false,
+    message: null,
+    recipientCount: null,
+  );
 
   JourneyComposeState copyWith({
     String? content,
@@ -70,20 +70,13 @@ class JourneyComposeState {
 }
 
 final journeyComposeControllerProvider =
-    NotifierProvider<JourneyComposeController, JourneyComposeState>(
-  JourneyComposeController.new,
-);
+    NotifierProvider.autoDispose<JourneyComposeController, JourneyComposeState>(
+      JourneyComposeController.new,
+    );
 
 class JourneyComposeController extends Notifier<JourneyComposeState> {
-  late final AppPermissionService _permissionService;
-  late final JourneyRepository _journeyRepository;
-  late final JourneyStorageRepository _storageRepository;
-
   @override
   JourneyComposeState build() {
-    _permissionService = ref.read(appPermissionServiceProvider);
-    _journeyRepository = ref.read(journeyRepositoryProvider);
-    _storageRepository = ref.read(journeyStorageRepositoryProvider);
     return JourneyComposeState.initial();
   }
 
@@ -104,7 +97,8 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
     if (kDebugMode) {
       debugPrint('compose: 이미지 선택 시작');
     }
-    final permission = await _permissionService.requestPhotoPermission();
+    final permissionService = ref.read(appPermissionServiceProvider);
+    final permission = await permissionService.requestPhotoPermission();
     if (!permission.isGranted && !permission.isLimited) {
       if (!permission.isPermanentlyDenied) {
         state = state.copyWith(message: JourneyComposeMessage.permissionDenied);
@@ -147,7 +141,9 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
     final content = state.content.trim();
     final recipientCount = state.recipientCount;
     if (recipientCount == null) {
-      state = state.copyWith(message: JourneyComposeMessage.missingRecipientCount);
+      state = state.copyWith(
+        message: JourneyComposeMessage.missingRecipientCount,
+      );
       if (kDebugMode) {
         debugPrint('compose: 릴레이 인원 미선택');
       }
@@ -160,7 +156,8 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
       }
       return;
     }
-    if (content.length > journeyMaxLength || containsForbiddenPattern(content)) {
+    if (content.length > journeyMaxLength ||
+        containsForbiddenPattern(content)) {
       state = state.copyWith(message: JourneyComposeMessage.invalidContent);
       if (kDebugMode) {
         debugPrint('compose: 내용 검증 실패');
@@ -182,7 +179,8 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
         if (kDebugMode) {
           debugPrint('compose: 이미지 업로드 시작 (${state.images.length}장)');
         }
-        uploadedPaths = await _storageRepository.uploadImages(
+        final storageRepository = ref.read(journeyStorageRepositoryProvider);
+        uploadedPaths = await storageRepository.uploadImages(
           filePaths: state.images.map((file) => file.path).toList(),
           accessToken: accessToken,
         );
@@ -200,8 +198,10 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
         recipientCount: recipientCount,
       );
       // dispatch도 동일한 방식으로 재시도 가능하도록 새 토큰 가져오기
-      final currentAccessToken = ref.read(sessionManagerProvider).accessToken ?? accessToken;
-      await _journeyRepository.dispatchJourneyMatch(
+      final currentAccessToken =
+          ref.read(sessionManagerProvider).accessToken ?? accessToken;
+      final journeyRepository = ref.read(journeyRepositoryProvider);
+      await journeyRepository.dispatchJourneyMatch(
         journeyId: result.journeyId,
         accessToken: currentAccessToken,
       );
@@ -236,7 +236,8 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
         debugPrint('compose: 알 수 없는 오류 ($error)');
       }
       if (uploadedPaths.isNotEmpty) {
-        await _storageRepository.deleteImages(
+        final storageRepository = ref.read(journeyStorageRepositoryProvider);
+        await storageRepository.deleteImages(
           paths: uploadedPaths,
           accessToken: accessToken,
         );
@@ -254,7 +255,8 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
     required JourneyCreationException exception,
   }) async {
     if (uploadedPaths.isNotEmpty) {
-      await _storageRepository.deleteImages(
+      final storageRepository = ref.read(journeyStorageRepositoryProvider);
+      await storageRepository.deleteImages(
         paths: uploadedPaths,
         accessToken: accessToken,
       );
@@ -297,6 +299,12 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
     state = state.copyWith(clearMessage: true);
   }
 
+  /// 작성 상태를 초기화합니다.
+  /// 화면 이탈 시 또는 계정 전환 시 호출됩니다.
+  void reset() {
+    state = JourneyComposeState.initial();
+  }
+
   // JWT 만료 시 자동 갱신 후 재시도
   Future<JourneyCreationResult> _createJourneyWithRetry({
     required String content,
@@ -310,7 +318,8 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
     }
 
     try {
-      return await _journeyRepository.createJourney(
+      final journeyRepository = ref.read(journeyRepositoryProvider);
+      return await journeyRepository.createJourney(
         content: content,
         languageTag: languageTag,
         imagePaths: imagePaths,
@@ -336,7 +345,8 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
         if (kDebugMode) {
           debugPrint('compose: 토큰 갱신 성공, 재시도');
         }
-        return await _journeyRepository.createJourney(
+        final journeyRepository = ref.read(journeyRepositoryProvider);
+        return await journeyRepository.createJourney(
           content: content,
           languageTag: languageTag,
           imagePaths: imagePaths,

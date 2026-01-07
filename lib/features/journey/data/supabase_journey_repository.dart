@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/logging/server_error_logger.dart';
+import '../../../core/network/network_error.dart';
+import '../../../core/network/network_guard.dart';
 import '../domain/journey_repository.dart';
 import '../domain/journey_storage_repository.dart';
 
@@ -24,10 +26,12 @@ class SupabaseJourneyRepository implements JourneyRepository {
   SupabaseJourneyRepository({required AppConfig config})
       : _config = config,
         _errorLogger = ServerErrorLogger(config: config),
+        _networkGuard = NetworkGuard(errorLogger: ServerErrorLogger(config: config)),
         _client = HttpClient();
 
   final AppConfig _config;
   final ServerErrorLogger _errorLogger;
+  final NetworkGuard _networkGuard;
   final HttpClient _client;
 
   @override
@@ -38,6 +42,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
     required int recipientCount,
     required String accessToken,
   }) async {
+    // 사전 검증: 설정 및 인증
     if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
       if (kDebugMode) {
         debugPrint('compose: supabase 설정 누락');
@@ -50,144 +55,152 @@ class SupabaseJourneyRepository implements JourneyRepository {
       }
       throw JourneyCreationException(JourneyCreationError.unauthorized);
     }
+
     final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/create_journey');
-    int? responseStatusCode;
-    String? responseBody;
+
     try {
-      if (kDebugMode) {
-        debugPrint(
-          'compose: create_journey 요청 (len=${content.length}, lang=$languageTag, images=${imagePaths.length})',
-        );
-      }
-      final request = await _client.postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-      request.add(
-        utf8.encode(
-          jsonEncode({
-            'content': content,
-            'language_tag': languageTag,
-            'image_paths': imagePaths,
-            'recipient_count': recipientCount,
-          }),
-        ),
-      );
-      final response = await request.close();
-      responseStatusCode = response.statusCode;
-      responseBody = await response.transform(utf8.decoder).join();
-      final body = responseBody;
-      if (response.statusCode != HttpStatus.ok) {
-        if (kDebugMode) {
-          debugPrint('compose: create_journey 실패 ${response.statusCode} $body');
-        }
-        await _errorLogger.logHttpFailure(
-          context: 'create_journey',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: {
-            'rpc': 'create_journey',
-          },
+      // NetworkGuard를 통한 요청 실행 (재시도 없음: 커밋 액션)
+      final result = await _networkGuard.execute<JourneyCreationResult>(
+        operation: () => _executeCreateJourney(
           uri: uri,
-          method: 'POST',
+          content: content,
+          languageTag: languageTag,
+          imagePaths: imagePaths,
+          recipientCount: recipientCount,
           accessToken: accessToken,
-        );
-        if (response.statusCode == HttpStatus.unauthorized) {
-          throw JourneyCreationException(JourneyCreationError.unauthorized);
-        }
-        if (response.statusCode == HttpStatus.forbidden) {
-          throw JourneyCreationException(JourneyCreationError.unauthorized);
-        }
-        final mapped = _mapErrorFromResponse(body);
-        throw JourneyCreationException(mapped ?? JourneyCreationError.serverRejected);
-      }
+        ),
+        retryPolicy: RetryPolicy.none,
+        context: 'create_journey',
+        uri: uri,
+        method: 'POST',
+        meta: {
+          'rpc': 'create_journey',
+          'content_length': content.length,
+          'image_count': imagePaths.length,
+        },
+        accessToken: accessToken,
+      );
+
+      return result;
+    } on NetworkRequestException catch (error) {
+      // NetworkRequestException을 JourneyCreationException으로 변환
       if (kDebugMode) {
-        debugPrint('compose: create_journey 응답 $body');
+        debugPrint('compose: create_journey NetworkRequestException: $error');
       }
-      final payload = jsonDecode(body);
-      if (payload is! List || payload.isEmpty) {
-        if (kDebugMode) {
-          debugPrint('compose: create_journey 응답 형식 오류 ($payload)');
-        }
-        throw JourneyCreationException(JourneyCreationError.invalidPayload);
+
+      switch (error.type) {
+        case NetworkErrorType.network:
+          throw JourneyCreationException(JourneyCreationError.network);
+        case NetworkErrorType.timeout:
+          throw JourneyCreationException(JourneyCreationError.network);
+        case NetworkErrorType.unauthorized:
+          throw JourneyCreationException(JourneyCreationError.unauthorized);
+        case NetworkErrorType.serverUnavailable:
+          throw JourneyCreationException(JourneyCreationError.serverRejected);
+        case NetworkErrorType.invalidPayload:
+          throw JourneyCreationException(JourneyCreationError.invalidPayload);
+        case NetworkErrorType.serverRejected:
+          // 서버 거부 메시지에서 상세 에러 코드 추출 시도
+          final mapped = _mapErrorFromResponse(error.message ?? '');
+          throw JourneyCreationException(mapped ?? JourneyCreationError.serverRejected);
+        case NetworkErrorType.missingConfig:
+          throw JourneyCreationException(JourneyCreationError.missingConfig);
+        case NetworkErrorType.unknown:
+          throw JourneyCreationException(JourneyCreationError.unknown);
       }
-      final first = payload.first;
-      if (first is! Map<String, dynamic>) {
-        if (kDebugMode) {
-          debugPrint('compose: create_journey 응답 첫 항목 형식 오류 ($first)');
-        }
-        throw JourneyCreationException(JourneyCreationError.invalidPayload);
-      }
-      final journeyId = first['journey_id'];
-      final createdAt = first['created_at'];
-      if (journeyId is! String || createdAt is! String) {
-        if (kDebugMode) {
-          debugPrint('compose: create_journey 응답 키 누락 ($first)');
-        }
-        throw JourneyCreationException(JourneyCreationError.invalidPayload);
-      }
-      return JourneyCreationResult(
-        journeyId: journeyId,
-        createdAt: DateTime.parse(createdAt),
-      );
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
-        context: 'create_journey',
-        error: error,
-        meta: {
-          'rpc': 'create_journey',
-        },
-        uri: uri,
-        method: 'POST',
-        accessToken: accessToken,
-      );
-      throw JourneyCreationException(JourneyCreationError.network);
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
-        context: 'create_journey',
-        error: error,
-        meta: {
-          'rpc': 'create_journey',
-        },
-        uri: uri,
-        method: 'POST',
-        accessToken: accessToken,
-      );
-      throw JourneyCreationException(JourneyCreationError.network);
-    } on FormatException catch (error) {
-      await _errorLogger.logException(
-        context: 'create_journey',
-        error: error,
-        meta: {
-          'rpc': 'create_journey',
-          'response_status': responseStatusCode,
-          'response_body': responseBody,
-        },
-        uri: uri,
-        method: 'POST',
-        accessToken: accessToken,
-      );
-      throw JourneyCreationException(JourneyCreationError.invalidPayload);
-    } catch (error) {
-      if (kDebugMode) {
-        debugPrint('compose: create_journey 알 수 없는 오류 $error');
-        debugPrint('compose: create_journey 응답 상태 $responseStatusCode');
-        debugPrint('compose: create_journey 응답 바디 $responseBody');
-      }
-      await _errorLogger.logException(
-        context: 'create_journey',
-        error: error,
-        meta: {
-          'rpc': 'create_journey',
-          'response_status': responseStatusCode,
-          'response_body': responseBody,
-        },
-        uri: uri,
-        method: 'POST',
-        accessToken: accessToken,
-      );
-      throw JourneyCreationException(JourneyCreationError.unknown);
     }
+  }
+
+  /// create_journey RPC 실제 실행 (NetworkGuard가 호출)
+  Future<JourneyCreationResult> _executeCreateJourney({
+    required Uri uri,
+    required String content,
+    required String languageTag,
+    required List<String> imagePaths,
+    required int recipientCount,
+    required String accessToken,
+  }) async {
+    if (kDebugMode) {
+      debugPrint(
+        'compose: create_journey 요청 (len=${content.length}, lang=$languageTag, images=${imagePaths.length})',
+      );
+    }
+
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(
+      utf8.encode(
+        jsonEncode({
+          'content': content,
+          'language_tag': languageTag,
+          'image_paths': imagePaths,
+          'recipient_count': recipientCount,
+        }),
+      ),
+    );
+
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      if (kDebugMode) {
+        debugPrint('compose: create_journey 실패 ${response.statusCode} $body');
+      }
+
+      await _errorLogger.logHttpFailure(
+        context: 'create_journey',
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: {'rpc': 'create_journey'},
+        uri: uri,
+        method: 'POST',
+        accessToken: accessToken,
+      );
+
+      // NetworkGuard가 처리할 수 있도록 NetworkRequestException 발생
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'create_journey',
+      );
+    }
+
+    if (kDebugMode) {
+      debugPrint('compose: create_journey 응답 $body');
+    }
+
+    // 응답 파싱
+    final payload = jsonDecode(body);
+    if (payload is! List || payload.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('compose: create_journey 응답 형식 오류 ($payload)');
+      }
+      throw const FormatException('Invalid payload format');
+    }
+
+    final first = payload.first;
+    if (first is! Map<String, dynamic>) {
+      if (kDebugMode) {
+        debugPrint('compose: create_journey 응답 첫 항목 형식 오류 ($first)');
+      }
+      throw const FormatException('Invalid first item format');
+    }
+
+    final journeyId = first['journey_id'];
+    final createdAt = first['created_at'];
+    if (journeyId is! String || createdAt is! String) {
+      if (kDebugMode) {
+        debugPrint('compose: create_journey 응답 키 누락 ($first)');
+      }
+      throw const FormatException('Missing required fields');
+    }
+
+    return JourneyCreationResult(
+      journeyId: journeyId,
+      createdAt: DateTime.parse(createdAt),
+    );
   }
 
   @override
@@ -304,101 +317,117 @@ class SupabaseJourneyRepository implements JourneyRepository {
       throw JourneyListException(JourneyListError.unauthorized);
     }
     final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/list_journeys');
+
     try {
-      final request = await _client.postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-      request.add(
-        utf8.encode(
-          jsonEncode({
-            'page_size': limit,
-            'page_offset': offset,
-          }),
-        ),
-      );
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      if (response.statusCode != HttpStatus.ok) {
-        if (kDebugMode) {
-          debugPrint('journeys: list 실패 ${response.statusCode} $body');
-        }
-        await _errorLogger.logHttpFailure(
-          context: 'list_journeys',
+      // NetworkGuard를 통한 요청 실행 (조회용 짧은 재시도)
+      final result = await _networkGuard.execute<List<JourneySummary>>(
+        operation: () => _executeFetchJourneys(
           uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: {
-            'limit': limit,
-            'offset': offset,
-          },
+          limit: limit,
+          offset: offset,
           accessToken: accessToken,
-        );
-        if (response.statusCode == HttpStatus.unauthorized ||
-            response.statusCode == HttpStatus.forbidden) {
+        ),
+        retryPolicy: RetryPolicy.short,
+        context: 'list_journeys',
+        uri: uri,
+        method: 'POST',
+        meta: {
+          'limit': limit,
+          'offset': offset,
+        },
+        accessToken: accessToken,
+      );
+      return result;
+    } on NetworkRequestException catch (error) {
+      if (kDebugMode) {
+        debugPrint('journeys: list_journeys NetworkRequestException: $error');
+      }
+
+      switch (error.type) {
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+          throw JourneyListException(JourneyListError.network);
+        case NetworkErrorType.unauthorized:
           throw JourneyListException(JourneyListError.unauthorized);
-        }
-        final mapped = _mapListErrorFromResponse(body);
-        throw JourneyListException(mapped ?? JourneyListError.serverRejected);
+        case NetworkErrorType.invalidPayload:
+          throw JourneyListException(JourneyListError.invalidPayload);
+        case NetworkErrorType.serverUnavailable:
+        case NetworkErrorType.serverRejected:
+          // 서버 거부 메시지에서 상세 에러 코드 추출 시도
+          final mapped = _mapListErrorFromResponse(error.message ?? '');
+          throw JourneyListException(mapped ?? JourneyListError.serverRejected);
+        case NetworkErrorType.missingConfig:
+          throw JourneyListException(JourneyListError.missingConfig);
+        case NetworkErrorType.unknown:
+          throw JourneyListException(JourneyListError.unknown);
       }
-      final payload = jsonDecode(body);
-      if (payload is! List) {
-        throw JourneyListException(JourneyListError.invalidPayload);
-      }
-      return payload
-          .whereType<Map<String, dynamic>>()
-          .map(
-            (row) => JourneySummary(
-              journeyId: row['journey_id'] as String,
-              content: row['content'] as String,
-              createdAt: DateTime.parse(row['created_at'] as String),
-              imageCount: (row['image_count'] as num?)?.toInt() ?? 0,
-              statusCode: row['status_code'] as String? ?? 'CREATED',
-              filterCode: row['filter_code'] as String? ?? 'OK',
-            ),
-          )
-          .toList();
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
-        context: 'list_journeys',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'limit': limit,
-          'offset': offset,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyListException(JourneyListError.network);
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
-        context: 'list_journeys',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'limit': limit,
-          'offset': offset,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyListException(JourneyListError.network);
-    } on FormatException catch (error) {
-      await _errorLogger.logException(
-        context: 'list_journeys',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'limit': limit,
-          'offset': offset,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyListException(JourneyListError.invalidPayload);
     }
+  }
+
+  /// fetchJourneys RPC 실제 실행 (NetworkGuard가 호출)
+  Future<List<JourneySummary>> _executeFetchJourneys({
+    required Uri uri,
+    required int limit,
+    required int offset,
+    required String accessToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(
+      utf8.encode(
+        jsonEncode({
+          'page_size': limit,
+          'page_offset': offset,
+        }),
+      ),
+    );
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      if (kDebugMode) {
+        debugPrint('journeys: list 실패 ${response.statusCode} $body');
+      }
+      await _errorLogger.logHttpFailure(
+        context: 'list_journeys',
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: {
+          'limit': limit,
+          'offset': offset,
+        },
+        accessToken: accessToken,
+      );
+
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'list_journeys',
+      );
+    }
+
+    final payload = jsonDecode(body);
+    if (payload is! List) {
+      throw const FormatException('Invalid payload format');
+    }
+
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (row) => JourneySummary(
+            journeyId: row['journey_id'] as String,
+            content: row['content'] as String,
+            createdAt: DateTime.parse(row['created_at'] as String),
+            imageCount: (row['image_count'] as num?)?.toInt() ?? 0,
+            statusCode: row['status_code'] as String? ?? 'CREATED',
+            filterCode: row['filter_code'] as String? ?? 'OK',
+          ),
+        )
+        .toList();
   }
 
   @override
@@ -426,131 +455,144 @@ class SupabaseJourneyRepository implements JourneyRepository {
     if (kDebugMode) {
       debugPrint('[InboxTrace][Supabase] fetchInboxJourneys - calling RPC: $uri');
     }
+
     try {
-      final request = await _client.postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-      request.add(
-        utf8.encode(
-          jsonEncode({
-            'page_size': limit,
-            'page_offset': offset,
-          }),
-        ),
-      );
-      if (kDebugMode) {
-        debugPrint('[InboxTrace][Supabase] fetchInboxJourneys - request sent, waiting for response');
-      }
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      if (kDebugMode) {
-        debugPrint('[InboxTrace][Supabase] fetchInboxJourneys - response received, statusCode: ${response.statusCode}, body length: ${body.length}');
-      }
-      if (response.statusCode != HttpStatus.ok) {
-        if (kDebugMode) {
-          debugPrint('[InboxTrace][Supabase] fetchInboxJourneys - error response: ${response.statusCode} $body');
-        }
-        await _errorLogger.logHttpFailure(
-          context: 'list_inbox_journeys',
+      // NetworkGuard를 통한 요청 실행 (조회용 짧은 재시도)
+      final result = await _networkGuard.execute<List<JourneyInboxItem>>(
+        operation: () => _executeFetchInboxJourneys(
           uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: {
-            'limit': limit,
-            'offset': offset,
-          },
+          limit: limit,
+          offset: offset,
           accessToken: accessToken,
-        );
-        if (response.statusCode == HttpStatus.unauthorized ||
-            response.statusCode == HttpStatus.forbidden) {
+        ),
+        retryPolicy: RetryPolicy.short,
+        context: 'list_inbox_journeys',
+        uri: uri,
+        method: 'POST',
+        meta: {
+          'limit': limit,
+          'offset': offset,
+        },
+        accessToken: accessToken,
+      );
+      return result;
+    } on NetworkRequestException catch (error) {
+      if (kDebugMode) {
+        debugPrint('[InboxTrace][Repo] fetchInboxJourneys NetworkRequestException: $error');
+      }
+
+      switch (error.type) {
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+          throw JourneyInboxException(JourneyInboxError.network);
+        case NetworkErrorType.unauthorized:
           throw JourneyInboxException(JourneyInboxError.unauthorized);
-        }
-        throw JourneyInboxException(JourneyInboxError.serverRejected);
+        case NetworkErrorType.invalidPayload:
+          throw JourneyInboxException(JourneyInboxError.invalidPayload);
+        case NetworkErrorType.serverUnavailable:
+        case NetworkErrorType.serverRejected:
+        case NetworkErrorType.missingConfig:
+        case NetworkErrorType.unknown:
+          throw JourneyInboxException(JourneyInboxError.serverRejected);
       }
-      final payload = jsonDecode(body);
-      if (payload is! List) {
-        if (kDebugMode) {
-          debugPrint('[InboxTrace][Repo] fetchInboxJourneys - invalid payload type: ${payload.runtimeType}');
-        }
-        throw JourneyInboxException(JourneyInboxError.invalidPayload);
-      }
-      if (kDebugMode) {
-        debugPrint('[InboxTrace][Supabase] fetchInboxJourneys - response row count: ${payload.length}');
-      }
-      final items = <JourneyInboxItem>[];
-      for (var i = 0; i < payload.length; i++) {
-        final row = payload[i];
-        if (row is! Map<String, dynamic>) {
-          if (kDebugMode) {
-            debugPrint('[InboxTrace][Repo] fetchInboxJourneys - row $i is not Map, skipping');
-          }
-          continue;
-        }
-        try {
-          final item = JourneyInboxItem(
-            journeyId: row['journey_id'] as String,
-            senderUserId: row['sender_user_id'] as String? ?? '',
-            content: row['content'] as String,
-            createdAt: DateTime.parse(row['created_at'] as String),
-            imageCount: (row['image_count'] as num?)?.toInt() ?? 0,
-            recipientStatus: row['recipient_status'] as String? ?? 'ASSIGNED',
-          );
-          if (kDebugMode && i == 0) {
-            debugPrint('[InboxTrace][Repo] fetchInboxJourneys - first item mapped: journeyId=${item.journeyId}, createdAt=${item.createdAt}, status=${item.recipientStatus}');
-          }
-          items.add(item);
-        } catch (e) {
-          if (kDebugMode) {
-            debugPrint('[InboxTrace][Repo] fetchInboxJourneys - mapping failed for row $i: $e');
-          }
-        }
-      }
-      if (kDebugMode) {
-        debugPrint('[InboxTrace][Repo] fetchInboxJourneys - completed, mapped items: ${items.length}');
-      }
-      return items;
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
-        context: 'list_inbox_journeys',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'limit': limit,
-          'offset': offset,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyInboxException(JourneyInboxError.network);
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
-        context: 'list_inbox_journeys',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'limit': limit,
-          'offset': offset,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyInboxException(JourneyInboxError.network);
-    } on FormatException catch (error) {
-      await _errorLogger.logException(
-        context: 'list_inbox_journeys',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'limit': limit,
-          'offset': offset,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyInboxException(JourneyInboxError.invalidPayload);
     }
+  }
+
+  /// fetchInboxJourneys RPC 실제 실행 (NetworkGuard가 호출)
+  Future<List<JourneyInboxItem>> _executeFetchInboxJourneys({
+    required Uri uri,
+    required int limit,
+    required int offset,
+    required String accessToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(
+      utf8.encode(
+        jsonEncode({
+          'page_size': limit,
+          'page_offset': offset,
+        }),
+      ),
+    );
+    if (kDebugMode) {
+      debugPrint('[InboxTrace][Supabase] fetchInboxJourneys - request sent, waiting for response');
+    }
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+    if (kDebugMode) {
+      debugPrint('[InboxTrace][Supabase] fetchInboxJourneys - response received, statusCode: ${response.statusCode}, body length: ${body.length}');
+    }
+
+    if (response.statusCode != HttpStatus.ok) {
+      if (kDebugMode) {
+        debugPrint('[InboxTrace][Supabase] fetchInboxJourneys - error response: ${response.statusCode} $body');
+      }
+      await _errorLogger.logHttpFailure(
+        context: 'list_inbox_journeys',
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: {
+          'limit': limit,
+          'offset': offset,
+        },
+        accessToken: accessToken,
+      );
+
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'list_inbox_journeys',
+      );
+    }
+
+    final payload = jsonDecode(body);
+    if (payload is! List) {
+      if (kDebugMode) {
+        debugPrint('[InboxTrace][Repo] fetchInboxJourneys - invalid payload type: ${payload.runtimeType}');
+      }
+      throw const FormatException('Invalid payload format');
+    }
+    if (kDebugMode) {
+      debugPrint('[InboxTrace][Supabase] fetchInboxJourneys - response row count: ${payload.length}');
+    }
+
+    final items = <JourneyInboxItem>[];
+    for (var i = 0; i < payload.length; i++) {
+      final row = payload[i];
+      if (row is! Map<String, dynamic>) {
+        if (kDebugMode) {
+          debugPrint('[InboxTrace][Repo] fetchInboxJourneys - row $i is not Map, skipping');
+        }
+        continue;
+      }
+      try {
+        final item = JourneyInboxItem(
+          journeyId: row['journey_id'] as String,
+          senderUserId: row['sender_user_id'] as String? ?? '',
+          content: row['content'] as String,
+          createdAt: DateTime.parse(row['created_at'] as String),
+          imageCount: (row['image_count'] as num?)?.toInt() ?? 0,
+          recipientStatus: row['recipient_status'] as String? ?? 'ASSIGNED',
+        );
+        if (kDebugMode && i == 0) {
+          debugPrint('[InboxTrace][Repo] fetchInboxJourneys - first item mapped: journeyId=${item.journeyId}, createdAt=${item.createdAt}, status=${item.recipientStatus}');
+        }
+        items.add(item);
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('[InboxTrace][Repo] fetchInboxJourneys - mapping failed for row $i: $e');
+        }
+      }
+    }
+    if (kDebugMode) {
+      debugPrint('[InboxTrace][Repo] fetchInboxJourneys - completed, mapped items: ${items.length}');
+    }
+    return items;
   }
 
   @override
@@ -613,168 +655,103 @@ class SupabaseJourneyRepository implements JourneyRepository {
     required String content,
     required String accessToken,
   }) async {
-    if (kDebugMode) {
-      debugPrint('[InboxReplyTrace][Repo] respondJourney - START');
-      debugPrint('[InboxReplyTrace][Repo] respondJourney - journeyId: $journeyId');
-      debugPrint('[InboxReplyTrace][Repo] respondJourney - content length: ${content.length}');
-      debugPrint('[InboxReplyTrace][Repo] respondJourney - accessToken length: ${accessToken.length}');
-    }
+    // 사전 검증
     if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
-      if (kDebugMode) {
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - ABORT: missing config');
-      }
       throw JourneyActionException(JourneyActionError.missingConfig);
     }
     if (accessToken.isEmpty) {
-      if (kDebugMode) {
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - ABORT: empty accessToken');
-      }
       throw JourneyActionException(JourneyActionError.unauthorized);
     }
+
     final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/respond_journey');
-    if (kDebugMode) {
-      debugPrint('[InboxReplyTrace][Repo] respondJourney - URI: $uri');
-    }
-    int? responseStatusCode;
-    String? responseBody;
+
     try {
-      if (kDebugMode) {
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - creating HTTP request...');
-      }
-      final request = await _client.postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-      final requestBody = {
-        'target_journey_id': journeyId,
-        'response_content': content,
-      };
-      if (kDebugMode) {
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - request body: ${jsonEncode(requestBody)}');
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - sending HTTP request...');
-      }
-      request.add(
-        utf8.encode(
-          jsonEncode(requestBody),
-        ),
-      );
-      final response = await request.close();
-      responseStatusCode = response.statusCode;
-      if (kDebugMode) {
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - HTTP response status: $responseStatusCode');
-      }
-      final body = await response.transform(utf8.decoder).join();
-      responseBody = body;
-      if (kDebugMode) {
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - HTTP response body: $body');
-      }
-      if (response.statusCode != HttpStatus.ok) {
-        if (kDebugMode) {
-          debugPrint('[InboxReplyTrace][Repo] respondJourney - ERROR: non-200 status code ${response.statusCode}');
-        }
-        await _errorLogger.logHttpFailure(
-          context: 'respond_journey',
+      await _networkGuard.execute<void>(
+        operation: () => _executeRespondJourney(
           uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: {
-            'journey_id': journeyId,
-          },
+          journeyId: journeyId,
+          content: content,
           accessToken: accessToken,
-        );
-        if (response.statusCode == HttpStatus.unauthorized ||
-            response.statusCode == HttpStatus.forbidden) {
-          if (kDebugMode) {
-            debugPrint('[InboxReplyTrace][Repo] respondJourney - throwing JourneyActionError.unauthorized');
-          }
+        ),
+        retryPolicy: RetryPolicy.none,
+        context: 'respond_journey',
+        uri: uri,
+        method: 'POST',
+        meta: {'journey_id': journeyId, 'content_length': content.length},
+        accessToken: accessToken,
+      );
+    } on NetworkRequestException catch (error) {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][Repo] respondJourney NetworkRequestException: $error');
+      }
+
+      switch (error.type) {
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+          throw JourneyActionException(JourneyActionError.network);
+        case NetworkErrorType.unauthorized:
           throw JourneyActionException(JourneyActionError.unauthorized);
-        }
-        if (kDebugMode) {
-          debugPrint('[InboxReplyTrace][Repo] respondJourney - throwing JourneyActionError.serverRejected');
-        }
-        throw JourneyActionException(JourneyActionError.serverRejected);
+        case NetworkErrorType.invalidPayload:
+          throw JourneyActionException(JourneyActionError.invalidPayload);
+        case NetworkErrorType.serverUnavailable:
+        case NetworkErrorType.serverRejected:
+        case NetworkErrorType.missingConfig:
+        case NetworkErrorType.unknown:
+          throw JourneyActionException(JourneyActionError.serverRejected);
       }
-      if (kDebugMode) {
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - SUCCESS: respond_journey completed');
-      }
-    } on SocketException catch (error) {
-      if (kDebugMode) {
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - NETWORK ERROR: SocketException $error');
-      }
-      await _errorLogger.logException(
-        context: 'respond_journey',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyActionException(JourneyActionError.network);
-    } on HttpException catch (error) {
-      if (kDebugMode) {
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - HTTP ERROR: HttpException $error');
-      }
-      await _errorLogger.logException(
-        context: 'respond_journey',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyActionException(JourneyActionError.network);
-    } on FormatException catch (error) {
-      if (kDebugMode) {
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - FORMAT ERROR: FormatException $error');
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - responseStatusCode: $responseStatusCode');
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - responseBody: $responseBody');
-      }
-      await _errorLogger.logException(
-        context: 'respond_journey',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-          'response_status': responseStatusCode,
-          'response_body': responseBody,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyActionException(JourneyActionError.invalidPayload);
-    } on JourneyActionException {
-      // 이미 throw된 JourneyActionException은 그대로 다시 throw
-      if (kDebugMode) {
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - rethrowing JourneyActionException');
-      }
-      rethrow;
-    } catch (error) {
-      if (kDebugMode) {
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - UNEXPECTED ERROR: $error');
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - responseStatusCode: $responseStatusCode');
-        debugPrint('[InboxReplyTrace][Repo] respondJourney - responseBody: $responseBody');
-      }
-      await _errorLogger.logException(
-        context: 'respond_journey',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-          'response_status': responseStatusCode,
-          'response_body': responseBody,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyActionException(JourneyActionError.unknown);
     }
+  }
+
+  Future<void> _executeRespondJourney({
+    required Uri uri,
+    required String journeyId,
+    required String content,
+    required String accessToken,
+  }) async {
     if (kDebugMode) {
-      debugPrint('[InboxReplyTrace][Repo] respondJourney - END');
+      debugPrint('[InboxReplyTrace][Repo] respond_journey 요청 (journeyId: $journeyId, content length: ${content.length})');
+    }
+
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(
+      utf8.encode(
+        jsonEncode({
+          'target_journey_id': journeyId,
+          'response_content': content,
+        }),
+      ),
+    );
+
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      if (kDebugMode) {
+        debugPrint('[InboxReplyTrace][Repo] respond_journey 실패 ${response.statusCode} $body');
+      }
+
+      await _errorLogger.logHttpFailure(
+        context: 'respond_journey',
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: {'journey_id': journeyId},
+        accessToken: accessToken,
+      );
+
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'respond_journey',
+      );
+    }
+
+    if (kDebugMode) {
+      debugPrint('[InboxReplyTrace][Repo] respond_journey 성공');
     }
   }
 
@@ -783,82 +760,12 @@ class SupabaseJourneyRepository implements JourneyRepository {
     required String journeyId,
     required String accessToken,
   }) async {
-    if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
-      throw JourneyActionException(JourneyActionError.missingConfig);
-    }
-    if (accessToken.isEmpty) {
-      throw JourneyActionException(JourneyActionError.unauthorized);
-    }
-    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/pass_journey');
-    try {
-      final request = await _client.postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-      request.add(
-        utf8.encode(
-          jsonEncode({
-            'target_journey_id': journeyId,
-          }),
-        ),
-      );
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      if (response.statusCode != HttpStatus.ok) {
-        await _errorLogger.logHttpFailure(
-          context: 'pass_journey',
-          uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: {
-            'journey_id': journeyId,
-          },
-          accessToken: accessToken,
-        );
-        if (response.statusCode == HttpStatus.unauthorized ||
-            response.statusCode == HttpStatus.forbidden) {
-          throw JourneyActionException(JourneyActionError.unauthorized);
-        }
-        throw JourneyActionException(JourneyActionError.serverRejected);
-      }
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
-        context: 'pass_journey',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyActionException(JourneyActionError.network);
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
-        context: 'pass_journey',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyActionException(JourneyActionError.network);
-    } on FormatException catch (error) {
-      await _errorLogger.logException(
-        context: 'pass_journey',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyActionException(JourneyActionError.invalidPayload);
-    }
+    await _executeSimpleJourneyAction(
+      rpc: 'pass_journey',
+      journeyId: journeyId,
+      accessToken: accessToken,
+      payload: {'target_journey_id': journeyId},
+    );
   }
 
   @override
@@ -867,86 +774,100 @@ class SupabaseJourneyRepository implements JourneyRepository {
     required String reasonCode,
     required String accessToken,
   }) async {
+    await _executeSimpleJourneyAction(
+      rpc: 'report_journey',
+      journeyId: journeyId,
+      accessToken: accessToken,
+      payload: {
+        'target_journey_id': journeyId,
+        'reason_code': reasonCode,
+      },
+      meta: {'reason_code': reasonCode},
+    );
+  }
+
+  /// 단순 Journey 액션 실행 (pass, report 등)
+  Future<void> _executeSimpleJourneyAction({
+    required String rpc,
+    required String journeyId,
+    required String accessToken,
+    required Map<String, dynamic> payload,
+    Map<String, dynamic>? meta,
+  }) async {
     if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
       throw JourneyActionException(JourneyActionError.missingConfig);
     }
     if (accessToken.isEmpty) {
       throw JourneyActionException(JourneyActionError.unauthorized);
     }
-    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/report_journey');
+
+    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/$rpc');
+
     try {
-      final request = await _client.postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-      request.add(
-        utf8.encode(
-          jsonEncode({
-            'target_journey_id': journeyId,
-            'reason_code': reasonCode,
-          }),
-        ),
-      );
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      if (response.statusCode != HttpStatus.ok) {
-        await _errorLogger.logHttpFailure(
-          context: 'report_journey',
+      await _networkGuard.execute<void>(
+        operation: () => _executeRpcPost(
           uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: {
-            'journey_id': journeyId,
-            'reason_code': reasonCode,
-          },
+          payload: payload,
           accessToken: accessToken,
-        );
-        if (response.statusCode == HttpStatus.unauthorized ||
-            response.statusCode == HttpStatus.forbidden) {
+          context: rpc,
+        ),
+        retryPolicy: RetryPolicy.none,
+        context: rpc,
+        uri: uri,
+        method: 'POST',
+        meta: {'journey_id': journeyId, ...?meta},
+        accessToken: accessToken,
+      );
+    } on NetworkRequestException catch (error) {
+      switch (error.type) {
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+          throw JourneyActionException(JourneyActionError.network);
+        case NetworkErrorType.unauthorized:
           throw JourneyActionException(JourneyActionError.unauthorized);
-        }
-        throw JourneyActionException(JourneyActionError.serverRejected);
+        case NetworkErrorType.invalidPayload:
+          throw JourneyActionException(JourneyActionError.invalidPayload);
+        case NetworkErrorType.serverUnavailable:
+        case NetworkErrorType.serverRejected:
+        case NetworkErrorType.missingConfig:
+        case NetworkErrorType.unknown:
+          throw JourneyActionException(JourneyActionError.serverRejected);
       }
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
-        context: 'report_journey',
+    }
+  }
+
+  /// RPC POST 요청 실행 (공통)
+  Future<void> _executeRpcPost({
+    required Uri uri,
+    required Map<String, dynamic> payload,
+    required String accessToken,
+    required String context,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(utf8.encode(jsonEncode(payload)));
+
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      await _errorLogger.logHttpFailure(
+        context: context,
         uri: uri,
         method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-          'reason_code': reasonCode,
-        },
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: payload,
         accessToken: accessToken,
       );
-      throw JourneyActionException(JourneyActionError.network);
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
-        context: 'report_journey',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-          'reason_code': reasonCode,
-        },
-        accessToken: accessToken,
+
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: context,
       );
-      throw JourneyActionException(JourneyActionError.network);
-    } on FormatException catch (error) {
-      await _errorLogger.logException(
-        context: 'report_journey',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-          'reason_code': reasonCode,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyActionException(JourneyActionError.invalidPayload);
     }
   }
 
@@ -956,86 +877,54 @@ class SupabaseJourneyRepository implements JourneyRepository {
     required String reasonCode,
     required String accessToken,
   }) async {
+    // 사전 검증
     if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
       throw JourneyResultReportException(JourneyResultReportError.missingConfig);
     }
     if (accessToken.isEmpty) {
       throw JourneyResultReportException(JourneyResultReportError.unauthorized);
     }
+
     final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/report_journey_response');
+
     try {
-      final request = await _client.postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-      request.add(
-        utf8.encode(
-          jsonEncode({
-            'target_response_id': responseId,
-            'reason_code': reasonCode,
-          }),
-        ),
-      );
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      if (response.statusCode != HttpStatus.ok) {
-        await _errorLogger.logHttpFailure(
-          context: 'report_journey_response',
+      // NetworkGuard를 통한 요청 실행 (재시도 없음: 커밋 액션)
+      await _networkGuard.execute<void>(
+        operation: () => _executeRpcPost(
           uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: {
-            'response_id': responseId,
+          payload: {
+            'target_response_id': responseId,
             'reason_code': reasonCode,
           },
           accessToken: accessToken,
-        );
-        if (response.statusCode == HttpStatus.unauthorized ||
-            response.statusCode == HttpStatus.forbidden) {
+          context: 'report_journey_response',
+        ),
+        retryPolicy: RetryPolicy.none,
+        context: 'report_journey_response',
+        uri: uri,
+        method: 'POST',
+        meta: {
+          'response_id': responseId,
+          'reason_code': reasonCode,
+        },
+        accessToken: accessToken,
+      );
+    } on NetworkRequestException catch (error) {
+      // NetworkRequestException을 JourneyResultReportException으로 변환
+      switch (error.type) {
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+          throw JourneyResultReportException(JourneyResultReportError.network);
+        case NetworkErrorType.unauthorized:
           throw JourneyResultReportException(JourneyResultReportError.unauthorized);
-        }
-        throw JourneyResultReportException(JourneyResultReportError.serverRejected);
+        case NetworkErrorType.invalidPayload:
+          throw JourneyResultReportException(JourneyResultReportError.invalidPayload);
+        case NetworkErrorType.serverUnavailable:
+        case NetworkErrorType.serverRejected:
+        case NetworkErrorType.missingConfig:
+        case NetworkErrorType.unknown:
+          throw JourneyResultReportException(JourneyResultReportError.serverRejected);
       }
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
-        context: 'report_journey_response',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'response_id': responseId,
-          'reason_code': reasonCode,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyResultReportException(JourneyResultReportError.network);
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
-        context: 'report_journey_response',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'response_id': responseId,
-          'reason_code': reasonCode,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyResultReportException(JourneyResultReportError.network);
-    } on FormatException catch (error) {
-      await _errorLogger.logException(
-        context: 'report_journey_response',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'response_id': responseId,
-          'reason_code': reasonCode,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyResultReportException(JourneyResultReportError.invalidPayload);
     }
   }
 
@@ -1051,94 +940,100 @@ class SupabaseJourneyRepository implements JourneyRepository {
       throw JourneyProgressException(JourneyProgressError.unauthorized);
     }
     final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/get_journey_progress');
+
     try {
-      final request = await _client.postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-      request.add(
-        utf8.encode(
-          jsonEncode({
-            'target_journey_id': journeyId,
-          }),
-        ),
-      );
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      if (response.statusCode != HttpStatus.ok) {
-        await _errorLogger.logHttpFailure(
-          context: 'get_journey_progress',
+      // NetworkGuard를 통한 요청 실행 (조회용 짧은 재시도)
+      final result = await _networkGuard.execute<JourneyProgress>(
+        operation: () => _executeFetchJourneyProgress(
           uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: {
-            'journey_id': journeyId,
-          },
+          journeyId: journeyId,
           accessToken: accessToken,
-        );
-        if (response.statusCode == HttpStatus.unauthorized ||
-            response.statusCode == HttpStatus.forbidden) {
+        ),
+        retryPolicy: RetryPolicy.short,
+        context: 'get_journey_progress',
+        uri: uri,
+        method: 'POST',
+        meta: {'journey_id': journeyId},
+        accessToken: accessToken,
+      );
+      return result;
+    } on NetworkRequestException catch (error) {
+      switch (error.type) {
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+          throw JourneyProgressException(JourneyProgressError.network);
+        case NetworkErrorType.unauthorized:
           throw JourneyProgressException(JourneyProgressError.unauthorized);
-        }
-        throw JourneyProgressException(JourneyProgressError.serverRejected);
+        case NetworkErrorType.invalidPayload:
+          throw JourneyProgressException(JourneyProgressError.invalidPayload);
+        case NetworkErrorType.serverUnavailable:
+        case NetworkErrorType.serverRejected:
+        case NetworkErrorType.missingConfig:
+        case NetworkErrorType.unknown:
+          throw JourneyProgressException(JourneyProgressError.serverRejected);
       }
-      final payload = jsonDecode(body);
-      if (payload is! List || payload.isEmpty) {
-        throw JourneyProgressException(JourneyProgressError.invalidPayload);
-      }
-      final row = payload.first as Map<String, dynamic>;
-      return JourneyProgress(
-        journeyId: row['journey_id'] as String,
-        statusCode: row['status_code'] as String,
-        responseTarget: (row['response_target'] as num?)?.toInt() ?? 0,
-        respondedCount: (row['responded_count'] as num?)?.toInt() ?? 0,
-        assignedCount: (row['assigned_count'] as num?)?.toInt() ?? 0,
-        passedCount: (row['passed_count'] as num?)?.toInt() ?? 0,
-        reportedCount: (row['reported_count'] as num?)?.toInt() ?? 0,
-        relayDeadlineAt: DateTime.parse(row['relay_deadline_at'] as String),
-        countryCodes: (row['country_codes'] as List<dynamic>?)
-                ?.whereType<String>()
-                .toList() ??
-            [],
-      );
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
-        context: 'get_journey_progress',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyProgressException(JourneyProgressError.network);
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
-        context: 'get_journey_progress',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyProgressException(JourneyProgressError.network);
-    } on FormatException catch (error) {
-      await _errorLogger.logException(
-        context: 'get_journey_progress',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyProgressException(JourneyProgressError.invalidPayload);
     }
+  }
+
+  /// fetchJourneyProgress RPC 실제 실행 (NetworkGuard가 호출)
+  Future<JourneyProgress> _executeFetchJourneyProgress({
+    required Uri uri,
+    required String journeyId,
+    required String accessToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(
+      utf8.encode(
+        jsonEncode({
+          'target_journey_id': journeyId,
+        }),
+      ),
+    );
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      await _errorLogger.logHttpFailure(
+        context: 'get_journey_progress',
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: {
+          'journey_id': journeyId,
+        },
+        accessToken: accessToken,
+      );
+
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'get_journey_progress',
+      );
+    }
+
+    final payload = jsonDecode(body);
+    if (payload is! List || payload.isEmpty) {
+      throw const FormatException('Invalid payload format');
+    }
+    final row = payload.first as Map<String, dynamic>;
+    return JourneyProgress(
+      journeyId: row['journey_id'] as String,
+      statusCode: row['status_code'] as String,
+      responseTarget: (row['response_target'] as num?)?.toInt() ?? 0,
+      respondedCount: (row['responded_count'] as num?)?.toInt() ?? 0,
+      assignedCount: (row['assigned_count'] as num?)?.toInt() ?? 0,
+      passedCount: (row['passed_count'] as num?)?.toInt() ?? 0,
+      reportedCount: (row['reported_count'] as num?)?.toInt() ?? 0,
+      relayDeadlineAt: DateTime.parse(row['relay_deadline_at'] as String),
+      countryCodes: (row['country_codes'] as List<dynamic>?)
+              ?.whereType<String>()
+              .toList() ??
+          [],
+    );
   }
 
   @override
@@ -1153,89 +1048,96 @@ class SupabaseJourneyRepository implements JourneyRepository {
       throw JourneyResultException(JourneyResultError.unauthorized);
     }
     final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/list_journey_results');
+
     try {
-      final request = await _client.postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-      request.add(
-        utf8.encode(
-          jsonEncode({
-            'target_journey_id': journeyId,
-          }),
-        ),
-      );
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      if (response.statusCode != HttpStatus.ok) {
-        await _errorLogger.logHttpFailure(
-          context: 'list_journey_results',
+      // NetworkGuard를 통한 요청 실행 (조회용 짧은 재시도)
+      final result = await _networkGuard.execute<List<JourneyResultItem>>(
+        operation: () => _executeFetchJourneyResults(
           uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: {
-            'journey_id': journeyId,
-          },
+          journeyId: journeyId,
           accessToken: accessToken,
-        );
-        if (response.statusCode == HttpStatus.unauthorized ||
-            response.statusCode == HttpStatus.forbidden) {
+        ),
+        retryPolicy: RetryPolicy.short,
+        context: 'list_journey_results',
+        uri: uri,
+        method: 'POST',
+        meta: {'journey_id': journeyId},
+        accessToken: accessToken,
+      );
+      return result;
+    } on NetworkRequestException catch (error) {
+      switch (error.type) {
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+          throw JourneyResultException(JourneyResultError.network);
+        case NetworkErrorType.unauthorized:
           throw JourneyResultException(JourneyResultError.unauthorized);
-        }
-        throw JourneyResultException(JourneyResultError.serverRejected);
+        case NetworkErrorType.invalidPayload:
+          throw JourneyResultException(JourneyResultError.invalidPayload);
+        case NetworkErrorType.serverUnavailable:
+        case NetworkErrorType.serverRejected:
+        case NetworkErrorType.missingConfig:
+        case NetworkErrorType.unknown:
+          throw JourneyResultException(JourneyResultError.serverRejected);
       }
-      final payload = jsonDecode(body);
-      if (payload is! List) {
-        throw JourneyResultException(JourneyResultError.invalidPayload);
-      }
-      return payload
-          .whereType<Map<String, dynamic>>()
-          .map(
-            (row) => JourneyResultItem(
-              responseId: (row['response_id'] as num?)?.toInt() ?? 0,
-              content: row['content'] as String? ?? '',
-              createdAt: DateTime.parse(row['created_at'] as String),
-            ),
-          )
-          .toList();
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
-        context: 'list_journey_results',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyResultException(JourneyResultError.network);
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
-        context: 'list_journey_results',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyResultException(JourneyResultError.network);
-    } on FormatException catch (error) {
-      await _errorLogger.logException(
-        context: 'list_journey_results',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
-        accessToken: accessToken,
-      );
-      throw JourneyResultException(JourneyResultError.invalidPayload);
     }
+  }
+
+  /// fetchJourneyResults RPC 실제 실행 (NetworkGuard가 호출)
+  Future<List<JourneyResultItem>> _executeFetchJourneyResults({
+    required Uri uri,
+    required String journeyId,
+    required String accessToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(
+      utf8.encode(
+        jsonEncode({
+          'target_journey_id': journeyId,
+        }),
+      ),
+    );
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      await _errorLogger.logHttpFailure(
+        context: 'list_journey_results',
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: {
+          'journey_id': journeyId,
+        },
+        accessToken: accessToken,
+      );
+
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'list_journey_results',
+      );
+    }
+
+    final payload = jsonDecode(body);
+    if (payload is! List) {
+      throw const FormatException('Invalid payload format');
+    }
+
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (row) => JourneyResultItem(
+            responseId: (row['response_id'] as num?)?.toInt() ?? 0,
+            content: row['content'] as String? ?? '',
+            createdAt: DateTime.parse(row['created_at'] as String),
+          ),
+        )
+        .toList();
   }
 
   Future<List<String>> _fetchInboxJourneyImagePaths({
@@ -1243,80 +1145,79 @@ class SupabaseJourneyRepository implements JourneyRepository {
     required String accessToken,
   }) async {
     final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/list_inbox_journey_images');
+
     try {
-      final request = await _client.postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-      request.add(
-        utf8.encode(
-          jsonEncode({
-            'target_journey_id': journeyId,
-          }),
-        ),
-      );
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      if (response.statusCode != HttpStatus.ok) {
-        await _errorLogger.logHttpFailure(
-          context: 'list_inbox_journey_images',
+      // NetworkGuard를 통한 요청 실행 (조회용 짧은 재시도)
+      final result = await _networkGuard.execute<List<String>>(
+        operation: () => _executeFetchInboxJourneyImagePaths(
           uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: {
-            'journey_id': journeyId,
-          },
+          journeyId: journeyId,
           accessToken: accessToken,
-        );
-        return [];
-      }
-      final payload = jsonDecode(body);
-      if (payload is! List) {
-        return [];
-      }
-      return payload
-          .whereType<Map<String, dynamic>>()
-          .map((row) => row['storage_path'] as String?)
-          .whereType<String>()
-          .toList();
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
+        ),
+        retryPolicy: RetryPolicy.short,
         context: 'list_inbox_journey_images',
         uri: uri,
         method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
+        meta: {'journey_id': journeyId},
         accessToken: accessToken,
       );
-      return [];
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
-        context: 'list_inbox_journey_images',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
-        accessToken: accessToken,
-      );
-      return [];
-    } on FormatException catch (error) {
-      await _errorLogger.logException(
-        context: 'list_inbox_journey_images',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
-        accessToken: accessToken,
-      );
+      return result;
+    } on NetworkRequestException catch (_) {
+      // 이미지 경로 조회 실패는 빈 배열 반환 (비블로킹)
       return [];
     }
+  }
+
+  /// _fetchInboxJourneyImagePaths RPC 실제 실행 (NetworkGuard가 호출)
+  Future<List<String>> _executeFetchInboxJourneyImagePaths({
+    required Uri uri,
+    required String journeyId,
+    required String accessToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(
+      utf8.encode(
+        jsonEncode({
+          'target_journey_id': journeyId,
+        }),
+      ),
+    );
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      await _errorLogger.logHttpFailure(
+        context: 'list_inbox_journey_images',
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: {
+          'journey_id': journeyId,
+        },
+        accessToken: accessToken,
+      );
+
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'list_inbox_journey_images',
+      );
+    }
+
+    final payload = jsonDecode(body);
+    if (payload is! List) {
+      throw const FormatException('Invalid payload format');
+    }
+
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map((row) => row['storage_path'] as String?)
+        .whereType<String>()
+        .toList();
   }
 
   Future<String?> _signStoragePath({
@@ -1567,48 +1468,76 @@ class SupabaseJourneyStorageRepository implements JourneyStorageRepository {
     required List<String> paths,
     required String accessToken,
   }) async {
+    // 백그라운드 작업: 설정 누락 시 조용히 실패
     if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
       return;
     }
     if (accessToken.isEmpty) {
       return;
     }
+
+    // NetworkGuard 인스턴스 생성 (storage 작업용)
+    final networkGuard = NetworkGuard(errorLogger: _errorLogger);
+
     for (final path in paths) {
       if (kDebugMode) {
         debugPrint('compose: 이미지 삭제 ($path)');
       }
       final uri = _storageUri(path);
+
       try {
-        final request = await _client.deleteUrl(uri);
-        request.headers.set('apikey', _config.supabaseAnonKey);
-        request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-        final response = await request.close();
-        final body = await response.transform(utf8.decoder).join();
-        if (response.statusCode >= HttpStatus.badRequest) {
-          await _errorLogger.logHttpFailure(
-            context: 'journey_image_delete',
+        // NetworkGuard를 통한 DELETE 요청 (재시도 없음: storage 정리는 멱등성 보장)
+        await networkGuard.execute<void>(
+          operation: () => _executeDeleteImage(
             uri: uri,
-            method: 'DELETE',
-            statusCode: response.statusCode,
-            errorMessage: body,
-            meta: {
-              'storage_path': path,
-            },
+            path: path,
             accessToken: accessToken,
-          );
-        }
-      } on SocketException catch (error) {
-        await _errorLogger.logException(
+          ),
+          retryPolicy: RetryPolicy.none,
           context: 'journey_image_delete',
           uri: uri,
           method: 'DELETE',
-          error: error,
-          meta: {
-            'storage_path': path,
-          },
+          meta: {'storage_path': path},
           accessToken: accessToken,
         );
+      } on NetworkRequestException catch (_) {
+        // 백그라운드 삭제 실패는 조용히 무시 (이미 로깅됨)
+        if (kDebugMode) {
+          debugPrint('compose: 이미지 삭제 실패 ($path) - 무시됨');
+        }
       }
+    }
+  }
+
+  /// 이미지 삭제 실제 실행 (NetworkGuard가 호출)
+  Future<void> _executeDeleteImage({
+    required Uri uri,
+    required String path,
+    required String accessToken,
+  }) async {
+    final request = await _client.deleteUrl(uri);
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode >= HttpStatus.badRequest) {
+      await _errorLogger.logHttpFailure(
+        context: 'journey_image_delete',
+        uri: uri,
+        method: 'DELETE',
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: {'storage_path': path},
+        accessToken: accessToken,
+      );
+
+      final networkGuard = NetworkGuard(errorLogger: _errorLogger);
+      throw networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'journey_image_delete',
+      );
     }
   }
 

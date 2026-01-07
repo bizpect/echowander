@@ -262,5 +262,11 @@
   "profileSignOutConfirm": "Terminar sessão",
   "profileUserIdLabel": "ID de utilizador",
   "profileDefaultNickname": "Utilizador",
-  "journeyDetailAnonymous": "Anónimo"
+  "journeyDetailAnonymous": "Anónimo",
+  "errorNetwork": "Por favor, verifique a sua ligação de rede.",
+  "errorTimeout": "Tempo limite excedido. Por favor, tente novamente.",
+  "errorServerUnavailable": "O servidor está temporariamente indisponível. Por favor, tente mais tarde.",
+  "errorUnauthorized": "Por favor, inicie sessão novamente.",
+  "errorRetry": "Tentar novamente",
+  "errorCancel": "Cancelar"
 }

@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 
 import '../config/app_config.dart';
 import '../logging/server_error_logger.dart';
+import '../network/network_error.dart';
+import '../network/network_guard.dart';
 import 'session_tokens.dart';
 
 const _logPrefix = '[AuthRpcClient]';
@@ -65,76 +67,99 @@ class DevAuthRpcClient implements AuthRpcClient {
 class HttpAuthRpcClient implements AuthRpcClient {
   HttpAuthRpcClient({required String baseUrl, required AppConfig config})
       : _baseUri = Uri.parse(baseUrl.endsWith('/') ? baseUrl : '$baseUrl/'),
-        _errorLogger = ServerErrorLogger(config: config);
+        _errorLogger = ServerErrorLogger(config: config),
+        _networkGuard = NetworkGuard(errorLogger: ServerErrorLogger(config: config)),
+        _client = HttpClient();
 
   final Uri _baseUri;
   final ServerErrorLogger _errorLogger;
+  final NetworkGuard _networkGuard;
+  final HttpClient _client;
 
   Uri _resolve(String path) => _baseUri.resolve(path);
 
+  /// 공통 POST JSON 요청 (NetworkGuard 경유)
   Future<Map<String, dynamic>?> _postJson({
     required String context,
     required Uri uri,
     required Map<String, dynamic> body,
     required String token,
+    RetryPolicy retryPolicy = RetryPolicy.short,
     Map<String, dynamic>? meta,
   }) async {
     try {
-      final request = await HttpClient().postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      if (token.isNotEmpty) {
-        request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
-      }
-      request.add(utf8.encode(jsonEncode(body)));
+      final result = await _networkGuard.execute<Map<String, dynamic>>(
+        operation: () => _executePostJson(
+          uri: uri,
+          body: body,
+          token: token,
+          context: context,
+        ),
+        retryPolicy: retryPolicy,
+        context: context,
+        uri: uri,
+        method: 'POST',
+        meta: meta ?? const {},
+        accessToken: token,
+      );
+      return result;
+    } on NetworkRequestException catch (_) {
+      // 인증 API 실패는 null 반환 (기존 시그니처 유지)
+      return null;
+    }
+  }
 
-      final response = await request.close();
-      final payloadText = await response.transform(utf8.decoder).join();
-      if (response.statusCode != HttpStatus.ok) {
-        await _errorLogger.logHttpFailure(
-          context: context,
-          uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: payloadText,
-          meta: meta,
-          accessToken: token,
-        );
-        return null;
-      }
-      try {
-        return jsonDecode(payloadText) as Map<String, dynamic>;
-      } on FormatException catch (error) {
-        await _errorLogger.logException(
-          context: context,
-          uri: uri,
-          method: 'POST',
-          error: error,
-          errorMessage: payloadText,
-          meta: meta,
-          accessToken: token,
-        );
-        return null;
-      }
-    } on SocketException catch (error) {
+  /// POST JSON 요청 실제 실행 (NetworkGuard가 호출)
+  Future<Map<String, dynamic>> _executePostJson({
+    required Uri uri,
+    required Map<String, dynamic> body,
+    required String token,
+    required String context,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    if (token.isNotEmpty) {
+      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
+    }
+    request.add(utf8.encode(jsonEncode(body)));
+
+    final response = await request.close();
+    final payloadText = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      await _errorLogger.logHttpFailure(
+        context: context,
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: payloadText,
+        meta: const {},
+        accessToken: token,
+      );
+
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: payloadText,
+        context: context,
+      );
+    }
+
+    try {
+      return jsonDecode(payloadText) as Map<String, dynamic>;
+    } on FormatException catch (error) {
       await _errorLogger.logException(
         context: context,
         uri: uri,
         method: 'POST',
         error: error,
-        meta: meta,
+        errorMessage: payloadText,
+        meta: const {},
         accessToken: token,
       );
-      return null;
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
-        context: context,
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: meta,
-        accessToken: token,
+      throw const NetworkRequestException(
+        type: NetworkErrorType.invalidPayload,
+        message: 'Invalid JSON response',
       );
-      return null;
     }
   }
 
@@ -191,28 +216,79 @@ class HttpAuthRpcClient implements AuthRpcClient {
     required String provider,
     required String idToken,
   }) async {
+    final uri = _resolve('login_social');
+
     try {
-      final uri = _resolve('login_social');
-      final request = await HttpClient().postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.add(utf8.encode(jsonEncode({'provider': provider, 'idToken': idToken})));
-      final response = await request.close();
-      final payloadText = await response.transform(utf8.decoder).join();
-      if (response.statusCode != HttpStatus.ok) {
-        await _errorLogger.logHttpFailure(
-          context: 'auth_login_social',
+      // NetworkGuard를 통한 요청 실행 (인증: 재시도 없음)
+      final result = await _networkGuard.execute<AuthRpcLoginResult>(
+        operation: () => _executeExchangeSocialToken(
           uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: payloadText,
-          meta: {
-            'provider': provider,
-          },
-          accessToken: '',
-        );
-        final errorCode = _extractErrorCode(payloadText);
-        return AuthRpcLoginResult.failure(_mapLoginError(errorCode));
+          provider: provider,
+          idToken: idToken,
+        ),
+        retryPolicy: RetryPolicy.none,
+        context: 'auth_login_social',
+        uri: uri,
+        method: 'POST',
+        meta: {'provider': provider},
+        accessToken: '',
+      );
+      return result;
+    } on NetworkRequestException catch (error) {
+      // NetworkRequestException을 AuthRpcLoginError로 변환
+      switch (error.type) {
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+          return const AuthRpcLoginResult.failure(AuthRpcLoginError.network);
+        case NetworkErrorType.unauthorized:
+          return const AuthRpcLoginResult.failure(AuthRpcLoginError.invalidToken);
+        case NetworkErrorType.invalidPayload:
+          return const AuthRpcLoginResult.failure(AuthRpcLoginError.missingPayload);
+        case NetworkErrorType.serverUnavailable:
+        case NetworkErrorType.serverRejected:
+          // 서버 거부 메시지에서 상세 에러 코드 추출 시도
+          final errorCode = _extractErrorCode(error.message ?? '');
+          return AuthRpcLoginResult.failure(_mapLoginError(errorCode));
+        case NetworkErrorType.missingConfig:
+          return const AuthRpcLoginResult.failure(AuthRpcLoginError.serverMisconfigured);
+        case NetworkErrorType.unknown:
+          return const AuthRpcLoginResult.failure(AuthRpcLoginError.unknown);
       }
+    }
+  }
+
+  /// exchangeSocialToken 실제 실행 (NetworkGuard가 호출)
+  Future<AuthRpcLoginResult> _executeExchangeSocialToken({
+    required Uri uri,
+    required String provider,
+    required String idToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.add(utf8.encode(jsonEncode({'provider': provider, 'idToken': idToken})));
+
+    final response = await request.close();
+    final payloadText = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      await _errorLogger.logHttpFailure(
+        context: 'auth_login_social',
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: payloadText,
+        meta: {'provider': provider},
+        accessToken: '',
+      );
+
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: payloadText,
+        context: 'auth_login_social',
+      );
+    }
+
+    try {
       final payload = jsonDecode(payloadText) as Map<String, dynamic>;
       return AuthRpcLoginResult.success(
         SessionTokens(
@@ -220,42 +296,20 @@ class HttpAuthRpcClient implements AuthRpcClient {
           refreshToken: payload['refreshToken'] as String,
         ),
       );
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
-        context: 'auth_login_social',
-        uri: _resolve('login_social'),
-        method: 'POST',
-        error: error,
-        meta: {
-          'provider': provider,
-        },
-        accessToken: '',
-      );
-      return const AuthRpcLoginResult.failure(AuthRpcLoginError.network);
     } on FormatException catch (error) {
       await _errorLogger.logException(
         context: 'auth_login_social',
-        uri: _resolve('login_social'),
+        uri: uri,
         method: 'POST',
         error: error,
-        meta: {
-          'provider': provider,
-        },
+        errorMessage: payloadText,
+        meta: {'provider': provider},
         accessToken: '',
       );
-      return const AuthRpcLoginResult.failure(AuthRpcLoginError.unknown);
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
-        context: 'auth_login_social',
-        uri: _resolve('login_social'),
-        method: 'POST',
-        error: error,
-        meta: {
-          'provider': provider,
-        },
-        accessToken: '',
+      throw const NetworkRequestException(
+        type: NetworkErrorType.invalidPayload,
+        message: 'Invalid JSON response',
       );
-      return const AuthRpcLoginResult.failure(AuthRpcLoginError.network);
     }
   }
 

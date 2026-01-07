@@ -729,4 +729,22 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get journeyDetailAnonymous => '匿名';
+
+  @override
+  String get errorNetwork => 'ネットワーク接続を確認してください。';
+
+  @override
+  String get errorTimeout => 'リクエストがタイムアウトしました。もう一度お試しください。';
+
+  @override
+  String get errorServerUnavailable => 'サーバーに一時的な問題があります。しばらくしてからもう一度お試しください。';
+
+  @override
+  String get errorUnauthorized => '再度ログインしてください。';
+
+  @override
+  String get errorRetry => '再試行';
+
+  @override
+  String get errorCancel => 'キャンセル';
 }

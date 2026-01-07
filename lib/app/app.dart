@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,6 +13,7 @@ import '../core/session/session_state.dart';
 import '../core/deeplink/deeplink_coordinator.dart';
 import '../core/locale/locale_controller.dart';
 import '../core/locale/locale_sync_controller.dart';
+import '../features/journey/application/journey_compose_controller.dart';
 import '../l10n/app_localizations.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
@@ -64,13 +67,22 @@ class _AppState extends ConsumerState<App> {
       });
     });
     ref.listen<SessionState>(sessionManagerProvider, (previous, next) {
-      if (previous?.status == next.status) {
-        return;
+      // 세션 상태 변경 감지
+      final statusChanged = previous?.status != next.status;
+      // accessToken 변경 감지 (계정 전환/로그아웃/로그인)
+      final accessTokenChanged = previous?.accessToken != next.accessToken;
+
+      // 계정 전환/로그아웃/로그인 시 compose draft 초기화
+      if (accessTokenChanged) {
+        ref.invalidate(journeyComposeControllerProvider);
       }
-      if (next.status == SessionStatus.authenticated) {
-        ref
-            .read(localeSyncControllerProvider.notifier)
-            .sync(ref.read(localeControllerProvider));
+
+      if (statusChanged) {
+        if (next.status == SessionStatus.authenticated) {
+          ref
+              .read(localeSyncControllerProvider.notifier)
+              .sync(ref.read(localeControllerProvider));
+        }
       }
     });
     ref.listen<Locale?>(localeControllerProvider, (previous, next) {
@@ -108,10 +120,19 @@ class _AppState extends ConsumerState<App> {
       });
     });
     final isLoading = ref.watch(sessionManagerProvider).isBusy;
+    final isMobile = Platform.isAndroid || Platform.isIOS;
 
     return MaterialApp.router(
       routerConfig: ref.watch(appRouterProvider),
-      theme: AppTheme.dark(),
+      theme: AppTheme.dark().copyWith(
+        // 모바일에서 Tooltip 비활성화 (fail-safe)
+        tooltipTheme: isMobile
+            ? const TooltipThemeData(
+                waitDuration: Duration(days: 365),
+                showDuration: Duration.zero,
+              )
+            : null,
+      ),
       scaffoldMessengerKey: _messengerKey,
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       locale: ref.watch(localeControllerProvider),

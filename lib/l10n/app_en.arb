@@ -262,5 +262,11 @@
   "profileSignOutConfirm": "Sign out",
   "profileUserIdLabel": "User ID",
   "profileDefaultNickname": "User",
-  "journeyDetailAnonymous": "Anonymous"
+  "journeyDetailAnonymous": "Anonymous",
+  "errorNetwork": "Please check your network connection.",
+  "errorTimeout": "Request timed out. Please try again.",
+  "errorServerUnavailable": "Server is temporarily unavailable. Please try again later.",
+  "errorUnauthorized": "Please sign in again.",
+  "errorRetry": "Retry",
+  "errorCancel": "Cancel"
 }

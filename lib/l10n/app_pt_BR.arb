@@ -262,5 +262,11 @@
   "profileSignOutConfirm": "Sair",
   "profileUserIdLabel": "ID de usuário",
   "profileDefaultNickname": "Usuário",
-  "journeyDetailAnonymous": "Anônimo"
+  "journeyDetailAnonymous": "Anônimo",
+  "errorNetwork": "Por favor, verifique sua conexão de rede.",
+  "errorTimeout": "Tempo limite excedido. Por favor, tente novamente.",
+  "errorServerUnavailable": "O servidor está temporariamente indisponível. Por favor, tente mais tarde.",
+  "errorUnauthorized": "Por favor, faça login novamente.",
+  "errorRetry": "Tentar novamente",
+  "errorCancel": "Cancelar"
 }

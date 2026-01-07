@@ -262,5 +262,11 @@
   "profileSignOutConfirm": "Cerrar sesión",
   "profileUserIdLabel": "ID de usuario",
   "profileDefaultNickname": "Usuario",
-  "journeyDetailAnonymous": "Anónimo"
+  "journeyDetailAnonymous": "Anónimo",
+  "errorNetwork": "Por favor, verifica tu conexión de red.",
+  "errorTimeout": "Tiempo de espera agotado. Por favor, inténtalo de nuevo.",
+  "errorServerUnavailable": "El servidor no está disponible temporalmente. Por favor, inténtalo más tarde.",
+  "errorUnauthorized": "Por favor, inicia sesión de nuevo.",
+  "errorRetry": "Reintentar",
+  "errorCancel": "Cancelar"
 }
