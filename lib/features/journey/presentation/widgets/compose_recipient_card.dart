@@ -22,6 +22,7 @@ class ComposeRecipientCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final current = recipientCount;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
@@ -56,13 +57,13 @@ class ComposeRecipientCard extends StatelessWidget {
                     vertical: AppSpacing.spacing4,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryContainer,
+                    color: AppColors.secondaryContainer,
                     borderRadius: AppRadius.small,
                   ),
                   child: Text(
                     l10n.composeRecipientCountOption(recipientCount!),
                     style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.onPrimaryContainer,
+                      color: AppColors.onSecondaryContainer,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -70,57 +71,127 @@ class ComposeRecipientCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.spacing12),
-          // 드롭다운
-          DropdownButtonFormField<int>(
-            key: ValueKey(recipientCount),
-            initialValue: recipientCount,
-            decoration: InputDecoration(
-              hintText: l10n.composeRecipientCountHint,
-              hintStyle: AppTypography.bodyMedium.copyWith(
-                color: AppColors.onSurfaceVariant,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.spacing12,
-                vertical: AppSpacing.spacing12,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: AppRadius.small,
-                borderSide: BorderSide(color: AppColors.outline),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: AppRadius.small,
-                borderSide: BorderSide(color: AppColors.outline),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: AppRadius.small,
-                borderSide: BorderSide(
-                  color: AppColors.primary,
-                  width: 2,
+          // Playful Picker: 칩 + 미니 슬라이더
+          Wrap(
+            spacing: AppSpacing.spacing8,
+            runSpacing: AppSpacing.spacing8,
+            children: [
+              for (var i = 1; i <= 5; i += 1)
+                _RecipientChip(
+                  label: l10n.composeRecipientCountOption(i),
+                  isSelected: current == i,
+                  onTap: () => onChanged(i),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.spacing12),
+          Row(
+            children: [
+              Expanded(
+                child: SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    activeTrackColor: AppColors.secondary,
+                    inactiveTrackColor:
+                        AppColors.outlineVariant.withValues(alpha: 0.9),
+                    thumbColor: AppColors.secondary,
+                    overlayColor: AppColors.secondary.withValues(alpha: 0.16),
+                  ),
+                  child: Slider(
+                    min: 1,
+                    max: 5,
+                    divisions: 4,
+                    value: (current ?? 3).toDouble(),
+                    onChanged: (value) => onChanged(value.round()),
+                  ),
                 ),
               ),
-              filled: true,
-              fillColor: AppColors.surfaceVariant,
-            ),
-            dropdownColor: AppColors.surface,
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.onSurface,
-            ),
-            items: List.generate(
-              5,
-              (index) => DropdownMenuItem(
-                value: index + 1,
+              const SizedBox(width: AppSpacing.spacing8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.spacing8,
+                  vertical: AppSpacing.spacing4,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant,
+                  borderRadius: AppRadius.small,
+                  border: Border.all(color: AppColors.outlineVariant),
+                ),
                 child: Text(
-                  l10n.composeRecipientCountOption(index + 1),
+                  l10n.composeRecipientCountOption(current ?? 3),
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.onSurface,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-            ),
-            onChanged: onChanged,
-            icon: Icon(
-              Icons.arrow_drop_down,
+            ],
+          ),
+          const SizedBox(height: AppSpacing.spacing8),
+          Text(
+            l10n.composeRecipientCountHint,
+            style: AppTypography.bodySmall.copyWith(
               color: AppColors.onSurfaceVariant,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RecipientChip extends StatelessWidget {
+  const _RecipientChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      child: AnimatedScale(
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOut,
+        scale: isSelected ? 1.04 : 1.0,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppRadius.full,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.spacing12,
+              vertical: AppSpacing.spacing8,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppColors.secondaryContainer
+                  : AppColors.surfaceVariant,
+              borderRadius: AppRadius.full,
+              border: Border.all(
+                color: isSelected
+                    ? AppColors.secondary.withValues(alpha: 0.55)
+                    : AppColors.outlineVariant,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                label,
+                style: AppTypography.labelMedium.copyWith(
+                  color: isSelected
+                      ? AppColors.onSecondaryContainer
+                      : AppColors.onSurface,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

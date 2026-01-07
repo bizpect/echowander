@@ -7,22 +7,31 @@ import '../../../../core/presentation/widgets/app_button.dart';
 
 /// 하단 액션 바
 ///
-/// 전송 버튼과 상태 정보를 표시하는 고정 하단 바입니다.
+/// 3-step wizard의 Back/Next/Send CTA를 표시하는 고정 하단 바입니다.
 class ComposeBottomBar extends StatelessWidget {
   const ComposeBottomBar({
     super.key,
+    required this.stepIndex,
+    required this.canGoNext,
     required this.canSubmit,
     required this.isSubmitting,
+    required this.onBack,
+    required this.onNext,
     required this.onSubmit,
   });
 
+  final int stepIndex;
+  final bool canGoNext;
   final bool canSubmit;
   final bool isSubmitting;
+  final VoidCallback? onBack;
+  final VoidCallback onNext;
   final VoidCallback onSubmit;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isLastStep = stepIndex >= 2;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -49,21 +58,48 @@ class ComposeBottomBar extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: AppFilledButton(
-          onPressed: canSubmit && !isSubmitting ? onSubmit : null,
-          isLoading: isSubmitting,
-          child: SizedBox(
-            width: double.infinity,
-            child: Text(
-              l10n.composeSubmit,
-              textAlign: TextAlign.center,
-              style: AppTypography.labelLarge.copyWith(
-                color: canSubmit && !isSubmitting
-                    ? AppColors.onPrimary
-                    : AppColors.onSurfaceDim,
+        child: Row(
+          children: [
+            if (stepIndex > 0) ...[
+              Expanded(
+                child: AppOutlinedButton(
+                  onPressed: !isSubmitting ? onBack : null,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Text(
+                      l10n.composeWizardBack,
+                      textAlign: TextAlign.center,
+                      style: AppTypography.labelLarge,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.spacing12),
+            ],
+            Expanded(
+              flex: stepIndex > 0 ? 2 : 1,
+              child: AppFilledButton(
+                onPressed: (!isSubmitting &&
+                        (isLastStep ? canSubmit : canGoNext))
+                    ? (isLastStep ? onSubmit : onNext)
+                    : null,
+                isLoading: isLastStep ? isSubmitting : false,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Text(
+                    isLastStep ? l10n.composeSubmit : l10n.composeWizardNext,
+                    textAlign: TextAlign.center,
+                    style: AppTypography.labelLarge.copyWith(
+                      color: (!isSubmitting &&
+                              (isLastStep ? canSubmit : canGoNext))
+                          ? AppColors.onPrimary
+                          : AppColors.onSurfaceDim,
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

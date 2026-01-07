@@ -8,12 +8,12 @@ import '../core/presentation/widgets/fullscreen_loading.dart';
 import '../core/push/push_coordinator.dart';
 import '../core/push/push_payload.dart';
 import '../core/push/push_state.dart';
+import '../core/session/session_invalidation_targets.dart';
 import '../core/session/session_manager.dart';
 import '../core/session/session_state.dart';
 import '../core/deeplink/deeplink_coordinator.dart';
 import '../core/locale/locale_controller.dart';
 import '../core/locale/locale_sync_controller.dart';
-import '../features/journey/application/journey_compose_controller.dart';
 import '../l10n/app_localizations.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
@@ -72,9 +72,12 @@ class _AppState extends ConsumerState<App> {
       // accessToken 변경 감지 (계정 전환/로그아웃/로그인)
       final accessTokenChanged = previous?.accessToken != next.accessToken;
 
-      // 계정 전환/로그아웃/로그인 시 compose draft 초기화
+      // 계정 전환/로그아웃/로그인 시 중앙 관리 목록의 모든 Provider invalidate
+      // → 이전 사용자의 데이터 잔상 방지
       if (accessTokenChanged) {
-        ref.invalidate(journeyComposeControllerProvider);
+        for (final target in sessionInvalidationTargets) {
+          ref.invalidate(target);
+        }
       }
 
       if (statusChanged) {
@@ -206,6 +209,8 @@ class _AppState extends ConsumerState<App> {
         return l10n.errorLoginServiceUnavailable;
       case SessionMessage.sessionExpired:
         return l10n.errorSessionExpired;
+      case SessionMessage.authRefreshFailed:
+        return l10n.errorAuthRefreshFailed;
       case SessionMessage.genericError:
         return l10n.errorGeneric;
     }

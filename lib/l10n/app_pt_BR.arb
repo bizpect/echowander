@@ -66,6 +66,14 @@
   "languagePortuguese": "Português",
   "languageChinese": "Chinês",
   "composeTitle": "Escrever mensagem",
+  "composeWizardStep1Title": "Que mensagem vai nessa jornada?",
+  "composeWizardStep1Subtitle": "Escreva uma frase para iniciar o revezamento.",
+  "composeWizardStep2Title": "Para quantas pessoas enviar?",
+  "composeWizardStep2Subtitle": "Escolha entre 1 e 5.",
+  "composeWizardStep3Title": "Quer enviar uma foto junto?",
+  "composeWizardStep3Subtitle": "Até 3 fotos. Você também pode enviar sem foto.",
+  "composeWizardBack": "Voltar",
+  "composeWizardNext": "Próximo",
   "composeLabel": "Mensagem",
   "composeHint": "Compartilhe o que pensa...",
   "composeCharacterCount": "{current}/{total}",
@@ -268,5 +276,6 @@
   "errorServerUnavailable": "O servidor está temporariamente indisponível. Por favor, tente mais tarde.",
   "errorUnauthorized": "Por favor, faça login novamente.",
   "errorRetry": "Tentar novamente",
-  "errorCancel": "Cancelar"
+  "errorCancel": "Cancelar",
+  "errorAuthRefreshFailed": "A rede está instável. Por favor, tente novamente em breve."
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../onboarding/application/onboarding_controller.dart';
-import '../../../core/session/session_manager.dart';
 import '../../../l10n/app_localizations.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -25,8 +24,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
     _pulse = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    // 세션 복원은 main.dart에서 1회만 수행 (중복 호출 방지)
+    // 온보딩 상태만 로드
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(sessionManagerProvider.notifier).restoreSession();
       ref.read(onboardingControllerProvider.notifier).load();
     });
   }

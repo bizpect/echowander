@@ -8,9 +8,8 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
-import '../../../core/presentation/widgets/app_dialog.dart';
-import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../core/validation/text_rules.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/journey_compose_controller.dart';
@@ -41,6 +40,15 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
   bool _allowPop = false;
   bool _isHandlingBack = false;
 
+  // 3-step wizard 상태 (UI 전용)
+  int _stepIndex = 0;
+
+  // 인라인 메시지/에러 상태 (모달 금지 정책 준수)
+  String? _inlineMessage;
+  bool _inlineMessageIsError = true;
+  bool _showPhotoSettingsCta = false;
+  bool _showExitConfirmBar = false;
+
   @override
   void initState() {
     super.initState();
@@ -55,9 +63,6 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
     _messageSubscription?.close();
     _contentSubscription?.close();
     _controller.removeListener(_onControllerChanged);
-    // 화면 이탈 시 작성 상태 초기화 (방어적 처리)
-    final controller = ref.read(journeyComposeControllerProvider.notifier);
-    controller.reset();
     _controller.dispose();
     super.dispose();
   }
@@ -85,7 +90,7 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
         if (!mounted) {
           return;
         }
-        unawaited(_handleMessage(l10n, next.message!));
+        _handleMessage(l10n, next.message!);
         ref.read(journeyComposeControllerProvider.notifier).clearMessage();
       },
     );
@@ -132,9 +137,10 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
     }
 
     final validationError = _validationError(l10n, state.content);
-    final canSubmit = validationError == null &&
-        state.content.trim().isNotEmpty &&
-        state.recipientCount != null;
+    final canGoNextFromMessage =
+        validationError == null && state.content.trim().isNotEmpty;
+    final canGoNextFromRecipient = state.recipientCount != null;
+    final canSubmit = canGoNextFromMessage && canGoNextFromRecipient;
 
     return PopScope(
       canPop: _allowPop,
@@ -150,7 +156,7 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
           }
           return;
         }
-        // pop이 막혔으므로 confirm 후 처리
+        // pop이 막혔으므로 화면 내 인라인 확인 바로 처리
         _isHandlingBack = true;
         try {
           await _handleBack(context, state);
@@ -172,75 +178,168 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
           ),
         ),
         resizeToAvoidBottomInset: true,
-        body: LoadingOverlay(
-          isLoading: state.isSubmitting,
-          child: SafeArea(
-            child: Column(
-              children: [
-                // 스크롤 가능한 본문 영역
-                Expanded(
-                  child: SingleChildScrollView(
+        body: SafeArea(
+          child: Stack(
+            children: [
+              // 배경 데코 (하드코딩 컬러 금지: 토큰 기반 파생 색상 사용)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: const Alignment(-0.8, -0.9),
+                        radius: 1.2,
+                        colors: [
+                          AppColors.secondary.withValues(alpha: 0.18),
+                          AppColors.background,
+                        ],
+                        stops: const [0, 0.7],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: const Alignment(0.9, 0.6),
+                        radius: 1.1,
+                        colors: [
+                          AppColors.secondary.withValues(alpha: 0.12),
+                          AppColors.background,
+                        ],
+                        stops: const [0, 0.75],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              Column(
+                children: [
+                  // 상단 진행 표시 + 스토리 헤더
+                  Padding(
                     padding: const EdgeInsets.fromLTRB(
                       AppSpacing.screenPaddingHorizontal,
                       AppSpacing.screenPaddingTop,
                       AppSpacing.screenPaddingHorizontal,
-                      AppSpacing.sectionGap,
+                      AppSpacing.spacing12,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // 수신자 선택 카드
-                        ComposeRecipientCard(
-                          recipientCount: state.recipientCount,
-                          onChanged: (count) => ref
-                              .read(journeyComposeControllerProvider.notifier)
-                              .updateRecipientCount(count),
+                        _ComposeProgressIndicator(
+                          stepIndex: _stepIndex,
                         ),
-                        const SizedBox(height: AppSpacing.sectionGap),
-
-                        // 메시지 입력 카드
-                        ComposeMessageCard(
-                          controller: _controller,
-                          content: state.content,
-                          onChanged: (value) => ref
-                              .read(journeyComposeControllerProvider.notifier)
-                              .updateContent(value),
+                        const SizedBox(height: AppSpacing.spacing12),
+                        _StoryHeader(
+                          title: _stepTitle(l10n, _stepIndex),
+                          subtitle: _stepSubtitle(l10n, _stepIndex),
                         ),
-                        const SizedBox(height: AppSpacing.sectionGap),
-
-                        // 첨부 이미지 그리드
-                        ComposeAttachmentGrid(
-                          images: state.images,
-                          onAddImage: () async {
-                            final status = await ref
-                                .read(journeyComposeControllerProvider.notifier)
-                                .pickImages();
-                            if (status.isPermanentlyDenied) {
-                              _showSettingsDialog(l10n);
-                            }
-                          },
-                          onRemoveImage: (index) => ref
-                              .read(journeyComposeControllerProvider.notifier)
-                              .removeImageAt(index),
-                        ),
+                        if (_inlineMessage != null) ...[
+                          const SizedBox(height: AppSpacing.spacing12),
+                          _InlineMessageBanner(
+                            message: _inlineMessage!,
+                            isError: _inlineMessageIsError,
+                            onRetry: _inlineMessageIsError ? _onInlineRetry : null,
+                          ),
+                        ],
                       ],
                     ),
                   ),
-                ),
 
-                // 고정 하단 액션 바
-                ComposeBottomBar(
-                  canSubmit: canSubmit,
-                  isSubmitting: state.isSubmitting,
-                  onSubmit: () => ref
-                      .read(journeyComposeControllerProvider.notifier)
-                      .submit(
-                        languageTag:
-                            Localizations.localeOf(context).toLanguageTag(),
+                  // 스크롤 가능한 본문 영역
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.screenPaddingHorizontal,
+                        0,
+                        AppSpacing.screenPaddingHorizontal,
+                        AppSpacing.sectionGap,
                       ),
-                ),
-              ],
-            ),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 240),
+                        switchInCurve: Curves.easeOut,
+                        switchOutCurve: Curves.easeIn,
+                        transitionBuilder: (child, animation) {
+                          final fade = CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeInOut,
+                          );
+                          final slide = Tween<Offset>(
+                            begin: const Offset(0.04, 0),
+                            end: Offset.zero,
+                          ).animate(fade);
+                          return FadeTransition(
+                            opacity: fade,
+                            child: SlideTransition(
+                              position: slide,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: KeyedSubtree(
+                          key: ValueKey(_stepIndex),
+                          child: _buildStepBody(
+                            context: context,
+                            l10n: l10n,
+                            state: state,
+                            validationError: validationError,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // 고정 하단 액션 바 (Back/Next/Send)
+                  if (_showExitConfirmBar)
+                    _ExitConfirmBar(
+                      onContinue: () {
+                        setState(() {
+                          _showExitConfirmBar = false;
+                        });
+                      },
+                      onLeave: () {
+                        setState(() {
+                          _showExitConfirmBar = false;
+                        });
+                        unawaited(_leaveCompose(context));
+                      },
+                    )
+                  else
+                    ComposeBottomBar(
+                      stepIndex: _stepIndex,
+                      canGoNext: switch (_stepIndex) {
+                        0 => canGoNextFromMessage,
+                        1 => canGoNextFromRecipient,
+                        _ => canSubmit,
+                      },
+                      canSubmit: canSubmit,
+                      isSubmitting: state.isSubmitting,
+                      onBack: _stepIndex > 0
+                          ? () {
+                              setState(() {
+                                _stepIndex = (_stepIndex - 1).clamp(0, 2);
+                              });
+                            }
+                          : null,
+                      onNext: () => _handleNext(
+                        l10n: l10n,
+                        state: state,
+                        validationError: validationError,
+                      ),
+                      onSubmit: () => ref
+                          .read(journeyComposeControllerProvider.notifier)
+                          .submit(
+                            languageTag:
+                                Localizations.localeOf(context).toLanguageTag(),
+                          ),
+                    ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
@@ -263,118 +362,86 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
   Future<void> _handleMessage(AppLocalizations l10n, JourneyComposeMessage message) async {
     switch (message) {
       case JourneyComposeMessage.emptyContent:
-        await showAppAlertDialog(
-          context: context,
-          title: l10n.composeErrorTitle,
-          message: l10n.composeEmpty,
-          confirmLabel: l10n.composeOk,
-        );
+        setState(() {
+          _inlineMessage = l10n.composeEmpty;
+          _inlineMessageIsError = true;
+        });
         return;
       case JourneyComposeMessage.invalidContent:
-        await showAppAlertDialog(
-          context: context,
-          title: l10n.composeErrorTitle,
-          message: l10n.composeInvalid,
-          confirmLabel: l10n.composeOk,
-        );
+        setState(() {
+          _inlineMessage = l10n.composeInvalid;
+          _inlineMessageIsError = true;
+        });
         return;
       case JourneyComposeMessage.tooLong:
-        await showAppAlertDialog(
-          context: context,
-          title: l10n.composeErrorTitle,
-          message: l10n.composeTooLong,
-          confirmLabel: l10n.composeOk,
-        );
+        setState(() {
+          _inlineMessage = l10n.composeTooLong;
+          _inlineMessageIsError = true;
+        });
         return;
       case JourneyComposeMessage.forbidden:
-        await showAppAlertDialog(
-          context: context,
-          title: l10n.composeErrorTitle,
-          message: l10n.composeForbidden,
-          confirmLabel: l10n.composeOk,
-        );
+        setState(() {
+          _inlineMessage = l10n.composeForbidden;
+          _inlineMessageIsError = true;
+        });
         return;
       case JourneyComposeMessage.imageLimitExceeded:
-        await showAppAlertDialog(
-          context: context,
-          title: l10n.composeErrorTitle,
-          message: l10n.composeImageLimit,
-          confirmLabel: l10n.composeOk,
-        );
+        setState(() {
+          _inlineMessage = l10n.composeImageLimit;
+          _inlineMessageIsError = true;
+        });
         return;
       case JourneyComposeMessage.permissionDenied:
-        await showAppAlertDialog(
-          context: context,
-          title: l10n.composeErrorTitle,
-          message: l10n.composePermissionDenied,
-          confirmLabel: l10n.composeOk,
-        );
+        setState(() {
+          _inlineMessage = l10n.composePermissionDenied;
+          _inlineMessageIsError = true;
+          _showPhotoSettingsCta = false;
+        });
         return;
       case JourneyComposeMessage.missingSession:
-        await showAppAlertDialog(
-          context: context,
-          title: l10n.composeErrorTitle,
-          message: l10n.composeSessionMissing,
-          confirmLabel: l10n.composeOk,
-        );
+        setState(() {
+          _inlineMessage = l10n.composeSessionMissing;
+          _inlineMessageIsError = true;
+        });
         return;
       case JourneyComposeMessage.serverMisconfigured:
-        await showAppAlertDialog(
-          context: context,
-          title: l10n.composeErrorTitle,
-          message: l10n.composeServerMisconfigured,
-          confirmLabel: l10n.composeOk,
-        );
+        setState(() {
+          _inlineMessage = l10n.composeServerMisconfigured;
+          _inlineMessageIsError = true;
+        });
         return;
       case JourneyComposeMessage.missingRecipientCount:
-        await showAppAlertDialog(
-          context: context,
-          title: l10n.composeErrorTitle,
-          message: l10n.composeRecipientRequired,
-          confirmLabel: l10n.composeOk,
-        );
+        setState(() {
+          _inlineMessage = l10n.composeRecipientRequired;
+          _inlineMessageIsError = true;
+        });
         return;
       case JourneyComposeMessage.invalidRecipientCount:
-        await showAppAlertDialog(
-          context: context,
-          title: l10n.composeErrorTitle,
-          message: l10n.composeRecipientInvalid,
-          confirmLabel: l10n.composeOk,
-        );
+        setState(() {
+          _inlineMessage = l10n.composeRecipientInvalid;
+          _inlineMessageIsError = true;
+        });
         return;
       case JourneyComposeMessage.submitFailed:
-        await showAppAlertDialog(
-          context: context,
-          title: l10n.composeErrorTitle,
-          message: l10n.composeSubmitFailed,
-          confirmLabel: l10n.composeOk,
-        );
+        setState(() {
+          _inlineMessage = l10n.composeSubmitFailed;
+          _inlineMessageIsError = true;
+          _stepIndex = 2;
+        });
         return;
       case JourneyComposeMessage.submitSuccess:
-        await showAppAlertDialog(
-          context: context,
-          title: l10n.composeSuccessTitle,
-          message: l10n.composeSubmitSuccess,
-          confirmLabel: l10n.composeOk,
-        );
+        setState(() {
+          _inlineMessage = l10n.composeSubmitSuccess;
+          _inlineMessageIsError = false;
+          _stepIndex = 2;
+        });
+        final router = GoRouter.of(context);
+        await Future.delayed(const Duration(milliseconds: 650));
         if (!mounted) {
           return;
         }
-        context.go(AppRoutes.journeyList);
+        router.go(AppRoutes.journeyList);
         return;
-    }
-  }
-
-  Future<void> _showSettingsDialog(AppLocalizations l10n) async {
-    final confirmed = await showAppConfirmDialog(
-      context: context,
-      title: l10n.composePermissionTitle,
-      message: l10n.composePermissionMessage,
-      confirmLabel: l10n.composeOpenSettings,
-      cancelLabel: l10n.composeCancel,
-    );
-    if (confirmed == true) {
-      await openAppSettings();
     }
   }
 
@@ -386,7 +453,6 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
     // await 이전에 navigator 참조 확보 (lint 회피)
     final navigator = Navigator.of(context);
     final router = GoRouter.of(context);
-    final l10n = AppLocalizations.of(context)!;
     final controller = ref.read(journeyComposeControllerProvider.notifier);
 
     // 입력이 있으면 확인 다이얼로그 표시
@@ -396,40 +462,13 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
       if (kDebugMode) {
         debugPrint('[ComposeBackTrace] 입력 있음, confirm 다이얼로그 표시');
       }
-
-      final confirmed = await showAppConfirmDialog(
-        context: context,
-        title: l10n.exitConfirmTitle,
-        message: l10n.exitConfirmMessage,
-        confirmLabel: l10n.exitConfirmLeave,
-        cancelLabel: l10n.exitConfirmContinue,
-      );
-
-      if (kDebugMode) {
-        debugPrint('[ComposeBackTrace] confirm 결과: $confirmed');
-      }
-
-      if (!mounted) {
-        if (kDebugMode) {
-          debugPrint('[ComposeBackTrace] mounted 아님, 종료');
-        }
-        return;
-      }
-
-      // 취소(계속 작성) 선택 시 화면 유지
-      if (confirmed != true) {
-        if (kDebugMode) {
-          debugPrint('[ComposeBackTrace] 취소 선택, 화면 유지');
-        }
-        return;
-      }
-
-      if (kDebugMode) {
-        debugPrint('[ComposeBackTrace] 나가기 확정, reset 및 navigate 시작');
-      }
+      setState(() {
+        _showExitConfirmBar = true;
+      });
+      return;
     }
 
-    // 나가기 확정: 순서 중요!
+    // 입력이 없는 경우: 즉시 나가기
     // 1) Focus/Keyboard 먼저 끊기
     if (kDebugMode) {
       debugPrint('[ComposeBackTrace] Focus unfocus 시작');
@@ -485,5 +524,468 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
       }
       router.go(AppRoutes.home);
     }
+  }
+
+  Widget _buildStepBody({
+    required BuildContext context,
+    required AppLocalizations l10n,
+    required JourneyComposeState state,
+    required String? validationError,
+  }) {
+    switch (_stepIndex) {
+      case 0:
+        return _StepCard(
+          accentBorder: true,
+          child: ComposeMessageCard(
+            controller: _controller,
+            content: state.content,
+            onChanged: (value) => ref
+                .read(journeyComposeControllerProvider.notifier)
+                .updateContent(value),
+          ),
+        );
+      case 1:
+        return _StepCard(
+          accentBorder: true,
+          child: ComposeRecipientCard(
+            recipientCount: state.recipientCount,
+            onChanged: (count) => ref
+                .read(journeyComposeControllerProvider.notifier)
+                .updateRecipientCount(count),
+          ),
+        );
+      case 2:
+      default:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _StepCard(
+              child: ComposeAttachmentGrid(
+                images: state.images,
+                onAddImage: () async {
+                  // await 이후 context 사용 금지: 상태만 업데이트 후 mounted 체크
+                  final status = await ref
+                      .read(journeyComposeControllerProvider.notifier)
+                      .pickImages();
+                  if (!mounted) {
+                    return;
+                  }
+                  setState(() {
+                    _showPhotoSettingsCta = status.isPermanentlyDenied;
+                  });
+                },
+                onRemoveImage: (index) => ref
+                    .read(journeyComposeControllerProvider.notifier)
+                    .removeImageAt(index),
+              ),
+            ),
+            if (_showPhotoSettingsCta) ...[
+              const SizedBox(height: AppSpacing.spacing12),
+              _InlineActionCard(
+                title: l10n.composePermissionTitle,
+                message: l10n.composePermissionMessage,
+                actionLabel: l10n.composeOpenSettings,
+                onAction: () => unawaited(openAppSettings()),
+              ),
+            ],
+          ],
+        );
+    }
+  }
+
+  void _handleNext({
+    required AppLocalizations l10n,
+    required JourneyComposeState state,
+    required String? validationError,
+  }) {
+    setState(() {
+      _inlineMessage = null;
+      _showPhotoSettingsCta = false;
+    });
+
+    if (_stepIndex == 0) {
+      if (validationError != null) {
+        setState(() {
+          _inlineMessage = validationError;
+          _inlineMessageIsError = true;
+        });
+        return;
+      }
+      if (state.content.trim().isEmpty) {
+        setState(() {
+          _inlineMessage = l10n.composeEmpty;
+          _inlineMessageIsError = true;
+        });
+        return;
+      }
+      setState(() {
+        _stepIndex = 1;
+      });
+      return;
+    }
+
+    if (_stepIndex == 1) {
+      if (state.recipientCount == null) {
+        setState(() {
+          _inlineMessage = l10n.composeRecipientRequired;
+          _inlineMessageIsError = true;
+        });
+        return;
+      }
+      setState(() {
+        _stepIndex = 2;
+      });
+      return;
+    }
+  }
+
+  void _onInlineRetry() {
+    if (_stepIndex == 2) {
+      setState(() {
+        _inlineMessage = null;
+      });
+      ref.read(journeyComposeControllerProvider.notifier).submit(
+            languageTag: Localizations.localeOf(context).toLanguageTag(),
+          );
+    }
+  }
+
+  String _stepTitle(AppLocalizations l10n, int stepIndex) {
+    switch (stepIndex) {
+      case 0:
+        return l10n.composeWizardStep1Title;
+      case 1:
+        return l10n.composeWizardStep2Title;
+      case 2:
+      default:
+        return l10n.composeWizardStep3Title;
+    }
+  }
+
+  String _stepSubtitle(AppLocalizations l10n, int stepIndex) {
+    switch (stepIndex) {
+      case 0:
+        return l10n.composeWizardStep1Subtitle;
+      case 1:
+        return l10n.composeWizardStep2Subtitle;
+      case 2:
+      default:
+        return l10n.composeWizardStep3Subtitle;
+    }
+  }
+
+  Future<void> _leaveCompose(BuildContext context) async {
+    final navigator = Navigator.of(context);
+    final router = GoRouter.of(context);
+    final controller = ref.read(journeyComposeControllerProvider.notifier);
+
+    // 1) Focus/Keyboard 끊기
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    // 2) Controller 안전 초기화
+    _isUpdatingController = true;
+    _controller.value = const TextEditingValue(
+      text: '',
+      selection: TextSelection.collapsed(offset: 0),
+    );
+    _isUpdatingController = false;
+
+    // 3) Provider reset
+    controller.reset();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _allowPop = true;
+    });
+
+    if (navigator.canPop()) {
+      navigator.pop();
+    } else {
+      router.go(AppRoutes.home);
+    }
+  }
+}
+
+class _ComposeProgressIndicator extends StatelessWidget {
+  const _ComposeProgressIndicator({
+    required this.stepIndex,
+  });
+
+  final int stepIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (var i = 0; i < 3; i += 1) ...[
+          Expanded(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              height: 8,
+              decoration: BoxDecoration(
+                color: i <= stepIndex
+                    ? AppColors.secondary
+                    : AppColors.outlineVariant,
+                borderRadius: AppRadius.full,
+              ),
+            ),
+          ),
+          if (i != 2) const SizedBox(width: AppSpacing.spacing8),
+        ],
+      ],
+    );
+  }
+}
+
+class _StoryHeader extends StatelessWidget {
+  const _StoryHeader({
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: AppColors.onBackground,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.spacing4),
+        Text(
+          subtitle,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: AppColors.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StepCard extends StatelessWidget {
+  const _StepCard({
+    required this.child,
+    this.accentBorder = false,
+  });
+
+  final Widget child;
+  final bool accentBorder;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: AppRadius.large,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withValues(alpha: 0.25),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: AppRadius.large,
+          border: Border.all(
+            color: accentBorder
+                ? AppColors.secondary.withValues(alpha: 0.45)
+                : AppColors.outlineVariant,
+            width: accentBorder ? 1.2 : 1,
+          ),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _InlineMessageBanner extends StatelessWidget {
+  const _InlineMessageBanner({
+    required this.message,
+    required this.isError,
+    this.onRetry,
+  });
+
+  final String message;
+  final bool isError;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.spacing12),
+      decoration: BoxDecoration(
+        color: isError
+            ? AppColors.errorContainer.withValues(alpha: 0.55)
+            : AppColors.secondaryContainer.withValues(alpha: 0.55),
+        borderRadius: AppRadius.medium,
+        border: Border.all(
+          color: isError
+              ? AppColors.error.withValues(alpha: 0.4)
+              : AppColors.secondary.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isError ? Icons.error_outline : Icons.check_circle_outline,
+            color: isError ? AppColors.onErrorContainer : AppColors.onSecondaryContainer,
+            size: 18,
+          ),
+          const SizedBox(width: AppSpacing.spacing8),
+          Expanded(
+            child: Text(
+              message,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: isError
+                    ? AppColors.onErrorContainer
+                    : AppColors.onSecondaryContainer,
+              ),
+            ),
+          ),
+          if (onRetry != null) ...[
+            const SizedBox(width: AppSpacing.spacing8),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(l10n.errorRetry),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _InlineActionCard extends StatelessWidget {
+  const _InlineActionCard({
+    required this.title,
+    required this.message,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
+  final String title;
+  final String message;
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.spacing12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariant,
+        borderRadius: AppRadius.medium,
+        border: Border.all(color: AppColors.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: AppColors.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.spacing4),
+          Text(
+            message,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColors.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.spacing12),
+          OutlinedButton(
+            onPressed: onAction,
+            child: Text(actionLabel),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExitConfirmBar extends StatelessWidget {
+  const _ExitConfirmBar({
+    required this.onContinue,
+    required this.onLeave,
+  });
+
+  final VoidCallback onContinue;
+  final VoidCallback onLeave;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.screenPaddingHorizontal,
+        AppSpacing.spacing12,
+        AppSpacing.screenPaddingHorizontal,
+        AppSpacing.spacing12,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          top: BorderSide(
+            color: AppColors.outline,
+            width: 1,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.exitConfirmMessage,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: AppSpacing.spacing12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onContinue,
+                    child: Text(l10n.exitConfirmContinue),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.spacing12),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: onLeave,
+                    child: Text(l10n.exitConfirmLeave),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

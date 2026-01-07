@@ -204,6 +204,32 @@ class AppLocalizationsFr extends AppLocalizations {
   String get composeTitle => 'Écrire un message';
 
   @override
+  String get composeWizardStep1Title => 'Quel message pour ce voyage ?';
+
+  @override
+  String get composeWizardStep1Subtitle =>
+      'Écrivez une phrase pour lancer le relais.';
+
+  @override
+  String get composeWizardStep2Title => 'À combien de personnes l’envoyer ?';
+
+  @override
+  String get composeWizardStep2Subtitle => 'Choisissez entre 1 et 5.';
+
+  @override
+  String get composeWizardStep3Title => 'Une photo à ajouter ?';
+
+  @override
+  String get composeWizardStep3Subtitle =>
+      'Jusqu’à 3 photos. Vous pouvez aussi envoyer sans photo.';
+
+  @override
+  String get composeWizardBack => 'Retour';
+
+  @override
+  String get composeWizardNext => 'Suivant';
+
+  @override
   String get composeLabel => 'Message';
 
   @override
@@ -784,4 +810,8 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get errorCancel => 'Annuler';
+
+  @override
+  String get errorAuthRefreshFailed =>
+      'Le réseau est instable. Veuillez réessayer dans un moment.';
 }

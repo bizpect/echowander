@@ -66,6 +66,14 @@
   "languagePortuguese": "ポルトガル語",
   "languageChinese": "中国語",
   "composeTitle": "メッセージ作成",
+  "composeWizardStep1Title": "どんな内容で旅を送りますか？",
+  "composeWizardStep1Subtitle": "リレーを始める一言を書いてください。",
+  "composeWizardStep2Title": "何人に届けますか？",
+  "composeWizardStep2Subtitle": "1〜5人から選べます。",
+  "composeWizardStep3Title": "写真も一緒に送りますか？",
+  "composeWizardStep3Subtitle": "最大3枚。なくても送信できます。",
+  "composeWizardBack": "戻る",
+  "composeWizardNext": "次へ",
   "composeLabel": "メッセージ",
   "composeHint": "伝えたいことを書いてください。",
   "composeCharacterCount": "{current}/{total}",
@@ -268,5 +276,6 @@
   "errorServerUnavailable": "サーバーに一時的な問題があります。しばらくしてからもう一度お試しください。",
   "errorUnauthorized": "再度ログインしてください。",
   "errorRetry": "再試行",
-  "errorCancel": "キャンセル"
+  "errorCancel": "キャンセル",
+  "errorAuthRefreshFailed": "ネットワークが不安定です。しばらくしてからもう一度お試しください。"
 }

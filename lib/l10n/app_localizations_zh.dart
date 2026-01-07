@@ -194,6 +194,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get composeTitle => '撰写消息';
 
   @override
+  String get composeWizardStep1Title => '想用什么内容发送旅程？';
+
+  @override
+  String get composeWizardStep1Subtitle => '写一句话开启接力。';
+
+  @override
+  String get composeWizardStep2Title => '要落到多少人手里？';
+
+  @override
+  String get composeWizardStep2Subtitle => '可选择 1～5 人。';
+
+  @override
+  String get composeWizardStep3Title => '要一起发送照片吗？';
+
+  @override
+  String get composeWizardStep3Subtitle => '最多 3 张，不加也可以发送。';
+
+  @override
+  String get composeWizardBack => '返回';
+
+  @override
+  String get composeWizardNext => '下一步';
+
+  @override
   String get composeLabel => '消息';
 
   @override
@@ -745,4 +769,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get errorCancel => '取消';
+
+  @override
+  String get errorAuthRefreshFailed => '网络不稳定。请稍后再试。';
 }

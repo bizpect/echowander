@@ -2,15 +2,20 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../config/app_config.dart';
-import '../logging/server_error_logger.dart';
 import '../network/network_error.dart';
 import '../network/network_guard.dart';
 import '../push/device_id_store.dart';
 
+/// 클라이언트 에러 로그 저장소
+///
+/// 중요: 순환 의존성 방지를 위해 NetworkGuard에 errorLogger를 null로 전달합니다.
+/// 에러 로깅 자체가 실패하면 조용히 swallow 처리합니다 (재귀 로깅/무한 루프 방지).
 class ClientErrorLogRepository {
   ClientErrorLogRepository({required AppConfig config})
       : _config = config,
-        _networkGuard = NetworkGuard(errorLogger: ServerErrorLogger(config: config)),
+        // 순환 의존성 방지: errorLogger를 null로 전달
+        // 에러 로깅 실패는 재귀적으로 로깅하지 않음
+        _networkGuard = NetworkGuard(),
         _client = HttpClient();
 
   final AppConfig _config;

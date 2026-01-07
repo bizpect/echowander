@@ -66,6 +66,14 @@
   "languagePortuguese": "Portuguese",
   "languageChinese": "Chinese",
   "composeTitle": "Write a message",
+  "composeWizardStep1Title": "What will your journey say?",
+  "composeWizardStep1Subtitle": "Write a short hook to start the relay.",
+  "composeWizardStep2Title": "How many people should it reach?",
+  "composeWizardStep2Subtitle": "Pick 1 to 5 recipients.",
+  "composeWizardStep3Title": "Add a photo? (optional)",
+  "composeWizardStep3Subtitle": "Attach up to 3 photos, or send without one.",
+  "composeWizardBack": "Back",
+  "composeWizardNext": "Next",
   "composeLabel": "Message",
   "composeHint": "Share your thoughts...",
   "composeCharacterCount": "{current}/{total}",
@@ -268,5 +276,6 @@
   "errorServerUnavailable": "Server is temporarily unavailable. Please try again later.",
   "errorUnauthorized": "Please sign in again.",
   "errorRetry": "Retry",
-  "errorCancel": "Cancel"
+  "errorCancel": "Cancel",
+  "errorAuthRefreshFailed": "Network is unstable. Please try again in a moment."
 }

@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'session_tokens.dart';
+
+const _logPrefix = '[TokenStore]';
 
 abstract class TokenStore {
   Future<SessionTokens?> read();
@@ -28,8 +31,9 @@ class SecureTokenStore implements TokenStore {
       }
       return SessionTokens(accessToken: access, refreshToken: refresh);
     } catch (error) {
-      // ignore: avoid_print
-      print('토큰 저장소 읽기 예외: $error');
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 읽기 예외: $error');
+      }
       return null;
     }
   }
@@ -39,11 +43,13 @@ class SecureTokenStore implements TokenStore {
     try {
       await _storage.write(key: _accessKey, value: tokens.accessToken);
       await _storage.write(key: _refreshKey, value: tokens.refreshToken);
-      // ignore: avoid_print
-      print('토큰 저장소 저장 완료');
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 저장 완료');
+      }
     } catch (error) {
-      // ignore: avoid_print
-      print('토큰 저장소 저장 예외: $error');
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 저장 예외: $error');
+      }
     }
   }
 
@@ -53,8 +59,9 @@ class SecureTokenStore implements TokenStore {
       await _storage.delete(key: _accessKey);
       await _storage.delete(key: _refreshKey);
     } catch (error) {
-      // ignore: avoid_print
-      print('토큰 저장소 삭제 예외: $error');
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 삭제 예외: $error');
+      }
     }
   }
 }

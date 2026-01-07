@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/app_config.dart';
@@ -14,6 +15,8 @@ import 'device_id_store.dart';
 import 'push_payload.dart';
 import 'push_state.dart';
 import 'push_token_repository.dart';
+
+const _logPrefix = '[PushCoordinator]';
 
 final pushCoordinatorProvider = NotifierProvider<PushCoordinator, PushState>(
   PushCoordinator.new,
@@ -115,32 +118,37 @@ class PushCoordinator extends Notifier<PushState> {
   Future<void> _registerToken() async {
     final accessToken = await _readAccessToken();
     if (accessToken == null || accessToken.isEmpty) {
-      // ignore: avoid_print
-      print('액세스 토큰 없음: 토큰 등록 중단');
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 액세스 토큰 없음: 토큰 등록 중단');
+      }
       _scheduleAccessRetry();
       return;
     }
     final enabled = await _isNotificationsEnabled(accessToken);
     if (!enabled) {
-      // ignore: avoid_print
-      print('알림 비활성화: 토큰 등록 건너뜀');
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 알림 비활성화: 토큰 등록 건너뜀');
+      }
       return;
     }
     if (Platform.isIOS) {
       final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
       if (apnsToken == null || apnsToken.isEmpty) {
         // APNs 토큰이 아직 준비되지 않은 상태를 기록한다.
-        // ignore: avoid_print
-        print('APNs 토큰 없음: 토큰 등록 재시도 대기');
+        if (kDebugMode) {
+          debugPrint('$_logPrefix APNs 토큰 없음: 토큰 등록 재시도 대기');
+        }
       } else {
-        // ignore: avoid_print
-        print('APNs 토큰 확인 완료');
+        if (kDebugMode) {
+          debugPrint('$_logPrefix APNs 토큰 확인 완료');
+        }
       }
     }
     final fcmToken = await FirebaseMessaging.instance.getToken();
     if (fcmToken == null || fcmToken.isEmpty) {
-      // ignore: avoid_print
-      print('FCM 토큰 없음: 토큰 등록 재시도 예약');
+      if (kDebugMode) {
+        debugPrint('$_logPrefix FCM 토큰 없음: 토큰 등록 재시도 예약');
+      }
       _scheduleApnsRetry();
       return;
     }
@@ -199,8 +207,9 @@ class PushCoordinator extends Notifier<PushState> {
   }) async {
     final tokenToUse = accessToken ?? await _readAccessToken();
     if (tokenToUse == null || tokenToUse.isEmpty) {
-      // ignore: avoid_print
-      print('액세스 토큰 없음: 토큰 업서트 중단');
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 액세스 토큰 없음: 토큰 업서트 중단');
+      }
       _scheduleAccessRetry();
       return;
     }
@@ -226,19 +235,22 @@ class PushCoordinator extends Notifier<PushState> {
   Future<String?> _readAccessToken() async {
     final sessionAccessToken = ref.read(sessionManagerProvider).accessToken;
     if (sessionAccessToken != null && sessionAccessToken.isNotEmpty) {
-      // ignore: avoid_print
-      print('세션 상태 accessToken 확인: 길이 ${sessionAccessToken.length}');
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 세션 상태 accessToken 확인: 길이 ${sessionAccessToken.length}');
+      }
       _cachedAccessToken = sessionAccessToken;
       return sessionAccessToken;
     }
-    // ignore: avoid_print
-    print('세션 상태 accessToken 없음: 저장소 조회 시도');
+    if (kDebugMode) {
+      debugPrint('$_logPrefix 세션 상태 accessToken 없음: 저장소 조회 시도');
+    }
     final tokenStore = ref.read(tokenStoreProvider);
     final tokens = await tokenStore.read();
     final accessToken = tokens?.accessToken;
     if (accessToken != null && accessToken.isNotEmpty) {
-      // ignore: avoid_print
-      print('저장소 accessToken 확인: 길이 ${accessToken.length}');
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 저장소 accessToken 확인: 길이 ${accessToken.length}');
+      }
       _cachedAccessToken = accessToken;
     }
     return accessToken;

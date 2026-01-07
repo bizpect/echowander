@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/block/block_repository.dart';
 import '../../../core/block/supabase_block_repository.dart';
+import '../../../core/session/auth_executor.dart';
 import '../../../core/session/session_manager.dart';
+
+const _logPrefix = '[BlockList]';
 
 enum BlockListMessage {
   missingSession,
@@ -43,11 +46,12 @@ final blockListControllerProvider =
 
 class BlockListController extends Notifier<BlockListState> {
   static const int _defaultLimit = 50;
-  late final BlockRepository _blockRepository;
+
+  /// build 재호출 시 LateInitializationError 방지를 위해 getter로 접근
+  BlockRepository get _blockRepository => ref.read(blockRepositoryProvider);
 
   @override
   BlockListState build() {
-    _blockRepository = ref.read(blockRepositoryProvider);
     return const BlockListState(
       items: [],
       isLoading: false,
@@ -56,30 +60,64 @@ class BlockListController extends Notifier<BlockListState> {
   }
 
   Future<void> load({int limit = _defaultLimit, int offset = 0}) async {
-    final accessToken = ref.read(sessionManagerProvider).accessToken;
-    if (accessToken == null || accessToken.isEmpty) {
-      state = state.copyWith(message: BlockListMessage.missingSession);
-      return;
+    if (kDebugMode) {
+      debugPrint('$_logPrefix load - start, limit: $limit, offset: $offset');
     }
     state = state.copyWith(isLoading: true, clearMessage: true);
+
     try {
-      final items = await _blockRepository.fetchBlocks(
-        limit: limit,
-        offset: offset,
-        accessToken: accessToken,
+      final executor = AuthExecutor(ref);
+      final result = await executor.execute<List<BlockedUser>>(
+        operation: (accessToken) => _blockRepository.fetchBlocks(
+          limit: limit,
+          offset: offset,
+          accessToken: accessToken,
+        ),
+        isUnauthorized: (error) =>
+            error is BlockException && error.error == BlockError.unauthorized,
       );
-      state = state.copyWith(items: items, isLoading: false);
-    } on BlockException catch (error) {
-      if (kDebugMode) {
-        debugPrint('block: 목록 로드 실패 (${error.error})');
+
+      switch (result) {
+        case AuthExecutorSuccess<List<BlockedUser>>(:final data):
+          if (kDebugMode) {
+            debugPrint('$_logPrefix load - completed, items: ${data.length}');
+          }
+          state = state.copyWith(items: data, isLoading: false);
+        case AuthExecutorNoSession<List<BlockedUser>>():
+          if (kDebugMode) {
+            debugPrint('$_logPrefix load - missing accessToken');
+          }
+          state = state.copyWith(
+            isLoading: false,
+            message: BlockListMessage.missingSession,
+          );
+        case AuthExecutorUnauthorized<List<BlockedUser>>():
+          if (kDebugMode) {
+            debugPrint('$_logPrefix load - unauthorized after retry');
+          }
+          state = state.copyWith(
+            isLoading: false,
+            message: BlockListMessage.missingSession,
+          );
+        case AuthExecutorTransientError<List<BlockedUser>>():
+          // 일시 장애: 네트워크/서버 문제 (로그아웃 아님)
+          if (kDebugMode) {
+            debugPrint('$_logPrefix load - transient error (network/server)');
+          }
+          state = state.copyWith(
+            isLoading: false,
+            message: BlockListMessage.loadFailed,
+          );
       }
-      final message = error.error == BlockError.unauthorized
-          ? BlockListMessage.missingSession
-          : BlockListMessage.loadFailed;
-      state = state.copyWith(isLoading: false, message: message);
-    } catch (_) {
+    } on BlockException catch (error) {
+      // 네트워크 오류 등 401이 아닌 예외
       if (kDebugMode) {
-        debugPrint('block: 목록 로드 알 수 없는 오류');
+        debugPrint('$_logPrefix load - BlockException: ${error.error}');
+      }
+      state = state.copyWith(isLoading: false, message: BlockListMessage.loadFailed);
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix load - unknown error: $error');
       }
       state = state.copyWith(isLoading: false, message: BlockListMessage.loadFailed);
     }

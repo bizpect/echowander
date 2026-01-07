@@ -205,6 +205,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get composeTitle => 'Write a message';
 
   @override
+  String get composeWizardStep1Title => 'What will your journey say?';
+
+  @override
+  String get composeWizardStep1Subtitle =>
+      'Write a short hook to start the relay.';
+
+  @override
+  String get composeWizardStep2Title => 'How many people should it reach?';
+
+  @override
+  String get composeWizardStep2Subtitle => 'Pick 1 to 5 recipients.';
+
+  @override
+  String get composeWizardStep3Title => 'Add a photo? (optional)';
+
+  @override
+  String get composeWizardStep3Subtitle =>
+      'Attach up to 3 photos, or send without one.';
+
+  @override
+  String get composeWizardBack => 'Back';
+
+  @override
+  String get composeWizardNext => 'Next';
+
+  @override
   String get composeLabel => 'Message';
 
   @override
@@ -770,4 +796,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorCancel => 'Cancel';
+
+  @override
+  String get errorAuthRefreshFailed =>
+      'Network is unstable. Please try again in a moment.';
 }

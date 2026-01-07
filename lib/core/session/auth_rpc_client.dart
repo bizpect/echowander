@@ -13,7 +13,10 @@ const _logPrefix = '[AuthRpcClient]';
 
 abstract class AuthRpcClient {
   Future<bool> validateSession(SessionTokens tokens);
-  Future<SessionTokens?> refreshSession(SessionTokens tokens);
+
+  /// 세션 갱신 (인증 실패 확정 vs 일시 장애 구분)
+  Future<RefreshResult> refreshSession(SessionTokens tokens);
+
   Future<AuthRpcLoginResult> exchangeSocialToken({
     required String provider,
     required String idToken,
@@ -42,6 +45,35 @@ class AuthRpcLoginResult {
       : this._(tokens: null, error: error);
 }
 
+/// refresh/validate 결과 타입: 인증 실패 확정 vs 일시 장애 구분
+sealed class RefreshResult {
+  const RefreshResult();
+
+  /// 성공: 새 토큰 발급
+  const factory RefreshResult.success(SessionTokens tokens) = RefreshSuccess;
+
+  /// 인증 실패 확정: refresh 토큰 만료/무효 (401/403 확정)
+  /// → 토큰 clear + unauthenticated (로그아웃)
+  const factory RefreshResult.authFailed() = RefreshAuthFailed;
+
+  /// 일시 장애: 네트워크/서버 문제 (timeout, 5xx, offline 등)
+  /// → 토큰 유지 + authenticated 유지 (로그아웃 금지)
+  const factory RefreshResult.transientError() = RefreshTransientError;
+}
+
+class RefreshSuccess extends RefreshResult {
+  const RefreshSuccess(this.tokens);
+  final SessionTokens tokens;
+}
+
+class RefreshAuthFailed extends RefreshResult {
+  const RefreshAuthFailed();
+}
+
+class RefreshTransientError extends RefreshResult {
+  const RefreshTransientError();
+}
+
 class DevAuthRpcClient implements AuthRpcClient {
   @override
   Future<bool> validateSession(SessionTokens tokens) async {
@@ -49,8 +81,8 @@ class DevAuthRpcClient implements AuthRpcClient {
   }
 
   @override
-  Future<SessionTokens?> refreshSession(SessionTokens tokens) async {
-    return tokens;
+  Future<RefreshResult> refreshSession(SessionTokens tokens) async {
+    return RefreshResult.success(tokens);
   }
 
   @override
@@ -77,37 +109,6 @@ class HttpAuthRpcClient implements AuthRpcClient {
   final HttpClient _client;
 
   Uri _resolve(String path) => _baseUri.resolve(path);
-
-  /// 공통 POST JSON 요청 (NetworkGuard 경유)
-  Future<Map<String, dynamic>?> _postJson({
-    required String context,
-    required Uri uri,
-    required Map<String, dynamic> body,
-    required String token,
-    RetryPolicy retryPolicy = RetryPolicy.short,
-    Map<String, dynamic>? meta,
-  }) async {
-    try {
-      final result = await _networkGuard.execute<Map<String, dynamic>>(
-        operation: () => _executePostJson(
-          uri: uri,
-          body: body,
-          token: token,
-          context: context,
-        ),
-        retryPolicy: retryPolicy,
-        context: context,
-        uri: uri,
-        method: 'POST',
-        meta: meta ?? const {},
-        accessToken: token,
-      );
-      return result;
-    } on NetworkRequestException catch (_) {
-      // 인증 API 실패는 null 반환 (기존 시그니처 유지)
-      return null;
-    }
-  }
 
   /// POST JSON 요청 실제 실행 (NetworkGuard가 호출)
   Future<Map<String, dynamic>> _executePostJson({
@@ -168,47 +169,108 @@ class HttpAuthRpcClient implements AuthRpcClient {
     if (kDebugMode) {
       debugPrint('$_logPrefix validateSession 시작');
     }
-    final payload = await _postJson(
-      context: 'auth_validate_session',
-      uri: _resolve('validate_session'),
-      body: {'refreshToken': tokens.refreshToken},
-      token: tokens.accessToken,
-    );
-    final isValid = payload?['valid'] == true;
-    if (kDebugMode) {
-      if (payload == null) {
-        debugPrint('$_logPrefix validateSession 실패: 네트워크/서버 오류 (payload=null)');
-      } else {
+
+    final uri = _resolve('validate_session');
+
+    try {
+      final result = await _networkGuard.execute<Map<String, dynamic>>(
+        operation: () => _executePostJson(
+          uri: uri,
+          body: {'refreshToken': tokens.refreshToken},
+          token: tokens.accessToken,
+          context: 'auth_validate_session',
+        ),
+        retryPolicy: RetryPolicy.short,
+        context: 'auth_validate_session',
+        uri: uri,
+        method: 'POST',
+        meta: const {},
+        accessToken: tokens.accessToken,
+      );
+
+      final isValid = result['valid'] == true;
+      if (kDebugMode) {
         debugPrint('$_logPrefix validateSession 결과: valid=$isValid');
       }
+      return isValid;
+    } on NetworkRequestException catch (error) {
+      // 에러 유형별 로깅 (401은 정상적인 "토큰 만료" 상황)
+      if (kDebugMode) {
+        debugPrint('$_logPrefix validateSession 실패: ${error.type} (statusCode=${error.statusCode})');
+      }
+      // 401/403은 "토큰 만료/무효"로 간주 → false 반환 (refreshSession으로 진행)
+      // 다른 에러도 false 반환 (refreshSession에서 다시 시도)
+      return false;
     }
-    return isValid;
   }
 
   @override
-  Future<SessionTokens?> refreshSession(SessionTokens tokens) async {
+  Future<RefreshResult> refreshSession(SessionTokens tokens) async {
     if (kDebugMode) {
       debugPrint('$_logPrefix refreshSession 시작');
     }
-    final payload = await _postJson(
-      context: 'auth_refresh_session',
-      uri: _resolve('refresh_session'),
-      body: {'refreshToken': tokens.refreshToken},
-      token: tokens.accessToken,
-    );
-    if (payload == null) {
+
+    final uri = _resolve('refresh_session');
+
+    try {
+      // 중요: refresh 요청은 Authorization 헤더에 accessToken을 보내지 않음
+      // Supabase Edge Functions가 만료된 JWT로 인해 401을 반환하는 것을 방지
+      // refresh_session 엔드포인트는 body의 refreshToken만 사용함
+      final result = await _networkGuard.execute<Map<String, dynamic>>(
+        operation: () => _executePostJson(
+          uri: uri,
+          body: {'refreshToken': tokens.refreshToken},
+          token: '', // Authorization 헤더 생략 (만료된 accessToken 전송 방지)
+          context: 'auth_refresh_session',
+        ),
+        retryPolicy: RetryPolicy.short,
+        context: 'auth_refresh_session',
+        uri: uri,
+        method: 'POST',
+        meta: const {},
+        accessToken: '', // 로깅용도 빈 문자열
+      );
+
       if (kDebugMode) {
-        debugPrint('$_logPrefix refreshSession 실패: 네트워크/서버 오류 또는 인증 실패');
+        debugPrint('$_logPrefix refreshSession 성공');
       }
-      return null;
+
+      return RefreshResult.success(
+        SessionTokens(
+          accessToken: result['accessToken'] as String,
+          refreshToken: result['refreshToken'] as String,
+        ),
+      );
+    } on NetworkRequestException catch (error) {
+      // 에러 타입에 따라 "인증 실패 확정" vs "일시 장애" 분류
+      switch (error.type) {
+        case NetworkErrorType.unauthorized:
+          // 401/403: refresh 토큰 만료/무효 → 인증 실패 확정
+          if (kDebugMode) {
+            debugPrint('$_logPrefix refreshSession 인증 실패 확정 (401/403)');
+          }
+          return const RefreshResult.authFailed();
+
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+        case NetworkErrorType.serverUnavailable:
+          // 네트워크/서버 일시 장애 → 토큰 유지
+          if (kDebugMode) {
+            debugPrint('$_logPrefix refreshSession 일시 장애 (${error.type})');
+          }
+          return const RefreshResult.transientError();
+
+        case NetworkErrorType.invalidPayload:
+        case NetworkErrorType.serverRejected:
+        case NetworkErrorType.missingConfig:
+        case NetworkErrorType.unknown:
+          // 기타 오류: 일시 장애로 처리 (로그아웃 금지)
+          if (kDebugMode) {
+            debugPrint('$_logPrefix refreshSession 기타 오류 (${error.type}) → 일시 장애로 처리');
+          }
+          return const RefreshResult.transientError();
+      }
     }
-    if (kDebugMode) {
-      debugPrint('$_logPrefix refreshSession 성공');
-    }
-    return SessionTokens(
-      accessToken: payload['accessToken'] as String,
-      refreshToken: payload['refreshToken'] as String,
-    );
   }
 
   @override

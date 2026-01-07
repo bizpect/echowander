@@ -66,6 +66,14 @@
   "languagePortuguese": "Portugués",
   "languageChinese": "Chino",
   "composeTitle": "Escribir mensaje",
+  "composeWizardStep1Title": "¿Qué quieres enviar en tu viaje?",
+  "composeWizardStep1Subtitle": "Escribe una frase para iniciar el relevo.",
+  "composeWizardStep2Title": "¿A cuántas personas lo enviamos?",
+  "composeWizardStep2Subtitle": "Elige entre 1 y 5.",
+  "composeWizardStep3Title": "¿Quieres adjuntar una foto?",
+  "composeWizardStep3Subtitle": "Hasta 3 fotos. También puedes enviarlo sin fotos.",
+  "composeWizardBack": "Atrás",
+  "composeWizardNext": "Siguiente",
   "composeLabel": "Mensaje",
   "composeHint": "Comparte lo que piensas...",
   "composeCharacterCount": "{current}/{total}",
@@ -268,5 +276,6 @@
   "errorServerUnavailable": "El servidor no está disponible temporalmente. Por favor, inténtalo más tarde.",
   "errorUnauthorized": "Por favor, inicia sesión de nuevo.",
   "errorRetry": "Reintentar",
-  "errorCancel": "Cancelar"
+  "errorCancel": "Cancelar",
+  "errorAuthRefreshFailed": "La red es inestable. Por favor, inténtalo de nuevo en un momento."
 }

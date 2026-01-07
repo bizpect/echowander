@@ -195,6 +195,30 @@ class AppLocalizationsJa extends AppLocalizations {
   String get composeTitle => 'メッセージ作成';
 
   @override
+  String get composeWizardStep1Title => 'どんな内容で旅を送りますか？';
+
+  @override
+  String get composeWizardStep1Subtitle => 'リレーを始める一言を書いてください。';
+
+  @override
+  String get composeWizardStep2Title => '何人に届けますか？';
+
+  @override
+  String get composeWizardStep2Subtitle => '1〜5人から選べます。';
+
+  @override
+  String get composeWizardStep3Title => '写真も一緒に送りますか？';
+
+  @override
+  String get composeWizardStep3Subtitle => '最大3枚。なくても送信できます。';
+
+  @override
+  String get composeWizardBack => '戻る';
+
+  @override
+  String get composeWizardNext => '次へ';
+
+  @override
   String get composeLabel => 'メッセージ';
 
   @override
@@ -747,4 +771,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get errorCancel => 'キャンセル';
+
+  @override
+  String get errorAuthRefreshFailed => 'ネットワークが不安定です。しばらくしてからもう一度お試しください。';
 }

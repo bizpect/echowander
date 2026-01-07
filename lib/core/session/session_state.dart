@@ -10,6 +10,9 @@ enum SessionMessage {
   loginUserSyncFailed,
   loginServiceUnavailable,
   sessionExpired,
+
+  /// 세션 갱신 일시 장애 (네트워크/서버 문제, 로그아웃 아님)
+  authRefreshFailed,
 }
 
 class SessionState {

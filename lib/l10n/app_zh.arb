@@ -66,6 +66,14 @@
   "languagePortuguese": "葡萄牙语",
   "languageChinese": "中文",
   "composeTitle": "撰写消息",
+  "composeWizardStep1Title": "想用什么内容发送旅程？",
+  "composeWizardStep1Subtitle": "写一句话开启接力。",
+  "composeWizardStep2Title": "要落到多少人手里？",
+  "composeWizardStep2Subtitle": "可选择 1～5 人。",
+  "composeWizardStep3Title": "要一起发送照片吗？",
+  "composeWizardStep3Subtitle": "最多 3 张，不加也可以发送。",
+  "composeWizardBack": "返回",
+  "composeWizardNext": "下一步",
   "composeLabel": "消息",
   "composeHint": "分享你的想法...",
   "composeCharacterCount": "{current}/{total}",
@@ -268,5 +276,6 @@
   "errorServerUnavailable": "服务器暂时不可用。请稍后再试。",
   "errorUnauthorized": "请重新登录。",
   "errorRetry": "重试",
-  "errorCancel": "取消"
+  "errorCancel": "取消",
+  "errorAuthRefreshFailed": "网络不稳定。请稍后再试。"
 }

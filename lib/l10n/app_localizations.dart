@@ -475,6 +475,54 @@ abstract class AppLocalizations {
   /// **'Write a message'**
   String get composeTitle;
 
+  /// No description provided for @composeWizardStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'What will your journey say?'**
+  String get composeWizardStep1Title;
+
+  /// No description provided for @composeWizardStep1Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a short hook to start the relay.'**
+  String get composeWizardStep1Subtitle;
+
+  /// No description provided for @composeWizardStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'How many people should it reach?'**
+  String get composeWizardStep2Title;
+
+  /// No description provided for @composeWizardStep2Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick 1 to 5 recipients.'**
+  String get composeWizardStep2Subtitle;
+
+  /// No description provided for @composeWizardStep3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a photo? (optional)'**
+  String get composeWizardStep3Title;
+
+  /// No description provided for @composeWizardStep3Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach up to 3 photos, or send without one.'**
+  String get composeWizardStep3Subtitle;
+
+  /// No description provided for @composeWizardBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get composeWizardBack;
+
+  /// No description provided for @composeWizardNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get composeWizardNext;
+
   /// No description provided for @composeLabel.
   ///
   /// In en, this message translates to:
@@ -1560,6 +1608,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get errorCancel;
+
+  /// No description provided for @errorAuthRefreshFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Network is unstable. Please try again in a moment.'**
+  String get errorAuthRefreshFailed;
 }
 
 class _AppLocalizationsDelegate

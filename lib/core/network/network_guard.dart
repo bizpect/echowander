@@ -29,10 +29,11 @@ class RetryPolicy {
 /// 네트워크 요청 가드 - 공통 네트워크 에러 처리 및 재시도 정책
 class NetworkGuard {
   NetworkGuard({
-    required ServerErrorLogger errorLogger,
+    ServerErrorLogger? errorLogger,
   }) : _errorLogger = errorLogger;
 
-  final ServerErrorLogger _errorLogger;
+  /// 에러 로거 (null이면 로깅 스킵 - 순환 의존성 방지용)
+  final ServerErrorLogger? _errorLogger;
 
   /// 네트워크 요청 실행
   ///
@@ -76,7 +77,8 @@ class NetworkGuard {
           debugPrint('[NetworkGuard][$context] SocketException: $error');
         }
 
-        await _errorLogger.logException(
+        // 에러 로거가 있으면 로깅 (null이면 스킵 - 순환 의존성 방지)
+        await _errorLogger?.logException(
           context: context,
           uri: logUri,
           method: logMethod,
@@ -99,7 +101,8 @@ class NetworkGuard {
           debugPrint('[NetworkGuard][$context] TimeoutException: $error');
         }
 
-        await _errorLogger.logException(
+        // 에러 로거가 있으면 로깅 (null이면 스킵 - 순환 의존성 방지)
+        await _errorLogger?.logException(
           context: context,
           uri: logUri,
           method: logMethod,
@@ -122,7 +125,8 @@ class NetworkGuard {
           debugPrint('[NetworkGuard][$context] HttpException: $error');
         }
 
-        await _errorLogger.logException(
+        // 에러 로거가 있으면 로깅 (null이면 스킵 - 순환 의존성 방지)
+        await _errorLogger?.logException(
           context: context,
           uri: logUri,
           method: logMethod,
@@ -145,7 +149,8 @@ class NetworkGuard {
           debugPrint('[NetworkGuard][$context] FormatException: $error');
         }
 
-        await _errorLogger.logException(
+        // 에러 로거가 있으면 로깅 (null이면 스킵 - 순환 의존성 방지)
+        await _errorLogger?.logException(
           context: context,
           uri: logUri,
           method: logMethod,
@@ -174,7 +179,8 @@ class NetworkGuard {
           debugPrint('[NetworkGuard][$context] Unknown error: $error');
         }
 
-        await _errorLogger.logException(
+        // 에러 로거가 있으면 로깅 (null이면 스킵 - 순환 의존성 방지)
+        await _errorLogger?.logException(
           context: context,
           uri: logUri,
           method: logMethod,

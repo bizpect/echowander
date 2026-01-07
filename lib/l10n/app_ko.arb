@@ -66,6 +66,14 @@
   "languagePortuguese": "포르투갈어",
   "languageChinese": "중국어",
   "composeTitle": "메시지 작성",
+  "composeWizardStep1Title": "어떤 내용으로 여정을 보낼까요?",
+  "composeWizardStep1Subtitle": "릴레이를 시작할 한 줄을 적어주세요.",
+  "composeWizardStep2Title": "몇 명에게 떨어뜨릴까요?",
+  "composeWizardStep2Subtitle": "1~5명 중에서 선택할 수 있어요.",
+  "composeWizardStep3Title": "같이 보낼 사진이 있으신가요?",
+  "composeWizardStep3Subtitle": "사진은 최대 3장, 없으면 바로 보내도 돼요.",
+  "composeWizardBack": "이전",
+  "composeWizardNext": "다음",
   "composeLabel": "메시지",
   "composeHint": "전하고 싶은 이야기를 적어주세요.",
   "composeCharacterCount": "{total}자 중 {current}자",
@@ -268,5 +276,6 @@
   "errorServerUnavailable": "서버에 일시적인 문제가 있습니다. 잠시 후 다시 시도해 주세요.",
   "errorUnauthorized": "다시 로그인해 주세요.",
   "errorRetry": "다시 시도",
-  "errorCancel": "취소"
+  "errorCancel": "취소",
+  "errorAuthRefreshFailed": "네트워크가 불안정합니다. 잠시 후 다시 시도해 주세요."
 }

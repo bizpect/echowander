@@ -1,9 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/session/auth_executor.dart';
 import '../../../core/session/session_manager.dart';
 import '../data/supabase_notification_repository.dart';
 import '../domain/notification_item.dart';
 import '../domain/notification_repository.dart';
+
+const _logPrefix = '[NotificationInbox]';
 
 enum NotificationInboxMessage {
   missingSession,
@@ -51,11 +55,12 @@ final notificationInboxControllerProvider =
 
 class NotificationInboxController extends Notifier<NotificationInboxState> {
   static const int _defaultLimit = 50;
-  late final NotificationRepository _repository;
+
+  /// build 재호출 시 LateInitializationError 방지를 위해 getter로 접근
+  NotificationRepository get _repository => ref.read(notificationRepositoryProvider);
 
   @override
   NotificationInboxState build() {
-    _repository = ref.read(notificationRepositoryProvider);
     return const NotificationInboxState(
       items: [],
       isLoading: false,
@@ -66,34 +71,86 @@ class NotificationInboxController extends Notifier<NotificationInboxState> {
   }
 
   Future<void> load({int limit = _defaultLimit, int offset = 0}) async {
-    final accessToken = ref.read(sessionManagerProvider).accessToken;
-    if (accessToken == null || accessToken.isEmpty) {
-      state = state.copyWith(message: NotificationInboxMessage.missingSession);
-      return;
+    if (kDebugMode) {
+      debugPrint('$_logPrefix load - start, limit: $limit, offset: $offset');
     }
     state = state.copyWith(isLoading: true, clearMessage: true);
+
     try {
-      final items = await _repository.fetchNotifications(
-        accessToken: accessToken,
-        limit: limit,
-        offset: offset,
-        unreadOnly: state.unreadOnly,
+      final executor = AuthExecutor(ref);
+      // 알림 목록과 읽지 않은 개수를 한 번에 조회
+      final result = await executor.execute<(List<NotificationItem>, int)>(
+        operation: (accessToken) async {
+          final items = await _repository.fetchNotifications(
+            accessToken: accessToken,
+            limit: limit,
+            offset: offset,
+            unreadOnly: state.unreadOnly,
+          );
+          final unreadCount = await _repository.fetchUnreadCount(
+            accessToken: accessToken,
+          );
+          return (items, unreadCount);
+        },
+        isUnauthorized: (error) =>
+            error is NotificationInboxException &&
+            error.error == NotificationInboxError.unauthorized,
       );
-      final unreadCount = await _repository.fetchUnreadCount(
-        accessToken: accessToken,
-      );
-      state = state.copyWith(
-        items: items,
-        isLoading: false,
-        unreadCount: unreadCount,
-      );
+
+      switch (result) {
+        case AuthExecutorSuccess<(List<NotificationItem>, int)>(:final data):
+          final (items, unreadCount) = data;
+          if (kDebugMode) {
+            debugPrint('$_logPrefix load - completed, items: ${items.length}, unread: $unreadCount');
+          }
+          state = state.copyWith(
+            items: items,
+            isLoading: false,
+            unreadCount: unreadCount,
+          );
+        case AuthExecutorNoSession<(List<NotificationItem>, int)>():
+          if (kDebugMode) {
+            debugPrint('$_logPrefix load - missing accessToken');
+          }
+          state = state.copyWith(
+            isLoading: false,
+            message: NotificationInboxMessage.missingSession,
+          );
+        case AuthExecutorUnauthorized<(List<NotificationItem>, int)>():
+          if (kDebugMode) {
+            debugPrint('$_logPrefix load - unauthorized after retry');
+          }
+          state = state.copyWith(
+            isLoading: false,
+            message: NotificationInboxMessage.missingSession,
+          );
+        case AuthExecutorTransientError<(List<NotificationItem>, int)>():
+          // 일시 장애: 네트워크/서버 문제 (로그아웃 아님)
+          if (kDebugMode) {
+            debugPrint('$_logPrefix load - transient error (network/server)');
+          }
+          state = state.copyWith(
+            isLoading: false,
+            message: NotificationInboxMessage.loadFailed,
+          );
+      }
     } on NotificationInboxException catch (error) {
-      final message = error.error == NotificationInboxError.unauthorized
-          ? NotificationInboxMessage.missingSession
-          : NotificationInboxMessage.loadFailed;
-      state = state.copyWith(isLoading: false, message: message);
-    } catch (_) {
-      state = state.copyWith(isLoading: false, message: NotificationInboxMessage.loadFailed);
+      // 네트워크 오류 등 401이 아닌 예외
+      if (kDebugMode) {
+        debugPrint('$_logPrefix load - NotificationInboxException: ${error.error}');
+      }
+      state = state.copyWith(
+        isLoading: false,
+        message: NotificationInboxMessage.loadFailed,
+      );
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix load - unknown error: $error');
+      }
+      state = state.copyWith(
+        isLoading: false,
+        message: NotificationInboxMessage.loadFailed,
+      );
     }
   }
 
@@ -173,19 +230,52 @@ class NotificationInboxController extends Notifier<NotificationInboxState> {
   }
 
   Future<void> loadUnreadCount() async {
-    final accessToken = ref.read(sessionManagerProvider).accessToken;
-    if (accessToken == null || accessToken.isEmpty) {
-      state = state.copyWith(message: NotificationInboxMessage.missingSession);
-      return;
+    if (kDebugMode) {
+      debugPrint('$_logPrefix loadUnreadCount - start');
     }
+
     try {
-      final unreadCount = await _repository.fetchUnreadCount(
-        accessToken: accessToken,
+      final executor = AuthExecutor(ref);
+      final result = await executor.execute<int>(
+        operation: (accessToken) => _repository.fetchUnreadCount(
+          accessToken: accessToken,
+        ),
+        isUnauthorized: (error) =>
+            error is NotificationInboxException &&
+            error.error == NotificationInboxError.unauthorized,
       );
-      state = state.copyWith(unreadCount: unreadCount);
+
+      switch (result) {
+        case AuthExecutorSuccess<int>(:final data):
+          if (kDebugMode) {
+            debugPrint('$_logPrefix loadUnreadCount - completed, count: $data');
+          }
+          state = state.copyWith(unreadCount: data);
+        case AuthExecutorNoSession<int>():
+          if (kDebugMode) {
+            debugPrint('$_logPrefix loadUnreadCount - missing accessToken');
+          }
+          state = state.copyWith(message: NotificationInboxMessage.missingSession);
+        case AuthExecutorUnauthorized<int>():
+          if (kDebugMode) {
+            debugPrint('$_logPrefix loadUnreadCount - unauthorized after retry');
+          }
+          state = state.copyWith(message: NotificationInboxMessage.missingSession);
+        case AuthExecutorTransientError<int>():
+          // 일시 장애: unreadCount 갱신 실패만, 로그아웃 아님
+          if (kDebugMode) {
+            debugPrint('$_logPrefix loadUnreadCount - transient error (network/server)');
+          }
+          // unreadCount는 실패해도 UI에 큰 영향 없음, 메시지 없이 무시
+      }
     } on NotificationInboxException catch (error) {
-      if (error.error == NotificationInboxError.unauthorized) {
-        state = state.copyWith(message: NotificationInboxMessage.missingSession);
+      // 네트워크 오류 등 401이 아닌 예외는 무시 (unreadCount 갱신 실패만)
+      if (kDebugMode) {
+        debugPrint('$_logPrefix loadUnreadCount - error: ${error.error}');
+      }
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix loadUnreadCount - unknown error: $error');
       }
     }
   }

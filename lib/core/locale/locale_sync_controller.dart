@@ -31,11 +31,12 @@ final localeSyncControllerProvider =
 );
 
 class LocaleSyncController extends Notifier<LocaleSyncState> {
-  late final LocaleSyncRepository _repository;
+  /// build 재호출 시 LateInitializationError 방지를 위해 getter로 접근
+  LocaleSyncRepository get _repository =>
+      LocaleSyncRepository(config: AppConfigStore.current);
 
   @override
   LocaleSyncState build() {
-    _repository = LocaleSyncRepository(config: AppConfigStore.current);
     return const LocaleSyncState(lastSyncedTag: null, isSyncing: false);
   }
 

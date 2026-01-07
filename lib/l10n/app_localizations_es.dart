@@ -204,6 +204,32 @@ class AppLocalizationsEs extends AppLocalizations {
   String get composeTitle => 'Escribir mensaje';
 
   @override
+  String get composeWizardStep1Title => '¿Qué quieres enviar en tu viaje?';
+
+  @override
+  String get composeWizardStep1Subtitle =>
+      'Escribe una frase para iniciar el relevo.';
+
+  @override
+  String get composeWizardStep2Title => '¿A cuántas personas lo enviamos?';
+
+  @override
+  String get composeWizardStep2Subtitle => 'Elige entre 1 y 5.';
+
+  @override
+  String get composeWizardStep3Title => '¿Quieres adjuntar una foto?';
+
+  @override
+  String get composeWizardStep3Subtitle =>
+      'Hasta 3 fotos. También puedes enviarlo sin fotos.';
+
+  @override
+  String get composeWizardBack => 'Atrás';
+
+  @override
+  String get composeWizardNext => 'Siguiente';
+
+  @override
   String get composeLabel => 'Mensaje';
 
   @override
@@ -776,4 +802,8 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get errorCancel => 'Cancelar';
+
+  @override
+  String get errorAuthRefreshFailed =>
+      'La red es inestable. Por favor, inténtalo de nuevo en un momento.';
 }

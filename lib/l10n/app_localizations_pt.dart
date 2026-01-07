@@ -204,6 +204,32 @@ class AppLocalizationsPt extends AppLocalizations {
   String get composeTitle => 'Escrever mensagem';
 
   @override
+  String get composeWizardStep1Title => 'Que mensagem vai nessa jornada?';
+
+  @override
+  String get composeWizardStep1Subtitle =>
+      'Escreva uma frase para iniciar o revezamento.';
+
+  @override
+  String get composeWizardStep2Title => 'Para quantas pessoas enviar?';
+
+  @override
+  String get composeWizardStep2Subtitle => 'Escolha entre 1 e 5.';
+
+  @override
+  String get composeWizardStep3Title => 'Quer enviar uma foto junto?';
+
+  @override
+  String get composeWizardStep3Subtitle =>
+      'Até 3 fotos. Você também pode enviar sem foto.';
+
+  @override
+  String get composeWizardBack => 'Voltar';
+
+  @override
+  String get composeWizardNext => 'Próximo';
+
+  @override
   String get composeLabel => 'Mensagem';
 
   @override
@@ -784,6 +810,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get errorCancel => 'Cancelar';
+
+  @override
+  String get errorAuthRefreshFailed =>
+      'A rede está instável. Por favor, tente novamente em breve.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -984,6 +1014,32 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get composeTitle => 'Escrever mensagem';
+
+  @override
+  String get composeWizardStep1Title => 'Que mensagem vai nessa jornada?';
+
+  @override
+  String get composeWizardStep1Subtitle =>
+      'Escreva uma frase para iniciar o revezamento.';
+
+  @override
+  String get composeWizardStep2Title => 'Para quantas pessoas enviar?';
+
+  @override
+  String get composeWizardStep2Subtitle => 'Escolha entre 1 e 5.';
+
+  @override
+  String get composeWizardStep3Title => 'Quer enviar uma foto junto?';
+
+  @override
+  String get composeWizardStep3Subtitle =>
+      'Até 3 fotos. Você também pode enviar sem foto.';
+
+  @override
+  String get composeWizardBack => 'Voltar';
+
+  @override
+  String get composeWizardNext => 'Próximo';
 
   @override
   String get composeLabel => 'Mensagem';
@@ -1566,4 +1622,8 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get errorCancel => 'Cancelar';
+
+  @override
+  String get errorAuthRefreshFailed =>
+      'A rede está instável. Por favor, tente novamente em breve.';
 }

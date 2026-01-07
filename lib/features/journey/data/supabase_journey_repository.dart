@@ -228,73 +228,72 @@ class SupabaseJourneyRepository implements JourneyRepository {
     }
     final uri = Uri.parse('${_config.supabaseUrl}/functions/v1/dispatch_journey_matches');
     try {
-      final request = await _client.postUrl(uri);
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-      request.headers.set('x-dispatch-secret', _config.dispatchJobSecret);
-      request.add(
-        utf8.encode(
-          jsonEncode({
-            'journey_id': journeyId,
-          }),
-        ),
-      );
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      if (response.statusCode != HttpStatus.ok) {
-        if (kDebugMode) {
-          debugPrint('compose: dispatch 실패 ${response.statusCode} $body');
-        }
-        await _errorLogger.logHttpFailure(
-          context: 'dispatch_journey_matches',
+      await _networkGuard.execute<void>(
+        operation: () => _executeDispatchJourneyMatch(
           uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: {
-            'journey_id': journeyId,
-          },
+          journeyId: journeyId,
           accessToken: accessToken,
-        );
-        return;
-      }
+        ),
+        retryPolicy: RetryPolicy.none,
+        context: 'dispatch_journey_matches',
+        uri: uri,
+        method: 'POST',
+        meta: {
+          'journey_id': journeyId,
+        },
+        accessToken: accessToken,
+      );
+    } on NetworkRequestException catch (error) {
+      // dispatch 실패는 비블로킹: 이미 로깅되었으므로 조용히 종료
       if (kDebugMode) {
-        debugPrint('compose: dispatch 성공 $body');
+        debugPrint('compose: dispatch 실패 (NetworkRequestException: ${error.type})');
       }
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
+    }
+  }
+
+  Future<void> _executeDispatchJourneyMatch({
+    required Uri uri,
+    required String journeyId,
+    required String accessToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.headers.set('x-dispatch-secret', _config.dispatchJobSecret);
+    request.add(
+      utf8.encode(
+        jsonEncode({
+          'journey_id': journeyId,
+        }),
+      ),
+    );
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+    if (response.statusCode != HttpStatus.ok) {
+      if (kDebugMode) {
+        debugPrint('compose: dispatch 실패 ${response.statusCode} $body');
+      }
+      await _errorLogger.logHttpFailure(
         context: 'dispatch_journey_matches',
         uri: uri,
         method: 'POST',
-        error: error,
+        statusCode: response.statusCode,
+        errorMessage: body,
         meta: {
           'journey_id': journeyId,
         },
         accessToken: accessToken,
       );
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
         context: 'dispatch_journey_matches',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
-        accessToken: accessToken,
       );
-    } on FormatException catch (error) {
-      await _errorLogger.logException(
-        context: 'dispatch_journey_matches',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {
-          'journey_id': journeyId,
-        },
-        accessToken: accessToken,
-      );
+    }
+
+    if (kDebugMode) {
+      debugPrint('compose: dispatch 성공 $body');
     }
   }
 
@@ -1366,10 +1365,12 @@ class SupabaseJourneyStorageRepository implements JourneyStorageRepository {
   SupabaseJourneyStorageRepository({required AppConfig config})
       : _config = config,
         _errorLogger = ServerErrorLogger(config: config),
+        _networkGuard = NetworkGuard(errorLogger: ServerErrorLogger(config: config)),
         _client = HttpClient();
 
   final AppConfig _config;
   final ServerErrorLogger _errorLogger;
+  final NetworkGuard _networkGuard;
   final HttpClient _client;
 
   @override
@@ -1390,8 +1391,6 @@ class SupabaseJourneyStorageRepository implements JourneyStorageRepository {
       throw JourneyStorageException(JourneyStorageError.unauthorized);
     }
     final uploaded = <String>[];
-    Uri? currentUri;
-    String? currentStoragePath;
     try {
       for (var i = 0; i < filePaths.length; i += 1) {
         final path = filePaths[i];
@@ -1400,15 +1399,44 @@ class SupabaseJourneyStorageRepository implements JourneyStorageRepository {
         }
         final bytes = await File(path).readAsBytes();
         final storagePath = _buildStoragePath(path, i);
-        currentStoragePath = storagePath;
-        currentUri = _storageUri(storagePath);
-        await _uploadObject(
-          uri: currentUri,
-          storagePath: storagePath,
-          bytes: bytes,
-          accessToken: accessToken,
-          contentType: _contentTypeForPath(path),
-        );
+        final uploadUri = _storageUri(storagePath);
+        try {
+          await _networkGuard.execute<void>(
+            operation: () => _executeUploadObject(
+              uri: uploadUri,
+              storagePath: storagePath,
+              bytes: bytes,
+              accessToken: accessToken,
+              contentType: _contentTypeForPath(path),
+            ),
+            retryPolicy: RetryPolicy.none,
+            context: 'journey_image_upload',
+            uri: uploadUri,
+            method: 'POST',
+            meta: {
+              'storage_path': storagePath,
+            },
+            accessToken: accessToken,
+          );
+        } on NetworkRequestException catch (error) {
+          if (kDebugMode) {
+            debugPrint('compose: 이미지 업로드 실패 (NetworkRequestException: ${error.type})');
+          }
+          await deleteImages(paths: uploaded, accessToken: accessToken);
+          switch (error.type) {
+            case NetworkErrorType.unauthorized:
+              throw JourneyStorageException(JourneyStorageError.unauthorized);
+            case NetworkErrorType.network:
+            case NetworkErrorType.timeout:
+            case NetworkErrorType.serverUnavailable:
+              throw JourneyStorageException(JourneyStorageError.network);
+            case NetworkErrorType.serverRejected:
+            case NetworkErrorType.invalidPayload:
+            case NetworkErrorType.missingConfig:
+            case NetworkErrorType.unknown:
+              throw JourneyStorageException(JourneyStorageError.uploadFailed);
+          }
+        }
         uploaded.add(storagePath);
         if (kDebugMode) {
           debugPrint('compose: 이미지 업로드 완료 ($storagePath)');
@@ -1421,39 +1449,6 @@ class SupabaseJourneyStorageRepository implements JourneyStorageRepository {
       }
       await deleteImages(paths: uploaded, accessToken: accessToken);
       rethrow;
-    } on SocketException catch (error) {
-      if (kDebugMode) {
-        debugPrint('compose: 이미지 업로드 실패 (SocketException)');
-      }
-      if (currentUri != null) {
-        await _errorLogger.logException(
-          context: 'journey_image_upload',
-          uri: currentUri,
-          method: 'POST',
-          error: error,
-          meta: {
-            'storage_path': currentStoragePath,
-          },
-          accessToken: accessToken,
-        );
-      }
-      await deleteImages(paths: uploaded, accessToken: accessToken);
-      throw JourneyStorageException(JourneyStorageError.network);
-    } on HttpException catch (error) {
-      if (currentUri != null) {
-        await _errorLogger.logException(
-          context: 'journey_image_upload',
-          uri: currentUri,
-          method: 'POST',
-          error: error,
-          meta: {
-            'storage_path': currentStoragePath,
-          },
-          accessToken: accessToken,
-        );
-      }
-      await deleteImages(paths: uploaded, accessToken: accessToken);
-      throw JourneyStorageException(JourneyStorageError.network);
     } on FileSystemException {
       if (kDebugMode) {
         debugPrint('compose: 이미지 업로드 실패 (FileSystemException)');
@@ -1541,7 +1536,7 @@ class SupabaseJourneyStorageRepository implements JourneyStorageRepository {
     }
   }
 
-  Future<void> _uploadObject({
+  Future<void> _executeUploadObject({
     required Uri uri,
     required String storagePath,
     required List<int> bytes,
@@ -1571,7 +1566,11 @@ class SupabaseJourneyStorageRepository implements JourneyStorageRepository {
         },
         accessToken: accessToken,
       );
-      throw JourneyStorageException(JourneyStorageError.uploadFailed);
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'journey_image_upload',
+      );
     }
   }
 

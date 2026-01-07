@@ -99,9 +99,19 @@ POST/커밋 액션은 중복 전송 방지를 위해 **RetryPolicy.none** 유지
 
 | # | 메소드명 | RPC 이름 | NetworkGuard | RetryPolicy | 파일 |
 |---|---------|---------|--------------|-------------|------|
-| 5 | logError | log_client_error | ✅ | none | lib/core/logging/client_error_log_repository.dart:20 |
+| 5 | logError | log_client_error | ✅ | none | lib/core/logging/client_error_log_repository.dart:25 |
 
-**참고:** 에러 로깅 실패 시 무한 재귀 방지를 위해 ServerErrorLogger 호출 금지
+### Server Error Logger (1개)
+
+| # | 메소드명 | RPC 이름 | NetworkGuard | RetryPolicy | 파일 |
+|---|---------|---------|--------------|-------------|------|
+| 6 | _logToServer | log_client_error | ✅ | none | lib/core/logging/server_error_logger.dart:75 |
+
+**중요 (재귀 방지 원칙):**
+- ClientErrorLogRepository: `NetworkGuard(errorLogger: null)` 사용
+- ServerErrorLogger: `NetworkGuard(errorLogger: null)` 사용
+- 에러 로깅 인프라는 반드시 errorLogger=null Guard를 사용하여 **재귀 로깅 원천 차단**
+- 로깅 실패 시 조용히 swallow 처리 (앱 UX/플로우 영향 0)
 
 ---
 

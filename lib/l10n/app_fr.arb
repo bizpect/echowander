@@ -66,6 +66,14 @@
   "languagePortuguese": "Portugais",
   "languageChinese": "Chinois",
   "composeTitle": "Écrire un message",
+  "composeWizardStep1Title": "Quel message pour ce voyage ?",
+  "composeWizardStep1Subtitle": "Écrivez une phrase pour lancer le relais.",
+  "composeWizardStep2Title": "À combien de personnes l’envoyer ?",
+  "composeWizardStep2Subtitle": "Choisissez entre 1 et 5.",
+  "composeWizardStep3Title": "Une photo à ajouter ?",
+  "composeWizardStep3Subtitle": "Jusqu’à 3 photos. Vous pouvez aussi envoyer sans photo.",
+  "composeWizardBack": "Retour",
+  "composeWizardNext": "Suivant",
   "composeLabel": "Message",
   "composeHint": "Partagez vos pensées...",
   "composeCharacterCount": "{current}/{total}",
@@ -268,5 +276,6 @@
   "errorServerUnavailable": "Le serveur est temporairement indisponible. Veuillez réessayer plus tard.",
   "errorUnauthorized": "Veuillez vous reconnecter.",
   "errorRetry": "Réessayer",
-  "errorCancel": "Annuler"
+  "errorCancel": "Annuler",
+  "errorAuthRefreshFailed": "Le réseau est instable. Veuillez réessayer dans un moment."
 }

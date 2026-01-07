@@ -195,6 +195,30 @@ class AppLocalizationsKo extends AppLocalizations {
   String get composeTitle => '메시지 작성';
 
   @override
+  String get composeWizardStep1Title => '어떤 내용으로 여정을 보낼까요?';
+
+  @override
+  String get composeWizardStep1Subtitle => '릴레이를 시작할 한 줄을 적어주세요.';
+
+  @override
+  String get composeWizardStep2Title => '몇 명에게 떨어뜨릴까요?';
+
+  @override
+  String get composeWizardStep2Subtitle => '1~5명 중에서 선택할 수 있어요.';
+
+  @override
+  String get composeWizardStep3Title => '같이 보낼 사진이 있으신가요?';
+
+  @override
+  String get composeWizardStep3Subtitle => '사진은 최대 3장, 없으면 바로 보내도 돼요.';
+
+  @override
+  String get composeWizardBack => '이전';
+
+  @override
+  String get composeWizardNext => '다음';
+
+  @override
   String get composeLabel => '메시지';
 
   @override
@@ -749,4 +773,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get errorCancel => '취소';
+
+  @override
+  String get errorAuthRefreshFailed => '네트워크가 불안정합니다. 잠시 후 다시 시도해 주세요.';
 }
