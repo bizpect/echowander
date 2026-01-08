@@ -9,12 +9,12 @@ import 'session_state.dart';
 const _logPrefix = '[AuthExecutor]';
 
 /// JWT 만료 여부 확인 유틸
-class _JwtUtils {
-  /// JWT가 만료되었는지 확인 (skew: 만료 N초 전부터 만료로 간주)
-  static bool isExpired(String jwt, {int skewSeconds = 30}) {
+class JwtUtils {
+  /// JWT 만료까지 남은 초 반환 (음수: 이미 만료됨, null: 파싱 실패)
+  static int? getSecondsUntilExpiry(String jwt) {
     try {
       final parts = jwt.split('.');
-      if (parts.length != 3) return true;
+      if (parts.length != 3) return null;
 
       final payload = parts[1];
       final normalized = base64Url.normalize(payload);
@@ -22,24 +22,49 @@ class _JwtUtils {
       final map = jsonDecode(decoded) as Map<String, dynamic>;
       final exp = (map['exp'] as num?)?.toInt();
 
-      if (exp == null) return true;
+      if (exp == null) return null;
 
       final nowSec = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
-      final isExpired = nowSec >= (exp - skewSeconds);
-
-      if (kDebugMode && isExpired) {
-        final expTime = DateTime.fromMillisecondsSinceEpoch(exp * 1000, isUtc: true);
-        final nowTime = DateTime.now().toUtc();
-        debugPrint('$_logPrefix JWT 만료 감지: exp=$expTime, now=$nowTime');
-      }
-
-      return isExpired;
+      return exp - nowSec;
     } catch (e) {
       if (kDebugMode) {
         debugPrint('$_logPrefix JWT 파싱 실패: $e');
       }
-      return true; // 파싱 실패 시 만료로 간주
+      return null;
     }
+  }
+
+  /// JWT가 만료되었는지 확인 (skew: 만료 N초 전부터 만료로 간주)
+  static bool isExpired(String jwt, {int skewSeconds = 30}) {
+    final secondsLeft = getSecondsUntilExpiry(jwt);
+    if (secondsLeft == null) return true; // 파싱 실패 시 만료로 간주
+
+    final isExpired = secondsLeft <= skewSeconds;
+
+    if (kDebugMode && isExpired) {
+      debugPrint(
+        '$_logPrefix JWT 만료 감지: $secondsLeft초 남음 (skew=$skewSeconds초)',
+      );
+    }
+
+    return isExpired;
+  }
+
+  /// JWT가 만료 임박인지 확인 (threshold초 이내면 true)
+  /// 선제적 refresh를 위한 체크
+  static bool isExpiringSoon(String jwt, {int thresholdSeconds = 60}) {
+    final secondsLeft = getSecondsUntilExpiry(jwt);
+    if (secondsLeft == null) return true; // 파싱 실패 시 갱신 필요로 간주
+
+    final isExpiringSoon = secondsLeft <= thresholdSeconds;
+
+    if (kDebugMode && isExpiringSoon) {
+      debugPrint(
+        '$_logPrefix JWT 만료 임박: $secondsLeft초 남음 (threshold=$thresholdSeconds초)',
+      );
+    }
+
+    return isExpiringSoon;
   }
 }
 
@@ -87,10 +112,12 @@ class AuthExecutor {
       return const AuthExecutorResult.noSession();
     }
 
-    // 2) JWT 만료 사전 점검 (불필요한 401 방지)
-    if (_JwtUtils.isExpired(accessToken)) {
+    // 2) JWT 만료 임박/만료 사전 점검 (선제적 refresh로 401 방지)
+    // verify_jwt=true 환경에서는 만료된 토큰으로 refresh_session 호출 불가
+    // 따라서 만료 "전"에 선제적으로 refresh 수행
+    if (JwtUtils.isExpiringSoon(accessToken, thresholdSeconds: 60)) {
       if (kDebugMode) {
-        debugPrint('$_logPrefix JWT 이미 만료됨 → RPC 호출 전 restoreSession 시도');
+        debugPrint('$_logPrefix JWT 만료 임박/만료 → 선제적 restoreSession 시도');
       }
 
       // 쿨다운 중이면 즉시 transientError 반환 (일시 장애, 로그아웃 아님)
@@ -110,18 +137,20 @@ class AuthExecutor {
       } on RestoreSessionTransientException {
         // 일시 장애: 토큰은 유지됨, 로그아웃 아님
         if (kDebugMode) {
-          debugPrint('$_logPrefix 사전 restoreSession 일시 장애 → transientError');
+          debugPrint('$_logPrefix 선제 restoreSession 일시 장애 → transientError');
         }
         return const AuthExecutorResult.transientError();
       } on RestoreSessionFailedException {
         // 인증 실패 확정: 토큰 만료
         if (kDebugMode) {
-          debugPrint('$_logPrefix 사전 restoreSession 인증 실패 → unauthorized');
+          debugPrint('$_logPrefix 선제 restoreSession 인증 실패 → unauthorized');
         }
         return const AuthExecutorResult.unauthorized();
       } catch (error) {
         if (kDebugMode) {
-          debugPrint('$_logPrefix 사전 restoreSession 기타 오류: $error → transientError');
+          debugPrint(
+            '$_logPrefix 선제 restoreSession 기타 오류: $error → transientError',
+          );
         }
         return const AuthExecutorResult.transientError();
       }
@@ -218,7 +247,8 @@ sealed class AuthExecutorResult<T> {
   const factory AuthExecutorResult.unauthorized() = AuthExecutorUnauthorized<T>;
 
   /// 일시 장애 (네트워크/서버 문제, 로그아웃 아님)
-  const factory AuthExecutorResult.transientError() = AuthExecutorTransientError<T>;
+  const factory AuthExecutorResult.transientError() =
+      AuthExecutorTransientError<T>;
 }
 
 /// 성공 결과

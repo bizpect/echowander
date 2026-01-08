@@ -40,9 +40,9 @@ class AuthRpcLoginResult {
   final AuthRpcLoginError? error;
 
   const AuthRpcLoginResult.success(SessionTokens tokens)
-      : this._(tokens: tokens, error: null);
+    : this._(tokens: tokens, error: null);
   const AuthRpcLoginResult.failure(AuthRpcLoginError error)
-      : this._(tokens: null, error: error);
+    : this._(tokens: null, error: error);
 }
 
 /// refresh/validate 결과 타입: 인증 실패 확정 vs 일시 장애 구분
@@ -98,12 +98,16 @@ class DevAuthRpcClient implements AuthRpcClient {
 
 class HttpAuthRpcClient implements AuthRpcClient {
   HttpAuthRpcClient({required String baseUrl, required AppConfig config})
-      : _baseUri = Uri.parse(baseUrl.endsWith('/') ? baseUrl : '$baseUrl/'),
-        _errorLogger = ServerErrorLogger(config: config),
-        _networkGuard = NetworkGuard(errorLogger: ServerErrorLogger(config: config)),
-        _client = HttpClient();
+    : _baseUri = Uri.parse(baseUrl.endsWith('/') ? baseUrl : '$baseUrl/'),
+      _config = config,
+      _errorLogger = ServerErrorLogger(config: config),
+      _networkGuard = NetworkGuard(
+        errorLogger: ServerErrorLogger(config: config),
+      ),
+      _client = HttpClient();
 
   final Uri _baseUri;
+  final AppConfig _config;
   final ServerErrorLogger _errorLogger;
   final NetworkGuard _networkGuard;
   final HttpClient _client;
@@ -118,7 +122,12 @@ class HttpAuthRpcClient implements AuthRpcClient {
     required String context,
   }) async {
     final request = await _client.postUrl(uri);
-    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
+    // Supabase Edge Functions 필수 헤더: apikey
+    request.headers.set('apikey', _config.supabaseAnonKey);
     if (token.isNotEmpty) {
       request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
     }
@@ -196,7 +205,9 @@ class HttpAuthRpcClient implements AuthRpcClient {
     } on NetworkRequestException catch (error) {
       // 에러 유형별 로깅 (401은 정상적인 "토큰 만료" 상황)
       if (kDebugMode) {
-        debugPrint('$_logPrefix validateSession 실패: ${error.type} (statusCode=${error.statusCode})');
+        debugPrint(
+          '$_logPrefix validateSession 실패: ${error.type} (statusCode=${error.statusCode})',
+        );
       }
       // 401/403은 "토큰 만료/무효"로 간주 → false 반환 (refreshSession으로 진행)
       // 다른 에러도 false 반환 (refreshSession에서 다시 시도)
@@ -213,14 +224,14 @@ class HttpAuthRpcClient implements AuthRpcClient {
     final uri = _resolve('refresh_session');
 
     try {
-      // 중요: refresh 요청은 Authorization 헤더에 accessToken을 보내지 않음
-      // Supabase Edge Functions가 만료된 JWT로 인해 401을 반환하는 것을 방지
-      // refresh_session 엔드포인트는 body의 refreshToken만 사용함
+      // verify_jwt=true 환경: Authorization 헤더에 accessToken 필수
+      // 단, 만료된 토큰으로는 게이트웨이 통과 불가 → 만료 "전"에 호출해야 함
+      // refresh_session 함수는 body의 refreshToken으로 새 토큰 발급
       final result = await _networkGuard.execute<Map<String, dynamic>>(
         operation: () => _executePostJson(
           uri: uri,
           body: {'refreshToken': tokens.refreshToken},
-          token: '', // Authorization 헤더 생략 (만료된 accessToken 전송 방지)
+          token: tokens.accessToken, // verify_jwt=true 게이트 통과용
           context: 'auth_refresh_session',
         ),
         retryPolicy: RetryPolicy.short,
@@ -228,7 +239,7 @@ class HttpAuthRpcClient implements AuthRpcClient {
         uri: uri,
         method: 'POST',
         meta: const {},
-        accessToken: '', // 로깅용도 빈 문자열
+        accessToken: tokens.accessToken,
       );
 
       if (kDebugMode) {
@@ -243,11 +254,16 @@ class HttpAuthRpcClient implements AuthRpcClient {
       );
     } on NetworkRequestException catch (error) {
       // 에러 타입에 따라 "인증 실패 확정" vs "일시 장애" 분류
+      // 응답 바디에서 에러 코드 추출 (민감정보 제외)
+      final errorCode = _extractErrorCode(error.message ?? '');
       switch (error.type) {
         case NetworkErrorType.unauthorized:
           // 401/403: refresh 토큰 만료/무효 → 인증 실패 확정
           if (kDebugMode) {
-            debugPrint('$_logPrefix refreshSession 인증 실패 확정 (401/403)');
+            debugPrint(
+              '$_logPrefix refreshSession 인증 실패 확정 '
+              '(status=${error.statusCode}, error=$errorCode)',
+            );
           }
           return const RefreshResult.authFailed();
 
@@ -256,7 +272,10 @@ class HttpAuthRpcClient implements AuthRpcClient {
         case NetworkErrorType.serverUnavailable:
           // 네트워크/서버 일시 장애 → 토큰 유지
           if (kDebugMode) {
-            debugPrint('$_logPrefix refreshSession 일시 장애 (${error.type})');
+            debugPrint(
+              '$_logPrefix refreshSession 일시 장애 '
+              '(type=${error.type}, status=${error.statusCode}, error=$errorCode)',
+            );
           }
           return const RefreshResult.transientError();
 
@@ -266,7 +285,10 @@ class HttpAuthRpcClient implements AuthRpcClient {
         case NetworkErrorType.unknown:
           // 기타 오류: 일시 장애로 처리 (로그아웃 금지)
           if (kDebugMode) {
-            debugPrint('$_logPrefix refreshSession 기타 오류 (${error.type}) → 일시 장애로 처리');
+            debugPrint(
+              '$_logPrefix refreshSession 기타 오류 '
+              '(type=${error.type}, status=${error.statusCode}, error=$errorCode) → 일시 장애로 처리',
+            );
           }
           return const RefreshResult.transientError();
       }
@@ -303,16 +325,22 @@ class HttpAuthRpcClient implements AuthRpcClient {
         case NetworkErrorType.timeout:
           return const AuthRpcLoginResult.failure(AuthRpcLoginError.network);
         case NetworkErrorType.unauthorized:
-          return const AuthRpcLoginResult.failure(AuthRpcLoginError.invalidToken);
+          return const AuthRpcLoginResult.failure(
+            AuthRpcLoginError.invalidToken,
+          );
         case NetworkErrorType.invalidPayload:
-          return const AuthRpcLoginResult.failure(AuthRpcLoginError.missingPayload);
+          return const AuthRpcLoginResult.failure(
+            AuthRpcLoginError.missingPayload,
+          );
         case NetworkErrorType.serverUnavailable:
         case NetworkErrorType.serverRejected:
           // 서버 거부 메시지에서 상세 에러 코드 추출 시도
           final errorCode = _extractErrorCode(error.message ?? '');
           return AuthRpcLoginResult.failure(_mapLoginError(errorCode));
         case NetworkErrorType.missingConfig:
-          return const AuthRpcLoginResult.failure(AuthRpcLoginError.serverMisconfigured);
+          return const AuthRpcLoginResult.failure(
+            AuthRpcLoginError.serverMisconfigured,
+          );
         case NetworkErrorType.unknown:
           return const AuthRpcLoginResult.failure(AuthRpcLoginError.unknown);
       }
@@ -326,8 +354,15 @@ class HttpAuthRpcClient implements AuthRpcClient {
     required String idToken,
   }) async {
     final request = await _client.postUrl(uri);
-    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
-    request.add(utf8.encode(jsonEncode({'provider': provider, 'idToken': idToken})));
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
+    // Supabase Edge Functions 필수 헤더: apikey
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.add(
+      utf8.encode(jsonEncode({'provider': provider, 'idToken': idToken})),
+    );
 
     final response = await request.close();
     final payloadText = await response.transform(utf8.decoder).join();
