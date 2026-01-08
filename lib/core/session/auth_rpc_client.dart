@@ -114,6 +114,65 @@ class HttpAuthRpcClient implements AuthRpcClient {
 
   Uri _resolve(String path) => _baseUri.resolve(path);
 
+  /// Supabase Auth REST refresh 요청 실제 실행 (NetworkGuard가 호출)
+  Future<Map<String, dynamic>> _executeAuthRefresh({
+    required Uri uri,
+    required String refreshToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
+    // Supabase Auth REST 필수 헤더
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    // Authorization: Bearer anonKey (권장 안전장치)
+    request.headers.set(
+      HttpHeaders.authorizationHeader,
+      'Bearer ${_config.supabaseAnonKey}',
+    );
+    request.add(utf8.encode(jsonEncode({'refresh_token': refreshToken})));
+
+    final response = await request.close();
+    final payloadText = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      await _errorLogger.logHttpFailure(
+        context: 'auth_refresh_session',
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: payloadText,
+        meta: const {},
+        accessToken: '', // 민감정보 제외
+      );
+
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: payloadText,
+        context: 'auth_refresh_session',
+      );
+    }
+
+    try {
+      return jsonDecode(payloadText) as Map<String, dynamic>;
+    } on FormatException catch (error) {
+      await _errorLogger.logException(
+        context: 'auth_refresh_session',
+        uri: uri,
+        method: 'POST',
+        error: error,
+        errorMessage: payloadText,
+        meta: const {},
+        accessToken: '',
+      );
+      throw const NetworkRequestException(
+        type: NetworkErrorType.invalidPayload,
+        message: 'Invalid JSON response',
+      );
+    }
+  }
+
   /// POST JSON 요청 실제 실행 (NetworkGuard가 호출)
   Future<Map<String, dynamic>> _executePostJson({
     required Uri uri,
@@ -218,39 +277,55 @@ class HttpAuthRpcClient implements AuthRpcClient {
   @override
   Future<RefreshResult> refreshSession(SessionTokens tokens) async {
     if (kDebugMode) {
-      debugPrint('$_logPrefix refreshSession 시작');
+      debugPrint('$_logPrefix refreshSession 시작 (Supabase Auth REST)');
     }
 
-    final uri = _resolve('refresh_session');
+    // Supabase Auth REST endpoint 사용 (verify_jwt 설정과 무관)
+    final supabaseUrl = _config.supabaseUrl;
+    if (supabaseUrl.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix refreshSession 실패: supabaseUrl 없음');
+      }
+      return const RefreshResult.transientError();
+    }
+
+    final uri = Uri.parse(
+      supabaseUrl,
+    ).resolve('/auth/v1/token?grant_type=refresh_token');
 
     try {
-      // verify_jwt=true 환경: Authorization 헤더에 accessToken 필수
-      // 단, 만료된 토큰으로는 게이트웨이 통과 불가 → 만료 "전"에 호출해야 함
-      // refresh_session 함수는 body의 refreshToken으로 새 토큰 발급
+      // Supabase Auth REST: refresh_token 기반, 만료된 accessToken 불필요
       final result = await _networkGuard.execute<Map<String, dynamic>>(
-        operation: () => _executePostJson(
-          uri: uri,
-          body: {'refreshToken': tokens.refreshToken},
-          token: tokens.accessToken, // verify_jwt=true 게이트 통과용
-          context: 'auth_refresh_session',
-        ),
+        operation: () =>
+            _executeAuthRefresh(uri: uri, refreshToken: tokens.refreshToken),
         retryPolicy: RetryPolicy.short,
         context: 'auth_refresh_session',
         uri: uri,
         method: 'POST',
         meta: const {},
-        accessToken: tokens.accessToken,
+        accessToken: '', // 로깅용도 빈 문자열
       );
 
       if (kDebugMode) {
         debugPrint('$_logPrefix refreshSession 성공');
       }
 
+      // 응답 파싱: access_token, refresh_token (null-safe, rotation 대응)
+      final accessToken = result['access_token'] as String?;
+      final refreshToken = result['refresh_token'] as String?;
+
+      if (accessToken == null || accessToken.isEmpty) {
+        if (kDebugMode) {
+          debugPrint('$_logPrefix refreshSession 응답에 access_token 없음');
+        }
+        return const RefreshResult.transientError();
+      }
+
+      // refresh_token이 없으면 기존 토큰 유지 (rotation 미적용 시)
+      final newRefreshToken = refreshToken ?? tokens.refreshToken;
+
       return RefreshResult.success(
-        SessionTokens(
-          accessToken: result['accessToken'] as String,
-          refreshToken: result['refreshToken'] as String,
-        ),
+        SessionTokens(accessToken: accessToken, refreshToken: newRefreshToken),
       );
     } on NetworkRequestException catch (error) {
       // 에러 타입에 따라 "인증 실패 확정" vs "일시 장애" 분류

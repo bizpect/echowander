@@ -305,7 +305,7 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
     state = JourneyComposeState.initial();
   }
 
-  // JWT 만료 시 자동 갱신 후 재시도
+  // Commit 작업: 자동 재시도 금지, 401이면 missingSession 처리
   Future<JourneyCreationResult> _createJourneyWithRetry({
     required String content,
     required String languageTag,
@@ -317,44 +317,15 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
       throw JourneyCreationException(JourneyCreationError.unauthorized);
     }
 
-    try {
-      final journeyRepository = ref.read(journeyRepositoryProvider);
-      return await journeyRepository.createJourney(
-        content: content,
-        languageTag: languageTag,
-        imagePaths: imagePaths,
-        recipientCount: recipientCount,
-        accessToken: accessToken,
-      );
-    } on JourneyCreationException catch (e) {
-      // 401 Unauthorized 에러 시 토큰 갱신 후 재시도
-      if (e.error == JourneyCreationError.unauthorized) {
-        if (kDebugMode) {
-          debugPrint('compose: JWT 만료, 토큰 갱신 시도');
-        }
-        await ref.read(sessionManagerProvider.notifier).restoreSession();
-
-        final newAccessToken = ref.read(sessionManagerProvider).accessToken;
-        if (newAccessToken == null || newAccessToken.isEmpty) {
-          if (kDebugMode) {
-            debugPrint('compose: 토큰 갱신 실패, 재로그인 필요');
-          }
-          rethrow;
-        }
-
-        if (kDebugMode) {
-          debugPrint('compose: 토큰 갱신 성공, 재시도');
-        }
-        final journeyRepository = ref.read(journeyRepositoryProvider);
-        return await journeyRepository.createJourney(
-          content: content,
-          languageTag: languageTag,
-          imagePaths: imagePaths,
-          recipientCount: recipientCount,
-          accessToken: newAccessToken,
-        );
-      }
-      rethrow;
-    }
+    // Commit 작업은 자동 재시도 금지 정책 준수
+    // 401 발생 시 예외를 그대로 전달하여 상위에서 missingSession 처리
+    final journeyRepository = ref.read(journeyRepositoryProvider);
+    return await journeyRepository.createJourney(
+      content: content,
+      languageTag: languageTag,
+      imagePaths: imagePaths,
+      recipientCount: recipientCount,
+      accessToken: accessToken,
+    );
   }
 }

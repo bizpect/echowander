@@ -113,8 +113,8 @@ class AuthExecutor {
     }
 
     // 2) JWT 만료 임박/만료 사전 점검 (선제적 refresh로 401 방지)
-    // verify_jwt=true 환경에서는 만료된 토큰으로 refresh_session 호출 불가
-    // 따라서 만료 "전"에 선제적으로 refresh 수행
+    // Supabase Auth REST endpoint 사용으로 만료 후에도 refresh 가능하지만,
+    // 선제적 refresh로 불필요한 401 방지
     if (JwtUtils.isExpiringSoon(accessToken, thresholdSeconds: 60)) {
       if (kDebugMode) {
         debugPrint('$_logPrefix JWT 만료 임박/만료 → 선제적 restoreSession 시도');
