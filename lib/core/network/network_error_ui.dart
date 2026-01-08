@@ -20,6 +20,8 @@ class NetworkErrorUI {
         return l10n.errorTimeout;
       case NetworkErrorType.unauthorized:
         return l10n.errorUnauthorized;
+      case NetworkErrorType.forbidden:
+        return l10n.errorForbiddenMessage;
       case NetworkErrorType.serverUnavailable:
         return l10n.errorServerUnavailable;
       case NetworkErrorType.invalidPayload:

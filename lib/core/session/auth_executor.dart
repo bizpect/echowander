@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../network/network_error.dart';
 import 'session_manager.dart';
 import 'session_state.dart';
 
@@ -203,6 +204,14 @@ class AuthExecutor {
       final result = await operation(accessToken);
       return AuthExecutorResult.success(result);
     } catch (error) {
+      // ✅ forbidden(403, 42501)은 refresh로 해결 불가 → 즉시 반환
+      if (error is NetworkRequestException && error.type == NetworkErrorType.forbidden) {
+        if (kDebugMode) {
+          debugPrint('$_logPrefix forbidden(403) 발생 → refresh 불가, 즉시 반환');
+        }
+        rethrow; // forbidden은 그대로 throw (재시도/refresh 금지)
+      }
+
       if (!isUnauthorized(error)) {
         // 401이 아니면 그대로 throw (네트워크 오류 등)
         rethrow;
@@ -245,6 +254,14 @@ class AuthExecutor {
       }
       return AuthExecutorResult.success(result);
     } catch (error) {
+      // ✅ forbidden(403, 42501)은 refresh로 해결 불가 → 즉시 반환
+      if (error is NetworkRequestException && error.type == NetworkErrorType.forbidden) {
+        if (kDebugMode) {
+          debugPrint('$_logPrefix 재시도 후에도 forbidden(403) → 즉시 반환');
+        }
+        rethrow; // forbidden은 그대로 throw (재시도/refresh 금지)
+      }
+
       if (isUnauthorized(error)) {
         if (kDebugMode) {
           debugPrint('$_logPrefix 재시도 후에도 401 → unauthorized');

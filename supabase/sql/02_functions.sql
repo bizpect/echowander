@@ -650,6 +650,7 @@ $$;
 drop function if exists public.list_inbox_journeys(integer, integer);
 
 -- 인박스 조회: journey_recipients 스냅샷 필드 사용 (journeys JOIN 제거, RLS 유지)
+-- SECURITY DEFINER: 함수 내부에서 auth.uid() 필터 강제로 RLS 우회하되 데이터 노출 방지
 create or replace function public.list_inbox_journeys(
   page_size integer,
   page_offset integer
@@ -663,9 +664,15 @@ returns table (
   recipient_status text
 )
 language plpgsql
+security definer
+set search_path = public
 as $$
+declare
+  current_user_id uuid;
 begin
-  if auth.uid() is null then
+  -- ✅ auth.uid() 필터 강제 (데이터 노출 방지)
+  current_user_id := auth.uid();
+  if current_user_id is null then
     raise exception 'unauthorized';
   end if;
 
@@ -678,7 +685,7 @@ begin
     jr.snapshot_image_count as image_count,
     jr.status_code as recipient_status
   from public.journey_recipients jr
-  where jr.recipient_user_id = auth.uid()
+  where jr.recipient_user_id = current_user_id
     -- 스냅샷 필드가 존재하는 경우만 (마이그레이션 이전 데이터 제외)
     and jr.sender_user_id is not null
     -- 숨김 처리된 메시지 제외 (신고 완료 등)
@@ -688,6 +695,10 @@ begin
   offset greatest(coalesce(page_offset, 0), 0);
 end;
 $$;
+
+-- ✅ 권한 최소화: PUBLIC에서 모든 권한 제거, authenticated에게만 EXECUTE 허용
+revoke all on function public.list_inbox_journeys(integer, integer) from public;
+grant execute on function public.list_inbox_journeys(integer, integer) to authenticated;
 
 create or replace function public.list_inbox_journey_images(
   target_journey_id uuid

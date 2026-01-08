@@ -9,8 +9,11 @@ enum NetworkErrorType {
   /// 요청 타임아웃
   timeout,
 
-  /// 인증 실패 (401/403)
+  /// 인증 실패 (401) - 세션 만료/토큰 무효
   unauthorized,
+
+  /// 권한 거부 (403, 42501) - 권한/정책 문제, refresh로 해결 불가
+  forbidden,
 
   /// 서버 에러 (5xx)
   serverUnavailable,
@@ -99,8 +102,16 @@ class NetworkRequestException implements Exception {
 
     // HTTP 상태 코드 기반 분류
     if (statusCode != null) {
-      if (statusCode == HttpStatus.unauthorized ||
-          statusCode == HttpStatus.forbidden) {
+      // ✅ 403 = forbidden (권한/정책 문제, refresh로 해결 불가)
+      if (statusCode == HttpStatus.forbidden) {
+        return NetworkRequestException(
+          type: NetworkErrorType.forbidden,
+          statusCode: statusCode,
+          message: responseBody,
+        );
+      }
+      // ✅ 401만 unauthorized (세션 만료/토큰 무효)
+      if (statusCode == HttpStatus.unauthorized) {
         return NetworkRequestException(
           type: NetworkErrorType.unauthorized,
           statusCode: statusCode,

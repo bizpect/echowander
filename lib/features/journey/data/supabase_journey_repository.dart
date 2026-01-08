@@ -97,6 +97,8 @@ class SupabaseJourneyRepository implements JourneyRepository {
           throw JourneyCreationException(JourneyCreationError.network);
         case NetworkErrorType.unauthorized:
           throw JourneyCreationException(JourneyCreationError.unauthorized);
+        case NetworkErrorType.forbidden:
+          throw JourneyCreationException(JourneyCreationError.serverRejected);
         case NetworkErrorType.serverUnavailable:
           throw JourneyCreationException(JourneyCreationError.serverRejected);
         case NetworkErrorType.invalidPayload:
@@ -350,6 +352,8 @@ class SupabaseJourneyRepository implements JourneyRepository {
           throw JourneyListException(JourneyListError.network);
         case NetworkErrorType.unauthorized:
           throw JourneyListException(JourneyListError.unauthorized);
+        case NetworkErrorType.forbidden:
+          throw JourneyListException(JourneyListError.unauthorized);
         case NetworkErrorType.invalidPayload:
           throw JourneyListException(JourneyListError.invalidPayload);
         case NetworkErrorType.serverUnavailable:
@@ -488,6 +492,9 @@ class SupabaseJourneyRepository implements JourneyRepository {
           throw JourneyInboxException(JourneyInboxError.network);
         case NetworkErrorType.unauthorized:
           throw JourneyInboxException(JourneyInboxError.unauthorized);
+        case NetworkErrorType.forbidden:
+          // ✅ 403(42501) = 권한/정책 문제, refresh로 해결 불가
+          throw JourneyInboxException(JourneyInboxError.forbidden);
         case NetworkErrorType.invalidPayload:
           throw JourneyInboxException(JourneyInboxError.invalidPayload);
         case NetworkErrorType.serverUnavailable:
@@ -692,6 +699,8 @@ class SupabaseJourneyRepository implements JourneyRepository {
           throw JourneyActionException(JourneyActionError.network);
         case NetworkErrorType.unauthorized:
           throw JourneyActionException(JourneyActionError.unauthorized);
+        case NetworkErrorType.forbidden:
+          throw JourneyActionException(JourneyActionError.unauthorized);
         case NetworkErrorType.invalidPayload:
           throw JourneyActionException(JourneyActionError.invalidPayload);
         case NetworkErrorType.serverUnavailable:
@@ -836,6 +845,8 @@ class SupabaseJourneyRepository implements JourneyRepository {
           throw JourneyActionException(JourneyActionError.network);
         case NetworkErrorType.unauthorized:
           throw JourneyActionException(JourneyActionError.unauthorized);
+        case NetworkErrorType.forbidden:
+          throw JourneyActionException(JourneyActionError.unauthorized);
         case NetworkErrorType.invalidPayload:
           throw JourneyActionException(JourneyActionError.invalidPayload);
         case NetworkErrorType.serverUnavailable:
@@ -979,6 +990,8 @@ class SupabaseJourneyRepository implements JourneyRepository {
           throw JourneyResultReportException(JourneyResultReportError.network);
         case NetworkErrorType.unauthorized:
           throw JourneyResultReportException(JourneyResultReportError.unauthorized);
+        case NetworkErrorType.forbidden:
+          throw JourneyResultReportException(JourneyResultReportError.unauthorized);
         case NetworkErrorType.invalidPayload:
           throw JourneyResultReportException(JourneyResultReportError.invalidPayload);
         case NetworkErrorType.serverUnavailable:
@@ -1025,6 +1038,8 @@ class SupabaseJourneyRepository implements JourneyRepository {
         case NetworkErrorType.timeout:
           throw JourneyProgressException(JourneyProgressError.network);
         case NetworkErrorType.unauthorized:
+          throw JourneyProgressException(JourneyProgressError.unauthorized);
+        case NetworkErrorType.forbidden:
           throw JourneyProgressException(JourneyProgressError.unauthorized);
         case NetworkErrorType.invalidPayload:
           throw JourneyProgressException(JourneyProgressError.invalidPayload);
@@ -1133,6 +1148,8 @@ class SupabaseJourneyRepository implements JourneyRepository {
         case NetworkErrorType.timeout:
           throw JourneyResultException(JourneyResultError.network);
         case NetworkErrorType.unauthorized:
+          throw JourneyResultException(JourneyResultError.unauthorized);
+        case NetworkErrorType.forbidden:
           throw JourneyResultException(JourneyResultError.unauthorized);
         case NetworkErrorType.invalidPayload:
           throw JourneyResultException(JourneyResultError.invalidPayload);
@@ -1488,6 +1505,8 @@ class SupabaseJourneyStorageRepository implements JourneyStorageRepository {
           await deleteImages(paths: uploaded, accessToken: accessToken);
           switch (error.type) {
             case NetworkErrorType.unauthorized:
+              throw JourneyStorageException(JourneyStorageError.unauthorized);
+            case NetworkErrorType.forbidden:
               throw JourneyStorageException(JourneyStorageError.unauthorized);
             case NetworkErrorType.network:
             case NetworkErrorType.timeout:

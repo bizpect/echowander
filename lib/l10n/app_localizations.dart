@@ -415,6 +415,30 @@ abstract class AppLocalizations {
   /// **'Your session expired. Please sign in again.'**
   String get errorSessionExpired;
 
+  /// No description provided for @errorForbiddenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission Required'**
+  String get errorForbiddenTitle;
+
+  /// No description provided for @errorForbiddenMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have permission to perform this action. Please check your login status or try again later.'**
+  String get errorForbiddenMessage;
+
+  /// No description provided for @journeyInboxForbiddenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot Load Inbox'**
+  String get journeyInboxForbiddenTitle;
+
+  /// No description provided for @journeyInboxForbiddenMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have permission to view the inbox. If the problem persists, please sign in again.'**
+  String get journeyInboxForbiddenMessage;
+
   /// No description provided for @languageSectionTitle.
   ///
   /// In en, this message translates to:

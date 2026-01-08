@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -223,12 +224,45 @@ class NetworkGuard {
     );
   }
 
+  /// Supabase 에러 응답에서 error_code 추출
+  String? _parseSupabaseErrorCode(String responseBody) {
+    try {
+      final payload = jsonDecode(responseBody) as Map<String, dynamic>;
+      // Supabase 응답 형식: error_code 우선
+      final errorCode = payload['error_code'];
+      if (errorCode is String) {
+        return errorCode;
+      }
+      // Postgres 에러 형식: code 필드
+      final code = payload['code'];
+      if (code is String) {
+        return code;
+      }
+      // 표준 OAuth2 형식: error
+      final error = payload['error'];
+      if (error is String) {
+        return error;
+      }
+      // Postgres 에러 메시지에서 code 추출 시도
+      final message = payload['message'] as String?;
+      if (message != null) {
+        // "permission denied for table journey_recipients" 같은 메시지에서 추출
+        if (message.toLowerCase().contains('permission denied')) {
+          return '42501';
+        }
+      }
+    } on FormatException {
+      return null;
+    }
+    return null;
+  }
+
   /// HTTP 응답 상태 코드를 NetworkRequestException으로 변환
   NetworkRequestException statusCodeToException({
     required int statusCode,
     required String responseBody,
     String? context,
-    // 응답 파싱 결과 (SSOT)
+    // 응답 파싱 결과 (SSOT) - 제공되면 사용, 없으면 내부에서 파싱
     String? rawBody,
     String? parsedErrorCode,
     String? parsedErrorDescription,
@@ -237,23 +271,44 @@ class NetworkGuard {
     bool? isEmpty,
     String? endpoint,
   }) {
+    // ✅ parsedErrorCode가 없으면 Supabase 에러 응답에서 추출
+    final errorCode = parsedErrorCode ?? _parseSupabaseErrorCode(responseBody);
+    final errorDesc = parsedErrorDescription;
+
     // 정규화된 safe 메시지 생성
-    final safeMessage = parsedErrorCode != null
-        ? 'status=$statusCode error=$parsedErrorCode${parsedErrorDescription != null ? " desc=$parsedErrorDescription" : ""}'
+    final safeMessage = errorCode != null
+        ? 'status=$statusCode error=$errorCode${errorDesc != null ? " desc=$errorDesc" : ""}'
         : (isHtml == true
             ? 'status=$statusCode html_response'
             : (isEmpty == true
                 ? 'status=$statusCode empty_response'
                 : 'status=$statusCode response_length=${responseBody.length}'));
 
-    if (statusCode == HttpStatus.unauthorized || statusCode == HttpStatus.forbidden) {
+    // ✅ 403(42501) = forbidden으로 분리 (권한/정책 문제, refresh로 해결 불가)
+    if (statusCode == HttpStatus.forbidden) {
+      return NetworkRequestException(
+        type: NetworkErrorType.forbidden,
+        statusCode: statusCode,
+        message: safeMessage,
+        rawBody: rawBody ?? responseBody,
+        parsedErrorCode: errorCode,
+        parsedErrorDescription: errorDesc,
+        contentType: contentType,
+        isHtml: isHtml,
+        isEmpty: isEmpty,
+        endpoint: endpoint,
+      );
+    }
+
+    // ✅ 401만 unauthorized (세션 만료/토큰 무효)
+    if (statusCode == HttpStatus.unauthorized) {
       return NetworkRequestException(
         type: NetworkErrorType.unauthorized,
         statusCode: statusCode,
         message: safeMessage,
         rawBody: rawBody ?? responseBody,
-        parsedErrorCode: parsedErrorCode,
-        parsedErrorDescription: parsedErrorDescription,
+        parsedErrorCode: errorCode,
+        parsedErrorDescription: errorDesc,
         contentType: contentType,
         isHtml: isHtml,
         isEmpty: isEmpty,
@@ -267,8 +322,8 @@ class NetworkGuard {
         statusCode: statusCode,
         message: safeMessage,
         rawBody: rawBody ?? responseBody,
-        parsedErrorCode: parsedErrorCode,
-        parsedErrorDescription: parsedErrorDescription,
+        parsedErrorCode: errorCode,
+        parsedErrorDescription: errorDesc,
         contentType: contentType,
         isHtml: isHtml,
         isEmpty: isEmpty,
@@ -282,8 +337,8 @@ class NetworkGuard {
         statusCode: statusCode,
         message: safeMessage,
         rawBody: rawBody ?? responseBody,
-        parsedErrorCode: parsedErrorCode,
-        parsedErrorDescription: parsedErrorDescription,
+        parsedErrorCode: errorCode,
+        parsedErrorDescription: errorDesc,
         contentType: contentType,
         isHtml: isHtml,
         isEmpty: isEmpty,
@@ -296,8 +351,8 @@ class NetworkGuard {
       statusCode: statusCode,
       message: safeMessage,
       rawBody: rawBody ?? responseBody,
-      parsedErrorCode: parsedErrorCode,
-      parsedErrorDescription: parsedErrorDescription,
+      parsedErrorCode: errorCode,
+      parsedErrorDescription: errorDesc,
       contentType: contentType,
       isHtml: isHtml,
       isEmpty: isEmpty,

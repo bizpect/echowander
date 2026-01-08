@@ -12,6 +12,7 @@ import '../domain/journey_repository.dart';
 enum JourneyInboxMessage {
   missingSession,
   loadFailed,
+  forbidden, // 권한 거부 (403, 42501) - 권한/정책 문제
 }
 
 class JourneyInboxState {
@@ -191,7 +192,18 @@ class JourneyInboxController extends Notifier<JourneyInboxState> {
           );
       }
     } on JourneyInboxException catch (error) {
-      // 네트워크 오류 등 401이 아닌 예외
+      // ✅ forbidden은 권한 오류 상태로 처리 (empty-state로 숨기지 않음)
+      if (error.error == JourneyInboxError.forbidden) {
+        if (kDebugMode) {
+          debugPrint('[InboxTrace][Provider] load - forbidden (권한 거부)');
+        }
+        state = state.copyWith(
+          isLoading: false,
+          message: JourneyInboxMessage.forbidden,
+        );
+        return; // 자동 재시도 트리거 금지
+      }
+      // 네트워크 오류 등 기타 예외
       if (kDebugMode) {
         debugPrint('[InboxTrace][Provider] load - JourneyInboxException: ${error.error}');
       }

@@ -10,9 +10,12 @@ import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
+import '../../../core/presentation/scaffolds/main_tab_controller.dart';
+import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/validation/text_rules.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/journey_compose_controller.dart';
+import '../application/journey_list_controller.dart';
 import 'widgets/compose_attachment_grid.dart';
 import 'widgets/compose_bottom_bar.dart';
 import 'widgets/compose_message_card.dart';
@@ -435,12 +438,32 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
           _inlineMessageIsError = false;
           _stepIndex = 2;
         });
+        
+        // router와 controller를 사전에 캡처하여 context 안전성 보장
         final router = GoRouter.of(context);
-        await Future.delayed(const Duration(milliseconds: 650));
-        if (!mounted) {
-          return;
-        }
-        router.go(AppRoutes.journeyList);
+        final tabController = ref.read(mainTabControllerProvider.notifier);
+        final listController = ref.read(journeyListControllerProvider.notifier);
+        
+        // 성공 알럿 표시 (확인 클릭 시 보낸메세지 탭으로 이동)
+        await showAppAlertDialog(
+          context: context,
+          title: l10n.composeSubmitSuccess,
+          message: '', // 제목만으로 충분
+          confirmLabel: l10n.composeOk,
+          onConfirm: () {
+            // 알럿이 닫힌 후 실행됨
+            // 작성 화면 닫기 및 보낸메세지 탭으로 이동
+            if (context.canPop()) {
+              context.pop();
+            }
+            // 메인 화면으로 이동 (탭 구조가 있는 경우)
+            router.go(AppRoutes.home);
+            // 보낸메세지 탭 활성화
+            tabController.switchToSentTab();
+            // 보낸메세지 리스트 갱신 (방금 보낸 메시지가 바로 보이도록)
+            listController.load();
+          },
+        );
         return;
     }
   }

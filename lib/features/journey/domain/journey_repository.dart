@@ -120,6 +120,7 @@ class JourneyResultItem {
 enum JourneyInboxError {
   missingConfig,
   unauthorized,
+  forbidden, // 권한 거부 (403, 42501) - 권한/정책 문제, refresh로 해결 불가
   invalidPayload,
   serverRejected,
   network,

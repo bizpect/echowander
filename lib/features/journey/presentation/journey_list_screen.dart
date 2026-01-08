@@ -56,22 +56,31 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
         body: LoadingOverlay(
           isLoading: state.isLoading,
           child: SafeArea(
-            child: state.items.isEmpty
-                ? Center(
-                    child: Padding(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                // Pull-to-Refresh: 보낸메세지 리스트 갱신
+                await controller.load();
+              },
+              child: state.items.isEmpty
+                  ? ListView(
                       padding: EdgeInsets.all(AppSpacing.spacing24),
-                      child: Text(
-                        l10n.journeyListEmpty,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                      ),
-                    ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                    itemCount: state.items.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 16),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        Center(
+                          child: Text(
+                            l10n.journeyListEmpty,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: AppColors.onSurfaceVariant,
+                                ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: state.items.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 16),
                     itemBuilder: (context, index) {
                       final item = state.items[index];
                       final isCompleted = item.statusCode == 'COMPLETED';
@@ -197,6 +206,7 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
                       );
                     },
                   ),
+            ),
           ),
         ),
     );

@@ -402,7 +402,9 @@ class HttpAuthRpcClient implements AuthRpcClient {
 
       switch (error.type) {
         case NetworkErrorType.unauthorized:
-          // 401/403: refresh 토큰 만료/무효 → 인증 실패 확정
+          // 401: refresh 토큰 만료/무효 → 인증 실패 확정
+        case NetworkErrorType.forbidden:
+          // 403: 권한 거부 (refresh로 해결 불가) → 인증 실패 확정
           if (kDebugMode) {
             debugPrint(
               '$_logPrefix refreshSession 인증 실패 확정 '
@@ -527,6 +529,10 @@ class HttpAuthRpcClient implements AuthRpcClient {
         case NetworkErrorType.timeout:
           return const AuthRpcLoginResult.failure(AuthRpcLoginError.network);
         case NetworkErrorType.unauthorized:
+          return const AuthRpcLoginResult.failure(
+            AuthRpcLoginError.invalidToken,
+          );
+        case NetworkErrorType.forbidden:
           return const AuthRpcLoginResult.failure(
             AuthRpcLoginError.invalidToken,
           );

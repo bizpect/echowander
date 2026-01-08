@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -134,7 +135,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (status == SessionStatus.unauthenticated) {
-        return location == AppRoutes.login ? null : AppRoutes.login;
+        // ✅ 로그인 경로는 항상 허용 (redirect 충돌 방지)
+        if (location == AppRoutes.login) {
+          return null; // 이미 로그인 화면이면 stay
+        }
+        // ✅ unauthenticated 상태에서는 반드시 로그인으로 이동
+        if (kDebugMode) {
+          debugPrint('[Router] redirect: status=unauthenticated, from=$location, to=${AppRoutes.login}');
+        }
+        return AppRoutes.login;
       }
 
       if (status == SessionStatus.authenticated) {

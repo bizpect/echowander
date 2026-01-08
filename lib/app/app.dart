@@ -241,6 +241,10 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
           // ✅ authenticated → unauthenticated 전환 시 알럿 표시 후 로그인 화면 이동
           // ✅ SessionMessage consume 방식으로 정확히 1회 보장
           if (next.message == SessionMessage.sessionExpired) {
+            // ✅ router를 사전에 확보 (컨텍스트/redirect 충돌 방지)
+            final router = ref.read(appRouterProvider);
+            final sessionManager = ref.read(sessionManagerProvider.notifier);
+            
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) {
                 return;
@@ -249,9 +253,10 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
               if (l10n == null) {
                 return;
               }
-              final router = ref.read(appRouterProvider);
+              
+              // ✅ 현재 위치 확인 (router 인스턴스 확보 후)
               final currentLocation = router.routerDelegate.currentConfiguration.uri.path;
-              final sessionManager = ref.read(sessionManagerProvider.notifier);
+              
               // 이미 로그인 화면이면 알럿만 표시
               if (currentLocation == AppRoutes.login) {
                 showAppAlertDialog(
@@ -259,6 +264,9 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
                   title: l10n.errorTitle,
                   message: l10n.errorSessionExpired,
                 ).then((_) {
+                  if (!mounted) {
+                    return;
+                  }
                   // ✅ 알럿 표시 후 consume (중복 방지)
                   sessionManager.consumeMessage(SessionMessage.sessionExpired);
                 });
@@ -274,6 +282,10 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
                   }
                   // ✅ 알럿 표시 후 consume (중복 방지)
                   sessionManager.consumeMessage(SessionMessage.sessionExpired);
+                  // ✅ router.go() 호출 보장 (redirect 충돌 방지)
+                  if (kDebugMode) {
+                    debugPrint('[App] sessionExpired confirm -> go(login)');
+                  }
                   router.go(AppRoutes.login);
                 });
               }

@@ -71,6 +71,8 @@ class SupabaseBlockRepository implements BlockRepository {
           throw BlockException(BlockError.network);
         case NetworkErrorType.unauthorized:
           throw BlockException(BlockError.unauthorized);
+        case NetworkErrorType.forbidden:
+          throw BlockException(BlockError.unauthorized);
         case NetworkErrorType.invalidPayload:
           throw BlockException(BlockError.invalidPayload);
         case NetworkErrorType.serverUnavailable:
@@ -185,6 +187,8 @@ class SupabaseBlockRepository implements BlockRepository {
           throw BlockException(BlockError.network);
         case NetworkErrorType.unauthorized:
           throw BlockException(BlockError.unauthorized);
+        case NetworkErrorType.forbidden:
+          throw BlockException(BlockError.unauthorized);
         case NetworkErrorType.invalidPayload:
           throw BlockException(BlockError.invalidPayload);
         case NetworkErrorType.serverUnavailable:
@@ -233,6 +237,8 @@ class SupabaseBlockRepository implements BlockRepository {
         case NetworkErrorType.timeout:
           throw BlockException(BlockError.network);
         case NetworkErrorType.unauthorized:
+          throw BlockException(BlockError.unauthorized);
+        case NetworkErrorType.forbidden:
           throw BlockException(BlockError.unauthorized);
         case NetworkErrorType.invalidPayload:
           throw BlockException(BlockError.invalidPayload);

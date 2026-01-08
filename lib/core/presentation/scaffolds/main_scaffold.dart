@@ -7,8 +7,10 @@ import '../../../features/home/presentation/home_screen.dart';
 import '../../../features/journey/presentation/journey_inbox_screen.dart';
 import '../../../features/journey/presentation/journey_list_screen.dart';
 import '../../../features/journey/application/journey_inbox_controller.dart';
+import '../../../features/journey/application/journey_list_controller.dart';
 import '../../../features/profile/presentation/profile_screen.dart';
 import '../widgets/app_bottom_navigation.dart';
+import 'main_tab_controller.dart';
 
 /// 메인 앱 Scaffold - 5탭 네비게이션 구조
 ///
@@ -22,7 +24,6 @@ class MainScaffold extends ConsumerStatefulWidget {
 
 class _MainScaffoldState extends ConsumerState<MainScaffold>
     with SingleTickerProviderStateMixin {
-  int _currentIndex = AppTab.home.tabIndex;
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
@@ -55,39 +56,43 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
       return;
     }
 
+    final currentIndex = ref.read(mainTabControllerProvider);
+    
     // 다른 탭으로 전환 시에만 fade 애니메이션 실행
-    if (_currentIndex != index) {
+    if (currentIndex != index) {
       _fadeController.forward(from: 0.0);
     }
 
-    setState(() {
-      _currentIndex = index;
-    });
+    // Provider를 통해 탭 인덱스 업데이트
+    ref.read(mainTabControllerProvider.notifier).switchToTab(AppTab.fromIndex(index));
 
     // 탭 전환 시 해당 탭의 데이터 새로고침
     if (index == AppTab.inbox.tabIndex) {
       ref.read(journeyInboxControllerProvider.notifier).load();
+    } else if (index == AppTab.sent.tabIndex) {
+      ref.read(journeyListControllerProvider.notifier).load();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Provider에서 현재 탭 인덱스 구독
+    final currentIndex = ref.watch(mainTabControllerProvider);
+    
     return PopScope(
       // 루트 화면에서 뒤로가기 시 앱 종료 확인
-      canPop: _currentIndex != AppTab.home.tabIndex,
+      canPop: currentIndex != AppTab.home.tabIndex,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop && _currentIndex != AppTab.home.tabIndex) {
+        if (!didPop && currentIndex != AppTab.home.tabIndex) {
           // 다른 탭에서 뒤로가기 시 Home으로 이동
-          setState(() {
-            _currentIndex = AppTab.home.tabIndex;
-          });
+          ref.read(mainTabControllerProvider.notifier).switchToTab(AppTab.home);
         }
       },
       child: Scaffold(
         body: FadeTransition(
           opacity: _fadeAnimation,
           child: IndexedStack(
-            index: _currentIndex,
+            index: currentIndex,
             children: [
               // Home 탭 (Nested Navigator)
               _buildTabNavigator(
@@ -119,7 +124,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
           ),
         ),
         bottomNavigationBar: AppBottomNavigation(
-          currentIndex: _currentIndex,
+          currentIndex: currentIndex,
           onTap: _onTabTapped,
         ),
       ),

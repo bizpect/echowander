@@ -78,6 +78,8 @@ class NotificationPreferenceRepository {
           throw NotificationPreferenceException(NotificationPreferenceError.network);
         case NetworkErrorType.unauthorized:
           throw NotificationPreferenceException(NotificationPreferenceError.unauthorized);
+        case NetworkErrorType.forbidden:
+          throw NotificationPreferenceException(NotificationPreferenceError.unauthorized);
         case NetworkErrorType.invalidPayload:
           throw NotificationPreferenceException(NotificationPreferenceError.invalidPayload);
         case NetworkErrorType.serverUnavailable:
@@ -172,6 +174,8 @@ class NotificationPreferenceRepository {
         case NetworkErrorType.timeout:
           throw NotificationPreferenceException(NotificationPreferenceError.network);
         case NetworkErrorType.unauthorized:
+          throw NotificationPreferenceException(NotificationPreferenceError.unauthorized);
+        case NetworkErrorType.forbidden:
           throw NotificationPreferenceException(NotificationPreferenceError.unauthorized);
         case NetworkErrorType.invalidPayload:
           throw NotificationPreferenceException(NotificationPreferenceError.invalidPayload);

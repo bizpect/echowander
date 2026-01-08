@@ -40,11 +40,13 @@ Future<bool?> showAppConfirmDialog({
 /// 단순 알림 다이얼로그
 ///
 /// 사용자에게 정보를 알리는 다이얼로그입니다.
+/// [onConfirm]이 제공되면 확인 버튼 클릭 시 실행됩니다.
 Future<void> showAppAlertDialog({
   required BuildContext context,
   required String title,
   required String message,
   String confirmLabel = 'OK',
+  VoidCallback? onConfirm,
 }) {
   return showDialog<void>(
     context: context,
@@ -55,7 +57,10 @@ Future<void> showAppAlertDialog({
         content: Text(message),
         actions: [
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              Navigator.of(context).pop();
+              onConfirm?.call();
+            },
             child: Text(confirmLabel),
           ),
         ],

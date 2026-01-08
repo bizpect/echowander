@@ -174,6 +174,20 @@ class AppLocalizationsPt extends AppLocalizations {
       'A sua sessão expirou. Inicie sessão novamente.';
 
   @override
+  String get errorForbiddenTitle => 'Permission Required';
+
+  @override
+  String get errorForbiddenMessage =>
+      'You don\'t have permission to perform this action. Please check your login status or try again later.';
+
+  @override
+  String get journeyInboxForbiddenTitle => 'Cannot Load Inbox';
+
+  @override
+  String get journeyInboxForbiddenMessage =>
+      'You don\'t have permission to view the inbox. If the problem persists, please sign in again.';
+
+  @override
   String get languageSectionTitle => 'Idioma';
 
   @override
@@ -991,6 +1005,20 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get errorSessionExpired => 'Sua sessão expirou. Faça login novamente.';
+
+  @override
+  String get errorForbiddenTitle => 'Permission Required';
+
+  @override
+  String get errorForbiddenMessage =>
+      'You don\'t have permission to perform this action. Please check your login status or try again later.';
+
+  @override
+  String get journeyInboxForbiddenTitle => 'Cannot Load Inbox';
+
+  @override
+  String get journeyInboxForbiddenMessage =>
+      'You don\'t have permission to view the inbox. If the problem persists, please sign in again.';
 
   @override
   String get languageSectionTitle => 'Idioma';

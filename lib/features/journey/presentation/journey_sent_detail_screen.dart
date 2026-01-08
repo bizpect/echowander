@@ -8,6 +8,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../core/ads/rewarded_ad_service.dart';
+import '../../../core/presentation/navigation/tab_navigation_helper.dart';
 import '../../../core/presentation/widgets/app_button.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
@@ -712,11 +713,8 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
   }
 
   void _handleBack(BuildContext context) {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go(AppRoutes.home);
-    }
+    // 보낸 메시지 탭 루트로 복귀
+    TabNavigationHelper.goToSentRoot(context, ref);
   }
 
   Future<void> _handleReportResult(int responseId) async {

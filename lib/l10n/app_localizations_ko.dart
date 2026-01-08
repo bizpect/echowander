@@ -165,6 +165,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get errorSessionExpired => '세션이 만료되었습니다. 다시 로그인해주세요.';
 
   @override
+  String get errorForbiddenTitle => '권한이 필요합니다';
+
+  @override
+  String get errorForbiddenMessage =>
+      '요청한 작업을 수행할 권한이 없습니다. 로그인 상태를 확인하거나 잠시 후 다시 시도해주세요.';
+
+  @override
+  String get journeyInboxForbiddenTitle => '인박스를 불러올 수 없어요';
+
+  @override
+  String get journeyInboxForbiddenMessage =>
+      '인박스를 조회할 권한이 없습니다. 문제가 계속되면 다시 로그인해 주세요.';
+
+  @override
   String get languageSectionTitle => '언어';
 
   @override

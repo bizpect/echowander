@@ -174,6 +174,14 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
           confirmLabel: l10n.composeOk,
         );
         return;
+      case JourneyInboxMessage.forbidden:
+        await showAppAlertDialog(
+          context: context,
+          title: l10n.journeyInboxForbiddenTitle,
+          message: l10n.journeyInboxForbiddenMessage,
+          confirmLabel: l10n.composeOk,
+        );
+        return;
       case JourneyInboxMessage.loadFailed:
         await showAppAlertDialog(
           context: context,

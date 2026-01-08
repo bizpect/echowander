@@ -62,6 +62,8 @@ class SupabaseNotificationRepository implements NotificationRepository {
           throw NotificationInboxException(NotificationInboxError.network);
         case NetworkErrorType.unauthorized:
           throw NotificationInboxException(NotificationInboxError.unauthorized);
+        case NetworkErrorType.forbidden:
+          throw NotificationInboxException(NotificationInboxError.unauthorized);
         case NetworkErrorType.invalidPayload:
           throw NotificationInboxException(NotificationInboxError.invalidPayload);
         case NetworkErrorType.serverUnavailable:
@@ -159,6 +161,8 @@ class SupabaseNotificationRepository implements NotificationRepository {
           throw NotificationInboxException(NotificationInboxError.network);
         case NetworkErrorType.unauthorized:
           throw NotificationInboxException(NotificationInboxError.unauthorized);
+        case NetworkErrorType.forbidden:
+          throw NotificationInboxException(NotificationInboxError.unauthorized);
         case NetworkErrorType.invalidPayload:
           throw NotificationInboxException(NotificationInboxError.invalidPayload);
         case NetworkErrorType.serverUnavailable:
@@ -245,6 +249,8 @@ class SupabaseNotificationRepository implements NotificationRepository {
           throw NotificationInboxException(NotificationInboxError.network);
         case NetworkErrorType.unauthorized:
           throw NotificationInboxException(NotificationInboxError.unauthorized);
+        case NetworkErrorType.forbidden:
+          throw NotificationInboxException(NotificationInboxError.unauthorized);
         case NetworkErrorType.invalidPayload:
           throw NotificationInboxException(NotificationInboxError.invalidPayload);
         case NetworkErrorType.serverUnavailable:
@@ -289,6 +295,8 @@ class SupabaseNotificationRepository implements NotificationRepository {
         case NetworkErrorType.timeout:
           throw NotificationInboxException(NotificationInboxError.network);
         case NetworkErrorType.unauthorized:
+          throw NotificationInboxException(NotificationInboxError.unauthorized);
+        case NetworkErrorType.forbidden:
           throw NotificationInboxException(NotificationInboxError.unauthorized);
         case NetworkErrorType.invalidPayload:
           throw NotificationInboxException(NotificationInboxError.invalidPayload);
