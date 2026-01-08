@@ -134,22 +134,33 @@ class HttpAuthRpcClient implements AuthRpcClient {
     request.add(utf8.encode(jsonEncode({'refresh_token': refreshToken})));
 
     final response = await request.close();
-    final payloadText = await response.transform(utf8.decoder).join();
+    final rawPayloadText = await response.transform(utf8.decoder).join();
+    // 빈 문자열이면 "<empty>"로 대체하여 파싱 시도
+    final payloadText = rawPayloadText.isEmpty ? '<empty>' : rawPayloadText;
 
-    if (response.statusCode != HttpStatus.ok) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      // 비-2xx 응답의 error/error_description 파싱 (토큰 값 제외)
+      final errorCode = _extractErrorCode(payloadText);
+      final errorMessage = _extractErrorMessage(payloadText);
+
+      // 정규화된 메시지 생성 (민감정보 제외)
+      final normalizedMessage = errorCode != null
+          ? 'error=$errorCode${errorMessage != null ? ", description=$errorMessage" : ""}'
+          : (payloadText == '<empty>' ? 'empty_response' : payloadText);
+
       await _errorLogger.logHttpFailure(
         context: 'auth_refresh_session',
         uri: uri,
         method: 'POST',
         statusCode: response.statusCode,
-        errorMessage: payloadText,
+        errorMessage: normalizedMessage, // 정규화된 메시지만 전달
         meta: const {},
         accessToken: '', // 민감정보 제외
       );
 
       throw _networkGuard.statusCodeToException(
         statusCode: response.statusCode,
-        responseBody: payloadText,
+        responseBody: normalizedMessage,
         context: 'auth_refresh_session',
       );
     }
@@ -354,8 +365,40 @@ class HttpAuthRpcClient implements AuthRpcClient {
           }
           return const RefreshResult.transientError();
 
-        case NetworkErrorType.invalidPayload:
         case NetworkErrorType.serverRejected:
+          // 400 응답: errorCode에 따라 분기
+          if (error.statusCode == 400) {
+            // invalid_grant, invalid_request는 refresh 토큰 무효 확정
+            if (errorCode == 'invalid_grant' || errorCode == 'invalid_request') {
+              if (kDebugMode) {
+                debugPrint(
+                  '$_logPrefix refreshSession 인증 실패 확정 '
+                  '(status=400, error=$errorCode)',
+                );
+              }
+              return const RefreshResult.authFailed();
+            }
+            // errorCode 파싱 실패(null)이어도 400은 authFailed로 처리 (루프 방지 우선)
+            if (errorCode == null) {
+              if (kDebugMode) {
+                debugPrint(
+                  '$_logPrefix refreshSession 인증 실패 확정 '
+                  '(status=400, error=null, 루프 방지)',
+                );
+              }
+              return const RefreshResult.authFailed();
+            }
+          }
+          // 그 외 400 또는 다른 serverRejected는 일시 장애로 처리
+          if (kDebugMode) {
+            debugPrint(
+              '$_logPrefix refreshSession 일시 장애 '
+              '(type=${error.type}, status=${error.statusCode}, error=$errorCode)',
+            );
+          }
+          return const RefreshResult.transientError();
+
+        case NetworkErrorType.invalidPayload:
         case NetworkErrorType.missingConfig:
         case NetworkErrorType.unknown:
           // 기타 오류: 일시 장애로 처리 (로그아웃 금지)
@@ -491,6 +534,20 @@ class HttpAuthRpcClient implements AuthRpcClient {
       final error = payload['error'];
       if (error is String) {
         return error;
+      }
+    } on FormatException {
+      return null;
+    }
+    return null;
+  }
+
+  /// Supabase Auth REST 응답에서 error_description 추출 (토큰 값 제외)
+  String? _extractErrorMessage(String payloadText) {
+    try {
+      final payload = jsonDecode(payloadText) as Map<String, dynamic>;
+      final errorDescription = payload['error_description'];
+      if (errorDescription is String) {
+        return errorDescription;
       }
     } on FormatException {
       return null;
