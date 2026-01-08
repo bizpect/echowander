@@ -223,12 +223,36 @@ class NetworkGuard {
     required int statusCode,
     required String responseBody,
     String? context,
+    // 응답 파싱 결과 (SSOT)
+    String? rawBody,
+    String? parsedErrorCode,
+    String? parsedErrorDescription,
+    String? contentType,
+    bool? isHtml,
+    bool? isEmpty,
+    String? endpoint,
   }) {
+    // 정규화된 safe 메시지 생성
+    final safeMessage = parsedErrorCode != null
+        ? 'status=$statusCode error=$parsedErrorCode${parsedErrorDescription != null ? " desc=$parsedErrorDescription" : ""}'
+        : (isHtml == true
+            ? 'status=$statusCode html_response'
+            : (isEmpty == true
+                ? 'status=$statusCode empty_response'
+                : 'status=$statusCode response_length=${responseBody.length}'));
+
     if (statusCode == HttpStatus.unauthorized || statusCode == HttpStatus.forbidden) {
       return NetworkRequestException(
         type: NetworkErrorType.unauthorized,
         statusCode: statusCode,
-        message: responseBody,
+        message: safeMessage,
+        rawBody: rawBody ?? responseBody,
+        parsedErrorCode: parsedErrorCode,
+        parsedErrorDescription: parsedErrorDescription,
+        contentType: contentType,
+        isHtml: isHtml,
+        isEmpty: isEmpty,
+        endpoint: endpoint,
       );
     }
 
@@ -236,7 +260,14 @@ class NetworkGuard {
       return NetworkRequestException(
         type: NetworkErrorType.serverUnavailable,
         statusCode: statusCode,
-        message: responseBody,
+        message: safeMessage,
+        rawBody: rawBody ?? responseBody,
+        parsedErrorCode: parsedErrorCode,
+        parsedErrorDescription: parsedErrorDescription,
+        contentType: contentType,
+        isHtml: isHtml,
+        isEmpty: isEmpty,
+        endpoint: endpoint,
       );
     }
 
@@ -244,14 +275,28 @@ class NetworkGuard {
       return NetworkRequestException(
         type: NetworkErrorType.serverRejected,
         statusCode: statusCode,
-        message: responseBody,
+        message: safeMessage,
+        rawBody: rawBody ?? responseBody,
+        parsedErrorCode: parsedErrorCode,
+        parsedErrorDescription: parsedErrorDescription,
+        contentType: contentType,
+        isHtml: isHtml,
+        isEmpty: isEmpty,
+        endpoint: endpoint,
       );
     }
 
     return NetworkRequestException(
       type: NetworkErrorType.unknown,
       statusCode: statusCode,
-      message: responseBody,
+      message: safeMessage,
+      rawBody: rawBody ?? responseBody,
+      parsedErrorCode: parsedErrorCode,
+      parsedErrorDescription: parsedErrorDescription,
+      contentType: contentType,
+      isHtml: isHtml,
+      isEmpty: isEmpty,
+      endpoint: endpoint,
     );
   }
 }

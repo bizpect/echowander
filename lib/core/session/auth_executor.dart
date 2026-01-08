@@ -102,9 +102,39 @@ class AuthExecutor {
     required bool Function(Object error) isUnauthorized,
   }) async {
     final sessionManager = _ref.read(sessionManagerProvider.notifier);
+    final sessionState = _ref.read(sessionManagerProvider);
+
+    // ✅ SSOT: restoreInFlight가 있으면 재호출 금지, 그 Future만 await
+    final restoreFuture = sessionManager.restoreInFlight;
+    if (restoreFuture != null) {
+      if (kDebugMode) {
+        debugPrint(
+          '$_logPrefix restoreInFlight exists → await '
+          '(status=${sessionState.status})',
+        );
+      }
+      try {
+        // ✅ SSOT: restoreInFlight가 있으면 그것만 await
+        await restoreFuture;
+        final newAccessToken = _ref.read(sessionManagerProvider).accessToken;
+        if (newAccessToken == null || newAccessToken.isEmpty) {
+          return const AuthExecutorResult.noSession();
+        }
+        // refresh 완료 후 Query 실행
+      } on RestoreSessionTransientException {
+        return const AuthExecutorResult.transientError();
+      } on RestoreSessionFailedException {
+        return const AuthExecutorResult.unauthorized();
+      } catch (error) {
+        if (kDebugMode) {
+          debugPrint('$_logPrefix restoreInFlight await 중 예외: $error → transientError');
+        }
+        return const AuthExecutorResult.transientError();
+      }
+    }
 
     // 1) accessToken 확인
-    var accessToken = _ref.read(sessionManagerProvider).accessToken;
+    var accessToken = sessionState.accessToken;
     if (accessToken == null || accessToken.isEmpty) {
       if (kDebugMode) {
         debugPrint('$_logPrefix accessToken 없음 → noSession');
@@ -129,7 +159,19 @@ class AuthExecutor {
       }
 
       try {
-        await sessionManager.restoreSession();
+        // ✅ SSOT: restoreInFlight가 있으면 그것만 await, 없으면 restoreSession 호출
+        final restoreFuture = sessionManager.restoreInFlight;
+        if (restoreFuture != null) {
+          if (kDebugMode) {
+            debugPrint('$_logPrefix 선제 refresh → restoreInFlight exists → await');
+          }
+          await restoreFuture;
+        } else {
+          if (kDebugMode) {
+            debugPrint('$_logPrefix 선제 refresh → restoreSession 호출');
+          }
+          await sessionManager.restoreSession();
+        }
         accessToken = _ref.read(sessionManagerProvider).accessToken;
         if (accessToken == null || accessToken.isEmpty) {
           return const AuthExecutorResult.noSession();
@@ -181,7 +223,19 @@ class AuthExecutor {
     }
 
     try {
-      await sessionManager.restoreSession();
+      // ✅ SSOT: restoreInFlight가 있으면 그것만 await, 없으면 restoreSession 호출
+      final restoreFuture = sessionManager.restoreInFlight;
+      if (restoreFuture != null) {
+        if (kDebugMode) {
+          debugPrint('$_logPrefix 401 → restoreInFlight exists → await');
+        }
+        await restoreFuture;
+      } else {
+        if (kDebugMode) {
+          debugPrint('$_logPrefix 401 → restoreSession once then retry');
+        }
+        await sessionManager.restoreSession();
+      }
     } on RestoreSessionTransientException {
       // 일시 장애: 토큰은 유지됨, 로그아웃 아님
       if (kDebugMode) {

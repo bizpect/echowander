@@ -35,12 +35,28 @@ class NetworkRequestException implements Exception {
     this.statusCode,
     this.message,
     this.originalError,
+    // 응답 파싱 결과 (SSOT)
+    this.rawBody,
+    this.parsedErrorCode,
+    this.parsedErrorDescription,
+    this.contentType,
+    this.isHtml,
+    this.isEmpty,
+    this.endpoint,
   });
 
   final NetworkErrorType type;
   final int? statusCode;
-  final String? message;
+  final String? message; // 정규화된 safe 문자열만 사용
   final Object? originalError;
+  // 응답 파싱 결과 (SSOT) - 로그에 직접 출력 금지
+  final String? rawBody;
+  final String? parsedErrorCode;
+  final String? parsedErrorDescription;
+  final String? contentType;
+  final bool? isHtml;
+  final bool? isEmpty;
+  final String? endpoint;
 
   /// 원본 에러로부터 NetworkRequestException 생성
   factory NetworkRequestException.fromError(

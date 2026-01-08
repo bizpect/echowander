@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,6 +9,7 @@ import '../core/presentation/widgets/fullscreen_loading.dart';
 import '../core/push/push_coordinator.dart';
 import '../core/push/push_payload.dart';
 import '../core/push/push_state.dart';
+import '../core/session/auth_executor.dart';
 import '../core/session/session_invalidation_targets.dart';
 import '../core/session/session_manager.dart';
 import '../core/session/session_state.dart';
@@ -25,15 +27,137 @@ class App extends ConsumerStatefulWidget {
   ConsumerState<App> createState() => _AppState();
 }
 
-class _AppState extends ConsumerState<App> {
+class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
   // 세션 만료 다이얼로그 중복 표시 방지 플래그
   SessionMessage? _lastShownMessage;
+  // 팝업 루프 차단: 마지막 팝업 표시 시각
+  DateTime? _lastPopupAt;
+  static const _popupCooldown = Duration(seconds: 30);
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     ref.read(pushCoordinatorProvider.notifier).initialize();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // 복귀 시: 복구 먼저, 조회 나중
+      _handleAppResumed();
+    }
+  }
+
+  void _handleAppResumed() {
+    // 복귀 시: 복구 먼저, 조회 나중
+    _ensureSessionReady();
+  }
+
+  /// 세션 준비 보장 (복귀 시 Query 폭주 방지)
+  /// 반드시 await 형태로 호출하여 복구가 끝나기 전에는 Query 실행을 미룬다.
+  Future<void> _ensureSessionReady() async {
+    if (kDebugMode) {
+      debugPrint('[App] resumed → ensureSessionReady');
+    }
+
+    final sessionManager = ref.read(sessionManagerProvider.notifier);
+    final sessionState = ref.read(sessionManagerProvider);
+
+    // ✅ SSOT: restoreInFlight가 존재하면 restoreSession을 호출하지 말고 그 Future만 await
+    final inFlight = sessionManager.restoreInFlight;
+    if (inFlight != null) {
+      if (kDebugMode) {
+        debugPrint('[App] inFlight exists → await');
+      }
+      await _awaitRestoreInFlight(inFlight);
+      return;
+    }
+
+    final accessToken = sessionState.accessToken;
+    final needsRestore = accessToken == null ||
+        accessToken.isEmpty ||
+        JwtUtils.isExpiringSoon(accessToken, thresholdSeconds: 60);
+
+    if (!needsRestore) {
+      if (kDebugMode) {
+        debugPrint('[App] 세션 준비 완료 (토큰 유효)');
+      }
+      return;
+    }
+
+    // accessToken이 없거나 만료/임박이면 restoreSession 선제 호출
+    // (이 호출이 single-flight를 걸어줌)
+    if (kDebugMode) {
+      if (accessToken == null || accessToken.isEmpty) {
+        debugPrint('[App] 복귀 시 accessToken 없음 → restoreSession 선제 호출');
+      } else {
+        debugPrint('[App] 복귀 시 세션 갱신 필요 → restoreSession 선제 호출');
+      }
+    }
+    await _restoreSessionSafely(sessionManager);
+  }
+
+  /// restoreInFlight await (재호출 금지)
+  Future<void> _awaitRestoreInFlight(Future<void> inFlight) async {
+    try {
+      await inFlight;
+    } on RestoreSessionBlockedException {
+      // 쿨다운 중 - 정상적인 상황
+      if (kDebugMode) {
+        debugPrint('[App] restoreInFlight 쿨다운 중 → 건너뜀');
+      }
+    } on RestoreSessionFailedException {
+      // 인증 실패 확정 - 이미 unauthenticated로 전환됨
+      if (kDebugMode) {
+        debugPrint('[App] restoreInFlight 인증 실패 → 로그인 유도');
+      }
+    } on RestoreSessionTransientException {
+      // 일시 장애 - 토큰 유지, 앱 계속 진행
+      if (kDebugMode) {
+        debugPrint('[App] restoreInFlight 일시 장애 → 앱 계속 진행');
+      }
+    } catch (error) {
+      // 예상치 못한 오류 - 로그만 남기고 앱 계속 진행
+      if (kDebugMode) {
+        debugPrint('[App] restoreInFlight 예외: $error');
+      }
+    }
+  }
+
+  /// restoreSession 안전 호출 (Unhandled Exception 방지)
+  Future<void> _restoreSessionSafely(SessionManager sessionManager) async {
+    try {
+      // single-flight로 중복 호출 방지됨
+      await sessionManager.restoreSession();
+    } on RestoreSessionBlockedException {
+      // 쿨다운 중 - 정상적인 상황
+      if (kDebugMode) {
+        debugPrint('[App] 복귀 시 restoreSession 쿨다운 중 → 건너뜀');
+      }
+    } on RestoreSessionFailedException {
+      // 인증 실패 확정 - 이미 unauthenticated로 전환됨
+      if (kDebugMode) {
+        debugPrint('[App] 복귀 시 restoreSession 인증 실패 → 로그인 유도');
+      }
+    } on RestoreSessionTransientException {
+      // 일시 장애 - 토큰 유지, 앱 계속 진행
+      if (kDebugMode) {
+        debugPrint('[App] 복귀 시 restoreSession 일시 장애 → 앱 계속 진행');
+      }
+    } catch (error) {
+      // 예상치 못한 오류 - 로그만 남기고 앱 계속 진행
+      if (kDebugMode) {
+        debugPrint('[App] 복귀 시 restoreSession 예외: $error');
+      }
+    }
   }
 
   @override
@@ -46,6 +170,25 @@ class _AppState extends ConsumerState<App> {
       if (_lastShownMessage == next.message) {
         return;
       }
+
+      // unauthenticated 상태면 팝업 대신 로그인 유도만 (팝업 루프 방지)
+      if (next.status == SessionStatus.unauthenticated) {
+        if (kDebugMode) {
+          debugPrint('[App] unauthenticated 상태 → 팝업 차단 (로그인 유도만)');
+        }
+        return;
+      }
+
+      // 팝업 쿨다운 체크 (30초 내 중복 방지)
+      final now = DateTime.now();
+      if (_lastPopupAt != null &&
+          now.difference(_lastPopupAt!) < _popupCooldown) {
+        if (kDebugMode) {
+          debugPrint('[App] 팝업 쿨다운 중 → 표시 건너뜀');
+        }
+        return;
+      }
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) {
           return;
@@ -56,6 +199,7 @@ class _AppState extends ConsumerState<App> {
         }
         final message = _resolveMessage(l10n, next.message!);
         _lastShownMessage = next.message;
+        _lastPopupAt = now;
         showAppAlertDialog(
           context: context,
           title: l10n.errorTitle,

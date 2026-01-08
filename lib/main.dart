@@ -11,6 +11,18 @@ const _logPrefix = '[Main]';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Unhandled Exception 최종 안전망
+  FlutterError.onError = (details) {
+    if (kDebugMode) {
+      debugPrint(
+        '$_logPrefix FlutterError.onError: ${details.exception} '
+        '(stack: ${details.stack})',
+      );
+    }
+    // 프로덕션에서는 크래시 리포팅 서비스로 전송
+    FlutterError.presentError(details);
+  };
+
   if (kDebugMode) {
     debugPrint('$_logPrefix 앱 부트스트랩 시작');
   }

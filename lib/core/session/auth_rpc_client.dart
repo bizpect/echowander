@@ -59,6 +59,10 @@ sealed class RefreshResult {
   /// 일시 장애: 네트워크/서버 문제 (timeout, 5xx, offline 등)
   /// → 토큰 유지 + authenticated 유지 (로그아웃 금지)
   const factory RefreshResult.transientError() = RefreshTransientError;
+
+  /// 치명적 설정 오류: 요청 자체가 잘못됨 (URL/엔드포인트/헤더 오류)
+  /// → 원인 노출 우선 (로그인 튕김보다 개발자 알림 우선)
+  const factory RefreshResult.fatalMisconfig(String reason) = RefreshFatalMisconfig;
 }
 
 class RefreshSuccess extends RefreshResult {
@@ -72,6 +76,11 @@ class RefreshAuthFailed extends RefreshResult {
 
 class RefreshTransientError extends RefreshResult {
   const RefreshTransientError();
+}
+
+class RefreshFatalMisconfig extends RefreshResult {
+  const RefreshFatalMisconfig(this.reason);
+  final String reason;
 }
 
 class DevAuthRpcClient implements AuthRpcClient {
@@ -119,6 +128,50 @@ class HttpAuthRpcClient implements AuthRpcClient {
     required Uri uri,
     required String refreshToken,
   }) async {
+    // URL 검증: supabaseUrl이 올바른 형태인지 확인
+    final supabaseUrl = _config.supabaseUrl;
+    if (!supabaseUrl.startsWith('https://') || !supabaseUrl.contains('.supabase.co')) {
+      if (kDebugMode) {
+        debugPrint(
+          '$_logPrefix refreshSession URL 검증 실패: supabaseUrl=$supabaseUrl '
+          '(예상: https://xxxx.supabase.co)',
+        );
+      }
+      throw NetworkRequestException(
+        type: NetworkErrorType.missingConfig,
+        message: 'Invalid supabaseUrl format: $supabaseUrl',
+      );
+    }
+
+    // 엔드포인트 검증: /auth/v1/token이어야 함
+    if (!uri.path.endsWith('/auth/v1/token') || !uri.queryParameters.containsKey('grant_type')) {
+      if (kDebugMode) {
+        debugPrint(
+          '$_logPrefix refreshSession 엔드포인트 검증 실패: uri=$uri '
+          '(예상: /auth/v1/token?grant_type=refresh_token)',
+        );
+      }
+      throw NetworkRequestException(
+        type: NetworkErrorType.missingConfig,
+        message: 'Invalid refresh endpoint: $uri',
+      );
+    }
+
+    // 헤더/바디 검증 로깅 (민감정보 제외)
+    if (kDebugMode) {
+      debugPrint(
+        '$_logPrefix refreshSession 요청 상세: '
+        'scheme=${uri.scheme}, '
+        'host=${uri.host}, '
+        'path=${uri.path}, '
+        'query=${uri.query}, '
+        'supabaseUrlSource=${_config.supabaseUrl}, '
+        'refreshTokenLength=${refreshToken.length}, '
+        'apikeyLength=${_config.supabaseAnonKey.length}, '
+        'hasAuthHeader=true',
+      );
+    }
+
     final request = await _client.postUrl(uri);
     request.headers.set(
       HttpHeaders.contentTypeHeader,
@@ -131,37 +184,96 @@ class HttpAuthRpcClient implements AuthRpcClient {
       HttpHeaders.authorizationHeader,
       'Bearer ${_config.supabaseAnonKey}',
     );
-    request.add(utf8.encode(jsonEncode({'refresh_token': refreshToken})));
+    // Accept: application/json (권장)
+    request.headers.set(HttpHeaders.acceptHeader, 'application/json');
+    final bodyJson = jsonEncode({'refresh_token': refreshToken});
+    request.add(utf8.encode(bodyJson));
 
     final response = await request.close();
     final rawPayloadText = await response.transform(utf8.decoder).join();
     // 빈 문자열이면 "<empty>"로 대체하여 파싱 시도
     final payloadText = rawPayloadText.isEmpty ? '<empty>' : rawPayloadText;
 
+    // 응답 상세 로깅 (민감정보 제외)
+    final contentType = response.headers.value(HttpHeaders.contentTypeHeader) ?? 'unknown';
+    final payloadLength = payloadText.length;
+    final payloadSample = _maskTokens(_truncate(payloadText, 200));
+
+    if (kDebugMode) {
+      debugPrint(
+        '$_logPrefix refreshSession 응답: '
+        'status=${response.statusCode}, '
+        'contentType=$contentType, '
+        'payloadLength=$payloadLength, '
+        'payloadSample=$payloadSample',
+      );
+    }
+
     if (response.statusCode < 200 || response.statusCode >= 300) {
       // 비-2xx 응답의 error/error_description 파싱 (토큰 값 제외)
-      final errorCode = _extractErrorCode(payloadText);
-      final errorMessage = _extractErrorMessage(payloadText);
+      final parsedErrorCode = _extractErrorCode(payloadText);
+      final parsedErrorDescription = _extractErrorMessage(payloadText);
 
-      // 정규화된 메시지 생성 (민감정보 제외)
-      final normalizedMessage = errorCode != null
-          ? 'error=$errorCode${errorMessage != null ? ", description=$errorMessage" : ""}'
-          : (payloadText == '<empty>' ? 'empty_response' : payloadText);
+      // HTML 응답 또는 빈 응답은 "요청 자체가 잘못" 가능성이 높음
+      final isHtml = payloadText.trim().toLowerCase().startsWith('<!doctype') ||
+          payloadText.trim().toLowerCase().startsWith('<html');
+      final isEmpty = payloadText == '<empty>' || payloadText.trim().isEmpty;
+
+      // 정규화된 메시지 생성 (로깅용, 민감정보 제외)
+      final normalizedMessage = parsedErrorCode != null
+          ? 'error=$parsedErrorCode${parsedErrorDescription != null ? ", description=$parsedErrorDescription" : ""}'
+          : (isEmpty
+              ? 'empty_response'
+              : (isHtml
+                  ? 'html_response'
+                  : payloadSample));
 
       await _errorLogger.logHttpFailure(
         context: 'auth_refresh_session',
         uri: uri,
         method: 'POST',
         statusCode: response.statusCode,
-        errorMessage: normalizedMessage, // 정규화된 메시지만 전달
-        meta: const {},
+        errorMessage: normalizedMessage, // 로깅용 정규화된 메시지
+        meta: {
+          'contentType': contentType,
+          'payloadLength': payloadLength,
+          'isHtml': isHtml,
+          'isEmpty': isEmpty,
+          'parsedErrorCode': parsedErrorCode,
+          'parsedErrorDescription': parsedErrorDescription,
+        },
         accessToken: '', // 민감정보 제외
       );
 
+      // 400 + HTML/empty 응답은 fatal_misconfig로 분기
+      if (response.statusCode == 400 && (isHtml || isEmpty)) {
+        throw NetworkRequestException(
+          type: NetworkErrorType.missingConfig,
+          statusCode: response.statusCode,
+          message: 'fatal_misconfig: 400 with HTML/empty response',
+          rawBody: payloadText,
+          parsedErrorCode: parsedErrorCode,
+          parsedErrorDescription: parsedErrorDescription,
+          contentType: contentType,
+          isHtml: isHtml,
+          isEmpty: isEmpty,
+          endpoint: uri.toString(),
+        );
+      }
+
+      // ⚠️ 중요: 파싱 결과를 exception 필드에 포함 (SSOT)
+      // message는 정규화된 safe 문자열만 사용
       throw _networkGuard.statusCodeToException(
         statusCode: response.statusCode,
-        responseBody: normalizedMessage,
+        responseBody: normalizedMessage, // 정규화된 메시지
         context: 'auth_refresh_session',
+        rawBody: payloadText, // 원문 (파싱용)
+        parsedErrorCode: parsedErrorCode,
+        parsedErrorDescription: parsedErrorDescription,
+        contentType: contentType,
+        isHtml: isHtml,
+        isEmpty: isEmpty,
+        endpoint: uri.toString(),
       );
     }
 
@@ -306,10 +418,11 @@ class HttpAuthRpcClient implements AuthRpcClient {
 
     try {
       // Supabase Auth REST: refresh_token 기반, 만료된 accessToken 불필요
+      // refresh는 비멱등(rotation 가능) → 자동 재시도 금지 (invalid_grant 방지)
       final result = await _networkGuard.execute<Map<String, dynamic>>(
         operation: () =>
             _executeAuthRefresh(uri: uri, refreshToken: tokens.refreshToken),
-        retryPolicy: RetryPolicy.short,
+        retryPolicy: RetryPolicy.none, // 재시도 0 (rotation 안전)
         context: 'auth_refresh_session',
         uri: uri,
         method: 'POST',
@@ -339,16 +452,32 @@ class HttpAuthRpcClient implements AuthRpcClient {
         SessionTokens(accessToken: accessToken, refreshToken: newRefreshToken),
       );
     } on NetworkRequestException catch (error) {
-      // 에러 타입에 따라 "인증 실패 확정" vs "일시 장애" 분류
-      // 응답 바디에서 에러 코드 추출 (민감정보 제외)
-      final errorCode = _extractErrorCode(error.message ?? '');
+      // 에러 타입에 따라 "인증 실패 확정" vs "일시 장애" vs "치명적 설정 오류" 분류
+      // SSOT: exception 필드에서 파싱 결과 사용 (message가 아닌 parsedErrorCode 사용)
+
+      // missingConfig는 fatal_misconfig로 분기
+      if (error.type == NetworkErrorType.missingConfig) {
+        if (kDebugMode) {
+          debugPrint(
+            '$_logPrefix refreshSession 치명적 설정 오류: '
+            'endpoint=${error.endpoint}, '
+            'contentType=${error.contentType}, '
+            'isHtml=${error.isHtml}, '
+            'isEmpty=${error.isEmpty}',
+          );
+        }
+        return RefreshResult.fatalMisconfig(
+          error.message ?? 'Unknown configuration error',
+        );
+      }
+
       switch (error.type) {
         case NetworkErrorType.unauthorized:
           // 401/403: refresh 토큰 만료/무효 → 인증 실패 확정
           if (kDebugMode) {
             debugPrint(
               '$_logPrefix refreshSession 인증 실패 확정 '
-              '(status=${error.statusCode}, error=$errorCode)',
+              '(status=${error.statusCode}, error=${error.parsedErrorCode})',
             );
           }
           return const RefreshResult.authFailed();
@@ -360,40 +489,65 @@ class HttpAuthRpcClient implements AuthRpcClient {
           if (kDebugMode) {
             debugPrint(
               '$_logPrefix refreshSession 일시 장애 '
-              '(type=${error.type}, status=${error.statusCode}, error=$errorCode)',
+              '(type=${error.type}, status=${error.statusCode})',
             );
           }
           return const RefreshResult.transientError();
 
         case NetworkErrorType.serverRejected:
-          // 400 응답: errorCode에 따라 분기
+          // 400 응답: exception 필드 기반 분기 (SSOT)
           if (error.statusCode == 400) {
-            // invalid_grant, invalid_request는 refresh 토큰 무효 확정
-            if (errorCode == 'invalid_grant' || errorCode == 'invalid_request') {
+            // HTML/empty 응답은 fatal_misconfig 또는 authFailed (설정/게이트웨이 가능성)
+            if (error.isHtml == true || error.isEmpty == true) {
               if (kDebugMode) {
                 debugPrint(
                   '$_logPrefix refreshSession 인증 실패 확정 '
-                  '(status=400, error=$errorCode)',
+                  '(status=400, isHtml=${error.isHtml}, isEmpty=${error.isEmpty}, '
+                  'contentType=${error.contentType}, endpoint=${error.endpoint})',
+                );
+              }
+              // 설정 오류 가능성이 높지만, 루프 방지를 위해 authFailed로 처리
+              return const RefreshResult.authFailed();
+            }
+
+            // parsedErrorCode 기반 분기 (SSOT)
+            final parsedErrorCode = error.parsedErrorCode;
+            if (parsedErrorCode == 'invalid_grant' || parsedErrorCode == 'invalid_request') {
+              if (kDebugMode) {
+                debugPrint(
+                  '$_logPrefix refreshSession 인증 실패 확정 '
+                  '(status=400, error=$parsedErrorCode, desc=${error.parsedErrorDescription})',
                 );
               }
               return const RefreshResult.authFailed();
             }
-            // errorCode 파싱 실패(null)이어도 400은 authFailed로 처리 (루프 방지 우선)
-            if (errorCode == null) {
+
+            if (parsedErrorCode != null) {
+              // 그 외 errorCode도 authFailed로 처리 (루프 방지 우선)
               if (kDebugMode) {
                 debugPrint(
                   '$_logPrefix refreshSession 인증 실패 확정 '
-                  '(status=400, error=null, 루프 방지)',
+                  '(status=400, error=$parsedErrorCode, 루프 방지)',
                 );
               }
               return const RefreshResult.authFailed();
             }
+
+            // parsedErrorCode가 null이면 unparsed 400 → authFailed (루프 방지)
+            if (kDebugMode) {
+              debugPrint(
+                '$_logPrefix refreshSession 인증 실패 확정 '
+                '(status=400, error=unparsed, contentType=${error.contentType}, '
+                'payloadLength=${error.rawBody?.length ?? 0}, 루프 방지)',
+              );
+            }
+            return const RefreshResult.authFailed();
           }
-          // 그 외 400 또는 다른 serverRejected는 일시 장애로 처리
+          // 그 외 serverRejected는 일시 장애로 처리
           if (kDebugMode) {
             debugPrint(
               '$_logPrefix refreshSession 일시 장애 '
-              '(type=${error.type}, status=${error.statusCode}, error=$errorCode)',
+              '(type=${error.type}, status=${error.statusCode})',
             );
           }
           return const RefreshResult.transientError();
@@ -402,10 +556,11 @@ class HttpAuthRpcClient implements AuthRpcClient {
         case NetworkErrorType.missingConfig:
         case NetworkErrorType.unknown:
           // 기타 오류: 일시 장애로 처리 (로그아웃 금지)
+          // missingConfig는 이미 위에서 fatalMisconfig로 처리되므로 여기 도달하지 않음
           if (kDebugMode) {
             debugPrint(
               '$_logPrefix refreshSession 기타 오류 '
-              '(type=${error.type}, status=${error.statusCode}, error=$errorCode) → 일시 장애로 처리',
+              '(type=${error.type}, status=${error.statusCode}) → 일시 장애로 처리',
             );
           }
           return const RefreshResult.transientError();
@@ -553,6 +708,19 @@ class HttpAuthRpcClient implements AuthRpcClient {
       return null;
     }
     return null;
+  }
+
+  /// 문자열을 지정된 길이로 자르기 (로깅용)
+  String _truncate(String text, int maxLength) {
+    if (text.length <= maxLength) return text;
+    return '${text.substring(0, maxLength)}...';
+  }
+
+  /// 토큰 문자열 패턴 마스킹 (로깅용)
+  String _maskTokens(String text) {
+    // JWT 패턴 (3개 부분으로 구성) 마스킹
+    final jwtPattern = RegExp(r'[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}');
+    return text.replaceAll(jwtPattern, '<token_masked>');
   }
 
   AuthRpcLoginError _mapLoginError(String? errorCode) {

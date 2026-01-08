@@ -1,4 +1,9 @@
-enum SessionStatus { unknown, authenticated, unauthenticated }
+enum SessionStatus {
+  unknown,
+  authenticated,
+  unauthenticated,
+  refreshing, // restoreSession 진행 중 (401 폭주 방지)
+}
 
 enum SessionMessage {
   genericError,
