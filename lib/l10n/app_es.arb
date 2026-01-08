@@ -166,6 +166,8 @@
   "inboxPassCta": "Pasar",
   "inboxPassSuccessTitle": "Pasado",
   "inboxPassSuccessBody": "Has pasado este mensaje.",
+  "inboxPassedTitle": "Mensaje pasado",
+  "inboxPassedDetailUnavailable": "Este mensaje fue pasado y el contenido no está disponible.",
   "inboxReportCta": "Reportar",
   "inboxReportTitle": "Motivo del reporte",
   "inboxReportSpam": "Spam",

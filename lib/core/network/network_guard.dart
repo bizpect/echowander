@@ -56,6 +56,10 @@ class NetworkGuard {
     // nullable 파라미터를 non-nullable로 변환 (로깅용 기본값)
     final logUri = uri ?? Uri.parse('unknown://unknown');
     final logMethod = method ?? 'UNKNOWN';
+    
+    // journeyId 추출 (로깅용)
+    final journeyId = meta?['journey_id'] as String?;
+    final traceLabel = journeyId != null ? '$context:journeyId=$journeyId' : context;
 
     int attempt = 0;
     Object? lastError;
@@ -67,14 +71,15 @@ class NetworkGuard {
 
       try {
         if (kDebugMode && attempt > 1) {
-          debugPrint('[NetworkGuard][$context] 재시도 시도 $attempt/${retryPolicy.maxAttempts}');
+          debugPrint('[NetworkGuard][$traceLabel] 재시도 시도 $attempt/${retryPolicy.maxAttempts}');
         }
 
-        return await operation();
+        final result = await operation();
+        return result;
       } on SocketException catch (error) {
         lastError = error;
         if (kDebugMode) {
-          debugPrint('[NetworkGuard][$context] SocketException: $error');
+          debugPrint('[NetworkGuard][$traceLabel] SocketException: $error');
         }
 
         // 에러 로거가 있으면 로깅 (null이면 스킵 - 순환 의존성 방지)
@@ -98,7 +103,7 @@ class NetworkGuard {
       } on TimeoutException catch (error) {
         lastError = error;
         if (kDebugMode) {
-          debugPrint('[NetworkGuard][$context] TimeoutException: $error');
+          debugPrint('[NetworkGuard][$traceLabel] TimeoutException: $error');
         }
 
         // 에러 로거가 있으면 로깅 (null이면 스킵 - 순환 의존성 방지)
@@ -122,7 +127,7 @@ class NetworkGuard {
       } on HttpException catch (error) {
         lastError = error;
         if (kDebugMode) {
-          debugPrint('[NetworkGuard][$context] HttpException: $error');
+          debugPrint('[NetworkGuard][$traceLabel] HttpException: $error');
         }
 
         // 에러 로거가 있으면 로깅 (null이면 스킵 - 순환 의존성 방지)
@@ -146,7 +151,7 @@ class NetworkGuard {
       } on FormatException catch (error) {
         lastError = error;
         if (kDebugMode) {
-          debugPrint('[NetworkGuard][$context] FormatException: $error');
+          debugPrint('[NetworkGuard][$traceLabel] FormatException: $error');
         }
 
         // 에러 로거가 있으면 로깅 (null이면 스킵 - 순환 의존성 방지)
@@ -176,7 +181,7 @@ class NetworkGuard {
       } catch (error) {
         lastError = error;
         if (kDebugMode) {
-          debugPrint('[NetworkGuard][$context] Unknown error: $error');
+          debugPrint('[NetworkGuard][$traceLabel] Unknown error: $error, type=${error.runtimeType}');
         }
 
         // 에러 로거가 있으면 로깅 (null이면 스킵 - 순환 의존성 방지)

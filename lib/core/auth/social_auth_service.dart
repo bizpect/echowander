@@ -108,6 +108,12 @@ class SocialAuthService {
       return const SocialAuthResult.failed();
     } on kakao.KakaoApiException catch (_) {
       return const SocialAuthResult.failed();
+    } on PlatformException catch (error) {
+      // ✅ Kakao 로그인 취소 PlatformException CANCELED 처리
+      if (error.code == 'CANCELED' || error.code == 'CANCEL') {
+        return const SocialAuthResult.cancelled();
+      }
+      return const SocialAuthResult.failed();
     }
   }
 }

@@ -274,45 +274,53 @@ class _InboxCard extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.spacing12),
 
-              // 메시지 내용
-              Text(
-                item.content,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.onSurface,
-                    ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: AppSpacing.spacing8),
-
-              // 하단 정보 (이미지 카운트 + 화살표)
-              Row(
-                children: [
-                  // 이미지 카운트
-                  if (item.imageCount > 0) ...[
+              // 메시지 내용 (PASSED 상태일 때는 고정 제목만 표시)
+              if (item.recipientStatus == 'PASSED') ...[
+                Text(
+                  l10n.inboxPassedTitle,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                        fontStyle: FontStyle.italic,
+                      ),
+                ),
+              ] else ...[
+                Text(
+                  item.content,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: AppColors.onSurface,
+                      ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.spacing8),
+                // 하단 정보 (이미지 카운트 + 화살표)
+                Row(
+                  children: [
+                    // 이미지 카운트
+                    if (item.imageCount > 0) ...[
+                      Icon(
+                        Icons.image_outlined,
+                        size: 16,
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: AppSpacing.spacing4),
+                      Text(
+                        l10n.inboxImageCount(item.imageCount),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
+                    const Spacer(),
+                    // 화살표 아이콘
                     Icon(
-                      Icons.image_outlined,
-                      size: 16,
+                      Icons.arrow_forward_ios,
+                      size: 14,
                       color: AppColors.onSurfaceVariant,
                     ),
-                    const SizedBox(width: AppSpacing.spacing4),
-                    Text(
-                      l10n.inboxImageCount(item.imageCount),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.onSurfaceVariant,
-                          ),
-                    ),
                   ],
-                  const Spacer(),
-
-                  // 화살표 아이콘
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 14,
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ],
           ),
         ),

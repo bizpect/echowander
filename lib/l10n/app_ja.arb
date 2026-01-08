@@ -166,6 +166,8 @@
   "inboxPassCta": "パス",
   "inboxPassSuccessTitle": "パス完了",
   "inboxPassSuccessBody": "このメッセージをパスしました。",
+  "inboxPassedTitle": "パスしたメッセージ",
+  "inboxPassedDetailUnavailable": "パス処理により内容を閲覧できません。",
   "inboxReportCta": "報告",
   "inboxReportTitle": "報告理由",
   "inboxReportSpam": "スパム",

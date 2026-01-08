@@ -681,6 +681,8 @@ begin
   where jr.recipient_user_id = auth.uid()
     -- 스냅샷 필드가 존재하는 경우만 (마이그레이션 이전 데이터 제외)
     and jr.sender_user_id is not null
+    -- 숨김 처리된 메시지 제외 (신고 완료 등)
+    and jr.is_hidden = false
   order by jr.created_at desc
   limit least(coalesce(page_size, 20), 50)
   offset greatest(coalesce(page_offset, 0), 0);
@@ -831,7 +833,146 @@ end;
 $$;
 
 drop function if exists public.pass_journey(uuid);
+drop function if exists public.pass_inbox_item_and_forward(uuid);
 
+-- Pass 처리 + 랜덤 전송 + redaction (트랜잭션)
+create or replace function public.pass_inbox_item_and_forward(
+  target_journey_id uuid
+)
+returns table (
+  success boolean,
+  passed_at timestamptz,
+  forwarded_recipient_id uuid
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  _recipient_id bigint;
+  _journey public.journeys%rowtype;
+  _remaining integer;
+  _forwarded_recipient_id uuid;
+  _passed_at timestamptz := now();
+begin
+  if auth.uid() is null then
+    raise exception 'unauthorized';
+  end if;
+  if target_journey_id is null then
+    raise exception 'missing_journey';
+  end if;
+
+  -- 1) journey_recipient 조회 및 권한 체크
+  select jr.id
+  into _recipient_id
+  from public.journey_recipients jr
+  where jr.journey_id = target_journey_id
+    and jr.recipient_user_id = auth.uid()
+    and jr.status_code = 'ASSIGNED';
+
+  if _recipient_id is null then
+    raise exception 'unauthorized';
+  end if;
+
+  -- journey 조회 (rowtype 변수는 별도 SELECT 필요)
+  select * into _journey
+  from public.journeys
+  where id = target_journey_id;
+
+  -- 2) PASS action 기록 (idempotent)
+  insert into public.journey_actions (
+    journey_recipient_id,
+    actor_user_id,
+    action_type_code
+  )
+  values (
+    _recipient_id,
+    auth.uid(),
+    'PASS'
+  )
+  on conflict (actor_user_id, journey_recipient_id, action_type_code) do nothing;
+
+  -- 3) 랜덤 수신자 선정 및 전송 (기존 match_journey 로직 재사용)
+  select greatest(_journey.requested_recipient_count - count(*), 0)
+  into _remaining
+  from public.journey_recipients
+  where journey_recipients.journey_id = _journey.id;
+
+  if _remaining > 0 then
+    with candidates as (
+      select
+        users.user_id,
+        user_profiles.locale_tag
+      from public.users
+      left join public.user_profiles
+        on user_profiles.user_id = users.user_id
+      where users.user_id <> _journey.user_id
+        and users.is_deleted = false
+        and users.is_suspended = false
+        and (users.response_suspended_until is null
+          or users.response_suspended_until <= now())
+        and not exists (
+          select 1
+          from public.journey_recipients recipients
+          where recipients.journey_id = _journey.id
+            and recipients.recipient_user_id = users.user_id
+        )
+        and not exists (
+          select 1
+          from public.user_blocks blocks
+          where (blocks.blocker_user_id = _journey.user_id
+            and blocks.blocked_user_id = users.user_id)
+            or (blocks.blocker_user_id = users.user_id
+            and blocks.blocked_user_id = _journey.user_id)
+        )
+      order by random()
+      limit 1
+    ),
+    journey_image_count as (
+      select count(*)::integer as cnt
+      from public.journey_images
+      where journey_images.journey_id = _journey.id
+    ),
+    inserted as (
+      insert into public.journey_recipients (
+        journey_id,
+        recipient_user_id,
+        recipient_locale_tag,
+        sender_user_id,
+        snapshot_content,
+        snapshot_image_count
+      )
+      select
+        _journey.id,
+        candidates.user_id,
+        candidates.locale_tag,
+        _journey.user_id,
+        _journey.content,
+        (select cnt from journey_image_count)
+      from candidates
+      returning journey_recipients.recipient_user_id, journey_recipients.id
+    )
+    select inserted.recipient_user_id into _forwarded_recipient_id
+    from inserted
+    limit 1;
+  end if;
+
+  -- 4) 현재 journey_recipient의 snapshot_content를 placeholder로 redaction
+  --    (보안: passed된 메시지는 내용을 볼 수 없도록)
+  update public.journey_recipients
+  set status_code = 'PASSED',
+      snapshot_content = '[패스한 메시지]',
+      snapshot_image_count = 0,
+      updated_at = _passed_at
+  where id = _recipient_id;
+
+  -- 5) 반환
+  return query
+  select true as success, _passed_at as passed_at, _forwarded_recipient_id as forwarded_recipient_id;
+end;
+$$;
+
+-- 기존 pass_journey 함수는 호환성을 위해 유지 (deprecated)
 create or replace function public.pass_journey(
   target_journey_id uuid
 )
@@ -841,27 +982,8 @@ security definer
 set search_path = public
 as $$
 begin
-  if auth.uid() is null then
-    raise exception 'unauthorized';
-  end if;
-  if target_journey_id is null then
-    raise exception 'missing_journey';
-  end if;
-  if not exists (
-    select 1
-    from public.journey_recipients
-    where journey_recipients.journey_id = target_journey_id
-      and journey_recipients.recipient_user_id = auth.uid()
-      and journey_recipients.status_code = 'ASSIGNED'
-  ) then
-    raise exception 'unauthorized';
-  end if;
-
-  update public.journey_recipients
-  set status_code = 'PASSED',
-      updated_at = now()
-  where journey_id = target_journey_id
-    and recipient_user_id = auth.uid();
+  -- 새로운 함수로 위임
+  perform * from public.pass_inbox_item_and_forward(target_journey_id);
 end;
 $$;
 
@@ -871,13 +993,19 @@ create or replace function public.report_journey(
   target_journey_id uuid,
   reason_code text
 )
-returns void
+returns table (
+  success boolean,
+  report_id bigint,
+  created_at timestamptz
+)
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
-  _report_count integer;
+  v_report_count integer;
+  v_report_id bigint;
+  v_report_created_at timestamptz;
 begin
   if auth.uid() is null then
     raise exception 'unauthorized';
@@ -890,21 +1018,23 @@ begin
   end if;
   if not exists (
     select 1
-    from public.common_codes
-    where code_type = 'report_reason'
-      and code_value = reason_code
+    from public.common_codes cc
+    where cc.code_type = 'report_reason'
+      and cc.code_value = reason_code
   ) then
     raise exception 'missing_code_value';
   end if;
   if not exists (
     select 1
-    from public.journey_recipients
-    where journey_recipients.journey_id = target_journey_id
-      and journey_recipients.recipient_user_id = auth.uid()
+    from public.journey_recipients jr
+    where jr.journey_id = target_journey_id
+      and jr.recipient_user_id = auth.uid()
   ) then
     raise exception 'unauthorized';
   end if;
 
+  -- INSERT with RETURNING: 테이블 스키마를 명시적으로 지정하여 ambiguous 제거
+  -- returns table의 created_at과 충돌 방지를 위해 public.journey_reports.created_at 명시
   insert into public.journey_reports (
     journey_id,
     reporter_user_id,
@@ -914,26 +1044,36 @@ begin
     target_journey_id,
     auth.uid(),
     reason_code
-  );
+  )
+  returning id, public.journey_reports.created_at into v_report_id, v_report_created_at;
 
-  update public.journey_recipients
+  -- journey_recipients 업데이트: 신고 상태 + 숨김 처리
+  update public.journey_recipients jr
   set status_code = 'REPORTED',
+      is_hidden = true,
+      hidden_reason_code = 'HIDE_REPORTED',
+      hidden_at = now(),
       updated_at = now()
-  where journey_id = target_journey_id
-    and recipient_user_id = auth.uid();
+  where jr.journey_id = target_journey_id
+    and jr.recipient_user_id = auth.uid();
 
+  -- SELECT COUNT: 테이블 alias 사용
   select count(*)
-  into _report_count
-  from public.journey_reports
-  where journey_id = target_journey_id;
+  into v_report_count
+  from public.journey_reports jr
+  where jr.journey_id = target_journey_id;
 
-  if _report_count >= 3 then
-    update public.journeys
+  if v_report_count >= 3 then
+    update public.journeys j
     set filter_code = 'HELD',
         updated_at = now()
-    where id = target_journey_id
-      and filter_code <> 'REMOVED';
+    where j.id = target_journey_id
+      and j.filter_code <> 'REMOVED';
   end if;
+
+  -- RETURN QUERY: 변수명을 v_report_created_at으로 사용
+  return query
+  select true as success, v_report_id as report_id, v_report_created_at as created_at;
 end;
 $$;
 

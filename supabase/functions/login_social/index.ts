@@ -80,14 +80,89 @@ serve(async (request) => {
     .setExpirationTime(now + accessTtlSeconds)
     .sign(encoder.encode(jwtSecret));
 
-  const refreshToken = await new SignJWT({ typ: "refresh", role: "authenticated" })
-    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-    .setIssuer(jwtIssuer)
-    .setAudience(jwtAudience)
-    .setSubject(userId)
-    .setIssuedAt(now)
-    .setExpirationTime(now + refreshTtlSeconds)
-    .sign(encoder.encode(jwtSecret));
+  // ✅ refresh_token은 JWT가 아닌 HMAC 서명 토큰으로 생성
+  // 형식: base64url(userId:timestamp:random) + "." + base64url(HMAC)
+  // 점이 1개만 있으므로 JWT(점 2개)와 구분됨
+  const randomBytes = new Uint8Array(32);
+  crypto.getRandomValues(randomBytes);
+  const randomString = btoa(String.fromCharCode(...randomBytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+  const payload = `${userId}:${now}:${randomString}`;
+  const payloadBytes = encoder.encode(payload);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(jwtSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, payloadBytes);
+  const signatureBase64 = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+  const payloadBase64 = btoa(payload)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+  const refreshToken = `${payloadBase64}.${signatureBase64}`;
+
+  // ✅ 불변식 검사: access_token은 JWT여야 함 (점 2개)
+  const accessTokenDotCount = (accessToken.match(/\./g) || []).length;
+  if (accessTokenDotCount !== 2) {
+    const accessTokenFingerprint = accessToken.substring(0, 12);
+    console.error(
+      `[login_social] ⚠️ 치명적 토큰 매핑 오류: access_token이 JWT 형태가 아닙니다 ` +
+        `(fp=${accessTokenFingerprint}, len=${accessToken.length}, dots=${accessTokenDotCount})`,
+    );
+    await logLoginAttempt({ loginTypeCode: provider ?? "unknown", result: "failed" });
+    return jsonResponse(
+      {
+        error: "server_misconfigured_access_token",
+        msg: "access_token must be JWT format",
+      },
+      500,
+    );
+  }
+
+  // ✅ 불변식 검사: refresh_token은 JWT가 아니어야 함 (점 2개면 안 됨)
+  const refreshTokenDotCount = (refreshToken.match(/\./g) || []).length;
+  if (refreshTokenDotCount >= 2) {
+    // refresh_token이 JWT 형태(점 2개)면 치명적 매핑 오류
+    const refreshTokenFingerprint = refreshToken.substring(0, 12);
+    console.error(
+      `[login_social] ⚠️ 치명적 토큰 매핑 오류: refresh_token이 JWT 형태입니다 ` +
+        `(fp=${refreshTokenFingerprint}, len=${refreshToken.length}, dots=${refreshTokenDotCount})`,
+    );
+    await logLoginAttempt({ loginTypeCode: provider ?? "unknown", result: "failed" });
+    return jsonResponse(
+      {
+        error: "server_misconfigured_refresh_token",
+        msg: "refresh_token must not be JWT format",
+      },
+      500,
+    );
+  }
+
+  // ✅ 불변식 검사: refresh_token이 access_token과 같은 값으로 매핑되는 치명적 오류 방지
+  if (refreshToken === accessToken) {
+    const accessTokenFingerprint = accessToken.substring(0, 12);
+    const refreshTokenFingerprint = refreshToken.substring(0, 12);
+    console.error(
+      `[login_social] ⚠️ 치명적 토큰 매핑 오류: refresh_token이 access_token과 동일합니다 ` +
+        `(accessFp=${accessTokenFingerprint}, refreshFp=${refreshTokenFingerprint}, len=${refreshToken.length})`,
+    );
+    await logLoginAttempt({ loginTypeCode: provider ?? "unknown", result: "failed" });
+    return jsonResponse(
+      {
+        error: "server_misconfigured_refresh_token",
+        msg: "refresh_token must not equal access_token",
+      },
+      500,
+    );
+  }
 
   const synced = await syncUser(accessToken, provider, providerSubject);
   if (!synced) {
@@ -101,7 +176,8 @@ serve(async (request) => {
     accessToken,
   });
 
-  return jsonResponse({ accessToken, refreshToken }, 200);
+  // ✅ SSOT: 응답 JSON 키를 access_token/refresh_token으로 통일
+  return jsonResponse({ access_token: accessToken, refresh_token: refreshToken }, 200);
 });
 
 async function verifyGoogle(idToken: string): Promise<string> {

@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,6 +12,13 @@ import 'session_tokens.dart';
 import 'token_store.dart';
 
 const _logPrefix = '[SessionManager]';
+
+/// 토큰 fingerprint 생성 (SHA256 prefix 12자, 민감정보 제외 로깅용)
+String _tokenFingerprint(String token) {
+  final bytes = utf8.encode(token);
+  final digest = sha256.convert(bytes);
+  return digest.toString().substring(0, 12);
+}
 
 /// restoreSession 내부 함수의 결과 모델
 /// 상태 변경 없이 결과만 반환하여 wrapper에서 일관된 상태 전환 보장
@@ -69,6 +78,13 @@ class SessionManager extends Notifier<SessionState> {
   DateTime? _lastRestoreFailedAt;
   static const _restoreCooldown = Duration(seconds: 15);
 
+  /// Silent refresh single-flight 락: 동시에 여러 silentRefresh 호출을 1회로 병합
+  Completer<void>? _silentRefreshCompleter;
+
+  /// Silent refresh 쿨다운: 최근 refresh 후 일정 시간 동안 재시도 차단 (연타 방지)
+  DateTime? _lastSilentRefreshAt;
+  static const _silentRefreshCooldown = Duration(seconds: 30);
+
   /// restoreInFlight Future (외부에서 await 가능)
   /// 
   /// SSOT: 복구 중인지 판단하는 단일 소스
@@ -101,6 +117,308 @@ class SessionManager extends Notifier<SessionState> {
     return DateTime.now().difference(_lastRestoreFailedAt!) < _restoreCooldown;
   }
 
+  /// 세션 만료 확정 및 토큰 purge (단일 진입점)
+  ///
+  /// 어떤 경로에서 실패하든 반드시 동일한 결말로 수렴합니다:
+  /// - TokenStore purge
+  /// - state = unauthenticated + message = sessionExpired
+  /// - 재시도 금지 플래그/쿨다운 갱신
+  Future<void> _markSessionExpiredAndPurge({
+    String reason = 'session_expired',
+    String source = 'unknown',
+  }) async {
+    if (kDebugMode) {
+      debugPrint('$_logPrefix markSessionExpiredAndPurge (reason=$reason, source=$source)');
+    }
+
+    await _tokenStore.clear();
+    state = state.copyWith(
+      status: SessionStatus.unauthenticated,
+      isBusy: false,
+      accessToken: null,
+      message: SessionMessage.sessionExpired,
+    );
+    _lastRestoreFailedAt = DateTime.now();
+    _lastSilentRefreshAt = DateTime.now(); // 쿨다운 갱신
+  }
+
+  /// SessionMessage consume (1회성 이벤트 처리)
+  ///
+  /// 알럿 표시 후 반드시 호출하여 중복 알럿을 방지합니다.
+  void consumeMessage(SessionMessage message) {
+    if (state.message == message) {
+      state = state.copyWith(resetMessage: true);
+      if (kDebugMode) {
+        debugPrint('$_logPrefix consumeMessage: $message');
+      }
+    }
+  }
+
+  /// Silent refresh in-flight Future (외부에서 await 가능)
+  Future<void>? get silentRefreshInFlight {
+    final completer = _silentRefreshCompleter;
+    if (completer != null && !completer.isCompleted) {
+      return completer.future;
+    }
+    return null;
+  }
+
+  /// 401 발생 시 처리 (단일 진입점)
+  ///
+  /// 정책:
+  /// - unauthenticated면 바로 return
+  /// - cooldown이면 return
+  /// - in-flight 있으면 join
+  /// - refresh 시도(필요 시) → 성공하면 상태 최소 업데이트
+  /// - 실패 확정이면 purge + unauthenticated로 전환(재시도 금지 플래그 포함)
+  ///
+  /// 이 메서드를 통해 401 처리가 단일 진입점으로 수렴하여,
+  /// 갱신 정책/중복 방지/실패 처리/로그인 이동 트리거가 한 군데로만 흐르게 됩니다.
+  Future<void> handleUnauthorized({
+    String reason = 'unauthorized',
+    String source = 'unknown',
+  }) async {
+    if (kDebugMode) {
+      debugPrint('$_logPrefix handleUnauthorized start (reason=$reason, source=$source)');
+    }
+
+    // ✅ unauthenticated 상태에서는 바로 return
+    if (state.status == SessionStatus.unauthenticated) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix handleUnauthorized skip: 이미 unauthenticated 상태');
+      }
+      return;
+    }
+
+    // ✅ cooldown 중에도 refresh 불가(토큰 없음/invalid 확정) 상황은 즉시 purge 확정
+    // cooldown은 "refresh 시도 연타 방지" 목적이지 "만료 확정 회피" 목적이 아님
+    final tokens = await _tokenStore.read();
+    if (tokens == null || tokens.refreshToken.isEmpty) {
+      // 토큰이 없으면 즉시 purge 확정
+      if (kDebugMode) {
+        debugPrint('$_logPrefix handleUnauthorized: 토큰 없음 → 즉시 purge 확정');
+      }
+      await _markSessionExpiredAndPurge(reason: 'no_tokens', source: source);
+      return;
+    }
+
+    // ✅ cooldown이면 return (단, 위에서 토큰 없음은 이미 처리됨)
+    if (isSilentRefreshBlocked) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix handleUnauthorized skip: 쿨다운 중');
+      }
+      return;
+    }
+
+    // ✅ in-flight 있으면 join 후 상태 검증
+    final existing = _silentRefreshCompleter;
+    if (existing != null && !existing.isCompleted) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix handleUnauthorized join existing in-flight');
+      }
+      try {
+        await existing.future;
+        // ✅ join 후 상태 검증: 이미 unauthenticated면 return
+        final currentState = state;
+        if (currentState.status == SessionStatus.unauthenticated) {
+          if (kDebugMode) {
+            debugPrint('$_logPrefix handleUnauthorized: in-flight 완료 후 unauthenticated 확인');
+          }
+          return;
+        }
+        // authenticated인데도 401 원인이 계속이면 재시도 (쿨다운 허용 시)
+        // 여기서는 이미 in-flight가 완료되었으므로 추가 처리 불필요
+      } catch (e) {
+        // in-flight 실패: 상태 검증 후 필요 시 purge 확정
+        if (kDebugMode) {
+          debugPrint('$_logPrefix handleUnauthorized in-flight 실패: $e');
+        }
+        final currentState = state;
+        if (currentState.status != SessionStatus.unauthenticated) {
+          // 실패했는데도 unauthenticated가 아니면 purge 확정
+          await _markSessionExpiredAndPurge(reason: 'in_flight_failed', source: source);
+        }
+      }
+      return;
+    }
+
+    // ✅ silentRefreshIfNeeded를 통해서만 refresh 시도
+    await silentRefreshIfNeeded(reason: '401:$source');
+  }
+
+  /// Silent refresh 쿨다운 중인지 확인
+  bool get isSilentRefreshBlocked {
+    if (_lastSilentRefreshAt == null) return false;
+    return DateTime.now().difference(_lastSilentRefreshAt!) < _silentRefreshCooldown;
+  }
+
+  /// Silent refresh (사용자 모르게 토큰 갱신, UI 영향 최소화)
+  ///
+  /// 만료 임박/만료 상황에서만 refresh를 시도하며,
+  /// single-flight + cooldown으로 연타/무한 반복을 방지합니다.
+  ///
+  /// 성공 시: 토큰 저장, 상태는 authenticated 유지 (isBusy만 변경)
+  /// 실패 확정 시: purge + unauthenticated 전환
+  Future<void> silentRefreshIfNeeded({String reason = 'proactive'}) async {
+    // ✅ unauthenticated 상태에서는 호출 차단
+    if (state.status == SessionStatus.unauthenticated) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix silentRefreshIfNeeded 차단: 이미 unauthenticated 상태');
+      }
+      return;
+    }
+
+    // ✅ 쿨다운 중이면 skip
+    if (isSilentRefreshBlocked) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix silentRefreshIfNeeded skip: 쿨다운 중 (reason=$reason)');
+      }
+      return;
+    }
+
+    // ✅ in-flight가 있으면 join
+    final existing = _silentRefreshCompleter;
+    if (existing != null && !existing.isCompleted) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix silentRefreshIfNeeded join existing (reason=$reason)');
+      }
+      return existing.future;
+    }
+
+    // ✅ 만료 임박 확인
+    final accessToken = state.accessToken;
+    if (accessToken == null || accessToken.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix silentRefreshIfNeeded skip: accessToken 없음');
+      }
+      return;
+    }
+
+    // JWT 만료 임박 확인 (60초 이내)
+    final parts = accessToken.split('.');
+    if (parts.length != 3) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix silentRefreshIfNeeded skip: JWT 형식 아님');
+      }
+      return;
+    }
+
+    try {
+      final payload = parts[1];
+      final normalized = base64Url.normalize(payload);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final map = jsonDecode(decoded) as Map<String, dynamic>;
+      final exp = (map['exp'] as num?)?.toInt();
+      if (exp == null) {
+        if (kDebugMode) {
+          debugPrint('$_logPrefix silentRefreshIfNeeded skip: exp 없음');
+        }
+        return;
+      }
+
+      final nowSec = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+      final secondsLeft = exp - nowSec;
+      if (secondsLeft > 60) {
+        // 만료 임박 아님 (60초 초과)
+        if (kDebugMode) {
+          debugPrint('$_logPrefix silentRefreshIfNeeded skip: 만료 임박 아님 ($secondsLeft초 남음)');
+        }
+        return;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix silentRefreshIfNeeded skip: JWT 파싱 실패: $e');
+      }
+      return;
+    }
+
+    // ✅ 새 completer 생성
+    final completer = Completer<void>();
+    _silentRefreshCompleter = completer;
+
+    if (kDebugMode) {
+      debugPrint('$_logPrefix silentRefreshIfNeeded start (reason=$reason)');
+    }
+
+    try {
+      // ✅ 내부 함수 실행 (결과만 반환, 상태 변경 없음)
+      final outcome = await _restoreSessionInternal();
+
+      switch (outcome) {
+        case RestoreSuccess(:final tokens):
+          // ✅ 토큰 변경 여부 비교 (fp/iat/exp) 후 실제 변경 시에만 저장
+          final currentTokens = await _tokenStore.read();
+          final tokenChanged = currentTokens == null ||
+              currentTokens.accessToken != tokens.accessToken ||
+              currentTokens.refreshToken != tokens.refreshToken;
+
+          if (tokenChanged) {
+            // 토큰이 실제로 변경된 경우에만 저장
+            await _tokenStore.save(tokens);
+            if (kDebugMode) {
+              debugPrint('$_logPrefix silentRefreshIfNeeded: 토큰 변경됨 → 저장');
+            }
+          } else {
+            if (kDebugMode) {
+              debugPrint('$_logPrefix silentRefreshIfNeeded: 토큰 변경 없음 → 저장 생략');
+            }
+          }
+
+          // 상태는 authenticated 유지 (isBusy만 변경)
+          state = state.copyWith(
+            status: SessionStatus.authenticated,
+            isBusy: false,
+            accessToken: tokens.accessToken,
+          );
+          _lastSilentRefreshAt = DateTime.now();
+          _lastRestoreFailedAt = null; // 쿨다운 해제
+          if (kDebugMode) {
+            debugPrint('$_logPrefix silentRefreshIfNeeded done (success)');
+          }
+
+        case RestoreAuthFailed():
+          // 인증 실패 확정: 단일 진입점으로 purge 확정
+          await _markSessionExpiredAndPurge(reason: 'refresh_failed', source: 'silentRefresh');
+          if (kDebugMode) {
+            debugPrint('$_logPrefix silentRefreshIfNeeded done (authFailed)');
+          }
+
+        case RestoreTransient():
+          // 일시 장애: 토큰 유지 및 authenticated 유지
+          final currentTokens = await _tokenStore.read();
+          state = state.copyWith(
+            status: SessionStatus.authenticated,
+            isBusy: false,
+            accessToken: currentTokens?.accessToken,
+          );
+          _lastSilentRefreshAt = DateTime.now();
+          if (kDebugMode) {
+            debugPrint('$_logPrefix silentRefreshIfNeeded done (transient)');
+          }
+      }
+
+      completer.complete();
+    } catch (e, st) {
+      // 예상치 못한 예외: 일시 장애로 처리
+      final currentTokens = await _tokenStore.read();
+      state = state.copyWith(
+        status: SessionStatus.authenticated,
+        isBusy: false,
+        accessToken: currentTokens?.accessToken,
+      );
+      _lastSilentRefreshAt = DateTime.now();
+
+      completer.completeError(e, st);
+      if (kDebugMode) {
+        debugPrint('$_logPrefix silentRefreshIfNeeded done (error: $e)');
+      }
+    } finally {
+      if (identical(_silentRefreshCompleter, completer)) {
+        _silentRefreshCompleter = null;
+      }
+    }
+  }
+
   @override
   SessionState build() {
     _tokenStore = ref.read(tokenStoreProvider);
@@ -125,6 +443,14 @@ class SessionManager extends Notifier<SessionState> {
   /// 6. completer complete/completeError
   /// 7. _restoreCompleter = null (이 순서로 "inFlight 정리 → 아직 refreshing" 방지)
   Future<void> restoreSession() async {
+    // ✅ unauthenticated 상태에서 restoreSession 호출 차단 (루프 방지)
+    if (state.status == SessionStatus.unauthenticated) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix restoreSession 차단: 이미 unauthenticated 상태 (루프 방지)');
+      }
+      throw RestoreSessionFailedException();
+    }
+
     // 쿨다운 중이면 즉시 예외 (무한 루프 방지)
     if (isRestoreBlocked) {
       if (kDebugMode) {
@@ -305,9 +631,47 @@ class SessionManager extends Notifier<SessionState> {
       return const RestoreOutcome.authFailed();
     }
 
+    // ✅ SSOT 검증: restore에서 사용 직전 토큰 형태 검증
+    final accessJwt = tokens.accessToken.split('.').length == 3;
+    final refreshJwt = tokens.refreshToken.split('.').length == 3;
+    
     if (kDebugMode) {
-      debugPrint('$_logPrefix 토큰 로드 성공 (access=${tokens.accessToken.length}자, refresh=${tokens.refreshToken.length}자)');
+      final accessLen = tokens.accessToken.length;
+      final accessFp = _tokenFingerprint(tokens.accessToken);
+      final refreshLen = tokens.refreshToken.length;
+      final refreshFp = _tokenFingerprint(tokens.refreshToken);
+      debugPrint(
+        '$_logPrefix 토큰 로드 성공: '
+        'accessLen=$accessLen, accessJwt=$accessJwt, accessFp=$accessFp, '
+        'refreshLen=$refreshLen, refreshJwt=$refreshJwt, refreshFp=$refreshFp',
+      );
       debugPrint('$_logPrefix 세션 검증 시작');
+    }
+
+    // ✅ 불변식 검사: access_token은 JWT여야 함
+    if (!accessJwt) {
+      final fingerprint = _tokenFingerprint(tokens.accessToken);
+      if (kDebugMode) {
+        debugPrint(
+          '$_logPrefix ⚠️ 치명적 토큰 매핑 오류: restoreSession에서 access_token이 JWT 형태가 아닙니다 '
+          '(fp=$fingerprint, len=${tokens.accessToken.length})',
+        );
+      }
+      // 토큰 clear는 wrapper에서 수행
+      return const RestoreOutcome.authFailed();
+    }
+
+    // ✅ 불변식 검사: refresh_token은 JWT가 아니어야 함 (점 2개면 안 됨)
+    if (refreshJwt) {
+      final fingerprint = _tokenFingerprint(tokens.refreshToken);
+      if (kDebugMode) {
+        debugPrint(
+          '$_logPrefix ⚠️ 치명적 토큰 매핑 오류: restoreSession에서 refresh_token이 JWT 형태입니다 '
+          '(fp=$fingerprint, len=${tokens.refreshToken.length}) - access_token을 잘못 매핑한 것',
+        );
+      }
+      // 토큰 clear는 wrapper에서 수행
+      return const RestoreOutcome.authFailed();
     }
 
     final isValid = await _authRpcClient.validateSession(tokens);
@@ -382,9 +746,25 @@ class SessionManager extends Notifier<SessionState> {
       return;
     }
     state = state.copyWith(isBusy: true);
+    
+    // ✅ SSOT 검증: signInWithTokens에서 저장 직전 토큰 형태 검증 로그
+    if (kDebugMode) {
+      final accessLen = tokens.accessToken.length;
+      final accessJwt = tokens.accessToken.split('.').length == 3;
+      final accessFp = _tokenFingerprint(tokens.accessToken);
+      final refreshLen = tokens.refreshToken.length;
+      final refreshJwt = tokens.refreshToken.split('.').length == 3;
+      final refreshFp = _tokenFingerprint(tokens.refreshToken);
+      debugPrint(
+        '$_logPrefix 로그인 토큰 저장 직전: '
+        'accessLen=$accessLen, accessJwt=$accessJwt, accessFp=$accessFp, '
+        'refreshLen=$refreshLen, refreshJwt=$refreshJwt, refreshFp=$refreshFp',
+      );
+    }
+    
     await _tokenStore.save(tokens);
     if (kDebugMode) {
-      debugPrint('$_logPrefix 로그인 성공: 토큰 저장 완료 (access=${tokens.accessToken.length}자)');
+      debugPrint('$_logPrefix 로그인 성공: 토큰 저장 완료');
     }
     state = state.copyWith(
       status: SessionStatus.authenticated,
@@ -418,8 +798,19 @@ class SessionManager extends Notifier<SessionState> {
       );
       return;
     }
+    // ✅ SSOT 검증: 소셜 로그인 직후 토큰 형태 검증 로그
     if (kDebugMode) {
-      debugPrint('$_logPrefix 소셜 로그인 토큰 수신: access=${tokens.accessToken.length}자');
+      final accessLen = tokens.accessToken.length;
+      final accessJwt = tokens.accessToken.split('.').length == 3;
+      final accessFp = _tokenFingerprint(tokens.accessToken);
+      final refreshLen = tokens.refreshToken.length;
+      final refreshJwt = tokens.refreshToken.split('.').length == 3;
+      final refreshFp = _tokenFingerprint(tokens.refreshToken);
+      debugPrint(
+        '$_logPrefix 소셜 로그인 토큰 수신: '
+        'accessLen=$accessLen, accessJwt=$accessJwt, accessFp=$accessFp, '
+        'refreshLen=$refreshLen, refreshJwt=$refreshJwt, refreshFp=$refreshFp',
+      );
     }
     await signInWithTokens(tokens);
   }

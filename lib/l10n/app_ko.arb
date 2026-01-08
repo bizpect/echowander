@@ -166,6 +166,8 @@
   "inboxPassCta": "패스",
   "inboxPassSuccessTitle": "패스 완료",
   "inboxPassSuccessBody": "이번 메시지는 패스했어요.",
+  "inboxPassedTitle": "패스한 메시지",
+  "inboxPassedDetailUnavailable": "패스 처리되어 내용을 볼 수 없습니다.",
   "inboxReportCta": "신고",
   "inboxReportTitle": "신고 사유",
   "inboxReportSpam": "스팸",

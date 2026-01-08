@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 
 import '../config/app_config.dart';
@@ -123,184 +124,11 @@ class HttpAuthRpcClient implements AuthRpcClient {
 
   Uri _resolve(String path) => _baseUri.resolve(path);
 
-  /// Supabase Auth REST refresh 요청 실제 실행 (NetworkGuard가 호출)
-  Future<Map<String, dynamic>> _executeAuthRefresh({
-    required Uri uri,
-    required String refreshToken,
-  }) async {
-    // URL 검증: supabaseUrl이 올바른 형태인지 확인
-    final supabaseUrl = _config.supabaseUrl;
-    if (!supabaseUrl.startsWith('https://') || !supabaseUrl.contains('.supabase.co')) {
-      if (kDebugMode) {
-        debugPrint(
-          '$_logPrefix refreshSession URL 검증 실패: supabaseUrl=$supabaseUrl '
-          '(예상: https://xxxx.supabase.co)',
-        );
-      }
-      throw NetworkRequestException(
-        type: NetworkErrorType.missingConfig,
-        message: 'Invalid supabaseUrl format: $supabaseUrl',
-      );
-    }
-
-    // 엔드포인트 검증: /auth/v1/token이어야 함
-    if (!uri.path.endsWith('/auth/v1/token') || !uri.queryParameters.containsKey('grant_type')) {
-      if (kDebugMode) {
-        debugPrint(
-          '$_logPrefix refreshSession 엔드포인트 검증 실패: uri=$uri '
-          '(예상: /auth/v1/token?grant_type=refresh_token)',
-        );
-      }
-      throw NetworkRequestException(
-        type: NetworkErrorType.missingConfig,
-        message: 'Invalid refresh endpoint: $uri',
-      );
-    }
-
-    // 헤더/바디 검증 로깅 (민감정보 제외)
-    if (kDebugMode) {
-      debugPrint(
-        '$_logPrefix refreshSession 요청 상세: '
-        'scheme=${uri.scheme}, '
-        'host=${uri.host}, '
-        'path=${uri.path}, '
-        'query=${uri.query}, '
-        'supabaseUrlSource=${_config.supabaseUrl}, '
-        'refreshTokenLength=${refreshToken.length}, '
-        'apikeyLength=${_config.supabaseAnonKey.length}, '
-        'hasAuthHeader=true',
-      );
-    }
-
-    final request = await _client.postUrl(uri);
-    request.headers.set(
-      HttpHeaders.contentTypeHeader,
-      'application/json; charset=utf-8',
-    );
-    // Supabase Auth REST 필수 헤더
-    request.headers.set('apikey', _config.supabaseAnonKey);
-    // Authorization: Bearer anonKey (권장 안전장치)
-    request.headers.set(
-      HttpHeaders.authorizationHeader,
-      'Bearer ${_config.supabaseAnonKey}',
-    );
-    // Accept: application/json (권장)
-    request.headers.set(HttpHeaders.acceptHeader, 'application/json');
-    final bodyJson = jsonEncode({'refresh_token': refreshToken});
-    request.add(utf8.encode(bodyJson));
-
-    final response = await request.close();
-    final rawPayloadText = await response.transform(utf8.decoder).join();
-    // 빈 문자열이면 "<empty>"로 대체하여 파싱 시도
-    final payloadText = rawPayloadText.isEmpty ? '<empty>' : rawPayloadText;
-
-    // 응답 상세 로깅 (민감정보 제외)
-    final contentType = response.headers.value(HttpHeaders.contentTypeHeader) ?? 'unknown';
-    final payloadLength = payloadText.length;
-    final payloadSample = _maskTokens(_truncate(payloadText, 200));
-
-    if (kDebugMode) {
-      debugPrint(
-        '$_logPrefix refreshSession 응답: '
-        'status=${response.statusCode}, '
-        'contentType=$contentType, '
-        'payloadLength=$payloadLength, '
-        'payloadSample=$payloadSample',
-      );
-    }
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      // 비-2xx 응답의 error/error_description 파싱 (토큰 값 제외)
-      final parsedErrorCode = _extractErrorCode(payloadText);
-      final parsedErrorDescription = _extractErrorMessage(payloadText);
-
-      // HTML 응답 또는 빈 응답은 "요청 자체가 잘못" 가능성이 높음
-      final isHtml = payloadText.trim().toLowerCase().startsWith('<!doctype') ||
-          payloadText.trim().toLowerCase().startsWith('<html');
-      final isEmpty = payloadText == '<empty>' || payloadText.trim().isEmpty;
-
-      // 정규화된 메시지 생성 (로깅용, 민감정보 제외)
-      final normalizedMessage = parsedErrorCode != null
-          ? 'error=$parsedErrorCode${parsedErrorDescription != null ? ", description=$parsedErrorDescription" : ""}'
-          : (isEmpty
-              ? 'empty_response'
-              : (isHtml
-                  ? 'html_response'
-                  : payloadSample));
-
-      await _errorLogger.logHttpFailure(
-        context: 'auth_refresh_session',
-        uri: uri,
-        method: 'POST',
-        statusCode: response.statusCode,
-        errorMessage: normalizedMessage, // 로깅용 정규화된 메시지
-        meta: {
-          'contentType': contentType,
-          'payloadLength': payloadLength,
-          'isHtml': isHtml,
-          'isEmpty': isEmpty,
-          'parsedErrorCode': parsedErrorCode,
-          'parsedErrorDescription': parsedErrorDescription,
-        },
-        accessToken: '', // 민감정보 제외
-      );
-
-      // 400 + HTML/empty 응답은 fatal_misconfig로 분기
-      if (response.statusCode == 400 && (isHtml || isEmpty)) {
-        throw NetworkRequestException(
-          type: NetworkErrorType.missingConfig,
-          statusCode: response.statusCode,
-          message: 'fatal_misconfig: 400 with HTML/empty response',
-          rawBody: payloadText,
-          parsedErrorCode: parsedErrorCode,
-          parsedErrorDescription: parsedErrorDescription,
-          contentType: contentType,
-          isHtml: isHtml,
-          isEmpty: isEmpty,
-          endpoint: uri.toString(),
-        );
-      }
-
-      // ⚠️ 중요: 파싱 결과를 exception 필드에 포함 (SSOT)
-      // message는 정규화된 safe 문자열만 사용
-      throw _networkGuard.statusCodeToException(
-        statusCode: response.statusCode,
-        responseBody: normalizedMessage, // 정규화된 메시지
-        context: 'auth_refresh_session',
-        rawBody: payloadText, // 원문 (파싱용)
-        parsedErrorCode: parsedErrorCode,
-        parsedErrorDescription: parsedErrorDescription,
-        contentType: contentType,
-        isHtml: isHtml,
-        isEmpty: isEmpty,
-        endpoint: uri.toString(),
-      );
-    }
-
-    try {
-      return jsonDecode(payloadText) as Map<String, dynamic>;
-    } on FormatException catch (error) {
-      await _errorLogger.logException(
-        context: 'auth_refresh_session',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        errorMessage: payloadText,
-        meta: const {},
-        accessToken: '',
-      );
-      throw const NetworkRequestException(
-        type: NetworkErrorType.invalidPayload,
-        message: 'Invalid JSON response',
-      );
-    }
-  }
-
   /// POST JSON 요청 실제 실행 (NetworkGuard가 호출)
   Future<Map<String, dynamic>> _executePostJson({
     required Uri uri,
     required Map<String, dynamic> body,
-    required String token,
+    String? token, // ✅ nullable로 변경: null이면 Authorization 헤더 추가 안 함
     required String context,
   }) async {
     final request = await _client.postUrl(uri);
@@ -310,7 +138,9 @@ class HttpAuthRpcClient implements AuthRpcClient {
     );
     // Supabase Edge Functions 필수 헤더: apikey
     request.headers.set('apikey', _config.supabaseAnonKey);
-    if (token.isNotEmpty) {
+    // ✅ Authorization 헤더는 옵션: token이 null이 아니고 비어있지 않을 때만 추가
+    // 빈 문자열 토큰을 Authorization에 넣는 것은 금지
+    if (token != null && token.isNotEmpty) {
       request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
     }
     request.add(utf8.encode(jsonEncode(body)));
@@ -358,17 +188,23 @@ class HttpAuthRpcClient implements AuthRpcClient {
   @override
   Future<bool> validateSession(SessionTokens tokens) async {
     if (kDebugMode) {
-      debugPrint('$_logPrefix validateSession 시작');
+      debugPrint(
+        '$_logPrefix validateSession 시작: '
+        '${_logTokenValidation(tokenType: 'access', token: tokens.accessToken)}, '
+        '${_logTokenValidation(tokenType: 'refresh', token: tokens.refreshToken)}',
+      );
     }
 
     final uri = _resolve('validate_session');
 
     try {
+      // ✅ validateSession은 accessToken을 Authorization Bearer로 보냄
+      // body에는 refreshToken을 포함 (서버에서 검증용)
       final result = await _networkGuard.execute<Map<String, dynamic>>(
         operation: () => _executePostJson(
           uri: uri,
           body: {'refreshToken': tokens.refreshToken},
-          token: tokens.accessToken,
+          token: tokens.accessToken, // Authorization Bearer로 전송됨
           context: 'auth_validate_session',
         ),
         retryPolicy: RetryPolicy.short,
@@ -400,10 +236,11 @@ class HttpAuthRpcClient implements AuthRpcClient {
   @override
   Future<RefreshResult> refreshSession(SessionTokens tokens) async {
     if (kDebugMode) {
-      debugPrint('$_logPrefix refreshSession 시작 (Supabase Auth REST)');
+      debugPrint('$_logPrefix refreshSession 시작 (Edge Function)');
     }
 
-    // Supabase Auth REST endpoint 사용 (verify_jwt 설정과 무관)
+    // ✅ Edge Function endpoint 사용: /functions/v1/refresh_session
+    // HMAC refresh_token은 Edge Function으로만 refresh 수행 (GoTrue 호환 불가)
     final supabaseUrl = _config.supabaseUrl;
     if (supabaseUrl.isEmpty) {
       if (kDebugMode) {
@@ -412,16 +249,65 @@ class HttpAuthRpcClient implements AuthRpcClient {
       return const RefreshResult.transientError();
     }
 
-    final uri = Uri.parse(
-      supabaseUrl,
-    ).resolve('/auth/v1/token?grant_type=refresh_token');
+    // ✅ URL 생성: Uri.replace로 고정 생성 (조건문 지옥 금지)
+    // base: https://<project>.supabase.co
+    // path: /functions/v1/refresh_session (고정)
+    final base = Uri.parse(supabaseUrl);
+    final uri = base.replace(path: '/functions/v1/refresh_session');
+
+    // ✅ URL 검증: 반드시 /functions/v1/refresh_session이어야 함
+    if (uri.path != '/functions/v1/refresh_session') {
+      if (kDebugMode) {
+        debugPrint(
+          '$_logPrefix ⚠️ URL 검증 실패: path=${uri.path} '
+          '(예상: /functions/v1/refresh_session)',
+        );
+      }
+      return RefreshResult.fatalMisconfig(
+        'Invalid refresh endpoint: ${uri.path} (expected: /functions/v1/refresh_session)',
+      );
+    }
+
+    // ✅ SSOT 검증: refresh 직전 토큰 형태 검증 로그
+    // refresh_token이 JWT 형태면 치명적 매핑 오류로 차단
+    if (_isJwtFormat(tokens.refreshToken)) {
+      final fingerprint = _tokenFingerprint(tokens.refreshToken);
+      if (kDebugMode) {
+        debugPrint(
+          '$_logPrefix ⚠️ 치명적 토큰 매핑 오류: refresh_token이 JWT 형태입니다 '
+          '(fp=$fingerprint, len=${tokens.refreshToken.length})',
+        );
+      }
+      return RefreshResult.fatalMisconfig(
+        'refresh_token 매핑 오류: JWT 형태로 변질됨 (fp=$fingerprint)',
+      );
+    }
+
+    if (kDebugMode) {
+      debugPrint(
+        '$_logPrefix refreshSession using: '
+        '${_logTokenValidation(tokenType: 'refresh', token: tokens.refreshToken)}',
+      );
+      // ✅ 최종 URL 출력 (검증 포인트)
+      debugPrint(
+        '$_logPrefix refreshSession 요청 상세: '
+        'path=${uri.path}, '
+        'fullUrl=${uri.toString()}',
+      );
+    }
 
     try {
-      // Supabase Auth REST: refresh_token 기반, 만료된 accessToken 불필요
+      // ✅ Edge Function: refresh_token 기반, 만료된 accessToken 불필요
+      // verify_jwt=true 환경에서도 게이트 통과를 위해 Bearer anonKey 사용
       // refresh는 비멱등(rotation 가능) → 자동 재시도 금지 (invalid_grant 방지)
+      // ✅ SSOT: 요청 body 키를 refresh_token으로 통일 (서버와 동일)
       final result = await _networkGuard.execute<Map<String, dynamic>>(
-        operation: () =>
-            _executeAuthRefresh(uri: uri, refreshToken: tokens.refreshToken),
+        operation: () => _executePostJson(
+          uri: uri,
+          body: {'refresh_token': tokens.refreshToken}, // ✅ SSOT: refresh_token으로 통일
+          token: _config.supabaseAnonKey, // ✅ Bearer anonKey로 게이트 401 차단 제거
+          context: 'auth_refresh_session',
+        ),
         retryPolicy: RetryPolicy.none, // 재시도 0 (rotation 안전)
         context: 'auth_refresh_session',
         uri: uri,
@@ -431,7 +317,7 @@ class HttpAuthRpcClient implements AuthRpcClient {
       );
 
       if (kDebugMode) {
-        debugPrint('$_logPrefix refreshSession 성공');
+        debugPrint('$_logPrefix refreshSession 응답: status=200');
       }
 
       // 응답 파싱: access_token, refresh_token (null-safe, rotation 대응)
@@ -447,6 +333,49 @@ class HttpAuthRpcClient implements AuthRpcClient {
 
       // refresh_token이 없으면 기존 토큰 유지 (rotation 미적용 시)
       final newRefreshToken = refreshToken ?? tokens.refreshToken;
+
+      // ✅ SSOT 검증: refresh 응답 직후 토큰 형태 검증
+      // access_token은 JWT여야 함 (점 2개)
+      final accessJwt = _isJwtFormat(accessToken);
+      if (!accessJwt) {
+        final fingerprint = _tokenFingerprint(accessToken);
+        if (kDebugMode) {
+          debugPrint(
+            '$_logPrefix ⚠️ 치명적 토큰 매핑 오류: refreshSession 응답의 access_token이 JWT 형태가 아닙니다 '
+            '(fp=$fingerprint, len=${accessToken.length})',
+          );
+        }
+        return RefreshResult.fatalMisconfig(
+          'access_token 매핑 오류: JWT 형태가 아님 (fp=$fingerprint)',
+        );
+      }
+
+      // refresh_token은 JWT가 아니어야 함 (점 2개면 안 됨)
+      final refreshJwt = _isJwtFormat(newRefreshToken);
+      if (refreshJwt) {
+        final fingerprint = _tokenFingerprint(newRefreshToken);
+        if (kDebugMode) {
+          debugPrint(
+            '$_logPrefix ⚠️ 치명적 토큰 매핑 오류: refreshSession 응답의 refresh_token이 JWT 형태입니다 '
+            '(fp=$fingerprint, len=${newRefreshToken.length}) - access_token을 잘못 매핑한 것',
+          );
+        }
+        return RefreshResult.fatalMisconfig(
+          'refresh_token 매핑 오류: JWT 형태로 변질됨 (fp=$fingerprint)',
+        );
+      }
+
+      if (kDebugMode) {
+        debugPrint(
+          '$_logPrefix [Token] refresh issued: '
+          '${_logTokenValidation(tokenType: 'access', token: accessToken)}, '
+          '${_logTokenValidation(tokenType: 'refresh', token: newRefreshToken)}',
+        );
+        // ✅ 완료 조건 검증: accessJwt=true, refreshJwt=false
+        debugPrint(
+          '$_logPrefix ✅ 토큰 형태 검증 통과: accessJwt=$accessJwt, refreshJwt=$refreshJwt',
+        );
+      }
 
       return RefreshResult.success(
         SessionTokens(accessToken: accessToken, refreshToken: newRefreshToken),
@@ -660,10 +589,72 @@ class HttpAuthRpcClient implements AuthRpcClient {
 
     try {
       final payload = jsonDecode(payloadText) as Map<String, dynamic>;
+      // ✅ SSOT: 서버 응답 키를 access_token/refresh_token으로 통일
+      final accessToken = payload['access_token'] as String?;
+      final refreshToken = payload['refresh_token'] as String?;
+      
+      if (accessToken == null || accessToken.isEmpty || refreshToken == null || refreshToken.isEmpty) {
+        await _errorLogger.logException(
+          context: 'auth_login_social',
+          uri: uri,
+          method: 'POST',
+          error: const FormatException('Missing access_token or refresh_token in response'),
+          errorMessage: payloadText,
+          meta: {'provider': provider},
+          accessToken: '',
+        );
+        return const AuthRpcLoginResult.failure(
+          AuthRpcLoginError.missingPayload,
+        );
+      }
+      
+      // ✅ SSOT 검증: 발급 직후 토큰 형태 검증
+      // access_token은 JWT여야 함 (점 2개)
+      final accessJwt = _isJwtFormat(accessToken);
+      if (!accessJwt) {
+        final fingerprint = _tokenFingerprint(accessToken);
+        if (kDebugMode) {
+          debugPrint(
+            '$_logPrefix ⚠️ 치명적 토큰 매핑 오류: exchangeSocialToken 응답의 access_token이 JWT 형태가 아닙니다 '
+            '(fp=$fingerprint, len=${accessToken.length})',
+          );
+        }
+        return const AuthRpcLoginResult.failure(
+          AuthRpcLoginError.serverMisconfigured,
+        );
+      }
+
+      // refresh_token은 JWT가 아니어야 함 (점 2개면 안 됨)
+      final refreshJwt = _isJwtFormat(refreshToken);
+      if (refreshJwt) {
+        final fingerprint = _tokenFingerprint(refreshToken);
+        if (kDebugMode) {
+          debugPrint(
+            '$_logPrefix ⚠️ 치명적 토큰 매핑 오류: exchangeSocialToken 응답의 refresh_token이 JWT 형태입니다 '
+            '(fp=$fingerprint, len=${refreshToken.length}) - access_token을 잘못 매핑한 것',
+          );
+        }
+        return const AuthRpcLoginResult.failure(
+          AuthRpcLoginError.serverMisconfigured,
+        );
+      }
+
+      if (kDebugMode) {
+        debugPrint(
+          '$_logPrefix [Token] issued: '
+          '${_logTokenValidation(tokenType: 'access', token: accessToken)}, '
+          '${_logTokenValidation(tokenType: 'refresh', token: refreshToken)}',
+        );
+        // ✅ 완료 조건 검증: accessJwt=true, refreshJwt=false
+        debugPrint(
+          '$_logPrefix ✅ 토큰 형태 검증 통과: accessJwt=$accessJwt, refreshJwt=$refreshJwt',
+        );
+      }
+      
       return AuthRpcLoginResult.success(
         SessionTokens(
-          accessToken: payload['accessToken'] as String,
-          refreshToken: payload['refreshToken'] as String,
+          accessToken: accessToken,
+          refreshToken: refreshToken,
         ),
       );
     } on FormatException catch (error) {
@@ -683,9 +674,38 @@ class HttpAuthRpcClient implements AuthRpcClient {
     }
   }
 
+  /// 토큰 검증 헬퍼: JWT dots 여부 및 길이 검증 (민감정보 제외 로깅용)
+  static bool _isJwtFormat(String token) {
+    return token.split('.').length == 3;
+  }
+
+  /// 토큰 fingerprint 생성 (SHA256 prefix 12자, 민감정보 제외 로깅용)
+  static String _tokenFingerprint(String token) {
+    final bytes = utf8.encode(token);
+    final digest = sha256.convert(bytes);
+    return digest.toString().substring(0, 12);
+  }
+
+  /// 토큰 검증 로그 생성 (민감정보 제외)
+  static String _logTokenValidation({
+    required String tokenType,
+    required String token,
+  }) {
+    final len = token.length;
+    final hasJwtDots = _isJwtFormat(token);
+    final fingerprint = _tokenFingerprint(token);
+    return '$tokenType: len=$len, jwtDots=$hasJwtDots, fp=$fingerprint';
+  }
+
   String? _extractErrorCode(String payloadText) {
     try {
       final payload = jsonDecode(payloadText) as Map<String, dynamic>;
+      // Supabase 응답 형식: error_code 우선
+      final errorCode = payload['error_code'];
+      if (errorCode is String) {
+        return errorCode;
+      }
+      // 표준 OAuth2 형식: error
       final error = payload['error'];
       if (error is String) {
         return error;
@@ -694,33 +714,6 @@ class HttpAuthRpcClient implements AuthRpcClient {
       return null;
     }
     return null;
-  }
-
-  /// Supabase Auth REST 응답에서 error_description 추출 (토큰 값 제외)
-  String? _extractErrorMessage(String payloadText) {
-    try {
-      final payload = jsonDecode(payloadText) as Map<String, dynamic>;
-      final errorDescription = payload['error_description'];
-      if (errorDescription is String) {
-        return errorDescription;
-      }
-    } on FormatException {
-      return null;
-    }
-    return null;
-  }
-
-  /// 문자열을 지정된 길이로 자르기 (로깅용)
-  String _truncate(String text, int maxLength) {
-    if (text.length <= maxLength) return text;
-    return '${text.substring(0, maxLength)}...';
-  }
-
-  /// 토큰 문자열 패턴 마스킹 (로깅용)
-  String _maskTokens(String text) {
-    // JWT 패턴 (3개 부분으로 구성) 마스킹
-    final jwtPattern = RegExp(r'[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}');
-    return text.replaceAll(jwtPattern, '<token_masked>');
   }
 
   AuthRpcLoginError _mapLoginError(String? errorCode) {

@@ -469,6 +469,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inboxPassSuccessBody => 'You\'ve passed this message.';
 
   @override
+  String get inboxPassedTitle => 'Passed message';
+
+  @override
+  String get inboxPassedDetailUnavailable =>
+      'This message was passed and content is unavailable.';
+
+  @override
   String get inboxReportCta => 'Report';
 
   @override

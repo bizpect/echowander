@@ -454,6 +454,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get inboxPassSuccessBody => '이번 메시지는 패스했어요.';
 
   @override
+  String get inboxPassedTitle => '패스한 메시지';
+
+  @override
+  String get inboxPassedDetailUnavailable => '패스 처리되어 내용을 볼 수 없습니다.';
+
+  @override
   String get inboxReportCta => '신고';
 
   @override

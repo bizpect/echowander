@@ -193,6 +193,10 @@ create table if not exists public.journey_recipients (
   sender_user_id uuid,
   snapshot_content text,
   snapshot_image_count integer not null default 0,
+  -- 숨김 처리 필드: 신고/차단 등으로 수신자 기준 숨김 (soft-hide)
+  is_hidden boolean not null default false,
+  hidden_reason_code text,
+  hidden_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint journey_recipients_journey_fk
@@ -272,4 +276,26 @@ create table if not exists public.journey_response_reports (
   constraint journey_response_reports_reason_fk
     foreign key (reason_group, reason_code)
     references public.common_codes (code_type, code_value)
+);
+
+create table if not exists public.journey_actions (
+  id bigserial primary key,
+  journey_recipient_id bigint not null,
+  actor_user_id uuid not null,
+  action_type_group text not null default 'journey_action_type',
+  action_type_code text not null,
+  created_at timestamptz not null default now(),
+  constraint journey_actions_recipient_fk
+    foreign key (journey_recipient_id)
+    references public.journey_recipients (id)
+    on delete cascade,
+  constraint journey_actions_user_fk
+    foreign key (actor_user_id)
+    references public.users (user_id)
+    on delete cascade,
+  constraint journey_actions_type_fk
+    foreign key (action_type_group, action_type_code)
+    references public.common_codes (code_type, code_value),
+  constraint journey_actions_unique
+    unique (actor_user_id, journey_recipient_id, action_type_code)
 );

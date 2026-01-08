@@ -23,6 +23,8 @@ final journeyStorageRepositoryProvider = Provider<JourneyStorageRepository>((ref
 });
 
 class SupabaseJourneyRepository implements JourneyRepository {
+  static const String _logPrefix = '📦[JourneyRepo]';
+
   SupabaseJourneyRepository({required AppConfig config})
       : _config = config,
         _errorLogger = ServerErrorLogger(config: config),
@@ -759,8 +761,9 @@ class SupabaseJourneyRepository implements JourneyRepository {
     required String journeyId,
     required String accessToken,
   }) async {
+    // 새로운 RPC: pass_inbox_item_and_forward 사용 (pass 기록 + 랜덤 전송 + redaction)
     await _executeSimpleJourneyAction(
-      rpc: 'pass_journey',
+      rpc: 'pass_inbox_item_and_forward',
       journeyId: journeyId,
       accessToken: accessToken,
       payload: {'target_journey_id': journeyId},
@@ -803,6 +806,9 @@ class SupabaseJourneyRepository implements JourneyRepository {
     final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/$rpc');
 
     try {
+      if (kDebugMode) {
+        debugPrint('[$_logPrefix][report_journey:journeyId=$journeyId] 신고 시작: reason=${meta?['reason_code'] ?? payload['reason_code']}');
+      }
       await _networkGuard.execute<void>(
         operation: () => _executeRpcPost(
           uri: uri,
@@ -817,7 +823,13 @@ class SupabaseJourneyRepository implements JourneyRepository {
         meta: {'journey_id': journeyId, ...?meta},
         accessToken: accessToken,
       );
+      if (kDebugMode) {
+        debugPrint('[$_logPrefix][report_journey:journeyId=$journeyId] 신고 성공 판정: NetworkGuard 완료');
+      }
     } on NetworkRequestException catch (error) {
+      if (kDebugMode) {
+        debugPrint('[$_logPrefix][report_journey:journeyId=$journeyId] NetworkRequestException: type=${error.type}, statusCode=${error.statusCode}, message=${error.message}');
+      }
       switch (error.type) {
         case NetworkErrorType.network:
         case NetworkErrorType.timeout:
@@ -830,8 +842,18 @@ class SupabaseJourneyRepository implements JourneyRepository {
         case NetworkErrorType.serverRejected:
         case NetworkErrorType.missingConfig:
         case NetworkErrorType.unknown:
+          if (kDebugMode) {
+            debugPrint('[$_logPrefix][report_journey:journeyId=$journeyId] serverRejected로 매핑: 원인 type=${error.type}, statusCode=${error.statusCode}, isEmpty=${error.isEmpty}, isHtml=${error.isHtml}, parsedErrorCode=${error.parsedErrorCode}');
+          }
           throw JourneyActionException(JourneyActionError.serverRejected);
       }
+    } catch (error, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('[$_logPrefix][report_journey:journeyId=$journeyId] 예상치 못한 예외: $error');
+        debugPrint('[$_logPrefix][report_journey:journeyId=$journeyId] 스택 트레이스: $stackTrace');
+      }
+      // 예상치 못한 예외도 serverRejected로 매핑
+      throw JourneyActionException(JourneyActionError.serverRejected);
     }
   }
 
@@ -842,6 +864,9 @@ class SupabaseJourneyRepository implements JourneyRepository {
     required String accessToken,
     required String context,
   }) async {
+    final journeyId = payload['target_journey_id'] as String? ?? payload['journey_id'] as String?;
+    final traceLabel = journeyId != null ? '$context:journeyId=$journeyId' : context;
+
     final request = await _client.postUrl(uri);
     request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
     request.headers.set('apikey', _config.supabaseAnonKey);
@@ -851,23 +876,61 @@ class SupabaseJourneyRepository implements JourneyRepository {
     final response = await request.close();
     final body = await response.transform(utf8.decoder).join();
 
-    if (response.statusCode != HttpStatus.ok) {
-      await _errorLogger.logHttpFailure(
-        context: context,
-        uri: uri,
-        method: 'POST',
-        statusCode: response.statusCode,
-        errorMessage: body,
-        meta: payload,
-        accessToken: accessToken,
-      );
-
-      throw _networkGuard.statusCodeToException(
-        statusCode: response.statusCode,
-        responseBody: body,
-        context: context,
-      );
+    // 200 OK 또는 204 No Content는 성공으로 처리
+    // (PostgREST는 void 반환 함수에 대해 204를 반환할 수 있음)
+    if (response.statusCode == HttpStatus.ok || response.statusCode == HttpStatus.noContent) {
+      // 성공: body가 비어있어도 OK (void 반환 함수의 경우)
+      if (kDebugMode) {
+        if (body.isEmpty) {
+          debugPrint('[$_logPrefix][$traceLabel] 성공: status=${response.statusCode}, body=empty');
+        } else {
+          try {
+            final decoded = jsonDecode(body);
+            if (decoded is List && decoded.isNotEmpty) {
+              final first = decoded[0];
+              if (first is Map<String, dynamic>) {
+                final success = first['success'] as bool?;
+                final reportId = first['report_id'];
+                debugPrint('[$_logPrefix][$traceLabel] 성공: status=${response.statusCode}, success=$success, report_id=$reportId, resType=List[Map], resKeys=${first.keys.toList()}');
+              } else {
+                debugPrint('[$_logPrefix][$traceLabel] 성공: status=${response.statusCode}, resType=${decoded.runtimeType}');
+              }
+            } else if (decoded is Map<String, dynamic>) {
+              final success = decoded['success'] as bool?;
+              final reportId = decoded['report_id'];
+              debugPrint('[$_logPrefix][$traceLabel] 성공: status=${response.statusCode}, success=$success, report_id=$reportId, resType=Map, resKeys=${decoded.keys.toList()}');
+            } else {
+              debugPrint('[$_logPrefix][$traceLabel] 성공: status=${response.statusCode}, resType=${decoded.runtimeType}');
+            }
+          } catch (e) {
+            // JSON 파싱 실패는 무시 (void 반환 함수는 빈 body 가능)
+            debugPrint('[$_logPrefix][$traceLabel] 성공: status=${response.statusCode}, body 파싱 실패(무시): $e');
+          }
+        }
+      }
+      return;
     }
+
+    // 그 외의 상태 코드는 실패
+    if (kDebugMode) {
+      debugPrint('[$_logPrefix][$traceLabel] 실패: status=${response.statusCode}, bodyLength=${body.length}, bodyPreview=${body.length > 200 ? body.substring(0, 200) : body}');
+    }
+
+    await _errorLogger.logHttpFailure(
+      context: context,
+      uri: uri,
+      method: 'POST',
+      statusCode: response.statusCode,
+      errorMessage: body,
+      meta: payload,
+      accessToken: accessToken,
+    );
+
+    throw _networkGuard.statusCodeToException(
+      statusCode: response.statusCode,
+      responseBody: body,
+      context: context,
+    );
   }
 
   @override

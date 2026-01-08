@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/session/auth_executor.dart';
+import '../../../core/session/session_manager.dart';
+import '../../../core/session/session_state.dart';
 import '../data/supabase_journey_repository.dart';
 import '../domain/journey_repository.dart';
 
@@ -60,12 +62,40 @@ class JourneyInboxController extends Notifier<JourneyInboxState> {
     );
   }
 
+  /// 특정 journeyId의 아이템을 리스트에서 제거 (optimistic update)
+  void removeItem(String journeyId) {
+    if (kDebugMode) {
+      debugPrint('[InboxTrace][Provider] removeItem - journeyId: $journeyId');
+    }
+    final updatedItems = state.items.where((item) => item.journeyId != journeyId).toList();
+    state = state.copyWith(items: updatedItems);
+    if (kDebugMode) {
+      debugPrint('[InboxTrace][Provider] removeItem - updated items: ${updatedItems.length}');
+    }
+  }
+
   Future<void> load({int limit = _defaultLimit, int offset = 0}) async {
     // 재진입 가드: 이미 로딩 중이면 중복 호출 방지
     if (state.isLoading) {
       if (kDebugMode) {
         debugPrint('[InboxTrace][Provider] load - 이미 로딩 중, 중복 호출 무시');
       }
+      return;
+    }
+
+    // ✅ 세션 상태 가드: unauthenticated 상태에서는 fetch 호출 금지
+    final sessionState = ref.read(sessionManagerProvider);
+    if (sessionState.status != SessionStatus.authenticated) {
+      if (kDebugMode) {
+        debugPrint(
+          '[InboxTrace][Provider] load - 세션 상태 가드: status=${sessionState.status}, '
+          'fetch 호출 차단',
+        );
+      }
+      state = state.copyWith(
+        isLoading: false,
+        message: JourneyInboxMessage.missingSession,
+      );
       return;
     }
 

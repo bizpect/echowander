@@ -166,6 +166,8 @@
   "inboxPassCta": "跳过",
   "inboxPassSuccessTitle": "已跳过",
   "inboxPassSuccessBody": "你已跳过这条消息。",
+  "inboxPassedTitle": "已跳过的消息",
+  "inboxPassedDetailUnavailable": "此消息已跳过，内容不可查看。",
   "inboxReportCta": "举报",
   "inboxReportTitle": "举报原因",
   "inboxReportSpam": "垃圾信息",

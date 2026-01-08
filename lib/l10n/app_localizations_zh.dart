@@ -452,6 +452,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get inboxPassSuccessBody => '你已跳过这条消息。';
 
   @override
+  String get inboxPassedTitle => '已跳过的消息';
+
+  @override
+  String get inboxPassedDetailUnavailable => '此消息已跳过，内容不可查看。';
+
+  @override
   String get inboxReportCta => '举报';
 
   @override

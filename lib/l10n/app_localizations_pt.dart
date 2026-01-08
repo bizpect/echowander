@@ -471,6 +471,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get inboxPassSuccessBody => 'Você passou esta mensagem.';
 
   @override
+  String get inboxPassedTitle => 'Mensagem passada';
+
+  @override
+  String get inboxPassedDetailUnavailable =>
+      'Esta mensagem foi passada e o conteúdo não está disponível.';
+
+  @override
   String get inboxReportCta => 'Denunciar';
 
   @override
@@ -1282,6 +1289,13 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get inboxPassSuccessBody => 'Você passou esta mensagem.';
+
+  @override
+  String get inboxPassedTitle => 'Mensagem passada';
+
+  @override
+  String get inboxPassedDetailUnavailable =>
+      'Esta mensagem foi passada e o conteúdo não está disponível.';
 
   @override
   String get inboxReportCta => 'Denunciar';

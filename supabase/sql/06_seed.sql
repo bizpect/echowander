@@ -17,7 +17,11 @@ values
   ('report_reason', 'OTHER', 'Other', 90),
   ('journey_filter_status', 'OK', 'Allowed', 10),
   ('journey_filter_status', 'HELD', 'Held', 20),
-  ('journey_filter_status', 'REMOVED', 'Removed', 90)
+  ('journey_filter_status', 'REMOVED', 'Removed', 90),
+  ('journey_action_type', 'PASS', 'Pass', 10),
+  ('journey_action_type', 'REPLY', 'Reply', 20),
+  ('journey_action_type', 'REPORT', 'Report', 30),
+  ('hide_reason', 'HIDE_REPORTED', 'Hidden due to report', 10)
 on conflict (code_type, code_value) do update
 set name = excluded.name,
     sort_order = excluded.sort_order,

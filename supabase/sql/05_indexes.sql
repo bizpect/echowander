@@ -63,3 +63,9 @@ create index if not exists client_error_logs_created_at_idx
 
 create index if not exists client_error_logs_user_id_idx
   on public.client_error_logs (user_id);
+
+create index if not exists journey_actions_recipient_id_idx
+  on public.journey_actions (journey_recipient_id);
+
+create index if not exists journey_actions_actor_id_idx
+  on public.journey_actions (actor_user_id, created_at desc);

@@ -979,6 +979,18 @@ abstract class AppLocalizations {
   /// **'You\'ve passed this message.'**
   String get inboxPassSuccessBody;
 
+  /// No description provided for @inboxPassedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Passed message'**
+  String get inboxPassedTitle;
+
+  /// No description provided for @inboxPassedDetailUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This message was passed and content is unavailable.'**
+  String get inboxPassedDetailUnavailable;
+
   /// No description provided for @inboxReportCta.
   ///
   /// In en, this message translates to:

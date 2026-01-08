@@ -104,6 +104,14 @@ class AuthExecutor {
     final sessionManager = _ref.read(sessionManagerProvider.notifier);
     final sessionState = _ref.read(sessionManagerProvider);
 
+    // ✅ unauthenticated 상태에서는 즉시 noSession 반환 (루프 방지)
+    if (sessionState.status == SessionStatus.unauthenticated) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 세션 상태 가드: unauthenticated → noSession (루프 방지)');
+      }
+      return const AuthExecutorResult.noSession();
+    }
+
     // ✅ SSOT: restoreInFlight가 있으면 재호출 금지, 그 Future만 await
     final restoreFuture = sessionManager.restoreInFlight;
     if (restoreFuture != null) {
@@ -116,7 +124,15 @@ class AuthExecutor {
       try {
         // ✅ SSOT: restoreInFlight가 있으면 그것만 await
         await restoreFuture;
-        final newAccessToken = _ref.read(sessionManagerProvider).accessToken;
+        final newSessionState = _ref.read(sessionManagerProvider);
+        // ✅ unauthenticated로 전환되었으면 noSession 반환
+        if (newSessionState.status == SessionStatus.unauthenticated) {
+          if (kDebugMode) {
+            debugPrint('$_logPrefix restoreInFlight 완료 후 unauthenticated → noSession');
+          }
+          return const AuthExecutorResult.noSession();
+        }
+        final newAccessToken = newSessionState.accessToken;
         if (newAccessToken == null || newAccessToken.isEmpty) {
           return const AuthExecutorResult.noSession();
         }
@@ -142,57 +158,41 @@ class AuthExecutor {
       return const AuthExecutorResult.noSession();
     }
 
-    // 2) JWT 만료 임박/만료 사전 점검 (선제적 refresh로 401 방지)
-    // Supabase Auth REST endpoint 사용으로 만료 후에도 refresh 가능하지만,
-    // 선제적 refresh로 불필요한 401 방지
+    // 2) JWT 만료 임박/만료 사전 점검 (silent refresh로 401 방지)
+    // silent refresh는 single-flight + cooldown으로 연타/무한 반복 방지
     if (JwtUtils.isExpiringSoon(accessToken, thresholdSeconds: 60)) {
       if (kDebugMode) {
-        debugPrint('$_logPrefix JWT 만료 임박/만료 → 선제적 restoreSession 시도');
-      }
-
-      // 쿨다운 중이면 즉시 transientError 반환 (일시 장애, 로그아웃 아님)
-      if (sessionManager.isRestoreBlocked) {
-        if (kDebugMode) {
-          debugPrint('$_logPrefix restoreSession 쿨다운 중 → transientError');
-        }
-        return const AuthExecutorResult.transientError();
+        debugPrint('$_logPrefix JWT 만료 임박/만료 → silentRefreshIfNeeded 시도');
       }
 
       try {
-        // ✅ SSOT: restoreInFlight가 있으면 그것만 await, 없으면 restoreSession 호출
-        final restoreFuture = sessionManager.restoreInFlight;
-        if (restoreFuture != null) {
+        // ✅ silent refresh (사용자 모르게 처리, UI 영향 없음)
+        final silentRefreshFuture = sessionManager.silentRefreshInFlight;
+        if (silentRefreshFuture != null) {
           if (kDebugMode) {
-            debugPrint('$_logPrefix 선제 refresh → restoreInFlight exists → await');
+            debugPrint('$_logPrefix silentRefresh inFlight exists → await');
           }
-          await restoreFuture;
+          await silentRefreshFuture;
         } else {
-          if (kDebugMode) {
-            debugPrint('$_logPrefix 선제 refresh → restoreSession 호출');
-          }
-          await sessionManager.restoreSession();
+          // silentRefreshIfNeeded는 쿨다운/상태 체크를 내부에서 수행
+          await sessionManager.silentRefreshIfNeeded(reason: 'proactive');
         }
-        accessToken = _ref.read(sessionManagerProvider).accessToken;
+        // refresh 완료 후 accessToken 재확인
+        final newSessionState = _ref.read(sessionManagerProvider);
+        if (newSessionState.status == SessionStatus.unauthenticated) {
+          if (kDebugMode) {
+            debugPrint('$_logPrefix silentRefresh 완료 후 unauthenticated → noSession');
+          }
+          return const AuthExecutorResult.noSession();
+        }
+        accessToken = newSessionState.accessToken;
         if (accessToken == null || accessToken.isEmpty) {
           return const AuthExecutorResult.noSession();
         }
-      } on RestoreSessionTransientException {
-        // 일시 장애: 토큰은 유지됨, 로그아웃 아님
-        if (kDebugMode) {
-          debugPrint('$_logPrefix 선제 restoreSession 일시 장애 → transientError');
-        }
-        return const AuthExecutorResult.transientError();
-      } on RestoreSessionFailedException {
-        // 인증 실패 확정: 토큰 만료
-        if (kDebugMode) {
-          debugPrint('$_logPrefix 선제 restoreSession 인증 실패 → unauthorized');
-        }
-        return const AuthExecutorResult.unauthorized();
       } catch (error) {
+        // silent refresh 실패는 일시 장애로 처리 (로그아웃 아님)
         if (kDebugMode) {
-          debugPrint(
-            '$_logPrefix 선제 restoreSession 기타 오류: $error → transientError',
-          );
+          debugPrint('$_logPrefix silentRefresh 기타 오류: $error → transientError');
         }
         return const AuthExecutorResult.transientError();
       }
@@ -209,51 +209,16 @@ class AuthExecutor {
       }
 
       if (kDebugMode) {
-        debugPrint('$_logPrefix 401 발생 → restoreSession 시도');
+        debugPrint('$_logPrefix 401 발생 → handleUnauthorized 호출');
       }
     }
 
-    // 4) restoreSession (single-flight + cooldown)
-    // 쿨다운 중이면 즉시 transientError 반환 (일시 장애, 로그아웃 아님)
-    if (sessionManager.isRestoreBlocked) {
-      if (kDebugMode) {
-        debugPrint('$_logPrefix restoreSession 쿨다운 중 → transientError');
-      }
-      return const AuthExecutorResult.transientError();
-    }
-
-    try {
-      // ✅ SSOT: restoreInFlight가 있으면 그것만 await, 없으면 restoreSession 호출
-      final restoreFuture = sessionManager.restoreInFlight;
-      if (restoreFuture != null) {
-        if (kDebugMode) {
-          debugPrint('$_logPrefix 401 → restoreInFlight exists → await');
-        }
-        await restoreFuture;
-      } else {
-        if (kDebugMode) {
-          debugPrint('$_logPrefix 401 → restoreSession once then retry');
-        }
-        await sessionManager.restoreSession();
-      }
-    } on RestoreSessionTransientException {
-      // 일시 장애: 토큰은 유지됨, 로그아웃 아님
-      if (kDebugMode) {
-        debugPrint('$_logPrefix restoreSession 일시 장애 → transientError');
-      }
-      return const AuthExecutorResult.transientError();
-    } on RestoreSessionFailedException {
-      // 인증 실패 확정: 토큰 만료
-      if (kDebugMode) {
-        debugPrint('$_logPrefix restoreSession 인증 실패 → unauthorized');
-      }
-      return const AuthExecutorResult.unauthorized();
-    } catch (error) {
-      if (kDebugMode) {
-        debugPrint('$_logPrefix restoreSession 기타 오류: $error → transientError');
-      }
-      return const AuthExecutorResult.transientError();
-    }
+    // 4) 401 처리: SessionManager의 단일 진입점으로 위임
+    // handleUnauthorized는 in-flight/cooldown을 존중하면서 refresh 또는 만료 확정을 처리
+    await sessionManager.handleUnauthorized(
+      reason: 'unauthorized',
+      source: 'AuthExecutor',
+    );
 
     // 5) 새 accessToken 확인
     final newAccessToken = _ref.read(sessionManagerProvider).accessToken;

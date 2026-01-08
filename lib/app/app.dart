@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/presentation/widgets/app_dialog.dart';
-import '../core/presentation/widgets/fullscreen_loading.dart';
 import '../core/push/push_coordinator.dart';
 import '../core/push/push_payload.dart';
 import '../core/push/push_state.dart';
@@ -78,6 +77,14 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
         debugPrint('[App] inFlight exists → await');
       }
       await _awaitRestoreInFlight(inFlight);
+      return;
+    }
+
+    // ✅ unauthenticated 상태에서는 restoreSession 호출 금지 (루프 방지)
+    if (sessionState.status == SessionStatus.unauthenticated) {
+      if (kDebugMode) {
+        debugPrint('[App] ensureSessionReady 차단: 이미 unauthenticated 상태 (루프 방지)');
+      }
       return;
     }
 
@@ -229,6 +236,49 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
           ref
               .read(localeSyncControllerProvider.notifier)
               .sync(ref.read(localeControllerProvider));
+        } else if (next.status == SessionStatus.unauthenticated &&
+            previous?.status == SessionStatus.authenticated) {
+          // ✅ authenticated → unauthenticated 전환 시 알럿 표시 후 로그인 화면 이동
+          // ✅ SessionMessage consume 방식으로 정확히 1회 보장
+          if (next.message == SessionMessage.sessionExpired) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) {
+                return;
+              }
+              final l10n = AppLocalizations.of(context);
+              if (l10n == null) {
+                return;
+              }
+              final router = ref.read(appRouterProvider);
+              final currentLocation = router.routerDelegate.currentConfiguration.uri.path;
+              final sessionManager = ref.read(sessionManagerProvider.notifier);
+              // 이미 로그인 화면이면 알럿만 표시
+              if (currentLocation == AppRoutes.login) {
+                showAppAlertDialog(
+                  context: context,
+                  title: l10n.errorTitle,
+                  message: l10n.errorSessionExpired,
+                ).then((_) {
+                  // ✅ 알럿 표시 후 consume (중복 방지)
+                  sessionManager.consumeMessage(SessionMessage.sessionExpired);
+                });
+              } else {
+                // 로그인 화면이 아니면 알럿 표시 후 이동
+                showAppAlertDialog(
+                  context: context,
+                  title: l10n.errorTitle,
+                  message: l10n.errorSessionExpired,
+                ).then((_) {
+                  if (!mounted) {
+                    return;
+                  }
+                  // ✅ 알럿 표시 후 consume (중복 방지)
+                  sessionManager.consumeMessage(SessionMessage.sessionExpired);
+                  router.go(AppRoutes.login);
+                });
+              }
+            });
+          }
         }
       }
     });
@@ -266,7 +316,8 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
         ref.read(deepLinkCoordinatorProvider.notifier).consumeCurrent();
       });
     });
-    final isLoading = ref.watch(sessionManagerProvider).isBusy;
+    // ✅ UI 로딩 인디케이터는 제거 (silent refresh는 사용자 모르게 처리)
+    // final isLoading = ref.watch(sessionManagerProvider).isBusy;
     final isMobile = Platform.isAndroid || Platform.isIOS;
 
     return MaterialApp.router(
@@ -285,12 +336,7 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
       locale: ref.watch(localeControllerProvider),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      builder: (context, child) {
-        return FullScreenLoadingOverlay(
-          isLoading: isLoading,
-          child: child ?? const SizedBox.shrink(),
-        );
-      },
+      // ✅ silent refresh는 사용자 모르게 처리하므로 로딩 오버레이 제거
     );
   }
 

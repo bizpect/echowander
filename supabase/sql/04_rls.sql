@@ -11,6 +11,7 @@ alter table public.journey_recipients enable row level security;
 alter table public.journey_responses enable row level security;
 alter table public.journey_reports enable row level security;
 alter table public.journey_response_reports enable row level security;
+alter table public.journey_actions enable row level security;
 
 drop policy if exists "common_codes_select_all" on public.common_codes;
 drop policy if exists "users_select_own" on public.users;
@@ -46,6 +47,8 @@ drop policy if exists "journey_responses_select_owner" on public.journey_respons
 drop policy if exists "journey_responses_insert_recipient" on public.journey_responses;
 drop policy if exists "journey_reports_insert_recipient" on public.journey_reports;
 drop policy if exists "journey_response_reports_insert_owner" on public.journey_response_reports;
+drop policy if exists "journey_actions_select_own" on public.journey_actions;
+drop policy if exists "journey_actions_insert_own" on public.journey_actions;
 
 create policy "common_codes_select_all"
   on public.common_codes
@@ -257,6 +260,24 @@ create policy "journey_response_reports_insert_owner"
     )
   );
 
+create policy "journey_actions_select_own"
+  on public.journey_actions
+  for select
+  using (actor_user_id = auth.uid());
+
+create policy "journey_actions_insert_own"
+  on public.journey_actions
+  for insert
+  with check (
+    actor_user_id = auth.uid()
+    and exists (
+      select 1
+      from public.journey_recipients
+      where journey_recipients.id = journey_actions.journey_recipient_id
+        and journey_recipients.recipient_user_id = auth.uid()
+    )
+  );
+
 create policy "journey_images_storage_insert"
   on storage.objects
   for insert
@@ -288,6 +309,7 @@ grant select, insert, update on public.journey_recipients to authenticated;
 grant select, insert on public.journey_responses to authenticated;
 grant insert on public.journey_reports to authenticated;
 grant insert on public.journey_response_reports to authenticated;
+grant select, insert on public.journey_actions to authenticated;
 grant insert on public.client_error_logs to anon, authenticated;
 
 grant execute on function public.create_or_get_user(text, text, text) to authenticated;
@@ -306,6 +328,7 @@ grant execute on function public.match_journey(uuid) to authenticated;
 grant execute on function public.match_pending_journeys(integer) to authenticated;
 grant execute on function public.respond_journey(uuid, text) to authenticated;
 grant execute on function public.pass_journey(uuid) to authenticated;
+grant execute on function public.pass_inbox_item_and_forward(uuid) to authenticated;
 grant execute on function public.report_journey(uuid, text) to authenticated;
 grant execute on function public.report_journey_response(bigint, text) to authenticated;
 grant execute on function public.get_journey_progress(uuid) to authenticated;
@@ -328,4 +351,5 @@ grant usage, select on sequence public.journey_recipients_id_seq to authenticate
 grant usage, select on sequence public.journey_responses_id_seq to authenticated;
 grant usage, select on sequence public.journey_reports_id_seq to authenticated;
 grant usage, select on sequence public.journey_response_reports_id_seq to authenticated;
+grant usage, select on sequence public.journey_actions_id_seq to authenticated;
 grant usage, select on sequence public.client_error_logs_id_seq to anon, authenticated;

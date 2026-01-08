@@ -453,6 +453,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get inboxPassSuccessBody => 'このメッセージをパスしました。';
 
   @override
+  String get inboxPassedTitle => 'パスしたメッセージ';
+
+  @override
+  String get inboxPassedDetailUnavailable => 'パス処理により内容を閲覧できません。';
+
+  @override
   String get inboxReportCta => '報告';
 
   @override

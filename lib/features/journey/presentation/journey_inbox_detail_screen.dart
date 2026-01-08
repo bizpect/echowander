@@ -7,11 +7,13 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/router/app_router.dart';
+import '../../../app/theme/app_colors.dart';
 import '../../../core/block/supabase_block_repository.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../l10n/app_localizations.dart';
+import '../application/journey_inbox_controller.dart';
 import '../data/supabase_journey_repository.dart';
 import '../domain/journey_repository.dart';
 
@@ -133,85 +135,119 @@ class _JourneyInboxDetailScreenState
                                 style: Theme.of(context).textTheme.labelLarge,
                               ),
                               const SizedBox(height: 12),
-                              Text(
-                                widget.item!.content,
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                '${l10n.inboxImagesLabel} ${widget.item!.imageCount}',
-                                style: Theme.of(context).textTheme.labelLarge,
-                              ),
-                              if (_loadFailed)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 12),
-                                  child: Text(
-                                    l10n.inboxImagesLoadFailed,
-                                    style: Theme.of(context).textTheme.bodyMedium,
+                              // PASSED 상태일 때는 내용 차단
+                              if (widget.item!.recipientStatus == 'PASSED') ...[
+                                Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 48),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.forward,
+                                          size: 64,
+                                          color: AppColors.onSurfaceVariant,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          l10n.inboxPassedTitle,
+                                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                                color: AppColors.onSurfaceVariant,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          l10n.inboxPassedDetailUnavailable,
+                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                                color: AppColors.onSurfaceVariant,
+                                              ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              if (_imageUrls.isNotEmpty)
-                                GridView.builder(
-                                  padding: const EdgeInsets.only(top: 16),
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  shrinkWrap: true,
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 3,
-                                    mainAxisSpacing: 8,
-                                    crossAxisSpacing: 8,
+                              ] else ...[
+                                Text(
+                                  widget.item!.content,
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  '${l10n.inboxImagesLabel} ${widget.item!.imageCount}',
+                                  style: Theme.of(context).textTheme.labelLarge,
+                                ),
+                                if (_loadFailed)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 12),
+                                    child: Text(
+                                      l10n.inboxImagesLoadFailed,
+                                      style: Theme.of(context).textTheme.bodyMedium,
+                                    ),
                                   ),
-                                  itemCount: _imageUrls.length,
-                                  itemBuilder: (context, index) {
-                                    final url = _imageUrls[index];
-                                    return ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Semantics(
-                                        label: '${l10n.inboxImagesLabel} ${index + 1}',
-                                        button: true,
-                                        child: InkWell(
-                                          onTap: () => _openViewer(index),
-                                          child: Image.network(
-                                            url,
-                                            semanticLabel: '${l10n.inboxImagesLabel} ${index + 1}',
-                                            fit: BoxFit.cover,
+                                if (_imageUrls.isNotEmpty)
+                                  GridView.builder(
+                                    padding: const EdgeInsets.only(top: 16),
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    shrinkWrap: true,
+                                    gridDelegate:
+                                        const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 3,
+                                      mainAxisSpacing: 8,
+                                      crossAxisSpacing: 8,
+                                    ),
+                                    itemCount: _imageUrls.length,
+                                    itemBuilder: (context, index) {
+                                      final url = _imageUrls[index];
+                                      return ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Semantics(
+                                          label: '${l10n.inboxImagesLabel} ${index + 1}',
+                                          button: true,
+                                          child: InkWell(
+                                            onTap: () => _openViewer(index),
+                                            child: Image.network(
+                                              url,
+                                              semanticLabel: '${l10n.inboxImagesLabel} ${index + 1}',
+                                              fit: BoxFit.cover,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    );
-                                  },
+                                      );
+                                    },
+                                  ),
+                                const SizedBox(height: 16),
+                                TextField(
+                                  controller: _responseController,
+                                  maxLength: 500,
+                                  maxLines: 4,
+                                  textInputAction: TextInputAction.newline,
+                                  decoration: InputDecoration(
+                                    labelText: l10n.inboxRespondLabel,
+                                    hintText: l10n.inboxRespondHint,
+                                  ),
                                 ),
-                              const SizedBox(height: 16),
-                              TextField(
-                                controller: _responseController,
-                                maxLength: 500,
-                                maxLines: 4,
-                                textInputAction: TextInputAction.newline,
-                                decoration: InputDecoration(
-                                  labelText: l10n.inboxRespondLabel,
-                                  hintText: l10n.inboxRespondHint,
+                                const SizedBox(height: 12),
+                                FilledButton(
+                                  onPressed: _isActionLoading ? null : _handleRespond,
+                                  child: Text(l10n.inboxRespondCta),
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              FilledButton(
-                                onPressed: _isActionLoading ? null : _handleRespond,
-                                child: Text(l10n.inboxRespondCta),
-                              ),
-                              const SizedBox(height: 8),
-                              OutlinedButton(
-                                onPressed: _isActionLoading ? null : _handlePass,
-                                child: Text(l10n.inboxPassCta),
-                              ),
-                              const SizedBox(height: 8),
-                              OutlinedButton(
-                                onPressed: _isActionLoading ? null : _handleReport,
-                                child: Text(l10n.inboxReportCta),
-                              ),
-                              const SizedBox(height: 8),
-                              OutlinedButton(
-                                onPressed: _isActionLoading ? null : _handleBlock,
-                                child: Text(l10n.inboxBlockCta),
-                              ),
+                                const SizedBox(height: 8),
+                                OutlinedButton(
+                                  onPressed: _isActionLoading ? null : _handlePass,
+                                  child: Text(l10n.inboxPassCta),
+                                ),
+                                const SizedBox(height: 8),
+                                OutlinedButton(
+                                  onPressed: _isActionLoading ? null : _handleReport,
+                                  child: Text(l10n.inboxReportCta),
+                                ),
+                                const SizedBox(height: 8),
+                                OutlinedButton(
+                                  onPressed: _isActionLoading ? null : _handleBlock,
+                                  child: Text(l10n.inboxBlockCta),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -459,21 +495,55 @@ class _JourneyInboxDetailScreenState
       _isActionLoading = true;
     });
     try {
+      if (kDebugMode) {
+        debugPrint('[InboxReportTrace][UI] 신고 시작: journeyId=${item.journeyId}, reason=$reason');
+      }
       await ref.read(journeyRepositoryProvider).reportJourney(
             journeyId: item.journeyId,
             reasonCode: reason,
             accessToken: accessToken,
           );
+      if (kDebugMode) {
+        debugPrint('[InboxReportTrace][UI] 신고 성공: journeyId=${item.journeyId}');
+      }
       if (!mounted) {
         return;
       }
+      
+      // 신고 성공 시: 리스트에서 제거 (optimistic update)
+      ref.read(journeyInboxControllerProvider.notifier).removeItem(item.journeyId);
+      
+      // 성공 다이얼로그 표시
       await showAppAlertDialog(
         context: context,
         title: l10n.inboxReportSuccessTitle,
         message: l10n.inboxReportSuccessBody,
         confirmLabel: l10n.composeOk,
       );
-    } on JourneyActionException {
+      
+      // 상세 화면 닫기
+      if (mounted && context.canPop()) {
+        context.pop();
+      }
+    } on JourneyActionException catch (e) {
+      if (kDebugMode) {
+        debugPrint('[InboxReportTrace][UI] 신고 실패: JourneyActionException ${e.error}');
+      }
+      if (!mounted) {
+        return;
+      }
+      await showAppAlertDialog(
+        context: context,
+        title: l10n.composeErrorTitle,
+        message: l10n.inboxActionFailed,
+        confirmLabel: l10n.composeOk,
+      );
+    } catch (e, stackTrace) {
+      // 예상치 못한 예외 로깅
+      if (kDebugMode) {
+        debugPrint('[InboxReportTrace][UI] 신고 예상치 못한 예외: $e');
+        debugPrint('[InboxReportTrace][UI] 스택 트레이스: $stackTrace');
+      }
       if (!mounted) {
         return;
       }
