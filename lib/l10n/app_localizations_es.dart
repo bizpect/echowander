@@ -591,7 +591,8 @@ class AppLocalizationsEs extends AppLocalizations {
       'No pudimos cargar el anuncio. Inténtalo más tarde.';
 
   @override
-  String get journeyDetailGateDialogTitle => 'Desbloquea con anuncio de recompensa';
+  String get journeyDetailGateDialogTitle =>
+      'Desbloquea con anuncio de recompensa';
 
   @override
   String get journeyDetailGateDialogBody =>

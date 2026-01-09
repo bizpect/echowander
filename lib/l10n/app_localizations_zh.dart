@@ -568,8 +568,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get journeyDetailGateDialogTitle => '观看广告解锁';
 
   @override
-  String get journeyDetailGateDialogBody =>
-      '观看激励广告即可解锁。\n仅需一次即可永久解锁。';
+  String get journeyDetailGateDialogBody => '观看激励广告即可解锁。\n仅需一次即可永久解锁。';
 
   @override
   String get journeyDetailGateDialogConfirm => '解锁';

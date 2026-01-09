@@ -592,7 +592,8 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible de charger la publicité. Réessayez plus tard.';
 
   @override
-  String get journeyDetailGateDialogTitle => 'Déverrouiller avec une pub récompensée';
+  String get journeyDetailGateDialogTitle =>
+      'Déverrouiller avec une pub récompensée';
 
   @override
   String get journeyDetailGateDialogBody =>

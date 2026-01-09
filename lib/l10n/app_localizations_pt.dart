@@ -591,7 +591,8 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não foi possível carregar o anúncio. Tente novamente mais tarde.';
 
   @override
-  String get journeyDetailGateDialogTitle => 'Desbloquear com anúncio recompensado';
+  String get journeyDetailGateDialogTitle =>
+      'Desbloquear com anúncio recompensado';
 
   @override
   String get journeyDetailGateDialogBody =>
@@ -1454,6 +1455,17 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get journeyDetailGateFailedBody =>
       'Não foi possível carregar o anúncio. Tente novamente mais tarde.';
+
+  @override
+  String get journeyDetailGateDialogTitle =>
+      'Desbloquear com anúncio recompensado';
+
+  @override
+  String get journeyDetailGateDialogBody =>
+      'Desbloqueie assistindo a um anúncio recompensado.\nAssista uma vez para desbloquear para sempre.';
+
+  @override
+  String get journeyDetailGateDialogConfirm => 'Desbloquear';
 
   @override
   String get journeyDetailLoadFailed =>
