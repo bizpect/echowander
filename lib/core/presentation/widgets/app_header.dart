@@ -16,6 +16,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.onTrailingTap,
     this.trailingSemanticLabel,
     this.alignLeft = false,
+    this.extraTopPadding = 0,
     this.showDivider = false,
   });
 
@@ -34,10 +35,11 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onTrailingTap;
   final String? trailingSemanticLabel;
   final bool alignLeft;
+  final double extraTopPadding;
   final bool showDivider;
 
   @override
-  Size get preferredSize => const Size.fromHeight(kHeaderHeight);
+  Size get preferredSize => Size.fromHeight(kHeaderHeight + extraTopPadding);
 
   @override
   Widget build(BuildContext context) {
@@ -46,8 +48,13 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
       child: SafeArea(
         bottom: false,
         child: Container(
-          height: kHeaderHeight,
-          padding: const EdgeInsets.symmetric(horizontal: kHeaderHorizontalPadding),
+          height: kHeaderHeight + extraTopPadding,
+          padding: EdgeInsets.fromLTRB(
+            kHeaderHorizontalPadding,
+            extraTopPadding,
+            kHeaderHorizontalPadding,
+            0,
+          ),
           decoration: BoxDecoration(
             border: showDivider
                 ? Border(

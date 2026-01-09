@@ -58,6 +58,7 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
         appBar: AppHeader(
           title: l10n.journeyListTitle,
           alignLeft: true,
+          extraTopPadding: AppSpacing.spacing8,
         ),
         body: LoadingOverlay(
           isLoading: state.isLoading || _isAdLoading,

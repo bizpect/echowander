@@ -82,6 +82,7 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
         appBar: AppHeader(
           title: l10n.inboxTitle,
           alignLeft: true,
+          extraTopPadding: AppSpacing.spacing8,
         ),
         body: LoadingOverlay(
           isLoading: state.isLoading,

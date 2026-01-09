@@ -31,6 +31,7 @@ class ProfileScreen extends ConsumerWidget {
       appBar: AppHeader(
         title: l10n.tabProfileLabel,
         alignLeft: true,
+        extraTopPadding: AppSpacing.spacing8,
       ),
       body: SafeArea(
         top: false,

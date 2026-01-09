@@ -114,6 +114,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       appBar: AppHeader(
         title: l10n.homeTitle,
         alignLeft: true,
+        extraTopPadding: AppSpacing.spacing8,
       ),
       body: LoadingOverlay(
         isLoading: isLoading,

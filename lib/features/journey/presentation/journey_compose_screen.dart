@@ -172,6 +172,8 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
         backgroundColor: AppColors.background,
         appBar: AppHeader(
           title: l10n.composeTitle,
+          alignLeft: true,
+          extraTopPadding: AppSpacing.spacing8,
           trailingIcon: Icons.close,
           onTrailingTap: () => _handleBack(context, state),
           trailingSemanticLabel: MaterialLocalizations.of(context).closeButtonTooltip,
