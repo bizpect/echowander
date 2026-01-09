@@ -69,9 +69,24 @@ class AdRewardLogger {
       );
     } on NetworkRequestException catch (error) {
       if (kDebugMode) {
-        debugPrint('[AdRewardLog] 실패: ${error.type}');
+        final preview = _buildBodyPreview(error.rawBody);
+        debugPrint(
+          '[AdRewardLog] 실패: reqId=$reqId type=${error.type} status=${error.statusCode} '
+          'bodyLength=${error.rawBody?.length ?? 0} bodyPreview=$preview code=${error.parsedErrorCode ?? "-"}',
+        );
       }
     }
+  }
+
+  String _buildBodyPreview(String? body) {
+    if (body == null || body.isEmpty) {
+      return 'empty';
+    }
+    final collapsed = body.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (collapsed.length <= 200) {
+      return collapsed;
+    }
+    return '${collapsed.substring(0, 200)}...';
   }
 
   Future<void> _executeLogEvent({
@@ -106,7 +121,8 @@ class AdRewardLogger {
     final response = await request.close();
     final body = await response.transform(utf8.decoder).join();
 
-    if (response.statusCode != HttpStatus.ok) {
+    if (response.statusCode != HttpStatus.ok &&
+        response.statusCode != HttpStatus.noContent) {
       await _errorLogger.logHttpFailure(
         context: 'log_ad_reward_event',
         uri: uri,

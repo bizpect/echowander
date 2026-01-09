@@ -547,6 +547,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get journeyDetailResultsLoadFailed => '无法加载回复。';
 
   @override
+  String get commonTemporaryErrorTitle => '临时错误';
+
+  @override
+  String get sentDetailRepliesLoadFailedMessage => '无法加载回复。\n将返回列表。';
+
+  @override
+  String get commonOk => '确定';
+
+  @override
+  String get journeyDetailResponsesMissingTitle => '临时错误';
+
+  @override
+  String get journeyDetailResponsesMissingBody => '无法加载回复。请重试。\n将返回列表。';
+
+  @override
   String get journeyDetailGateConfigTitle => '广告未就绪';
 
   @override
@@ -562,7 +577,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get journeyDetailGateFailedTitle => '广告不可用';
 
   @override
-  String get journeyDetailGateFailedBody => '广告加载失败，请稍后再试。';
+  String get journeyDetailGateFailedBody => '广告加载失败，请重试。';
+
+  @override
+  String get journeyDetailUnlockFailedTitle => '解锁保存失败';
+
+  @override
+  String get journeyDetailUnlockFailedBody => '由于网络或服务器问题，解锁保存失败。请重试。';
 
   @override
   String get journeyDetailGateDialogTitle => '观看广告解锁';

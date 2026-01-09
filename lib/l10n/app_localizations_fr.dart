@@ -571,6 +571,23 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible de charger les réponses.';
 
   @override
+  String get commonTemporaryErrorTitle => 'Erreur temporaire';
+
+  @override
+  String get sentDetailRepliesLoadFailedMessage =>
+      'Impossible de charger les réponses.\nRetour à la liste.';
+
+  @override
+  String get commonOk => 'OK';
+
+  @override
+  String get journeyDetailResponsesMissingTitle => 'Erreur temporaire';
+
+  @override
+  String get journeyDetailResponsesMissingBody =>
+      'Impossible de charger les réponses. Veuillez réessayer.\nRetour à la liste.';
+
+  @override
   String get journeyDetailGateConfigTitle => 'Publicité non prête';
 
   @override
@@ -589,7 +606,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get journeyDetailGateFailedBody =>
-      'Impossible de charger la publicité. Réessayez plus tard.';
+      'Impossible de charger la publicité. Veuillez réessayer.';
+
+  @override
+  String get journeyDetailUnlockFailedTitle =>
+      'Échec de l’enregistrement du déverrouillage';
+
+  @override
+  String get journeyDetailUnlockFailedBody =>
+      'Impossible d’enregistrer le déverrouillage à cause d’un problème réseau/serveur. Veuillez réessayer.';
 
   @override
   String get journeyDetailGateDialogTitle =>

@@ -1536,6 +1536,139 @@ begin
 end;
 $$;
 
+drop function if exists public.get_sent_journey_detail(uuid);
+
+create or replace function public.get_sent_journey_detail(
+  p_journey_id uuid
+)
+returns table (
+  journey_id uuid,
+  content text,
+  created_at timestamptz,
+  status_code text,
+  response_count integer,
+  image_count integer,
+  is_reward_unlocked boolean
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid := auth.uid();
+begin
+  if v_user_id is null then
+    raise exception 'unauthorized';
+  end if;
+  if p_journey_id is null then
+    raise exception 'missing_journey';
+  end if;
+  if not exists (
+    select 1
+    from public.journeys j
+    where j.id = p_journey_id
+      and j.user_id = v_user_id
+  ) then
+    raise exception 'unauthorized:not_sender';
+  end if;
+
+  return query
+  select
+    j.id as journey_id,
+    j.content,
+    j.created_at,
+    j.status_code,
+    (
+      select count(*)
+      from public.journey_responses jr
+      where jr.journey_id = j.id
+        and jr.is_hidden = false
+    )::integer as response_count,
+    (
+      select count(*)
+      from public.journey_images ji
+      where ji.journey_id = j.id
+    )::integer as image_count,
+    (
+      j.status_code = 'COMPLETED'
+      and exists (
+        select 1
+        from public.reward_unlocks ru
+        where ru.user_id = v_user_id
+          and ru.journey_id = j.id
+      )
+    ) as is_reward_unlocked
+  from public.journeys j
+  where j.id = p_journey_id;
+end;
+$$;
+
+drop function if exists public.list_sent_journey_responses(uuid, integer, integer);
+
+create or replace function public.list_sent_journey_responses(
+  p_journey_id uuid,
+  page_size integer,
+  page_offset integer
+)
+returns table (
+  response_id bigint,
+  content text,
+  created_at timestamptz,
+  responder_nickname text
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid := auth.uid();
+begin
+  if v_user_id is null then
+    raise exception 'unauthorized';
+  end if;
+  if p_journey_id is null then
+    raise exception 'missing_journey';
+  end if;
+  if not exists (
+    select 1
+    from public.journeys j
+    where j.id = p_journey_id
+      and j.user_id = v_user_id
+  ) then
+    raise exception 'unauthorized:not_sender';
+  end if;
+  if not exists (
+    select 1
+    from public.journeys j
+    where j.id = p_journey_id
+      and j.status_code = 'COMPLETED'
+  ) then
+    return;
+  end if;
+  if not exists (
+    select 1
+    from public.journey_responses jr
+    where jr.journey_id = p_journey_id
+      and jr.is_hidden = false
+  ) then
+    raise exception 'responses_missing';
+  end if;
+
+  return query
+  select
+    jr.id as response_id,
+    jr.content,
+    jr.created_at,
+    jr.snapshot_nickname
+  from public.journey_responses jr
+  where jr.journey_id = p_journey_id
+    and jr.is_hidden = false
+  order by jr.created_at asc
+  limit least(coalesce(page_size, 50), 50)
+  offset greatest(coalesce(page_offset, 0), 0);
+end;
+$$;
+
 drop function if exists public.list_sent_journey_replies(uuid);
 
 create or replace function public.list_sent_journey_replies(
@@ -1577,6 +1710,30 @@ begin
   where journey_responses.journey_id = target_journey_id
     and journey_responses.is_hidden = false
   order by journey_responses.created_at asc;
+end;
+$$;
+
+-- 완료 상태 전환 시 응답 존재 여부를 보장한다.
+create or replace function public.ensure_journey_responses_before_complete()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_count integer;
+begin
+  if new.status_code = 'COMPLETED' then
+    select count(*)
+      into v_count
+      from public.journey_responses jr
+      where jr.journey_id = new.id
+        and jr.is_hidden = false;
+    if v_count = 0 then
+      raise exception 'responses_missing' using errcode = 'P0001';
+    end if;
+  end if;
+  return new;
 end;
 $$;
 
@@ -1897,11 +2054,13 @@ create or replace function public.log_ad_reward_event(
   p_req_id text default null,
   p_metadata jsonb default null
 )
-returns void
+returns jsonb
 language plpgsql
 as $$
+declare
+  v_user_id uuid := auth.uid();
 begin
-  if auth.uid() is null then
+  if v_user_id is null then
     raise exception 'unauthorized';
   end if;
   if p_placement_code is null or length(trim(p_placement_code)) = 0 then
@@ -1926,7 +2085,7 @@ begin
     metadata
   )
   values (
-    auth.uid(),
+    v_user_id,
     p_journey_id,
     p_placement_code,
     p_env_code,
@@ -1936,6 +2095,8 @@ begin
     p_req_id,
     p_metadata
   );
+
+  return jsonb_build_object('success', true);
 end;
 $$;
 
@@ -1944,21 +2105,16 @@ drop function if exists public.upsert_reward_unlock(uuid);
 create or replace function public.upsert_reward_unlock(
   p_journey_id uuid
 )
-returns table (
-  success boolean,
-  journey_id uuid,
-  unlocked boolean,
-  unlocked_at timestamptz
-)
+returns jsonb
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
-  v_journey_id uuid;
+  v_user_id uuid := auth.uid();
   v_unlocked_at timestamptz;
 begin
-  if auth.uid() is null then
+  if v_user_id is null then
     raise exception 'unauthorized';
   end if;
   if p_journey_id is null then
@@ -1966,31 +2122,40 @@ begin
   end if;
   if not exists (
     select 1
-    from public.journeys
-    where journeys.id = p_journey_id
-      and journeys.user_id = auth.uid()
-      and journeys.status_code = 'COMPLETED'
+    from public.journeys j
+    where j.id = p_journey_id
+      and j.user_id = v_user_id
+      and j.status_code = 'COMPLETED'
   ) then
     raise exception 'journey_not_found';
   end if;
 
-  insert into public.reward_unlocks (
+  insert into public.reward_unlocks as ru (
     user_id,
     journey_id,
-    unlocked_by_code
+    unlocked_by_code,
+    unlocked_at,
+    updated_at
   )
   values (
-    auth.uid(),
+    v_user_id,
     p_journey_id,
-    'ADMOB_REWARDED'
+    'ADMOB_REWARDED',
+    now(),
+    now()
   )
   on conflict (user_id, journey_id) do update
-    set unlocked_by_code = reward_unlocks.unlocked_by_code
-  returning reward_unlocks.journey_id, reward_unlocks.unlocked_at
-  into v_journey_id, v_unlocked_at;
+    set unlocked_by_code = excluded.unlocked_by_code,
+        unlocked_at = excluded.unlocked_at,
+        updated_at = now()
+  returning ru.unlocked_at into v_unlocked_at;
 
-  return query
-  select true, v_journey_id, true, v_unlocked_at;
+  return jsonb_build_object(
+    'success', true,
+    'journey_id', p_journey_id,
+    'unlocked', true,
+    'unlocked_at', v_unlocked_at
+  );
 end;
 $$;
 

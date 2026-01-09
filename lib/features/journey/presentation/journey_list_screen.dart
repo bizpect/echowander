@@ -240,9 +240,16 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
       return;
     }
     final l10n = AppLocalizations.of(context)!;
+    final reqId = DateTime.now().microsecondsSinceEpoch.toString();
+    if (kDebugMode) {
+      debugPrint(
+        '[RewardFlow] click reqId=$reqId journeyId=${item.journeyId} status=${item.statusCode} '
+        'unlockedCached=${item.isRewardUnlocked}',
+      );
+    }
     final controller = ref.read(journeyListControllerProvider.notifier);
     if (item.isRewardUnlocked) {
-      _goToDetail(item);
+      _goToDetail(item, reqId: reqId);
       return;
     }
     final accessToken = ref.read(sessionManagerProvider).accessToken;
@@ -263,6 +270,15 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
       confirmLabel: l10n.journeyDetailGateDialogConfirm,
       cancelLabel: l10n.composeCancel,
     );
+    if (!mounted) {
+      return;
+    }
+    if (kDebugMode) {
+      debugPrint(
+        '[RewardFlow] dialog_unlock reqId=$reqId journeyId=${item.journeyId} '
+        'action=${confirmed == true ? 'CONFIRM' : 'CANCEL'}',
+      );
+    }
     if (confirmed != true) {
       return;
     }
@@ -270,12 +286,8 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
     setState(() {
       _isAdLoading = true;
     });
-    final reqId = DateTime.now().microsecondsSinceEpoch.toString();
-    if (kDebugMode) {
-      debugPrint('[SentDetailGate][UI] tap reqId=$reqId journeyId=${item.journeyId}');
-    }
     final gate = ref.read(rewardedAdGateProvider);
-    final result = await gate.showRewardedAndReturnResult(
+    final outcome = await gate.showRewardedAndReturnResult(
       placementCode: AdPlacementCodes.sentDetailGate,
       contentId: item.journeyId,
       accessToken: accessToken,
@@ -289,38 +301,36 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
       _isAdLoading = false;
     });
 
-    switch (result) {
-      case RewardedAdGateResult.earned:
-        controller.markRewardUnlocked(item.journeyId);
-        _goToDetail(item);
+    if (outcome.unlockFailed) {
+      if (!mounted) {
         return;
-      case RewardedAdGateResult.skippedByConfig:
-        if (!mounted) {
+      }
+      await showAppAlertDialog(
+        context: context,
+        title: refreshedL10n.journeyDetailUnlockFailedTitle,
+        message: refreshedL10n.journeyDetailUnlockFailedBody,
+        confirmLabel: refreshedL10n.composeOk,
+      );
+      return;
+    }
+
+    switch (outcome.result) {
+      case RewardGateResult.earned:
+        controller.markRewardUnlocked(item.journeyId, reqId: reqId);
+        _goToDetail(item, reqId: reqId);
+        return;
+      case RewardGateResult.dismissed:
+        return;
+      case RewardGateResult.failLoad:
+      case RewardGateResult.failShow:
+      case RewardGateResult.failConfig:
+        if (outcome.allowNavigationWithoutAd) {
+          _goToDetail(item, reqId: reqId);
           return;
         }
-        await showAppAlertDialog(
-          context: context,
-          title: refreshedL10n.journeyDetailGateConfigTitle,
-          message: refreshedL10n.journeyDetailGateConfigBody,
-          confirmLabel: refreshedL10n.composeOk,
-        );
-        if (mounted) {
-          _goToDetail(item);
-        }
-        return;
-      case RewardedAdGateResult.dismissed:
-        if (!mounted) {
+        if (!outcome.shouldAlert) {
           return;
         }
-        await showAppAlertDialog(
-          context: context,
-          title: refreshedL10n.journeyDetailGateDismissedTitle,
-          message: refreshedL10n.journeyDetailGateDismissedBody,
-          confirmLabel: refreshedL10n.composeOk,
-        );
-        return;
-      case RewardedAdGateResult.failedToLoad:
-      case RewardedAdGateResult.failedToShow:
         if (!mounted) {
           return;
         }
@@ -334,7 +344,10 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
     }
   }
 
-  void _goToDetail(JourneySummary item) {
+  void _goToDetail(JourneySummary item, {required String reqId}) {
+    if (kDebugMode) {
+      debugPrint('[Nav] toDetail reqId=$reqId journeyId=${item.journeyId}');
+    }
     context.go(
       '${AppRoutes.journeyList}/${item.journeyId}',
       extra: item,

@@ -142,7 +142,7 @@ class JourneyListController extends Notifier<JourneyListState> {
     state = state.copyWith(clearMessage: true);
   }
 
-  void markRewardUnlocked(String journeyId) {
+  void markRewardUnlocked(String journeyId, {String? reqId}) {
     final updatedItems = state.items
         .map(
           (item) => item.journeyId == journeyId
@@ -159,5 +159,10 @@ class JourneyListController extends Notifier<JourneyListState> {
         )
         .toList();
     state = state.copyWith(items: updatedItems);
+    if (kDebugMode) {
+      debugPrint(
+        '[Provider] unlock_set reqId=${reqId ?? "-"} journeyId=$journeyId unlocked=true',
+      );
+    }
   }
 }

@@ -10,6 +10,8 @@ import '../../../core/logging/server_error_logger.dart';
 import '../../../core/network/network_error.dart';
 import '../../../core/network/network_guard.dart';
 import '../domain/journey_repository.dart';
+import '../domain/sent_journey_detail.dart';
+import '../domain/sent_journey_response.dart';
 import '../domain/journey_storage_repository.dart';
 
 const _journeyImagesBucketId = 'journey-images';
@@ -1260,6 +1262,274 @@ class SupabaseJourneyRepository implements JourneyRepository {
           throw JourneyReplyException(JourneyReplyError.serverRejected);
       }
     }
+  }
+
+  @override
+  Future<SentJourneyDetail> fetchSentJourneyDetail({
+    required String journeyId,
+    required String accessToken,
+  }) async {
+    if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
+      throw JourneyProgressException(JourneyProgressError.missingConfig);
+    }
+    if (accessToken.isEmpty) {
+      throw JourneyProgressException(JourneyProgressError.unauthorized);
+    }
+    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/get_sent_journey_detail');
+
+    try {
+      final result = await _networkGuard.execute<SentJourneyDetail>(
+        operation: () => _executeFetchSentJourneyDetail(
+          uri: uri,
+          journeyId: journeyId,
+          accessToken: accessToken,
+        ),
+        retryPolicy: RetryPolicy.short,
+        context: 'get_sent_journey_detail',
+        uri: uri,
+        method: 'POST',
+        meta: {'journey_id': journeyId},
+        accessToken: accessToken,
+      );
+      return result;
+    } on NetworkRequestException catch (error) {
+      if (_isResponsesMissing(error)) {
+        throw JourneyReplyException(JourneyReplyError.unexpectedEmpty);
+      }
+      switch (error.type) {
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+          throw JourneyProgressException(JourneyProgressError.network);
+        case NetworkErrorType.unauthorized:
+          throw JourneyProgressException(JourneyProgressError.unauthorized);
+        case NetworkErrorType.forbidden:
+          throw JourneyProgressException(JourneyProgressError.unauthorized);
+        case NetworkErrorType.invalidPayload:
+          throw JourneyProgressException(JourneyProgressError.invalidPayload);
+        case NetworkErrorType.serverUnavailable:
+        case NetworkErrorType.serverRejected:
+        case NetworkErrorType.missingConfig:
+        case NetworkErrorType.unknown:
+          throw JourneyProgressException(JourneyProgressError.serverRejected);
+      }
+    }
+  }
+
+  Future<SentJourneyDetail> _executeFetchSentJourneyDetail({
+    required Uri uri,
+    required String journeyId,
+    required String accessToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(
+      utf8.encode(
+        jsonEncode({
+          'p_journey_id': journeyId,
+        }),
+      ),
+    );
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+    if (kDebugMode) {
+      debugPrint(
+        '[SentDetail] rpc=get_sent_journey_detail status=${response.statusCode} bodyLength=${body.length}',
+      );
+    }
+
+    if (response.statusCode != HttpStatus.ok) {
+      await _errorLogger.logHttpFailure(
+        context: 'get_sent_journey_detail',
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: {
+          'journey_id': journeyId,
+        },
+        accessToken: accessToken,
+      );
+
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'get_sent_journey_detail',
+      );
+    }
+
+    final payload = jsonDecode(body);
+    if (kDebugMode && payload is Map<String, dynamic>) {
+      debugPrint(
+        '[SentDetail] rpc=get_sent_journey_detail keys=${payload.keys.toList()}',
+      );
+    }
+    Map<String, dynamic>? row;
+    if (payload is Map<String, dynamic>) {
+      row = payload;
+    } else if (payload is List && payload.isNotEmpty && payload.first is Map<String, dynamic>) {
+      row = payload.first as Map<String, dynamic>;
+    }
+    if (row == null) {
+      throw const FormatException('Invalid payload format');
+    }
+
+    return SentJourneyDetail(
+      journeyId: row['journey_id'] as String,
+      content: row['content'] as String? ?? '',
+      createdAt: DateTime.parse(row['created_at'] as String),
+      statusCode: row['status_code'] as String? ?? 'CREATED',
+      responseCount: (row['response_count'] as num?)?.toInt() ?? 0,
+      imageCount: (row['image_count'] as num?)?.toInt() ?? 0,
+      isRewardUnlocked: row['is_reward_unlocked'] as bool? ?? false,
+    );
+  }
+
+  @override
+  Future<List<SentJourneyResponse>> fetchSentJourneyResponses({
+    required String journeyId,
+    required int limit,
+    required int offset,
+    required String accessToken,
+  }) async {
+    if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
+      throw JourneyReplyException(JourneyReplyError.missingConfig);
+    }
+    if (accessToken.isEmpty) {
+      throw JourneyReplyException(JourneyReplyError.unauthorized);
+    }
+    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/list_sent_journey_responses');
+
+    try {
+      final result = await _networkGuard.execute<List<SentJourneyResponse>>(
+        operation: () => _executeFetchSentJourneyResponses(
+          uri: uri,
+          journeyId: journeyId,
+          limit: limit,
+          offset: offset,
+          accessToken: accessToken,
+        ),
+        retryPolicy: RetryPolicy.short,
+        context: 'list_sent_journey_responses',
+        uri: uri,
+        method: 'POST',
+        meta: {'journey_id': journeyId},
+        accessToken: accessToken,
+      );
+      if (result.isEmpty) {
+        throw JourneyReplyException(JourneyReplyError.unexpectedEmpty);
+      }
+      return result;
+    } on NetworkRequestException catch (error) {
+      switch (error.type) {
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+          throw JourneyReplyException(JourneyReplyError.network);
+        case NetworkErrorType.unauthorized:
+          throw JourneyReplyException(JourneyReplyError.unauthorized);
+        case NetworkErrorType.forbidden:
+          throw JourneyReplyException(JourneyReplyError.unauthorized);
+        case NetworkErrorType.invalidPayload:
+          throw JourneyReplyException(JourneyReplyError.invalidPayload);
+        case NetworkErrorType.serverUnavailable:
+        case NetworkErrorType.serverRejected:
+        case NetworkErrorType.missingConfig:
+        case NetworkErrorType.unknown:
+          throw JourneyReplyException(JourneyReplyError.serverRejected);
+      }
+    }
+  }
+
+  bool _isResponsesMissing(NetworkRequestException error) {
+    if (error.parsedErrorCode != 'P0001') {
+      return false;
+    }
+    final body = error.rawBody ?? '';
+    return body.contains('responses_missing');
+  }
+
+  Future<List<SentJourneyResponse>> _executeFetchSentJourneyResponses({
+    required Uri uri,
+    required String journeyId,
+    required int limit,
+    required int offset,
+    required String accessToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(
+      utf8.encode(
+        jsonEncode({
+          'p_journey_id': journeyId,
+          'page_size': limit,
+          'page_offset': offset,
+        }),
+      ),
+    );
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+    if (kDebugMode) {
+      debugPrint(
+        '[SentDetail] rpc=list_sent_journey_responses status=${response.statusCode} bodyLength=${body.length}',
+      );
+    }
+
+    if (response.statusCode != HttpStatus.ok) {
+      if (kDebugMode) {
+        final preview = body.length > 200 ? body.substring(0, 200) : body;
+        debugPrint(
+          '[SentDetail] rpc=list_sent_journey_responses fail status=${response.statusCode} bodyPreview=$preview params={journey_id:$journeyId, page_size:$limit, page_offset:$offset}',
+        );
+      }
+      await _errorLogger.logHttpFailure(
+        context: 'list_sent_journey_responses',
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: {
+          'journey_id': journeyId,
+        },
+        accessToken: accessToken,
+      );
+
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'list_sent_journey_responses',
+      );
+    }
+
+    final payload = jsonDecode(body);
+    if (kDebugMode) {
+      if (payload is List) {
+        debugPrint(
+          '[SentDetail] rpc=list_sent_journey_responses listLength=${payload.length}',
+        );
+      } else if (payload is Map<String, dynamic>) {
+        debugPrint(
+          '[SentDetail] rpc=list_sent_journey_responses keys=${payload.keys.toList()}',
+        );
+      }
+    }
+    if (payload is! List) {
+      throw const FormatException('Invalid payload format');
+    }
+
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (row) => SentJourneyResponse(
+            responseId: (row['response_id'] as num?)?.toInt() ?? 0,
+            content: row['content'] as String? ?? '',
+            createdAt: DateTime.parse(row['created_at'] as String),
+            responderNickname: (row['responder_nickname'] as String? ?? '').trim(),
+          ),
+        )
+        .toList();
   }
 
   /// fetchJourneyReplies RPC 실제 실행 (NetworkGuard가 호출)

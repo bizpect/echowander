@@ -570,6 +570,23 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não foi possível carregar as respostas.';
 
   @override
+  String get commonTemporaryErrorTitle => 'Erro temporário';
+
+  @override
+  String get sentDetailRepliesLoadFailedMessage =>
+      'Não foi possível carregar as respostas.\nVoltaremos à lista.';
+
+  @override
+  String get commonOk => 'OK';
+
+  @override
+  String get journeyDetailResponsesMissingTitle => 'Erro temporário';
+
+  @override
+  String get journeyDetailResponsesMissingBody =>
+      'Não foi possível carregar as respostas. Tente novamente.\nVoltaremos à lista.';
+
+  @override
   String get journeyDetailGateConfigTitle => 'Anúncio não pronto';
 
   @override
@@ -588,7 +605,14 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get journeyDetailGateFailedBody =>
-      'Não foi possível carregar o anúncio. Tente novamente mais tarde.';
+      'Não foi possível carregar o anúncio. Tente novamente.';
+
+  @override
+  String get journeyDetailUnlockFailedTitle => 'Falha ao salvar o desbloqueio';
+
+  @override
+  String get journeyDetailUnlockFailedBody =>
+      'Não foi possível salvar o desbloqueio por um problema de rede/servidor. Tente novamente.';
 
   @override
   String get journeyDetailGateDialogTitle =>
@@ -1436,6 +1460,23 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Não foi possível carregar as respostas.';
 
   @override
+  String get commonTemporaryErrorTitle => 'Erro temporário';
+
+  @override
+  String get sentDetailRepliesLoadFailedMessage =>
+      'Não foi possível carregar as respostas.\nVoltaremos à lista.';
+
+  @override
+  String get commonOk => 'OK';
+
+  @override
+  String get journeyDetailResponsesMissingTitle => 'Erro temporário';
+
+  @override
+  String get journeyDetailResponsesMissingBody =>
+      'Não foi possível carregar as respostas. Tente novamente.\nVoltaremos à lista.';
+
+  @override
   String get journeyDetailGateConfigTitle => 'Anúncio não configurado';
 
   @override
@@ -1454,7 +1495,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get journeyDetailGateFailedBody =>
-      'Não foi possível carregar o anúncio. Tente novamente mais tarde.';
+      'Não foi possível carregar o anúncio. Tente novamente.';
+
+  @override
+  String get journeyDetailUnlockFailedTitle => 'Falha ao salvar o desbloqueio';
+
+  @override
+  String get journeyDetailUnlockFailedBody =>
+      'Não foi possível salvar o desbloqueio por um problema de rede/servidor. Tente novamente.';
 
   @override
   String get journeyDetailGateDialogTitle =>

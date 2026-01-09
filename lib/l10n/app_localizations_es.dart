@@ -570,6 +570,23 @@ class AppLocalizationsEs extends AppLocalizations {
       'No pudimos cargar las respuestas.';
 
   @override
+  String get commonTemporaryErrorTitle => 'Error temporal';
+
+  @override
+  String get sentDetailRepliesLoadFailedMessage =>
+      'No pudimos cargar las respuestas.\nVolveremos a la lista.';
+
+  @override
+  String get commonOk => 'OK';
+
+  @override
+  String get journeyDetailResponsesMissingTitle => 'Error temporal';
+
+  @override
+  String get journeyDetailResponsesMissingBody =>
+      'No pudimos cargar las respuestas. Inténtalo de nuevo.\nVolveremos a la lista.';
+
+  @override
   String get journeyDetailGateConfigTitle => 'Anuncio no configurado';
 
   @override
@@ -588,7 +605,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get journeyDetailGateFailedBody =>
-      'No pudimos cargar el anuncio. Inténtalo más tarde.';
+      'No pudimos cargar el anuncio. Inténtalo de nuevo.';
+
+  @override
+  String get journeyDetailUnlockFailedTitle =>
+      'No se pudo guardar el desbloqueo';
+
+  @override
+  String get journeyDetailUnlockFailedBody =>
+      'No pudimos guardar el desbloqueo por un problema de red/servidor. Inténtalo de nuevo.';
 
   @override
   String get journeyDetailGateDialogTitle =>

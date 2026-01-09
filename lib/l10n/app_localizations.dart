@@ -1165,6 +1165,36 @@ abstract class AppLocalizations {
   /// **'We couldn\'t load the replies.'**
   String get journeyDetailResultsLoadFailed;
 
+  /// No description provided for @commonTemporaryErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary error'**
+  String get commonTemporaryErrorTitle;
+
+  /// No description provided for @sentDetailRepliesLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the replies. We\'ll return to the list.'**
+  String get sentDetailRepliesLoadFailedMessage;
+
+  /// No description provided for @commonOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get commonOk;
+
+  /// No description provided for @journeyDetailResponsesMissingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary error'**
+  String get journeyDetailResponsesMissingTitle;
+
+  /// No description provided for @journeyDetailResponsesMissingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the responses. Please try again.\nWe\'ll return to the list.'**
+  String get journeyDetailResponsesMissingBody;
+
   /// No description provided for @journeyDetailGateConfigTitle.
   ///
   /// In en, this message translates to:
@@ -1198,8 +1228,20 @@ abstract class AppLocalizations {
   /// No description provided for @journeyDetailGateFailedBody.
   ///
   /// In en, this message translates to:
-  /// **'We couldn\'t load the ad. Try again later.'**
+  /// **'We couldn\'t load the ad. Please try again.'**
   String get journeyDetailGateFailedBody;
+
+  /// No description provided for @journeyDetailUnlockFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock failed'**
+  String get journeyDetailUnlockFailedTitle;
+
+  /// No description provided for @journeyDetailUnlockFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t save the unlock due to a network or server issue. Please try again.'**
+  String get journeyDetailUnlockFailedBody;
 
   /// No description provided for @journeyDetailGateDialogTitle.
   ///

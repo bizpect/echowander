@@ -1,3 +1,6 @@
+import 'sent_journey_detail.dart';
+import 'sent_journey_response.dart';
+
 class JourneyCreationResult {
   JourneyCreationResult({
     required this.journeyId,
@@ -173,6 +176,7 @@ enum JourneyReplyError {
   missingConfig,
   unauthorized,
   invalidPayload,
+  unexpectedEmpty,
   serverRejected,
   network,
   unknown,
@@ -266,6 +270,18 @@ abstract class JourneyRepository {
 
   Future<List<JourneyReplyItem>> fetchJourneyReplies({
     required String journeyId,
+    required String accessToken,
+  });
+
+  Future<SentJourneyDetail> fetchSentJourneyDetail({
+    required String journeyId,
+    required String accessToken,
+  });
+
+  Future<List<SentJourneyResponse>> fetchSentJourneyResponses({
+    required String journeyId,
+    required int limit,
+    required int offset,
     required String accessToken,
   });
 

@@ -548,6 +548,22 @@ class AppLocalizationsJa extends AppLocalizations {
   String get journeyDetailResultsLoadFailed => '返信を読み込めませんでした。';
 
   @override
+  String get commonTemporaryErrorTitle => '一時的なエラー';
+
+  @override
+  String get sentDetailRepliesLoadFailedMessage => '返信を読み込めませんでした。\n一覧に戻ります。';
+
+  @override
+  String get commonOk => 'OK';
+
+  @override
+  String get journeyDetailResponsesMissingTitle => '一時的なエラー';
+
+  @override
+  String get journeyDetailResponsesMissingBody =>
+      '返信を読み込めませんでした。もう一度お試しください。\n一覧に戻ります。';
+
+  @override
   String get journeyDetailGateConfigTitle => '広告準備中';
 
   @override
@@ -563,7 +579,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get journeyDetailGateFailedTitle => '広告を利用できません';
 
   @override
-  String get journeyDetailGateFailedBody => '広告を読み込めませんでした。時間をおいて再試行してください。';
+  String get journeyDetailGateFailedBody => '広告の読み込みに失敗しました。もう一度お試しください。';
+
+  @override
+  String get journeyDetailUnlockFailedTitle => 'ロック解除の保存に失敗しました';
+
+  @override
+  String get journeyDetailUnlockFailedBody =>
+      'ネットワーク/サーバーの問題でロック解除の保存に失敗しました。もう一度お試しください。';
 
   @override
   String get journeyDetailGateDialogTitle => 'リワード広告でロック解除';

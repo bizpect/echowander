@@ -10,12 +10,68 @@ import 'ad_reward_constants.dart';
 import 'ad_reward_logger.dart';
 import 'reward_unlock_repository.dart';
 
-enum RewardedAdGateResult {
+enum RewardGateResult {
   earned,
   dismissed,
-  failedToLoad,
-  failedToShow,
-  skippedByConfig,
+  failLoad,
+  failShow,
+  failConfig,
+}
+
+enum RewardGateState {
+  idle,
+  loading,
+  ready,
+  showing,
+  completedEarned,
+  completedDismissed,
+  completedFailed,
+}
+
+enum AdLoadContext {
+  preload,
+  userAttempt,
+}
+
+class RewardGateOutcome {
+  const RewardGateOutcome({
+    required this.result,
+    required this.context,
+    this.unlockFailed = false,
+    this.allowNavigationWithoutAd = false,
+    this.suppressAlert = false,
+  });
+
+  final RewardGateResult result;
+  final AdLoadContext context;
+  final bool unlockFailed;
+  final bool allowNavigationWithoutAd;
+  final bool suppressAlert;
+
+  bool get shouldAlert {
+    if (suppressAlert) {
+      return false;
+    }
+    if (context != AdLoadContext.userAttempt) {
+      return false;
+    }
+    if (allowNavigationWithoutAd || unlockFailed) {
+      return false;
+    }
+    return result == RewardGateResult.failLoad ||
+        result == RewardGateResult.failShow ||
+        result == RewardGateResult.failConfig;
+  }
+}
+
+class _RewardGateSessionResult {
+  const _RewardGateSessionResult({
+    required this.result,
+    required this.unlockFailed,
+  });
+
+  final RewardGateResult result;
+  final bool unlockFailed;
 }
 
 final rewardedAdGateProvider = Provider<RewardedAdGate>((ref) {
@@ -39,16 +95,29 @@ class RewardedAdGate {
   final AppConfig _config;
   final AdRewardLogger _logger;
   final RewardUnlockRepository _unlockRepository;
+  bool _inFlight = false;
+  RewardGateState _state = RewardGateState.idle;
+  RewardedAd? _preloadedAd;
+  int _sessionCounter = 0;
+  int _preloadCounter = 0;
 
-  Future<RewardedAdGateResult> showRewardedAndReturnResult({
+  Future<void> preloadRewarded({
     required String placementCode,
     required String contentId,
     required String accessToken,
     required String reqId,
   }) async {
+    if (_inFlight || _state == RewardGateState.loading || _state == RewardGateState.showing) {
+      return;
+    }
+    if (_preloadedAd != null && _state == RewardGateState.ready) {
+      return;
+    }
+    _state = RewardGateState.loading;
+    _preloadCounter += 1;
+    final preloadToken = _preloadCounter;
     final envCode = _resolveEnvCode(_config.environment);
     final unitId = _resolveAdUnitId(_config);
-
     if (unitId.isEmpty) {
       await _safeLog(
         journeyId: contentId,
@@ -59,23 +128,15 @@ class RewardedAdGate {
         accessToken: accessToken,
         reqId: reqId,
         metadata: {
+          'context': 'preload',
           'reason': 'missing_ad_unit_id',
         },
       );
-      // PROD에서 광고 ID가 비어 있으면 광고 없이 진입 허용 (잠금해제는 하지 않음)
-      return RewardedAdGateResult.skippedByConfig;
+      if (_state == RewardGateState.loading && !_inFlight && _preloadCounter == preloadToken) {
+        _state = RewardGateState.idle;
+      }
+      return;
     }
-
-    await _safeLog(
-      journeyId: contentId,
-      placementCode: placementCode,
-      envCode: envCode,
-      adUnitId: unitId,
-      eventCode: AdRewardEventCodes.request,
-      accessToken: accessToken,
-      reqId: reqId,
-    );
-
     final ad = await _loadAd(
       unitId: unitId,
       journeyId: contentId,
@@ -83,20 +144,123 @@ class RewardedAdGate {
       envCode: envCode,
       accessToken: accessToken,
       reqId: reqId,
+      context: AdLoadContext.preload,
     );
-
     if (ad == null) {
-      return RewardedAdGateResult.failedToLoad;
+      if (_state == RewardGateState.loading && !_inFlight && _preloadCounter == preloadToken) {
+        _state = RewardGateState.idle;
+      }
+      return;
+    }
+    if (_inFlight || _state != RewardGateState.loading || _preloadCounter != preloadToken) {
+      ad.dispose();
+      return;
+    }
+    _preloadedAd = ad;
+    _state = RewardGateState.ready;
+  }
+
+  Future<RewardGateOutcome> showRewardedAndReturnResult({
+    required String placementCode,
+    required String contentId,
+    required String accessToken,
+    required String reqId,
+  }) async {
+    if (_inFlight) {
+      return const RewardGateOutcome(
+        result: RewardGateResult.failShow,
+        context: AdLoadContext.userAttempt,
+        suppressAlert: true,
+      );
+    }
+    _inFlight = true;
+    final envCode = _resolveEnvCode(_config.environment);
+    final unitId = _resolveAdUnitId(_config);
+    if (kDebugMode) {
+      debugPrint(
+        '[AdGate] START reqId=$reqId ctx=userAttempt env=$envCode unitId=$unitId',
+      );
     }
 
-    return _showAd(
-      ad: ad,
-      journeyId: contentId,
-      placementCode: placementCode,
-      envCode: envCode,
-      accessToken: accessToken,
-      reqId: reqId,
-    );
+    try {
+      if (unitId.isEmpty) {
+        await _safeLog(
+          journeyId: contentId,
+          placementCode: placementCode,
+          envCode: envCode,
+          adUnitId: unitId,
+          eventCode: AdRewardEventCodes.failConfig,
+          accessToken: accessToken,
+          reqId: reqId,
+          metadata: {
+            'context': 'user_attempt',
+            'reason': 'missing_ad_unit_id',
+          },
+        );
+        return const RewardGateOutcome(
+          result: RewardGateResult.failConfig,
+          context: AdLoadContext.userAttempt,
+          allowNavigationWithoutAd: true,
+        );
+      }
+
+      await _safeLog(
+        journeyId: contentId,
+        placementCode: placementCode,
+        envCode: envCode,
+        adUnitId: unitId,
+        eventCode: AdRewardEventCodes.request,
+        accessToken: accessToken,
+        reqId: reqId,
+      );
+
+      RewardedAd? ad;
+      if (_preloadedAd != null && _state == RewardGateState.ready) {
+        ad = _preloadedAd;
+        _preloadedAd = null;
+        _state = RewardGateState.showing;
+      } else {
+        _state = RewardGateState.loading;
+        ad = await _loadAd(
+          unitId: unitId,
+          journeyId: contentId,
+          placementCode: placementCode,
+          envCode: envCode,
+          accessToken: accessToken,
+          reqId: reqId,
+          context: AdLoadContext.userAttempt,
+        );
+      }
+
+      if (ad == null) {
+        _state = RewardGateState.idle;
+        return const RewardGateOutcome(
+          result: RewardGateResult.failLoad,
+          context: AdLoadContext.userAttempt,
+        );
+      }
+
+      _state = RewardGateState.showing;
+      _sessionCounter += 1;
+      final sessionId = _sessionCounter;
+      final sessionResult = await _showAd(
+        ad: ad,
+        journeyId: contentId,
+        placementCode: placementCode,
+        envCode: envCode,
+        accessToken: accessToken,
+        reqId: reqId,
+        sessionId: sessionId,
+      );
+      return RewardGateOutcome(
+        result: sessionResult.result,
+        context: AdLoadContext.userAttempt,
+        unlockFailed: sessionResult.unlockFailed,
+      );
+    } finally {
+      _inFlight = false;
+      _state = RewardGateState.idle;
+    }
   }
 
   Future<RewardedAd?> _loadAd({
@@ -106,6 +270,7 @@ class RewardedAdGate {
     required String envCode,
     required String accessToken,
     required String reqId,
+    required AdLoadContext context,
   }) async {
     final completer = Completer<RewardedAd?>();
 
@@ -120,7 +285,10 @@ class RewardedAdGate {
         },
         onAdFailedToLoad: (error) {
           if (kDebugMode) {
-            debugPrint('[RewardedAdGate] load failed: ${error.code} ${error.message}');
+            debugPrint(
+              '[AdGate] FAIL reqId=$reqId stage=load ctx=${context == AdLoadContext.preload ? 'preload' : 'userAttempt'} '
+              'code=${error.code} message=${error.message}',
+            );
           }
           _safeLog(
             journeyId: journeyId,
@@ -131,6 +299,7 @@ class RewardedAdGate {
             accessToken: accessToken,
             reqId: reqId,
             metadata: {
+              'context': context == AdLoadContext.preload ? 'preload' : 'user_attempt',
               'code': error.code,
               'message': error.message,
             },
@@ -145,20 +314,51 @@ class RewardedAdGate {
     return completer.future;
   }
 
-  Future<RewardedAdGateResult> _showAd({
+  Future<_RewardGateSessionResult> _showAd({
     required RewardedAd ad,
     required String journeyId,
     required String placementCode,
     required String envCode,
     required String accessToken,
     required String reqId,
+    required int sessionId,
   }) async {
-    final completer = Completer<RewardedAdGateResult>();
-    var earned = false;
+    final completer = Completer<_RewardGateSessionResult>();
+    var state = RewardGateState.showing;
+    var earnedLatch = false;
+    var unlockFailed = false;
     Future<bool>? unlockFuture;
+
+    bool isCompleted(RewardGateState current) {
+      return current == RewardGateState.completedEarned ||
+          current == RewardGateState.completedDismissed ||
+          current == RewardGateState.completedFailed;
+    }
+
+    void completeOnce(RewardGateResult result, RewardGateState nextState) {
+      if (isCompleted(state)) {
+        return;
+      }
+      state = nextState;
+      _state = nextState;
+      if (!completer.isCompleted) {
+        completer.complete(
+          _RewardGateSessionResult(
+            result: result,
+            unlockFailed: unlockFailed,
+          ),
+        );
+      }
+    }
 
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdShowedFullScreenContent: (ad) {
+        if (_sessionCounter != sessionId) {
+          return;
+        }
+        if (kDebugMode) {
+          debugPrint('[AdGate] SHOW reqId=$reqId');
+        }
         _safeLog(
           journeyId: journeyId,
           placementCode: placementCode,
@@ -169,9 +369,16 @@ class RewardedAdGate {
           reqId: reqId,
         );
       },
-      onAdDismissedFullScreenContent: (ad) {
+      onAdDismissedFullScreenContent: (ad) async {
+        if (_sessionCounter != sessionId) {
+          ad.dispose();
+          return;
+        }
         ad.dispose();
-        if (!earned) {
+        if (isCompleted(state)) {
+          return;
+        }
+        if (!earnedLatch) {
           _safeLog(
             journeyId: journeyId,
             placementCode: placementCode,
@@ -181,23 +388,34 @@ class RewardedAdGate {
             accessToken: accessToken,
             reqId: reqId,
           );
-          if (!completer.isCompleted) {
-            completer.complete(RewardedAdGateResult.dismissed);
-          }
+          completeOnce(RewardGateResult.dismissed, RewardGateState.completedDismissed);
           return;
         }
+        if (kDebugMode) {
+          debugPrint('[AdGate] DISMISS reqId=$reqId latch=true');
+        }
         final unlockTask = unlockFuture ?? Future.value(false);
-        unlockTask.then((success) {
-          if (!completer.isCompleted) {
-            completer.complete(
-              success ? RewardedAdGateResult.earned : RewardedAdGateResult.failedToShow,
-            );
-          }
-        });
+        final unlockSuccess = await unlockTask;
+        if (unlockSuccess) {
+          completeOnce(RewardGateResult.earned, RewardGateState.completedEarned);
+        } else {
+          unlockFailed = true;
+          completeOnce(RewardGateResult.earned, RewardGateState.completedFailed);
+        }
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
+        if (_sessionCounter != sessionId) {
+          ad.dispose();
+          return;
+        }
+        if (isCompleted(state) || earnedLatch) {
+          ad.dispose();
+          return;
+        }
         if (kDebugMode) {
-          debugPrint('[RewardedAdGate] show failed: ${error.code} ${error.message}');
+          debugPrint(
+            '[AdGate] FAIL reqId=$reqId stage=show ctx=userAttempt code=${error.code} message=${error.message}',
+          );
         }
         ad.dispose();
         _safeLog(
@@ -213,21 +431,34 @@ class RewardedAdGate {
             'message': error.message,
           },
         );
-        if (!completer.isCompleted) {
-          completer.complete(RewardedAdGateResult.failedToShow);
-        }
+        completeOnce(RewardGateResult.failShow, RewardGateState.completedFailed);
       },
     );
 
     ad.show(
       onUserEarnedReward: (ad, reward) {
-        earned = true;
+        if (_sessionCounter != sessionId) {
+          return;
+        }
+        if (isCompleted(state)) {
+          return;
+        }
+        earnedLatch = true;
+        if (kDebugMode) {
+          debugPrint('[AdGate] EARN reqId=$reqId latch=true');
+        }
         unlockFuture = _unlockRepository
             .upsertRewardUnlock(
               journeyId: journeyId,
               accessToken: accessToken,
+              reqId: reqId,
             )
             .then((success) {
+              if (kDebugMode) {
+                debugPrint(
+                  '[Unlock] upsert reqId=$reqId journeyId=$journeyId -> ${success ? 'OK' : 'FAIL'}',
+                );
+              }
               _safeLog(
                 journeyId: journeyId,
                 placementCode: placementCode,

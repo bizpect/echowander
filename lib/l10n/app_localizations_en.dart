@@ -566,6 +566,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get journeyDetailResultsLoadFailed => 'We couldn\'t load the replies.';
 
   @override
+  String get commonTemporaryErrorTitle => 'Temporary error';
+
+  @override
+  String get sentDetailRepliesLoadFailedMessage =>
+      'We couldn\'t load the replies. We\'ll return to the list.';
+
+  @override
+  String get commonOk => 'OK';
+
+  @override
+  String get journeyDetailResponsesMissingTitle => 'Temporary error';
+
+  @override
+  String get journeyDetailResponsesMissingBody =>
+      'We couldn\'t load the responses. Please try again.\nWe\'ll return to the list.';
+
+  @override
   String get journeyDetailGateConfigTitle => 'Ad not ready';
 
   @override
@@ -584,7 +601,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get journeyDetailGateFailedBody =>
-      'We couldn\'t load the ad. Try again later.';
+      'We couldn\'t load the ad. Please try again.';
+
+  @override
+  String get journeyDetailUnlockFailedTitle => 'Unlock failed';
+
+  @override
+  String get journeyDetailUnlockFailedBody =>
+      'We couldn\'t save the unlock due to a network or server issue. Please try again.';
 
   @override
   String get journeyDetailGateDialogTitle => 'Unlock with a reward ad';

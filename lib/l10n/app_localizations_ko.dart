@@ -549,6 +549,23 @@ class AppLocalizationsKo extends AppLocalizations {
   String get journeyDetailResultsLoadFailed => '댓글을 불러오지 못했어요.';
 
   @override
+  String get commonTemporaryErrorTitle => '일시적인 오류';
+
+  @override
+  String get sentDetailRepliesLoadFailedMessage =>
+      '댓글을 불러오지 못했습니다.\n목록으로 이동합니다.';
+
+  @override
+  String get commonOk => '확인';
+
+  @override
+  String get journeyDetailResponsesMissingTitle => '일시적인 오류';
+
+  @override
+  String get journeyDetailResponsesMissingBody =>
+      '댓글을 불러오지 못했습니다. 다시 시도해 주세요.\n목록으로 이동합니다.';
+
+  @override
   String get journeyDetailGateConfigTitle => '광고 준비 중';
 
   @override
@@ -564,7 +581,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get journeyDetailGateFailedTitle => '광고 이용 불가';
 
   @override
-  String get journeyDetailGateFailedBody => '광고를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
+  String get journeyDetailGateFailedBody => '광고 로드에 실패했습니다. 다시 시도해주세요.';
+
+  @override
+  String get journeyDetailUnlockFailedTitle => '잠금해제 저장에 실패했어요';
+
+  @override
+  String get journeyDetailUnlockFailedBody =>
+      '네트워크/서버 문제로 잠금해제에 실패했어요. 다시 시도해주세요.';
 
   @override
   String get journeyDetailGateDialogTitle => '리워드 광고로 잠금해제';

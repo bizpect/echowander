@@ -9,7 +9,7 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../core/presentation/scaffolds/main_scaffold.dart';
 import '../../features/journey/presentation/journey_compose_screen.dart';
 import '../../features/journey/presentation/journey_inbox_detail_screen.dart';
-import '../../features/journey/presentation/journey_sent_detail_screen.dart';
+import '../../features/journey/presentation/sent_detail/sent_journey_detail_screen.dart';
 import '../../features/onboarding/application/onboarding_controller.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/push/presentation/push_preview_screen.dart';
@@ -72,9 +72,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.journeyDetail,
-        builder: (context, state) => JourneySentDetailScreen(
+        builder: (context, state) => SentJourneyDetailScreen(
           journeyId: state.pathParameters['journeyId'] ?? '',
-          summary: state.extra as JourneySummary?,
         ),
       ),
       GoRoute(
@@ -84,9 +83,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.journeyResults,
-        builder: (context, state) => JourneySentDetailScreen(
+        builder: (context, state) => SentJourneyDetailScreen(
           journeyId: state.pathParameters['journeyId'] ?? '',
-          summary: state.extra as JourneySummary?,
           fromNotification:
               state.uri.queryParameters['highlight'] == '1' ||
               state.uri.queryParameters['highlight'] == 'true',

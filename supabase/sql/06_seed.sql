@@ -29,7 +29,7 @@ values
   ('app_env', 'STG', 'Staging', 20),
   ('app_env', 'PROD', 'Production', 90),
   ('ad_network', 'ADMOB', 'AdMob', 10),
-  ('reward_unlock_type', 'ADMOB_REWARDED', 'AdMob rewarded', 10),
+  ('reward_unlock_type', 'ADMOB_REWARDED', 'AdMob Rewarded', 10),
   ('ad_reward_event', 'REQUEST', 'Request', 10),
   ('ad_reward_event', 'SHOW', 'Show', 20),
   ('ad_reward_event', 'EARN', 'Earn', 30),
