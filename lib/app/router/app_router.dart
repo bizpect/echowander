@@ -18,6 +18,7 @@ import '../../features/journey/domain/journey_repository.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/block/presentation/block_list_screen.dart';
 import '../../features/notifications/presentation/notification_inbox_screen.dart';
+import '../../features/settings/presentation/support/support_screen.dart';
 
 class AppRoutes {
   static const splash = '/splash';
@@ -33,6 +34,7 @@ class AppRoutes {
   static const settings = '/settings';
   static const blockList = '/settings/blocks';
   static const notifications = '/notifications';
+  static const support = '/support';
   static const pushPreview = '/push-preview';
 }
 
@@ -106,6 +108,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.notifications,
         builder: (context, state) => const NotificationInboxScreen(),
       ),
+      GoRoute(
+        path: AppRoutes.support,
+        builder: (context, state) => const SupportScreen(),
+      ),
     ],
     redirect: (context, state) {
       final status = sessionStatus;
@@ -154,7 +160,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             location.startsWith('/results/') ||
             location == AppRoutes.settings ||
             location == AppRoutes.blockList ||
-            location == AppRoutes.notifications) {
+            location == AppRoutes.notifications ||
+            location == AppRoutes.support) {
           return null;
         }
         return location == AppRoutes.home ? null : AppRoutes.home;

@@ -823,6 +823,120 @@ class AppLocalizationsJa extends AppLocalizations {
   String get profileDefaultNickname => 'ユーザー';
 
   @override
+  String get profileEditCta => 'プロフィール編集';
+
+  @override
+  String get profileLoginProviderGoogle => 'Googleログイン';
+
+  @override
+  String get profileLoginProviderApple => 'Appleログイン';
+
+  @override
+  String get profileLoginProviderEmail => 'メールログイン';
+
+  @override
+  String get profileLoginProviderUnknown => 'ログイン済み';
+
+  @override
+  String get profileMenuNotifications => '通知設定';
+
+  @override
+  String get profileMenuNotices => 'お知らせ';
+
+  @override
+  String get profileMenuSupport => 'サポート';
+
+  @override
+  String get profileMenuAppInfo => 'アプリ情報';
+
+  @override
+  String get profileWithdrawCta => '退会する';
+
+  @override
+  String get profileWithdrawTitle => '退会する';
+
+  @override
+  String get profileWithdrawMessage => '退会しますか？この操作は取り消せません。';
+
+  @override
+  String get profileWithdrawConfirm => '退会';
+
+  @override
+  String get profileFeaturePreparingTitle => '準備中';
+
+  @override
+  String get profileFeaturePreparingBody => 'この機能はまだ利用できません。';
+
+  @override
+  String get profileAvatarSemantics => 'プロフィールのアバター';
+
+  @override
+  String get supportTitle => 'サポート';
+
+  @override
+  String get supportStatusMessage => 'インストール済みのアプリは最新です。';
+
+  @override
+  String get supportReleaseNotesTitle => 'アップデート内容';
+
+  @override
+  String supportReleaseNotesHeader(Object version) {
+    return '最新バージョン $version の更新内容';
+  }
+
+  @override
+  String get supportReleaseNotesBody =>
+      '• リレー体験と安定性を改善しました。\n• プロフィール/サポート画面のダークテーマを調整しました。\n• 軽微な不具合とパフォーマンスを改善しました。';
+
+  @override
+  String get supportVersionUnknown => '不明';
+
+  @override
+  String get supportSuggestCta => 'ご意見を送る';
+
+  @override
+  String get supportReportCta => '不具合を報告';
+
+  @override
+  String get supportFaqTitle => 'よくある質問';
+
+  @override
+  String get supportFaqQ1 => 'チームを作成するには？';
+
+  @override
+  String get supportFaqA1 => 'チーム機能は近日公開予定です。';
+
+  @override
+  String get supportFaqQ2 => 'チームメンバーの招待方法は？';
+
+  @override
+  String get supportFaqA2 => 'チーム機能の公開後に招待できます。';
+
+  @override
+  String get supportFaqQ3 => '試合予定はどう登録する？';
+
+  @override
+  String get supportFaqA3 => 'スケジュール管理は今後の更新で対応します。';
+
+  @override
+  String get supportFaqQ4 => '通知が届きません。';
+
+  @override
+  String get supportFaqA4 => '端末の通知許可とアプリ内設定をご確認ください。';
+
+  @override
+  String get supportFaqQ5 => 'アカウント削除はどうすればいい？';
+
+  @override
+  String get supportFaqA5 => 'プロフィール > 退会する から手続きしてください。';
+
+  @override
+  String get supportActionPreparingTitle => '準備中';
+
+  @override
+  String get supportActionPreparingBody => 'この操作はまもなく利用できます。';
+
+  @override
   String get journeyDetailAnonymous => '匿名';
 
   @override

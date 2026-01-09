@@ -866,6 +866,127 @@ class AppLocalizationsPt extends AppLocalizations {
   String get profileDefaultNickname => 'Utilizador';
 
   @override
+  String get profileEditCta => 'Editar perfil';
+
+  @override
+  String get profileLoginProviderGoogle => 'Login com Google';
+
+  @override
+  String get profileLoginProviderApple => 'Login com Apple';
+
+  @override
+  String get profileLoginProviderEmail => 'Login com e-mail';
+
+  @override
+  String get profileLoginProviderUnknown => 'Sessão iniciada';
+
+  @override
+  String get profileMenuNotifications => 'Configurações de notificações';
+
+  @override
+  String get profileMenuNotices => 'Avisos';
+
+  @override
+  String get profileMenuSupport => 'Suporte';
+
+  @override
+  String get profileMenuAppInfo => 'Informações do app';
+
+  @override
+  String get profileWithdrawCta => 'Eliminar conta';
+
+  @override
+  String get profileWithdrawTitle => 'Eliminar conta';
+
+  @override
+  String get profileWithdrawMessage =>
+      'Quer eliminar a sua conta? Esta ação não pode ser desfeita.';
+
+  @override
+  String get profileWithdrawConfirm => 'Eliminar';
+
+  @override
+  String get profileFeaturePreparingTitle => 'Em breve';
+
+  @override
+  String get profileFeaturePreparingBody =>
+      'Esta funcionalidade ainda não está disponível.';
+
+  @override
+  String get profileAvatarSemantics => 'Avatar do perfil';
+
+  @override
+  String get supportTitle => 'Suporte';
+
+  @override
+  String get supportStatusMessage => 'O aplicativo instalado está atualizado.';
+
+  @override
+  String get supportReleaseNotesTitle => 'Notas de atualização';
+
+  @override
+  String supportReleaseNotesHeader(Object version) {
+    return 'Última versão $version - novidades';
+  }
+
+  @override
+  String get supportReleaseNotesBody =>
+      '• Melhoramos a experiência e a estabilidade do relé.\n• Ajustamos o tema escuro em perfil e suporte.\n• Corrigimos pequenos bugs e desempenho.';
+
+  @override
+  String get supportVersionUnknown => 'Desconhecida';
+
+  @override
+  String get supportSuggestCta => 'Enviar sugestão';
+
+  @override
+  String get supportReportCta => 'Relatar erro';
+
+  @override
+  String get supportFaqTitle => 'Perguntas frequentes';
+
+  @override
+  String get supportFaqQ1 => 'Como posso criar uma equipe?';
+
+  @override
+  String get supportFaqA1 =>
+      'Os recursos de equipe estarão disponíveis em breve.';
+
+  @override
+  String get supportFaqQ2 => 'Como convidar membros da equipe?';
+
+  @override
+  String get supportFaqA2 =>
+      'Convites serão liberados com a função de equipes.';
+
+  @override
+  String get supportFaqQ3 => 'Como registrar o calendário de jogos?';
+
+  @override
+  String get supportFaqA3 =>
+      'O calendário será suportado em uma atualização futura.';
+
+  @override
+  String get supportFaqQ4 => 'Não recebo notificações.';
+
+  @override
+  String get supportFaqA4 =>
+      'Verifique as permissões do sistema e as configurações do app.';
+
+  @override
+  String get supportFaqQ5 => 'Como excluir minha conta?';
+
+  @override
+  String get supportFaqA5 => 'Vá em Perfil > Eliminar conta e siga as etapas.';
+
+  @override
+  String get supportActionPreparingTitle => 'Em breve';
+
+  @override
+  String get supportActionPreparingBody =>
+      'Esta ação estará disponível em breve.';
+
+  @override
   String get journeyDetailAnonymous => 'Anónimo';
 
   @override
@@ -1753,6 +1874,127 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get profileDefaultNickname => 'Usuário';
+
+  @override
+  String get profileEditCta => 'Editar perfil';
+
+  @override
+  String get profileLoginProviderGoogle => 'Login com Google';
+
+  @override
+  String get profileLoginProviderApple => 'Login com Apple';
+
+  @override
+  String get profileLoginProviderEmail => 'Login com e-mail';
+
+  @override
+  String get profileLoginProviderUnknown => 'Sessão iniciada';
+
+  @override
+  String get profileMenuNotifications => 'Configurações de notificações';
+
+  @override
+  String get profileMenuNotices => 'Avisos';
+
+  @override
+  String get profileMenuSupport => 'Suporte';
+
+  @override
+  String get profileMenuAppInfo => 'Informações do app';
+
+  @override
+  String get profileWithdrawCta => 'Excluir conta';
+
+  @override
+  String get profileWithdrawTitle => 'Excluir conta';
+
+  @override
+  String get profileWithdrawMessage =>
+      'Deseja excluir sua conta? Esta ação não pode ser desfeita.';
+
+  @override
+  String get profileWithdrawConfirm => 'Excluir';
+
+  @override
+  String get profileFeaturePreparingTitle => 'Em breve';
+
+  @override
+  String get profileFeaturePreparingBody =>
+      'Este recurso ainda não está disponível.';
+
+  @override
+  String get profileAvatarSemantics => 'Avatar do perfil';
+
+  @override
+  String get supportTitle => 'Suporte';
+
+  @override
+  String get supportStatusMessage => 'O aplicativo instalado está atualizado.';
+
+  @override
+  String get supportReleaseNotesTitle => 'Notas de atualização';
+
+  @override
+  String supportReleaseNotesHeader(Object version) {
+    return 'Última versão $version - novidades';
+  }
+
+  @override
+  String get supportReleaseNotesBody =>
+      '• Melhoramos a experiência e a estabilidade do relé.\n• Ajustamos o tema escuro em perfil e suporte.\n• Corrigimos pequenos bugs e desempenho.';
+
+  @override
+  String get supportVersionUnknown => 'Desconhecida';
+
+  @override
+  String get supportSuggestCta => 'Enviar sugestão';
+
+  @override
+  String get supportReportCta => 'Relatar erro';
+
+  @override
+  String get supportFaqTitle => 'Perguntas frequentes';
+
+  @override
+  String get supportFaqQ1 => 'Como posso criar uma equipe?';
+
+  @override
+  String get supportFaqA1 =>
+      'Os recursos de equipe estarão disponíveis em breve.';
+
+  @override
+  String get supportFaqQ2 => 'Como convidar membros da equipe?';
+
+  @override
+  String get supportFaqA2 =>
+      'Convites serão liberados com a função de equipes.';
+
+  @override
+  String get supportFaqQ3 => 'Como registrar o calendário de jogos?';
+
+  @override
+  String get supportFaqA3 =>
+      'O calendário será suportado em uma atualização futura.';
+
+  @override
+  String get supportFaqQ4 => 'Não recebo notificações.';
+
+  @override
+  String get supportFaqA4 =>
+      'Verifique as permissões do sistema e as configurações do app.';
+
+  @override
+  String get supportFaqQ5 => 'Como excluir minha conta?';
+
+  @override
+  String get supportFaqA5 => 'Vá em Perfil > Excluir conta e siga as etapas.';
+
+  @override
+  String get supportActionPreparingTitle => 'Em breve';
+
+  @override
+  String get supportActionPreparingBody =>
+      'Esta ação estará disponível em breve.';
 
   @override
   String get journeyDetailAnonymous => 'Anônimo';

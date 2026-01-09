@@ -868,6 +868,127 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileDefaultNickname => 'Utilisateur';
 
   @override
+  String get profileEditCta => 'Modifier le profil';
+
+  @override
+  String get profileLoginProviderGoogle => 'Connexion Google';
+
+  @override
+  String get profileLoginProviderApple => 'Connexion Apple';
+
+  @override
+  String get profileLoginProviderEmail => 'Connexion e-mail';
+
+  @override
+  String get profileLoginProviderUnknown => 'Connecté';
+
+  @override
+  String get profileMenuNotifications => 'Paramètres de notifications';
+
+  @override
+  String get profileMenuNotices => 'Annonces';
+
+  @override
+  String get profileMenuSupport => 'Support';
+
+  @override
+  String get profileMenuAppInfo => 'Infos sur l’app';
+
+  @override
+  String get profileWithdrawCta => 'Supprimer le compte';
+
+  @override
+  String get profileWithdrawTitle => 'Supprimer le compte';
+
+  @override
+  String get profileWithdrawMessage =>
+      'Voulez-vous supprimer votre compte ? Cette action est irréversible.';
+
+  @override
+  String get profileWithdrawConfirm => 'Supprimer';
+
+  @override
+  String get profileFeaturePreparingTitle => 'Bientôt disponible';
+
+  @override
+  String get profileFeaturePreparingBody =>
+      'Cette fonctionnalité n’est pas encore disponible.';
+
+  @override
+  String get profileAvatarSemantics => 'Avatar de profil';
+
+  @override
+  String get supportTitle => 'Support';
+
+  @override
+  String get supportStatusMessage => 'Votre application est à jour.';
+
+  @override
+  String get supportReleaseNotesTitle => 'Notes de version';
+
+  @override
+  String supportReleaseNotesHeader(Object version) {
+    return 'Dernière version $version - nouveautés';
+  }
+
+  @override
+  String get supportReleaseNotesBody =>
+      '• Amélioration de l’expérience et de la stabilité.\n• Optimisation du thème sombre pour le profil et le support.\n• Corrections mineures et performances améliorées.';
+
+  @override
+  String get supportVersionUnknown => 'Inconnue';
+
+  @override
+  String get supportSuggestCta => 'Envoyer une suggestion';
+
+  @override
+  String get supportReportCta => 'Signaler un problème';
+
+  @override
+  String get supportFaqTitle => 'FAQ';
+
+  @override
+  String get supportFaqQ1 => 'Comment créer une équipe ?';
+
+  @override
+  String get supportFaqA1 => 'Les fonctionnalités d’équipe arrivent bientôt.';
+
+  @override
+  String get supportFaqQ2 => 'Comment inviter des membres ?';
+
+  @override
+  String get supportFaqA2 =>
+      'Les invitations seront disponibles lors du lancement des équipes.';
+
+  @override
+  String get supportFaqQ3 => 'Comment ajouter un calendrier de matchs ?';
+
+  @override
+  String get supportFaqA3 =>
+      'La gestion du calendrier sera ajoutée prochainement.';
+
+  @override
+  String get supportFaqQ4 => 'Je ne reçois pas de notifications.';
+
+  @override
+  String get supportFaqA4 =>
+      'Vérifiez les permissions système et les réglages des notifications.';
+
+  @override
+  String get supportFaqQ5 => 'Comment supprimer mon compte ?';
+
+  @override
+  String get supportFaqA5 =>
+      'Allez dans Profil > Supprimer le compte et suivez les étapes.';
+
+  @override
+  String get supportActionPreparingTitle => 'Bientôt disponible';
+
+  @override
+  String get supportActionPreparingBody =>
+      'Cette action sera disponible prochainement.';
+
+  @override
   String get journeyDetailAnonymous => 'Anonyme';
 
   @override

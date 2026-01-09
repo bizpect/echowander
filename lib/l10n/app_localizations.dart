@@ -1699,6 +1699,228 @@ abstract class AppLocalizations {
   /// **'User'**
   String get profileDefaultNickname;
 
+  /// No description provided for @profileEditCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get profileEditCta;
+
+  /// No description provided for @profileLoginProviderGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Google login'**
+  String get profileLoginProviderGoogle;
+
+  /// No description provided for @profileLoginProviderApple.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple login'**
+  String get profileLoginProviderApple;
+
+  /// No description provided for @profileLoginProviderEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email login'**
+  String get profileLoginProviderEmail;
+
+  /// No description provided for @profileLoginProviderUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in'**
+  String get profileLoginProviderUnknown;
+
+  /// No description provided for @profileMenuNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification settings'**
+  String get profileMenuNotifications;
+
+  /// No description provided for @profileMenuNotices.
+  ///
+  /// In en, this message translates to:
+  /// **'Notices'**
+  String get profileMenuNotices;
+
+  /// No description provided for @profileMenuSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get profileMenuSupport;
+
+  /// No description provided for @profileMenuAppInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'App info'**
+  String get profileMenuAppInfo;
+
+  /// No description provided for @profileWithdrawCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get profileWithdrawCta;
+
+  /// No description provided for @profileWithdrawTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get profileWithdrawTitle;
+
+  /// No description provided for @profileWithdrawMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete your account? This cannot be undone.'**
+  String get profileWithdrawMessage;
+
+  /// No description provided for @profileWithdrawConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get profileWithdrawConfirm;
+
+  /// No description provided for @profileFeaturePreparingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get profileFeaturePreparingTitle;
+
+  /// No description provided for @profileFeaturePreparingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature is not available yet.'**
+  String get profileFeaturePreparingBody;
+
+  /// No description provided for @profileAvatarSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile avatar'**
+  String get profileAvatarSemantics;
+
+  /// No description provided for @supportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get supportTitle;
+
+  /// No description provided for @supportStatusMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your app is up to date.'**
+  String get supportStatusMessage;
+
+  /// No description provided for @supportReleaseNotesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Release notes'**
+  String get supportReleaseNotesTitle;
+
+  /// No description provided for @supportReleaseNotesHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest version {version} updates'**
+  String supportReleaseNotesHeader(Object version);
+
+  /// No description provided for @supportReleaseNotesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'• Improved the relay experience and stability.\n• Polished dark theme visuals for profile and support.\n• Fixed minor bugs and performance issues.'**
+  String get supportReleaseNotesBody;
+
+  /// No description provided for @supportVersionUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown version'**
+  String get supportVersionUnknown;
+
+  /// No description provided for @supportSuggestCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Send suggestions'**
+  String get supportSuggestCta;
+
+  /// No description provided for @supportReportCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Report an issue'**
+  String get supportReportCta;
+
+  /// No description provided for @supportFaqTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FAQ'**
+  String get supportFaqTitle;
+
+  /// No description provided for @supportFaqQ1.
+  ///
+  /// In en, this message translates to:
+  /// **'How can I create a team?'**
+  String get supportFaqQ1;
+
+  /// No description provided for @supportFaqA1.
+  ///
+  /// In en, this message translates to:
+  /// **'Team features are coming soon. We\'ll announce details in future updates.'**
+  String get supportFaqA1;
+
+  /// No description provided for @supportFaqQ2.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I invite team members?'**
+  String get supportFaqQ2;
+
+  /// No description provided for @supportFaqA2.
+  ///
+  /// In en, this message translates to:
+  /// **'Invites will be available once team features are released.'**
+  String get supportFaqA2;
+
+  /// No description provided for @supportFaqQ3.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I register game schedules?'**
+  String get supportFaqQ3;
+
+  /// No description provided for @supportFaqA3.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule management will be supported in a future update.'**
+  String get supportFaqA3;
+
+  /// No description provided for @supportFaqQ4.
+  ///
+  /// In en, this message translates to:
+  /// **'I am not receiving notifications.'**
+  String get supportFaqQ4;
+
+  /// No description provided for @supportFaqA4.
+  ///
+  /// In en, this message translates to:
+  /// **'Check notification permissions in system settings and in-app settings.'**
+  String get supportFaqA4;
+
+  /// No description provided for @supportFaqQ5.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I delete my account?'**
+  String get supportFaqQ5;
+
+  /// No description provided for @supportFaqA5.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Profile > Delete account and follow the confirmation steps.'**
+  String get supportFaqA5;
+
+  /// No description provided for @supportActionPreparingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get supportActionPreparingTitle;
+
+  /// No description provided for @supportActionPreparingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This action will be available soon.'**
+  String get supportActionPreparingBody;
+
   /// No description provided for @journeyDetailAnonymous.
   ///
   /// In en, this message translates to:

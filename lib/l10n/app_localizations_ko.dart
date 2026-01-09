@@ -826,6 +826,120 @@ class AppLocalizationsKo extends AppLocalizations {
   String get profileDefaultNickname => '사용자';
 
   @override
+  String get profileEditCta => '프로필 편집';
+
+  @override
+  String get profileLoginProviderGoogle => '구글 로그인';
+
+  @override
+  String get profileLoginProviderApple => '애플 로그인';
+
+  @override
+  String get profileLoginProviderEmail => '이메일 로그인';
+
+  @override
+  String get profileLoginProviderUnknown => '로그인됨';
+
+  @override
+  String get profileMenuNotifications => '알림 설정';
+
+  @override
+  String get profileMenuNotices => '공지사항';
+
+  @override
+  String get profileMenuSupport => '지원하기';
+
+  @override
+  String get profileMenuAppInfo => '앱 정보';
+
+  @override
+  String get profileWithdrawCta => '탈퇴하기';
+
+  @override
+  String get profileWithdrawTitle => '탈퇴하기';
+
+  @override
+  String get profileWithdrawMessage => '정말 탈퇴하시겠어요? 이 작업은 되돌릴 수 없습니다.';
+
+  @override
+  String get profileWithdrawConfirm => '탈퇴';
+
+  @override
+  String get profileFeaturePreparingTitle => '준비 중';
+
+  @override
+  String get profileFeaturePreparingBody => '아직 준비되지 않은 기능입니다.';
+
+  @override
+  String get profileAvatarSemantics => '프로필 아바타';
+
+  @override
+  String get supportTitle => '지원하기';
+
+  @override
+  String get supportStatusMessage => '설치 된 앱은 최신버전입니다.';
+
+  @override
+  String get supportReleaseNotesTitle => '업데이트 내용';
+
+  @override
+  String supportReleaseNotesHeader(Object version) {
+    return '최신버전 $version 버전 업데이트 내용';
+  }
+
+  @override
+  String get supportReleaseNotesBody =>
+      '• 릴레이 경험과 안정성이 개선되었습니다.\n• 프로필/지원하기 화면의 다크 테마가 개선되었습니다.\n• 경미한 버그와 성능 문제를 수정했습니다.';
+
+  @override
+  String get supportVersionUnknown => '알 수 없음';
+
+  @override
+  String get supportSuggestCta => '건의사항 요구';
+
+  @override
+  String get supportReportCta => '오류사항 제보';
+
+  @override
+  String get supportFaqTitle => '자주묻는질문';
+
+  @override
+  String get supportFaqQ1 => '팀을 어떻게 만들 수 있나요?';
+
+  @override
+  String get supportFaqA1 => '팀 기능은 준비 중입니다. 업데이트로 안내드릴게요.';
+
+  @override
+  String get supportFaqQ2 => '팀원을 초대하려면 어떻게 해야 하나요?';
+
+  @override
+  String get supportFaqA2 => '팀 기능이 출시되면 초대 기능을 제공할 예정입니다.';
+
+  @override
+  String get supportFaqQ3 => '게임 일정은 어떻게 등록하나요?';
+
+  @override
+  String get supportFaqA3 => '일정 등록 기능은 추후 업데이트로 제공될 예정입니다.';
+
+  @override
+  String get supportFaqQ4 => '앱에서 알림을 받지 못하는 경우는?';
+
+  @override
+  String get supportFaqA4 => '시스템 알림 권한과 앱 내 알림 설정을 확인해 주세요.';
+
+  @override
+  String get supportFaqQ5 => '계정을 삭제하려면 어떻게 해야 하나요?';
+
+  @override
+  String get supportFaqA5 => '프로필 > 탈퇴하기에서 안내에 따라 진행해 주세요.';
+
+  @override
+  String get supportActionPreparingTitle => '준비 중';
+
+  @override
+  String get supportActionPreparingBody => '곧 이용할 수 있습니다.';
+
+  @override
   String get journeyDetailAnonymous => '익명';
 
   @override

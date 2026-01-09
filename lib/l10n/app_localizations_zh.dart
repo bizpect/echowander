@@ -818,6 +818,120 @@ class AppLocalizationsZh extends AppLocalizations {
   String get profileDefaultNickname => '用户';
 
   @override
+  String get profileEditCta => '编辑资料';
+
+  @override
+  String get profileLoginProviderGoogle => 'Google 登录';
+
+  @override
+  String get profileLoginProviderApple => 'Apple 登录';
+
+  @override
+  String get profileLoginProviderEmail => '邮箱登录';
+
+  @override
+  String get profileLoginProviderUnknown => '已登录';
+
+  @override
+  String get profileMenuNotifications => '通知设置';
+
+  @override
+  String get profileMenuNotices => '公告';
+
+  @override
+  String get profileMenuSupport => '支持';
+
+  @override
+  String get profileMenuAppInfo => '应用信息';
+
+  @override
+  String get profileWithdrawCta => '注销账号';
+
+  @override
+  String get profileWithdrawTitle => '注销账号';
+
+  @override
+  String get profileWithdrawMessage => '确定要注销账号吗？此操作无法撤销。';
+
+  @override
+  String get profileWithdrawConfirm => '注销';
+
+  @override
+  String get profileFeaturePreparingTitle => '即将推出';
+
+  @override
+  String get profileFeaturePreparingBody => '该功能尚未开放。';
+
+  @override
+  String get profileAvatarSemantics => '个人头像';
+
+  @override
+  String get supportTitle => '支持';
+
+  @override
+  String get supportStatusMessage => '已安装的应用是最新版本。';
+
+  @override
+  String get supportReleaseNotesTitle => '更新内容';
+
+  @override
+  String supportReleaseNotesHeader(Object version) {
+    return '最新版本 $version 更新内容';
+  }
+
+  @override
+  String get supportReleaseNotesBody =>
+      '• 改进了转发体验与稳定性。\n• 优化了个人资料/支持页面的深色主题。\n• 修复了部分小问题并提升性能。';
+
+  @override
+  String get supportVersionUnknown => '未知';
+
+  @override
+  String get supportSuggestCta => '提交建议';
+
+  @override
+  String get supportReportCta => '反馈问题';
+
+  @override
+  String get supportFaqTitle => '常见问题';
+
+  @override
+  String get supportFaqQ1 => '如何创建团队？';
+
+  @override
+  String get supportFaqA1 => '团队功能即将推出。';
+
+  @override
+  String get supportFaqQ2 => '如何邀请团队成员？';
+
+  @override
+  String get supportFaqA2 => '团队功能上线后可进行邀请。';
+
+  @override
+  String get supportFaqQ3 => '如何登记比赛日程？';
+
+  @override
+  String get supportFaqA3 => '日程管理将在后续更新中支持。';
+
+  @override
+  String get supportFaqQ4 => '收不到通知怎么办？';
+
+  @override
+  String get supportFaqA4 => '请检查系统通知权限和应用内通知设置。';
+
+  @override
+  String get supportFaqQ5 => '如何删除账号？';
+
+  @override
+  String get supportFaqA5 => '前往个人资料 > 注销账号并按提示操作。';
+
+  @override
+  String get supportActionPreparingTitle => '即将推出';
+
+  @override
+  String get supportActionPreparingBody => '该操作即将开放。';
+
+  @override
   String get journeyDetailAnonymous => '匿名';
 
   @override

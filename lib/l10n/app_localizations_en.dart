@@ -852,6 +852,128 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileDefaultNickname => 'User';
 
   @override
+  String get profileEditCta => 'Edit profile';
+
+  @override
+  String get profileLoginProviderGoogle => 'Google login';
+
+  @override
+  String get profileLoginProviderApple => 'Apple login';
+
+  @override
+  String get profileLoginProviderEmail => 'Email login';
+
+  @override
+  String get profileLoginProviderUnknown => 'Signed in';
+
+  @override
+  String get profileMenuNotifications => 'Notification settings';
+
+  @override
+  String get profileMenuNotices => 'Notices';
+
+  @override
+  String get profileMenuSupport => 'Support';
+
+  @override
+  String get profileMenuAppInfo => 'App info';
+
+  @override
+  String get profileWithdrawCta => 'Delete account';
+
+  @override
+  String get profileWithdrawTitle => 'Delete account';
+
+  @override
+  String get profileWithdrawMessage =>
+      'Are you sure you want to delete your account? This cannot be undone.';
+
+  @override
+  String get profileWithdrawConfirm => 'Delete';
+
+  @override
+  String get profileFeaturePreparingTitle => 'Coming soon';
+
+  @override
+  String get profileFeaturePreparingBody =>
+      'This feature is not available yet.';
+
+  @override
+  String get profileAvatarSemantics => 'Profile avatar';
+
+  @override
+  String get supportTitle => 'Support';
+
+  @override
+  String get supportStatusMessage => 'Your app is up to date.';
+
+  @override
+  String get supportReleaseNotesTitle => 'Release notes';
+
+  @override
+  String supportReleaseNotesHeader(Object version) {
+    return 'Latest version $version updates';
+  }
+
+  @override
+  String get supportReleaseNotesBody =>
+      '• Improved the relay experience and stability.\n• Polished dark theme visuals for profile and support.\n• Fixed minor bugs and performance issues.';
+
+  @override
+  String get supportVersionUnknown => 'Unknown version';
+
+  @override
+  String get supportSuggestCta => 'Send suggestions';
+
+  @override
+  String get supportReportCta => 'Report an issue';
+
+  @override
+  String get supportFaqTitle => 'FAQ';
+
+  @override
+  String get supportFaqQ1 => 'How can I create a team?';
+
+  @override
+  String get supportFaqA1 =>
+      'Team features are coming soon. We\'ll announce details in future updates.';
+
+  @override
+  String get supportFaqQ2 => 'How do I invite team members?';
+
+  @override
+  String get supportFaqA2 =>
+      'Invites will be available once team features are released.';
+
+  @override
+  String get supportFaqQ3 => 'How do I register game schedules?';
+
+  @override
+  String get supportFaqA3 =>
+      'Schedule management will be supported in a future update.';
+
+  @override
+  String get supportFaqQ4 => 'I am not receiving notifications.';
+
+  @override
+  String get supportFaqA4 =>
+      'Check notification permissions in system settings and in-app settings.';
+
+  @override
+  String get supportFaqQ5 => 'How do I delete my account?';
+
+  @override
+  String get supportFaqA5 =>
+      'Go to Profile > Delete account and follow the confirmation steps.';
+
+  @override
+  String get supportActionPreparingTitle => 'Coming soon';
+
+  @override
+  String get supportActionPreparingBody =>
+      'This action will be available soon.';
+
+  @override
   String get journeyDetailAnonymous => 'Anonymous';
 
   @override
