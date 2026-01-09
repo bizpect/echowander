@@ -1144,13 +1144,13 @@ abstract class AppLocalizations {
   /// No description provided for @journeyDetailResultsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Results'**
+  /// **'Replies'**
   String get journeyDetailResultsTitle;
 
   /// No description provided for @journeyDetailResultsLocked.
   ///
   /// In en, this message translates to:
-  /// **'Results will appear after completion.'**
+  /// **'Replies will appear after completion.'**
   String get journeyDetailResultsLocked;
 
   /// No description provided for @journeyDetailResultsEmpty.
@@ -1162,8 +1162,62 @@ abstract class AppLocalizations {
   /// No description provided for @journeyDetailResultsLoadFailed.
   ///
   /// In en, this message translates to:
-  /// **'We couldn\'t load the results.'**
+  /// **'We couldn\'t load the replies.'**
   String get journeyDetailResultsLoadFailed;
+
+  /// No description provided for @journeyDetailGateConfigTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ad not ready'**
+  String get journeyDetailGateConfigTitle;
+
+  /// No description provided for @journeyDetailGateConfigBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Ads aren\'t configured yet. We\'ll open the details without an ad.'**
+  String get journeyDetailGateConfigBody;
+
+  /// No description provided for @journeyDetailGateDismissedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ad not completed'**
+  String get journeyDetailGateDismissedTitle;
+
+  /// No description provided for @journeyDetailGateDismissedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Please watch the ad to view details.'**
+  String get journeyDetailGateDismissedBody;
+
+  /// No description provided for @journeyDetailGateFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ad unavailable'**
+  String get journeyDetailGateFailedTitle;
+
+  /// No description provided for @journeyDetailGateFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the ad. Try again later.'**
+  String get journeyDetailGateFailedBody;
+
+  /// No description provided for @journeyDetailGateDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock with a reward ad'**
+  String get journeyDetailGateDialogTitle;
+
+  /// No description provided for @journeyDetailGateDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock by watching a reward ad.\nWatch once to unlock forever.'**
+  String get journeyDetailGateDialogBody;
+
+  /// No description provided for @journeyDetailGateDialogConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get journeyDetailGateDialogConfirm;
 
   /// No description provided for @journeyDetailLoadFailed.
   ///

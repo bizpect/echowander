@@ -536,16 +536,44 @@ class AppLocalizationsJa extends AppLocalizations {
   String get journeyDetailCountriesEmpty => 'まだ地域情報がありません。';
 
   @override
-  String get journeyDetailResultsTitle => '結果';
+  String get journeyDetailResultsTitle => '返信';
 
   @override
-  String get journeyDetailResultsLocked => '完了後に結果が表示されます。';
+  String get journeyDetailResultsLocked => '完了後に返信を確認できます。';
 
   @override
   String get journeyDetailResultsEmpty => 'まだ返信がありません。';
 
   @override
-  String get journeyDetailResultsLoadFailed => '結果を読み込めませんでした。';
+  String get journeyDetailResultsLoadFailed => '返信を読み込めませんでした。';
+
+  @override
+  String get journeyDetailGateConfigTitle => '広告準備中';
+
+  @override
+  String get journeyDetailGateConfigBody => '広告設定が未準備のため、広告なしで詳細に移動します。';
+
+  @override
+  String get journeyDetailGateDismissedTitle => '広告視聴未完了';
+
+  @override
+  String get journeyDetailGateDismissedBody => '詳細を見るには広告を最後まで視聴してください。';
+
+  @override
+  String get journeyDetailGateFailedTitle => '広告を利用できません';
+
+  @override
+  String get journeyDetailGateFailedBody => '広告を読み込めませんでした。時間をおいて再試行してください。';
+
+  @override
+  String get journeyDetailGateDialogTitle => 'リワード広告でロック解除';
+
+  @override
+  String get journeyDetailGateDialogBody =>
+      'リワード広告の視聴でロック解除します。\n一度視聴すれば永久に解除されます。';
+
+  @override
+  String get journeyDetailGateDialogConfirm => 'ロック解除';
 
   @override
   String get journeyDetailLoadFailed => '進行状況を読み込めませんでした。';

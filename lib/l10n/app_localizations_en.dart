@@ -553,17 +553,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get journeyDetailCountriesEmpty => 'No locations yet.';
 
   @override
-  String get journeyDetailResultsTitle => 'Results';
+  String get journeyDetailResultsTitle => 'Replies';
 
   @override
   String get journeyDetailResultsLocked =>
-      'Results will appear after completion.';
+      'Replies will appear after completion.';
 
   @override
   String get journeyDetailResultsEmpty => 'No replies yet.';
 
   @override
-  String get journeyDetailResultsLoadFailed => 'We couldn\'t load the results.';
+  String get journeyDetailResultsLoadFailed => 'We couldn\'t load the replies.';
+
+  @override
+  String get journeyDetailGateConfigTitle => 'Ad not ready';
+
+  @override
+  String get journeyDetailGateConfigBody =>
+      'Ads aren\'t configured yet. We\'ll open the details without an ad.';
+
+  @override
+  String get journeyDetailGateDismissedTitle => 'Ad not completed';
+
+  @override
+  String get journeyDetailGateDismissedBody =>
+      'Please watch the ad to view details.';
+
+  @override
+  String get journeyDetailGateFailedTitle => 'Ad unavailable';
+
+  @override
+  String get journeyDetailGateFailedBody =>
+      'We couldn\'t load the ad. Try again later.';
+
+  @override
+  String get journeyDetailGateDialogTitle => 'Unlock with a reward ad';
+
+  @override
+  String get journeyDetailGateDialogBody =>
+      'Unlock by watching a reward ad.\nWatch once to unlock forever.';
+
+  @override
+  String get journeyDetailGateDialogConfirm => 'Unlock';
 
   @override
   String get journeyDetailLoadFailed => 'We couldn\'t load the progress.';

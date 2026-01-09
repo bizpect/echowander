@@ -430,6 +430,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
             imageCount: (row['image_count'] as num?)?.toInt() ?? 0,
             statusCode: row['status_code'] as String? ?? 'CREATED',
             filterCode: row['filter_code'] as String? ?? 'OK',
+            isRewardUnlocked: row['is_reward_unlocked'] as bool? ?? false,
           ),
         )
         .toList();
@@ -1051,10 +1052,10 @@ class SupabaseJourneyRepository implements JourneyRepository {
   }) async {
     // 사전 검증
     if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
-      throw JourneyResultReportException(JourneyResultReportError.missingConfig);
+      throw JourneyReplyReportException(JourneyReplyReportError.missingConfig);
     }
     if (accessToken.isEmpty) {
-      throw JourneyResultReportException(JourneyResultReportError.unauthorized);
+      throw JourneyReplyReportException(JourneyReplyReportError.unauthorized);
     }
 
     final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/report_journey_response');
@@ -1082,22 +1083,22 @@ class SupabaseJourneyRepository implements JourneyRepository {
         accessToken: accessToken,
       );
     } on NetworkRequestException catch (error) {
-      // NetworkRequestException을 JourneyResultReportException으로 변환
+      // NetworkRequestException을 JourneyReplyReportException으로 변환
       switch (error.type) {
         case NetworkErrorType.network:
         case NetworkErrorType.timeout:
-          throw JourneyResultReportException(JourneyResultReportError.network);
+          throw JourneyReplyReportException(JourneyReplyReportError.network);
         case NetworkErrorType.unauthorized:
-          throw JourneyResultReportException(JourneyResultReportError.unauthorized);
+          throw JourneyReplyReportException(JourneyReplyReportError.unauthorized);
         case NetworkErrorType.forbidden:
-          throw JourneyResultReportException(JourneyResultReportError.unauthorized);
+          throw JourneyReplyReportException(JourneyReplyReportError.unauthorized);
         case NetworkErrorType.invalidPayload:
-          throw JourneyResultReportException(JourneyResultReportError.invalidPayload);
+          throw JourneyReplyReportException(JourneyReplyReportError.invalidPayload);
         case NetworkErrorType.serverUnavailable:
         case NetworkErrorType.serverRejected:
         case NetworkErrorType.missingConfig:
         case NetworkErrorType.unknown:
-          throw JourneyResultReportException(JourneyResultReportError.serverRejected);
+          throw JourneyReplyReportException(JourneyReplyReportError.serverRejected);
       }
     }
   }
@@ -1213,28 +1214,28 @@ class SupabaseJourneyRepository implements JourneyRepository {
   }
 
   @override
-  Future<List<JourneyResultItem>> fetchJourneyResults({
+  Future<List<JourneyReplyItem>> fetchJourneyReplies({
     required String journeyId,
     required String accessToken,
   }) async {
     if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
-      throw JourneyResultException(JourneyResultError.missingConfig);
+      throw JourneyReplyException(JourneyReplyError.missingConfig);
     }
     if (accessToken.isEmpty) {
-      throw JourneyResultException(JourneyResultError.unauthorized);
+      throw JourneyReplyException(JourneyReplyError.unauthorized);
     }
-    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/list_journey_results');
+    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/list_sent_journey_replies');
 
     try {
       // NetworkGuard를 통한 요청 실행 (조회용 짧은 재시도)
-      final result = await _networkGuard.execute<List<JourneyResultItem>>(
-        operation: () => _executeFetchJourneyResults(
+      final result = await _networkGuard.execute<List<JourneyReplyItem>>(
+        operation: () => _executeFetchJourneyReplies(
           uri: uri,
           journeyId: journeyId,
           accessToken: accessToken,
         ),
         retryPolicy: RetryPolicy.short,
-        context: 'list_journey_results',
+        context: 'list_sent_journey_replies',
         uri: uri,
         method: 'POST',
         meta: {'journey_id': journeyId},
@@ -1245,24 +1246,24 @@ class SupabaseJourneyRepository implements JourneyRepository {
       switch (error.type) {
         case NetworkErrorType.network:
         case NetworkErrorType.timeout:
-          throw JourneyResultException(JourneyResultError.network);
+          throw JourneyReplyException(JourneyReplyError.network);
         case NetworkErrorType.unauthorized:
-          throw JourneyResultException(JourneyResultError.unauthorized);
+          throw JourneyReplyException(JourneyReplyError.unauthorized);
         case NetworkErrorType.forbidden:
-          throw JourneyResultException(JourneyResultError.unauthorized);
+          throw JourneyReplyException(JourneyReplyError.unauthorized);
         case NetworkErrorType.invalidPayload:
-          throw JourneyResultException(JourneyResultError.invalidPayload);
+          throw JourneyReplyException(JourneyReplyError.invalidPayload);
         case NetworkErrorType.serverUnavailable:
         case NetworkErrorType.serverRejected:
         case NetworkErrorType.missingConfig:
         case NetworkErrorType.unknown:
-          throw JourneyResultException(JourneyResultError.serverRejected);
+          throw JourneyReplyException(JourneyReplyError.serverRejected);
       }
     }
   }
 
-  /// fetchJourneyResults RPC 실제 실행 (NetworkGuard가 호출)
-  Future<List<JourneyResultItem>> _executeFetchJourneyResults({
+  /// fetchJourneyReplies RPC 실제 실행 (NetworkGuard가 호출)
+  Future<List<JourneyReplyItem>> _executeFetchJourneyReplies({
     required Uri uri,
     required String journeyId,
     required String accessToken,
@@ -1283,7 +1284,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
 
     if (response.statusCode != HttpStatus.ok) {
       await _errorLogger.logHttpFailure(
-        context: 'list_journey_results',
+        context: 'list_sent_journey_replies',
         uri: uri,
         method: 'POST',
         statusCode: response.statusCode,
@@ -1297,7 +1298,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
       throw _networkGuard.statusCodeToException(
         statusCode: response.statusCode,
         responseBody: body,
-        context: 'list_journey_results',
+        context: 'list_sent_journey_replies',
       );
     }
 
@@ -1309,10 +1310,11 @@ class SupabaseJourneyRepository implements JourneyRepository {
     return payload
         .whereType<Map<String, dynamic>>()
         .map(
-          (row) => JourneyResultItem(
-            responseId: (row['response_id'] as num?)?.toInt() ?? 0,
+          (row) => JourneyReplyItem(
+            responseId: (row['reply_id'] as num?)?.toInt() ?? 0,
             content: row['content'] as String? ?? '',
             createdAt: DateTime.parse(row['created_at'] as String),
+            responderNickname: row['responder_nickname'] as String?,
           ),
         )
         .toList();

@@ -535,16 +535,44 @@ class AppLocalizationsZh extends AppLocalizations {
   String get journeyDetailCountriesEmpty => '暂无地区信息。';
 
   @override
-  String get journeyDetailResultsTitle => '结果';
+  String get journeyDetailResultsTitle => '回复';
 
   @override
-  String get journeyDetailResultsLocked => '完成后会显示结果。';
+  String get journeyDetailResultsLocked => '完成后可查看回复。';
 
   @override
-  String get journeyDetailResultsEmpty => '暂无回复。';
+  String get journeyDetailResultsEmpty => '暂时没有回复。';
 
   @override
-  String get journeyDetailResultsLoadFailed => '无法加载结果。';
+  String get journeyDetailResultsLoadFailed => '无法加载回复。';
+
+  @override
+  String get journeyDetailGateConfigTitle => '广告未就绪';
+
+  @override
+  String get journeyDetailGateConfigBody => '广告设置尚未完成，将直接进入详情。';
+
+  @override
+  String get journeyDetailGateDismissedTitle => '广告未看完';
+
+  @override
+  String get journeyDetailGateDismissedBody => '观看完广告后才能查看详情。';
+
+  @override
+  String get journeyDetailGateFailedTitle => '广告不可用';
+
+  @override
+  String get journeyDetailGateFailedBody => '广告加载失败，请稍后再试。';
+
+  @override
+  String get journeyDetailGateDialogTitle => '观看广告解锁';
+
+  @override
+  String get journeyDetailGateDialogBody =>
+      '观看激励广告即可解锁。\n仅需一次即可永久解锁。';
+
+  @override
+  String get journeyDetailGateDialogConfirm => '解锁';
 
   @override
   String get journeyDetailLoadFailed => '无法加载进度。';

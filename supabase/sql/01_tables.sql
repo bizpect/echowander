@@ -134,6 +134,68 @@ create table if not exists public.client_error_logs (
     on delete set null
 );
 
+create table if not exists public.ad_reward_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  journey_id uuid,
+  placement_group text not null default 'ad_placement',
+  placement_code text not null,
+  env_group text not null default 'app_env',
+  env_code text not null,
+  ad_network_group text not null default 'ad_network',
+  ad_network_code text not null,
+  ad_unit_id text,
+  event_group text not null default 'ad_reward_event',
+  event_code text not null,
+  req_id text,
+  metadata jsonb,
+  created_at timestamptz not null default now(),
+  constraint ad_reward_logs_user_fk
+    foreign key (user_id)
+    references public.users (user_id)
+    on delete cascade,
+  constraint ad_reward_logs_journey_fk
+    foreign key (journey_id)
+    references public.journeys (id)
+    on delete set null,
+  constraint ad_reward_logs_placement_fk
+    foreign key (placement_group, placement_code)
+    references public.common_codes (code_type, code_value),
+  constraint ad_reward_logs_env_fk
+    foreign key (env_group, env_code)
+    references public.common_codes (code_type, code_value),
+  constraint ad_reward_logs_network_fk
+    foreign key (ad_network_group, ad_network_code)
+    references public.common_codes (code_type, code_value),
+  constraint ad_reward_logs_event_fk
+    foreign key (event_group, event_code)
+    references public.common_codes (code_type, code_value)
+);
+
+create table if not exists public.reward_unlocks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  journey_id uuid not null,
+  unlocked_by_group text not null default 'reward_unlock_type',
+  unlocked_by_code text not null,
+  unlocked_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint reward_unlocks_unique
+    unique (user_id, journey_id),
+  constraint reward_unlocks_user_fk
+    foreign key (user_id)
+    references public.users (user_id)
+    on delete cascade,
+  constraint reward_unlocks_journey_fk
+    foreign key (journey_id)
+    references public.journeys (id)
+    on delete cascade,
+  constraint reward_unlocks_type_fk
+    foreign key (unlocked_by_group, unlocked_by_code)
+    references public.common_codes (code_type, code_value)
+);
+
 create table if not exists public.journeys (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null,
@@ -219,6 +281,8 @@ create table if not exists public.journey_responses (
   id bigserial primary key,
   journey_id uuid not null,
   responder_user_id uuid not null,
+  -- 스냅샷 필드: 닉네임 JOIN 없이 결과 조회 (RLS 유지)
+  snapshot_nickname text,
   content text not null,
   is_hidden boolean not null default false,
   created_at timestamptz not null default now(),

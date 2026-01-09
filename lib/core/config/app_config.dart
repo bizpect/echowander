@@ -14,8 +14,8 @@ class AppConfig {
     required this.dispatchJobSecret,
     required this.admobAppIdAndroid,
     required this.admobAppIdIos,
-    required this.admobRewardedUnitIdAndroid,
-    required this.admobRewardedUnitIdIos,
+    required this.admobRewardedUnitIdAndroidProd,
+    required this.admobRewardedUnitIdIosProd,
   });
 
   final AppEnvironment environment;
@@ -28,8 +28,8 @@ class AppConfig {
   final String dispatchJobSecret;
   final String admobAppIdAndroid;
   final String admobAppIdIos;
-  final String admobRewardedUnitIdAndroid;
-  final String admobRewardedUnitIdIos;
+  final String admobRewardedUnitIdAndroidProd;
+  final String admobRewardedUnitIdIosProd;
 
   static AppConfig fromEnvironment() {
     final env = dotenv.env['APP_ENV'] ??
@@ -52,16 +52,16 @@ class AppConfig {
         const String.fromEnvironment('ADMOB_APP_ID_ANDROID', defaultValue: '');
     final admobAppIdIos = dotenv.env['ADMOB_APP_ID_IOS'] ??
         const String.fromEnvironment('ADMOB_APP_ID_IOS', defaultValue: '');
-    final admobRewardedUnitIdAndroid =
-        dotenv.env['ADMOB_REWARDED_UNIT_ID_ANDROID'] ??
+    final admobRewardedUnitIdAndroidProd =
+        dotenv.env['ADMOB_REWARDED_UNIT_ID_ANDROID_PROD'] ??
             const String.fromEnvironment(
-              'ADMOB_REWARDED_UNIT_ID_ANDROID',
+              'ADMOB_REWARDED_UNIT_ID_ANDROID_PROD',
               defaultValue: '',
             );
-    final admobRewardedUnitIdIos =
-        dotenv.env['ADMOB_REWARDED_UNIT_ID_IOS'] ??
+    final admobRewardedUnitIdIosProd =
+        dotenv.env['ADMOB_REWARDED_UNIT_ID_IOS_PROD'] ??
             const String.fromEnvironment(
-              'ADMOB_REWARDED_UNIT_ID_IOS',
+              'ADMOB_REWARDED_UNIT_ID_IOS_PROD',
               defaultValue: '',
             );
     return AppConfig(
@@ -75,8 +75,8 @@ class AppConfig {
       dispatchJobSecret: dispatchJobSecret,
       admobAppIdAndroid: admobAppIdAndroid,
       admobAppIdIos: admobAppIdIos,
-      admobRewardedUnitIdAndroid: admobRewardedUnitIdAndroid,
-      admobRewardedUnitIdIos: admobRewardedUnitIdIos,
+      admobRewardedUnitIdAndroidProd: admobRewardedUnitIdAndroidProd,
+      admobRewardedUnitIdIosProd: admobRewardedUnitIdIosProd,
     );
   }
 

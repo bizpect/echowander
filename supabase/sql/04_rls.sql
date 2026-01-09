@@ -6,6 +6,8 @@ alter table public.login_logs enable row level security;
 alter table public.journeys enable row level security;
 alter table public.journey_images enable row level security;
 alter table public.client_error_logs enable row level security;
+alter table public.ad_reward_logs enable row level security;
+alter table public.reward_unlocks enable row level security;
 alter table public.user_blocks enable row level security;
 alter table public.journey_recipients enable row level security;
 alter table public.journey_responses enable row level security;
@@ -37,6 +39,9 @@ drop policy if exists "journey_images_storage_select" on storage.objects;
 drop policy if exists "journey_images_storage_delete" on storage.objects;
 drop policy if exists "client_error_logs_insert_auth" on public.client_error_logs;
 drop policy if exists "client_error_logs_insert_anon" on public.client_error_logs;
+drop policy if exists "ad_reward_logs_insert_own" on public.ad_reward_logs;
+drop policy if exists "reward_unlocks_select_own" on public.reward_unlocks;
+drop policy if exists "reward_unlocks_insert_own" on public.reward_unlocks;
 drop policy if exists "user_blocks_select_own" on public.user_blocks;
 drop policy if exists "user_blocks_insert_own" on public.user_blocks;
 drop policy if exists "user_blocks_delete_own" on public.user_blocks;
@@ -278,6 +283,23 @@ create policy "journey_actions_insert_own"
     )
   );
 
+create policy "ad_reward_logs_insert_own"
+  on public.ad_reward_logs
+  for insert
+  with check (
+    user_id = auth.uid()
+  );
+
+create policy "reward_unlocks_select_own"
+  on public.reward_unlocks
+  for select
+  using (user_id = auth.uid());
+
+create policy "reward_unlocks_insert_own"
+  on public.reward_unlocks
+  for insert
+  with check (user_id = auth.uid());
+
 create policy "journey_images_storage_insert"
   on storage.objects
   for insert
@@ -311,6 +333,8 @@ grant insert on public.journey_reports to authenticated;
 grant insert on public.journey_response_reports to authenticated;
 grant select, insert on public.journey_actions to authenticated;
 grant insert on public.client_error_logs to anon, authenticated;
+grant insert on public.ad_reward_logs to authenticated;
+grant select, insert on public.reward_unlocks to authenticated;
 
 grant execute on function public.create_or_get_user(text, text, text) to authenticated;
 grant execute on function public.log_login_attempt(text, text) to anon, authenticated;
@@ -334,7 +358,10 @@ grant execute on function public.report_journey(uuid, text) to authenticated;
 grant execute on function public.report_journey_response(bigint, text) to authenticated;
 grant execute on function public.get_journey_progress(uuid) to authenticated;
 grant execute on function public.list_journey_results(uuid) to authenticated;
+grant execute on function public.list_sent_journey_replies(uuid) to authenticated;
 grant execute on function public.complete_due_journeys(integer) to authenticated;
+grant execute on function public.log_ad_reward_event(uuid, text, text, text, text, text, jsonb) to authenticated;
+grant execute on function public.upsert_reward_unlock(uuid) to authenticated;
 grant execute on function public.list_my_blocks(integer, integer) to authenticated;
 grant execute on function public.block_user(uuid) to authenticated;
 grant execute on function public.unblock_user(uuid) to authenticated;

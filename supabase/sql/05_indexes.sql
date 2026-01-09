@@ -52,6 +52,15 @@ create index if not exists journey_response_reports_response_id_idx
 create index if not exists journey_response_reports_user_id_idx
   on public.journey_response_reports (reporter_user_id);
 
+create index if not exists ad_reward_logs_user_created_idx
+  on public.ad_reward_logs (user_id, created_at desc);
+
+create index if not exists ad_reward_logs_journey_created_idx
+  on public.ad_reward_logs (journey_id, created_at desc);
+
+create index if not exists reward_unlocks_user_idx
+  on public.reward_unlocks (user_id, journey_id);
+
 create index if not exists users_response_suspended_until_idx
   on public.users (response_suspended_until);
 

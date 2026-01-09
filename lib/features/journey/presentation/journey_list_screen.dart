@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,10 +10,14 @@ import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
+import '../../../core/ads/ad_reward_constants.dart';
+import '../../../core/ads/rewarded_ad_gate.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
+import '../../../core/session/session_manager.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/journey_list_controller.dart';
+import '../domain/journey_repository.dart';
 
 class JourneyListScreen extends ConsumerStatefulWidget {
   const JourneyListScreen({super.key});
@@ -22,6 +27,8 @@ class JourneyListScreen extends ConsumerStatefulWidget {
 }
 
 class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
+  bool _isAdLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -54,7 +61,7 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
           scrolledUnderElevation: 0,
         ),
         body: LoadingOverlay(
-          isLoading: state.isLoading,
+          isLoading: state.isLoading || _isAdLoading,
           child: SafeArea(
             child: RefreshIndicator(
               onRefresh: () async {
@@ -93,12 +100,7 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
                         ),
                         child: InkWell(
                           onTap: isCompleted
-                              ? () {
-                                  context.go(
-                                    '${AppRoutes.journeyList}/${item.journeyId}',
-                                    extra: item,
-                                  );
-                                }
+                              ? () => _handleCompletedTap(item)
                               : null,
                           borderRadius: AppRadius.medium,
                           child: Padding(
@@ -231,6 +233,112 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
         );
         return;
     }
+  }
+
+  Future<void> _handleCompletedTap(JourneySummary item) async {
+    if (_isAdLoading) {
+      return;
+    }
+    final l10n = AppLocalizations.of(context)!;
+    final controller = ref.read(journeyListControllerProvider.notifier);
+    if (item.isRewardUnlocked) {
+      _goToDetail(item);
+      return;
+    }
+    final accessToken = ref.read(sessionManagerProvider).accessToken;
+    if (accessToken == null || accessToken.isEmpty) {
+      await showAppAlertDialog(
+        context: context,
+        title: l10n.errorTitle,
+        message: l10n.errorSessionExpired,
+        confirmLabel: l10n.composeOk,
+      );
+      return;
+    }
+
+    final confirmed = await showAppConfirmDialog(
+      context: context,
+      title: l10n.journeyDetailGateDialogTitle,
+      message: l10n.journeyDetailGateDialogBody,
+      confirmLabel: l10n.journeyDetailGateDialogConfirm,
+      cancelLabel: l10n.composeCancel,
+    );
+    if (confirmed != true) {
+      return;
+    }
+
+    setState(() {
+      _isAdLoading = true;
+    });
+    final reqId = DateTime.now().microsecondsSinceEpoch.toString();
+    if (kDebugMode) {
+      debugPrint('[SentDetailGate][UI] tap reqId=$reqId journeyId=${item.journeyId}');
+    }
+    final gate = ref.read(rewardedAdGateProvider);
+    final result = await gate.showRewardedAndReturnResult(
+      placementCode: AdPlacementCodes.sentDetailGate,
+      contentId: item.journeyId,
+      accessToken: accessToken,
+      reqId: reqId,
+    );
+    if (!mounted) {
+      return;
+    }
+    final refreshedL10n = AppLocalizations.of(context)!;
+    setState(() {
+      _isAdLoading = false;
+    });
+
+    switch (result) {
+      case RewardedAdGateResult.earned:
+        controller.markRewardUnlocked(item.journeyId);
+        _goToDetail(item);
+        return;
+      case RewardedAdGateResult.skippedByConfig:
+        if (!mounted) {
+          return;
+        }
+        await showAppAlertDialog(
+          context: context,
+          title: refreshedL10n.journeyDetailGateConfigTitle,
+          message: refreshedL10n.journeyDetailGateConfigBody,
+          confirmLabel: refreshedL10n.composeOk,
+        );
+        if (mounted) {
+          _goToDetail(item);
+        }
+        return;
+      case RewardedAdGateResult.dismissed:
+        if (!mounted) {
+          return;
+        }
+        await showAppAlertDialog(
+          context: context,
+          title: refreshedL10n.journeyDetailGateDismissedTitle,
+          message: refreshedL10n.journeyDetailGateDismissedBody,
+          confirmLabel: refreshedL10n.composeOk,
+        );
+        return;
+      case RewardedAdGateResult.failedToLoad:
+      case RewardedAdGateResult.failedToShow:
+        if (!mounted) {
+          return;
+        }
+        await showAppAlertDialog(
+          context: context,
+          title: refreshedL10n.journeyDetailGateFailedTitle,
+          message: refreshedL10n.journeyDetailGateFailedBody,
+          confirmLabel: refreshedL10n.composeOk,
+        );
+        return;
+    }
+  }
+
+  void _goToDetail(JourneySummary item) {
+    context.go(
+      '${AppRoutes.journeyList}/${item.journeyId}',
+      extra: item,
+    );
   }
 
   Widget _buildStatusBadge({

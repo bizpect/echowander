@@ -28,8 +28,8 @@ void main() {
       dispatchJobSecret: '',
       admobAppIdAndroid: '',
       admobAppIdIos: '',
-      admobRewardedUnitIdAndroid: '',
-      admobRewardedUnitIdIos: '',
+      admobRewardedUnitIdAndroidProd: '',
+      admobRewardedUnitIdIosProd: '',
     );
 
     await tester.pumpWidget(

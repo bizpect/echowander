@@ -7,7 +7,6 @@ import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
-import '../../../core/ads/rewarded_ad_service.dart';
 import '../../../core/presentation/navigation/tab_navigation_helper.dart';
 import '../../../core/presentation/widgets/app_button.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
@@ -18,13 +17,12 @@ import '../../../l10n/app_localizations.dart';
 import '../data/supabase_journey_repository.dart';
 import '../domain/journey_repository.dart';
 
-/// Journey 결과 화면 (Return 화면)
+/// 보낸 메시지 처리완료 상세 화면
 ///
 /// 특징:
 /// - 릴레이 완료 상태 명확한 시각화
 /// - 응답 개수, 참여 국가 요약
-/// - 응답 리스트 (익명, 카드형)
-/// - Rewarded Ad 게이트 (실패 시 대체 UX)
+/// - 받은 댓글(답글) 리스트 표시
 /// - EmptyStateWidget로 빈 결과 처리
 class JourneySentDetailScreen extends ConsumerStatefulWidget {
   const JourneySentDetailScreen({
@@ -45,12 +43,10 @@ class JourneySentDetailScreen extends ConsumerStatefulWidget {
 class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScreen> {
   bool _isLoading = false;
   bool _loadFailed = false;
-  bool _resultLoadFailed = false;
-  bool _adUnlocked = false;
-  bool _isAdLoading = false;
+  bool _replyLoadFailed = false;
+  bool _isActionLoading = false;
   JourneyProgress? _progress;
-  List<JourneyResultItem> _results = [];
-  final RewardedAdService _rewardedAdService = RewardedAdService();
+  List<JourneyReplyItem> _replies = [];
   bool _didLoad = false;
 
   @override
@@ -78,25 +74,25 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
     setState(() {
       _isLoading = true;
       _loadFailed = false;
-      _resultLoadFailed = false;
+      _replyLoadFailed = false;
     });
     try {
       final progress = await ref.read(journeyRepositoryProvider).fetchJourneyProgress(
             journeyId: widget.journeyId,
             accessToken: accessToken,
           );
-      var results = <JourneyResultItem>[];
-      var resultLoadFailed = false;
+      var replies = <JourneyReplyItem>[];
+      var replyLoadFailed = false;
       if (progress.statusCode == 'COMPLETED') {
         try {
-          results = await ref.read(journeyRepositoryProvider).fetchJourneyResults(
+          replies = await ref.read(journeyRepositoryProvider).fetchJourneyReplies(
                 journeyId: widget.journeyId,
                 accessToken: accessToken,
               );
-        } on JourneyResultException {
-          resultLoadFailed = true;
+        } on JourneyReplyException {
+          replyLoadFailed = true;
         } catch (_) {
-          resultLoadFailed = true;
+          replyLoadFailed = true;
         }
       }
       if (!mounted) {
@@ -104,8 +100,8 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
       }
       setState(() {
         _progress = progress;
-        _results = results;
-        _resultLoadFailed = resultLoadFailed;
+        _replies = replies;
+        _replyLoadFailed = replyLoadFailed;
         _isLoading = false;
       });
     } on JourneyProgressException {
@@ -160,7 +156,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
           ],
         ),
         body: LoadingOverlay(
-          isLoading: _isLoading || _isAdLoading,
+          isLoading: _isLoading || _isActionLoading,
           child: SafeArea(
             child: _loadFailed
                 ? _buildError(l10n)
@@ -467,11 +463,9 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
           // 상태별 결과 표시
           if (!isCompleted)
             _buildResultsLocked(l10n)
-          else if (!_adUnlocked)
-            _buildAdGate(l10n)
-          else if (_resultLoadFailed)
+          else if (_replyLoadFailed)
             _buildResultsError(l10n)
-          else if (_results.isEmpty)
+          else if (_replies.isEmpty)
             _buildEmptyResults(l10n)
           else
             _buildResultsList(l10n),
@@ -499,47 +493,6 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppColors.onSurface,
                     ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAdGate(AppLocalizations l10n) {
-    return Card(
-      color: AppColors.primary.withValues(alpha: 0.1),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.medium,
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(AppSpacing.spacing16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.play_circle_outline, color: AppColors.primary),
-                SizedBox(width: AppSpacing.spacing12),
-                Expanded(
-                  child: Text(
-                    l10n.journeyDetailAdRequired,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.onSurface,
-                        ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: AppSpacing.spacing16),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: AppFilledButton(
-                onPressed: _handleUnlockResults,
-                child: Text(l10n.journeyDetailAdCta),
               ),
             ),
           ],
@@ -591,10 +544,11 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: _results.length,
+      itemCount: _replies.length,
       separatorBuilder: (context, index) => SizedBox(height: AppSpacing.spacing12),
       itemBuilder: (context, index) {
-        final result = _results[index];
+        final reply = _replies[index];
+        final nickname = (reply.responderNickname ?? '').trim();
         return Card(
           color: AppColors.surface,
           elevation: 2,
@@ -616,7 +570,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
                     ),
                     SizedBox(width: AppSpacing.spacing4),
                     Text(
-                      l10n.journeyDetailAnonymous,
+                      nickname.isEmpty ? l10n.journeyDetailAnonymous : nickname,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: AppColors.onSurfaceVariant,
                           ),
@@ -636,7 +590,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
                     ),
                     SizedBox(width: AppSpacing.spacing4),
                     Text(
-                      dateFormat.format(result.createdAt.toLocal()),
+                      dateFormat.format(reply.createdAt.toLocal()),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: AppColors.onSurfaceVariant,
                           ),
@@ -647,7 +601,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
 
                 // 응답 내용 (감정 전달을 위한 타이포그래피)
                 Text(
-                  result.content,
+                  reply.content,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: AppColors.onSurface,
                         height: 1.6,
@@ -656,12 +610,12 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
                 ),
 
                 // 신고 버튼
-                if (result.responseId > 0) ...[
+                if (reply.responseId > 0) ...[
                   SizedBox(height: AppSpacing.spacing12),
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton.icon(
-                      onPressed: () => _handleReportResult(result.responseId),
+                      onPressed: () => _handleReportResult(reply.responseId),
                       icon: Icon(Icons.flag_outlined, size: 16),
                       label: Text(l10n.journeyResultReportCta),
                       style: TextButton.styleFrom(
@@ -676,40 +630,6 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
         );
       },
     );
-  }
-
-  Future<void> _handleUnlockResults() async {
-    final l10n = AppLocalizations.of(context)!;
-    setState(() {
-      _isAdLoading = true;
-    });
-    final result = await _rewardedAdService.showRewardedAd();
-    if (!mounted) {
-      return;
-    }
-    if (result) {
-      setState(() {
-        _adUnlocked = true;
-        _isAdLoading = false;
-      });
-      return;
-    }
-    setState(() {
-      _isAdLoading = false;
-    });
-    // 광고 실패 시 대체 UX (부드러운 안내, 차단 금지)
-    final confirmed = await showAppConfirmDialog(
-      context: context,
-      title: l10n.journeyDetailAdFailedTitle,
-      message: l10n.journeyDetailAdFailedBody,
-      confirmLabel: l10n.journeyDetailAdFailedConfirm,
-      cancelLabel: l10n.composeCancel,
-    );
-    if (confirmed == true && mounted) {
-      setState(() {
-        _adUnlocked = true;
-      });
-    }
   }
 
   void _handleBack(BuildContext context) {
@@ -756,7 +676,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
       return;
     }
     setState(() {
-      _isAdLoading = true;
+      _isActionLoading = true;
     });
     try {
       await ref.read(journeyRepositoryProvider).reportJourneyResponse(
@@ -773,7 +693,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
         message: l10n.journeyResultReportSuccessBody,
         confirmLabel: l10n.composeOk,
       );
-    } on JourneyResultReportException {
+    } on JourneyReplyReportException {
       if (!mounted) {
         return;
       }
@@ -796,7 +716,7 @@ class _JourneySentDetailScreenState extends ConsumerState<JourneySentDetailScree
     } finally {
       if (mounted) {
         setState(() {
-          _isAdLoading = false;
+          _isActionLoading = false;
         });
       }
     }

@@ -556,18 +556,49 @@ class AppLocalizationsPt extends AppLocalizations {
   String get journeyDetailCountriesEmpty => 'Ainda não há locais.';
 
   @override
-  String get journeyDetailResultsTitle => 'Resultados';
+  String get journeyDetailResultsTitle => 'Respostas';
 
   @override
   String get journeyDetailResultsLocked =>
-      'Os resultados aparecerão após a conclusão.';
+      'As respostas aparecerão após a conclusão.';
 
   @override
   String get journeyDetailResultsEmpty => 'Ainda não há respostas.';
 
   @override
   String get journeyDetailResultsLoadFailed =>
-      'Não foi possível carregar os resultados.';
+      'Não foi possível carregar as respostas.';
+
+  @override
+  String get journeyDetailGateConfigTitle => 'Anúncio não pronto';
+
+  @override
+  String get journeyDetailGateConfigBody =>
+      'A configuração de anúncios não está pronta. Vamos abrir os detalhes sem anúncio.';
+
+  @override
+  String get journeyDetailGateDismissedTitle => 'Anúncio não concluído';
+
+  @override
+  String get journeyDetailGateDismissedBody =>
+      'Assista ao anúncio até o fim para ver os detalhes.';
+
+  @override
+  String get journeyDetailGateFailedTitle => 'Anúncio indisponível';
+
+  @override
+  String get journeyDetailGateFailedBody =>
+      'Não foi possível carregar o anúncio. Tente novamente mais tarde.';
+
+  @override
+  String get journeyDetailGateDialogTitle => 'Desbloquear com anúncio recompensado';
+
+  @override
+  String get journeyDetailGateDialogBody =>
+      'Desbloqueie assistindo a um anúncio recompensado.\nAssista uma vez para desbloquear para sempre.';
+
+  @override
+  String get journeyDetailGateDialogConfirm => 'Desbloquear';
 
   @override
   String get journeyDetailLoadFailed =>
@@ -1390,18 +1421,39 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get journeyDetailCountriesEmpty => 'Ainda não há locais.';
 
   @override
-  String get journeyDetailResultsTitle => 'Resultados';
+  String get journeyDetailResultsTitle => 'Respostas';
 
   @override
   String get journeyDetailResultsLocked =>
-      'Os resultados aparecerão após a conclusão.';
+      'As respostas aparecem após a conclusão.';
 
   @override
   String get journeyDetailResultsEmpty => 'Ainda não há respostas.';
 
   @override
   String get journeyDetailResultsLoadFailed =>
-      'Não foi possível carregar os resultados.';
+      'Não foi possível carregar as respostas.';
+
+  @override
+  String get journeyDetailGateConfigTitle => 'Anúncio não configurado';
+
+  @override
+  String get journeyDetailGateConfigBody =>
+      'A configuração de anúncios não está pronta. Vamos abrir os detalhes sem anúncio.';
+
+  @override
+  String get journeyDetailGateDismissedTitle => 'Anúncio não concluído';
+
+  @override
+  String get journeyDetailGateDismissedBody =>
+      'Assista ao anúncio até o fim para ver os detalhes.';
+
+  @override
+  String get journeyDetailGateFailedTitle => 'Anúncio indisponível';
+
+  @override
+  String get journeyDetailGateFailedBody =>
+      'Não foi possível carregar o anúncio. Tente novamente mais tarde.';
 
   @override
   String get journeyDetailLoadFailed =>

@@ -141,4 +141,23 @@ class JourneyListController extends Notifier<JourneyListState> {
   void clearMessage() {
     state = state.copyWith(clearMessage: true);
   }
+
+  void markRewardUnlocked(String journeyId) {
+    final updatedItems = state.items
+        .map(
+          (item) => item.journeyId == journeyId
+              ? JourneySummary(
+                  journeyId: item.journeyId,
+                  content: item.content,
+                  createdAt: item.createdAt,
+                  imageCount: item.imageCount,
+                  statusCode: item.statusCode,
+                  filterCode: item.filterCode,
+                  isRewardUnlocked: true,
+                )
+              : item,
+        )
+        .toList();
+    state = state.copyWith(items: updatedItems);
+  }
 }

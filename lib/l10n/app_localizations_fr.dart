@@ -557,18 +557,49 @@ class AppLocalizationsFr extends AppLocalizations {
   String get journeyDetailCountriesEmpty => 'Aucune zone pour le moment.';
 
   @override
-  String get journeyDetailResultsTitle => 'Résultats';
+  String get journeyDetailResultsTitle => 'Réponses';
 
   @override
   String get journeyDetailResultsLocked =>
-      'Les résultats apparaîtront après la fin.';
+      'Les réponses apparaîtront après la fin.';
 
   @override
   String get journeyDetailResultsEmpty => 'Aucune réponse pour le moment.';
 
   @override
   String get journeyDetailResultsLoadFailed =>
-      'Impossible de charger les résultats.';
+      'Impossible de charger les réponses.';
+
+  @override
+  String get journeyDetailGateConfigTitle => 'Publicité non prête';
+
+  @override
+  String get journeyDetailGateConfigBody =>
+      'La publicité n\'est pas configurée. Nous ouvrons les détails sans publicité.';
+
+  @override
+  String get journeyDetailGateDismissedTitle => 'Publicité non terminée';
+
+  @override
+  String get journeyDetailGateDismissedBody =>
+      'Regardez la publicité jusqu\'au bout pour voir les détails.';
+
+  @override
+  String get journeyDetailGateFailedTitle => 'Publicité indisponible';
+
+  @override
+  String get journeyDetailGateFailedBody =>
+      'Impossible de charger la publicité. Réessayez plus tard.';
+
+  @override
+  String get journeyDetailGateDialogTitle => 'Déverrouiller avec une pub récompensée';
+
+  @override
+  String get journeyDetailGateDialogBody =>
+      'Déverrouillez en regardant une pub récompensée.\nUne seule fois suffit pour déverrouiller à vie.';
+
+  @override
+  String get journeyDetailGateDialogConfirm => 'Déverrouiller';
 
   @override
   String get journeyDetailLoadFailed => 'Impossible de charger la progression.';

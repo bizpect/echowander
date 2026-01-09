@@ -537,16 +537,44 @@ class AppLocalizationsKo extends AppLocalizations {
   String get journeyDetailCountriesEmpty => '아직 지역 정보가 없어요.';
 
   @override
-  String get journeyDetailResultsTitle => '결과';
+  String get journeyDetailResultsTitle => '받은 댓글';
 
   @override
-  String get journeyDetailResultsLocked => '릴레이 완료 후 결과가 표시돼요.';
+  String get journeyDetailResultsLocked => '처리완료 후 댓글을 확인할 수 있어요.';
 
   @override
-  String get journeyDetailResultsEmpty => '아직 응답이 없어요.';
+  String get journeyDetailResultsEmpty => '아직 댓글이 없어요.';
 
   @override
-  String get journeyDetailResultsLoadFailed => '결과를 불러오지 못했어요.';
+  String get journeyDetailResultsLoadFailed => '댓글을 불러오지 못했어요.';
+
+  @override
+  String get journeyDetailGateConfigTitle => '광고 준비 중';
+
+  @override
+  String get journeyDetailGateConfigBody => '광고 설정이 준비되지 않아 광고 없이 상세로 이동해요.';
+
+  @override
+  String get journeyDetailGateDismissedTitle => '광고 시청 미완료';
+
+  @override
+  String get journeyDetailGateDismissedBody => '상세를 보려면 광고를 끝까지 시청해 주세요.';
+
+  @override
+  String get journeyDetailGateFailedTitle => '광고 이용 불가';
+
+  @override
+  String get journeyDetailGateFailedBody => '광고를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
+
+  @override
+  String get journeyDetailGateDialogTitle => '리워드 광고로 잠금해제';
+
+  @override
+  String get journeyDetailGateDialogBody =>
+      '리워드 광고 시청으로 잠금해제 합니다.\n한 번 시청하면 영원히 잠금 풀립니다.';
+
+  @override
+  String get journeyDetailGateDialogConfirm => '잠금해제';
 
   @override
   String get journeyDetailLoadFailed => '진행 정보를 불러오지 못했어요.';

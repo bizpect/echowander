@@ -23,7 +23,20 @@ values
   ('journey_action_type', 'REPORT', 'Report', 30),
   ('journey_action_type', 'BLOCK', 'Block', 40),
   ('hide_reason', 'HIDE_REPORTED', 'Hidden due to report', 10),
-  ('hide_reason', 'HIDE_BLOCKED', 'Hidden due to block', 20)
+  ('hide_reason', 'HIDE_BLOCKED', 'Hidden due to block', 20),
+  ('ad_placement', 'SENT_DETAIL_GATE', 'Sent detail gate', 10),
+  ('app_env', 'DEV', 'Development', 10),
+  ('app_env', 'STG', 'Staging', 20),
+  ('app_env', 'PROD', 'Production', 90),
+  ('ad_network', 'ADMOB', 'AdMob', 10),
+  ('reward_unlock_type', 'ADMOB_REWARDED', 'AdMob rewarded', 10),
+  ('ad_reward_event', 'REQUEST', 'Request', 10),
+  ('ad_reward_event', 'SHOW', 'Show', 20),
+  ('ad_reward_event', 'EARN', 'Earn', 30),
+  ('ad_reward_event', 'DISMISS', 'Dismiss', 40),
+  ('ad_reward_event', 'FAIL_LOAD', 'Fail load', 80),
+  ('ad_reward_event', 'FAIL_SHOW', 'Fail show', 81),
+  ('ad_reward_event', 'FAIL_CONFIG', 'Fail config', 90)
 on conflict (code_type, code_value) do update
 set name = excluded.name,
     sort_order = excluded.sort_order,

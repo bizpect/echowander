@@ -38,6 +38,7 @@ class JourneySummary {
     required this.imageCount,
     required this.statusCode,
     required this.filterCode,
+    required this.isRewardUnlocked,
   });
 
   final String journeyId;
@@ -46,6 +47,7 @@ class JourneySummary {
   final int imageCount;
   final String statusCode;
   final String filterCode;
+  final bool isRewardUnlocked;
 }
 
 enum JourneyListError {
@@ -107,16 +109,18 @@ class JourneyProgress {
   final List<String> countryCodes;
 }
 
-class JourneyResultItem {
-  JourneyResultItem({
+class JourneyReplyItem {
+  JourneyReplyItem({
     required this.responseId,
     required this.content,
     required this.createdAt,
+    required this.responderNickname,
   });
 
   final int responseId;
   final String content;
   final DateTime createdAt;
+  final String? responderNickname;
 }
 
 enum JourneyInboxError {
@@ -165,7 +169,7 @@ class JourneyProgressException implements Exception {
   final JourneyProgressError error;
 }
 
-enum JourneyResultError {
+enum JourneyReplyError {
   missingConfig,
   unauthorized,
   invalidPayload,
@@ -174,13 +178,13 @@ enum JourneyResultError {
   unknown,
 }
 
-class JourneyResultException implements Exception {
-  JourneyResultException(this.error);
+class JourneyReplyException implements Exception {
+  JourneyReplyException(this.error);
 
-  final JourneyResultError error;
+  final JourneyReplyError error;
 }
 
-enum JourneyResultReportError {
+enum JourneyReplyReportError {
   missingConfig,
   unauthorized,
   invalidPayload,
@@ -189,10 +193,10 @@ enum JourneyResultReportError {
   unknown,
 }
 
-class JourneyResultReportException implements Exception {
-  JourneyResultReportException(this.error);
+class JourneyReplyReportException implements Exception {
+  JourneyReplyReportException(this.error);
 
-  final JourneyResultReportError error;
+  final JourneyReplyReportError error;
 }
 
 abstract class JourneyRepository {
@@ -260,7 +264,7 @@ abstract class JourneyRepository {
     required String accessToken,
   });
 
-  Future<List<JourneyResultItem>> fetchJourneyResults({
+  Future<List<JourneyReplyItem>> fetchJourneyReplies({
     required String journeyId,
     required String accessToken,
   });
