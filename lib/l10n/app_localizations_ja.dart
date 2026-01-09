@@ -975,6 +975,66 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appInfoLinkPreparingBody => 'まもなく利用できます。';
 
   @override
+  String get openLicenseTitle => 'オープンライセンス';
+
+  @override
+  String get openLicenseHeaderTitle => 'オープンソースライブラリ';
+
+  @override
+  String get openLicenseHeaderBody => 'このアプリは以下のオープンソースライブラリを使用しています。';
+
+  @override
+  String openLicenseChipVersion(Object version) {
+    return 'バージョン: $version';
+  }
+
+  @override
+  String openLicenseChipLicense(Object license) {
+    return 'ライセンス: $license';
+  }
+
+  @override
+  String get openLicenseChipDetails => '詳細';
+
+  @override
+  String get openLicenseTypeMit => 'MIT';
+
+  @override
+  String get openLicenseTypeApache => 'Apache 2.0';
+
+  @override
+  String get openLicenseTypeBsd3 => 'BSD 3-Clause';
+
+  @override
+  String get openLicenseTypeBsd2 => 'BSD 2-Clause';
+
+  @override
+  String get openLicenseTypeMpl2 => 'MPL 2.0';
+
+  @override
+  String get openLicenseTypeGpl => 'GPL';
+
+  @override
+  String get openLicenseTypeLgpl => 'LGPL';
+
+  @override
+  String get openLicenseTypeIsc => 'ISC';
+
+  @override
+  String get openLicenseTypeUnknown => '不明';
+
+  @override
+  String get openLicenseUnknown => '不明';
+
+  @override
+  String get openLicenseEmptyMessage => 'ライセンス情報が見つかりません。';
+
+  @override
+  String openLicenseDetailTitle(Object package) {
+    return '$package のライセンス';
+  }
+
+  @override
   String get journeyDetailAnonymous => '匿名';
 
   @override

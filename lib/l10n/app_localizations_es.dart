@@ -1021,6 +1021,68 @@ class AppLocalizationsEs extends AppLocalizations {
       'Este enlace estará disponible pronto.';
 
   @override
+  String get openLicenseTitle => 'Licencias abiertas';
+
+  @override
+  String get openLicenseHeaderTitle => 'Bibliotecas de código abierto';
+
+  @override
+  String get openLicenseHeaderBody =>
+      'Esta app usa las siguientes bibliotecas de código abierto.';
+
+  @override
+  String openLicenseChipVersion(Object version) {
+    return 'Versión: $version';
+  }
+
+  @override
+  String openLicenseChipLicense(Object license) {
+    return 'Licencia: $license';
+  }
+
+  @override
+  String get openLicenseChipDetails => 'Detalles';
+
+  @override
+  String get openLicenseTypeMit => 'MIT';
+
+  @override
+  String get openLicenseTypeApache => 'Apache 2.0';
+
+  @override
+  String get openLicenseTypeBsd3 => 'BSD 3-Clause';
+
+  @override
+  String get openLicenseTypeBsd2 => 'BSD 2-Clause';
+
+  @override
+  String get openLicenseTypeMpl2 => 'MPL 2.0';
+
+  @override
+  String get openLicenseTypeGpl => 'GPL';
+
+  @override
+  String get openLicenseTypeLgpl => 'LGPL';
+
+  @override
+  String get openLicenseTypeIsc => 'ISC';
+
+  @override
+  String get openLicenseTypeUnknown => 'Desconocida';
+
+  @override
+  String get openLicenseUnknown => 'Desconocida';
+
+  @override
+  String get openLicenseEmptyMessage =>
+      'No hay información de licencias disponible.';
+
+  @override
+  String openLicenseDetailTitle(Object package) {
+    return 'Licencia de $package';
+  }
+
+  @override
   String get journeyDetailAnonymous => 'Anónimo';
 
   @override

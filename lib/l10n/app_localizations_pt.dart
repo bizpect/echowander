@@ -1028,6 +1028,68 @@ class AppLocalizationsPt extends AppLocalizations {
       'Este link estará disponível em breve.';
 
   @override
+  String get openLicenseTitle => 'Licenças abertas';
+
+  @override
+  String get openLicenseHeaderTitle => 'Bibliotecas de código aberto';
+
+  @override
+  String get openLicenseHeaderBody =>
+      'Este app usa as seguintes bibliotecas de código aberto.';
+
+  @override
+  String openLicenseChipVersion(Object version) {
+    return 'Versão: $version';
+  }
+
+  @override
+  String openLicenseChipLicense(Object license) {
+    return 'Licença: $license';
+  }
+
+  @override
+  String get openLicenseChipDetails => 'Detalhes';
+
+  @override
+  String get openLicenseTypeMit => 'MIT';
+
+  @override
+  String get openLicenseTypeApache => 'Apache 2.0';
+
+  @override
+  String get openLicenseTypeBsd3 => 'BSD 3-Clause';
+
+  @override
+  String get openLicenseTypeBsd2 => 'BSD 2-Clause';
+
+  @override
+  String get openLicenseTypeMpl2 => 'MPL 2.0';
+
+  @override
+  String get openLicenseTypeGpl => 'GPL';
+
+  @override
+  String get openLicenseTypeLgpl => 'LGPL';
+
+  @override
+  String get openLicenseTypeIsc => 'ISC';
+
+  @override
+  String get openLicenseTypeUnknown => 'Desconhecida';
+
+  @override
+  String get openLicenseUnknown => 'Desconhecida';
+
+  @override
+  String get openLicenseEmptyMessage =>
+      'Nenhuma informação de licença disponível.';
+
+  @override
+  String openLicenseDetailTitle(Object package) {
+    return 'Licença de $package';
+  }
+
+  @override
   String get journeyDetailAnonymous => 'Anónimo';
 
   @override
@@ -2077,6 +2139,68 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get appInfoLinkPreparingBody =>
       'Este link estará disponível em breve.';
+
+  @override
+  String get openLicenseTitle => 'Licenças abertas';
+
+  @override
+  String get openLicenseHeaderTitle => 'Bibliotecas de código aberto';
+
+  @override
+  String get openLicenseHeaderBody =>
+      'Este app usa as seguintes bibliotecas de código aberto.';
+
+  @override
+  String openLicenseChipVersion(Object version) {
+    return 'Versão: $version';
+  }
+
+  @override
+  String openLicenseChipLicense(Object license) {
+    return 'Licença: $license';
+  }
+
+  @override
+  String get openLicenseChipDetails => 'Detalhes';
+
+  @override
+  String get openLicenseTypeMit => 'MIT';
+
+  @override
+  String get openLicenseTypeApache => 'Apache 2.0';
+
+  @override
+  String get openLicenseTypeBsd3 => 'BSD 3-Clause';
+
+  @override
+  String get openLicenseTypeBsd2 => 'BSD 2-Clause';
+
+  @override
+  String get openLicenseTypeMpl2 => 'MPL 2.0';
+
+  @override
+  String get openLicenseTypeGpl => 'GPL';
+
+  @override
+  String get openLicenseTypeLgpl => 'LGPL';
+
+  @override
+  String get openLicenseTypeIsc => 'ISC';
+
+  @override
+  String get openLicenseTypeUnknown => 'Desconhecida';
+
+  @override
+  String get openLicenseUnknown => 'Desconhecida';
+
+  @override
+  String get openLicenseEmptyMessage =>
+      'Nenhuma informação de licença disponível.';
+
+  @override
+  String openLicenseDetailTitle(Object package) {
+    return 'Licença de $package';
+  }
 
   @override
   String get journeyDetailAnonymous => 'Anônimo';

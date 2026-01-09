@@ -970,6 +970,66 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appInfoLinkPreparingBody => '该链接即将开放。';
 
   @override
+  String get openLicenseTitle => '开源许可';
+
+  @override
+  String get openLicenseHeaderTitle => '开源库';
+
+  @override
+  String get openLicenseHeaderBody => '本应用使用了以下开源库。';
+
+  @override
+  String openLicenseChipVersion(Object version) {
+    return '版本: $version';
+  }
+
+  @override
+  String openLicenseChipLicense(Object license) {
+    return '许可: $license';
+  }
+
+  @override
+  String get openLicenseChipDetails => '详情';
+
+  @override
+  String get openLicenseTypeMit => 'MIT';
+
+  @override
+  String get openLicenseTypeApache => 'Apache 2.0';
+
+  @override
+  String get openLicenseTypeBsd3 => 'BSD 3-Clause';
+
+  @override
+  String get openLicenseTypeBsd2 => 'BSD 2-Clause';
+
+  @override
+  String get openLicenseTypeMpl2 => 'MPL 2.0';
+
+  @override
+  String get openLicenseTypeGpl => 'GPL';
+
+  @override
+  String get openLicenseTypeLgpl => 'LGPL';
+
+  @override
+  String get openLicenseTypeIsc => 'ISC';
+
+  @override
+  String get openLicenseTypeUnknown => '未知';
+
+  @override
+  String get openLicenseUnknown => '未知';
+
+  @override
+  String get openLicenseEmptyMessage => '未找到许可信息。';
+
+  @override
+  String openLicenseDetailTitle(Object package) {
+    return '$package 许可';
+  }
+
+  @override
   String get journeyDetailAnonymous => '匿名';
 
   @override

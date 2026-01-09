@@ -11,6 +11,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../core/presentation/scaffolds/main_tab_controller.dart';
+import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/validation/text_rules.dart';
 import '../../../l10n/app_localizations.dart';
@@ -169,16 +170,11 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: Text(l10n.composeTitle),
-          leading: Semantics(
-            label: MaterialLocalizations.of(context).closeButtonTooltip,
-            button: true,
-            child: IconButton(
-              onPressed: () => _handleBack(context, state),
-              icon: const Icon(Icons.close),
-            ),
-          ),
+        appBar: AppHeader(
+          title: l10n.composeTitle,
+          trailingIcon: Icons.close,
+          onTrailingTap: () => _handleBack(context, state),
+          trailingSemanticLabel: MaterialLocalizations.of(context).closeButtonTooltip,
         ),
         resizeToAvoidBottomInset: true,
         body: SafeArea(

@@ -10,6 +10,7 @@ import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
+import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/empty_state.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
@@ -78,20 +79,9 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
         _handleBack(context);
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(l10n.inboxTitle),
-          leading: IconButton(
-            onPressed: () => _handleBack(context),
-            icon: const Icon(Icons.arrow_back),
-            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          ),
-          actions: [
-            IconButton(
-              onPressed: () => controller.load(),
-              icon: const Icon(Icons.refresh),
-              tooltip: l10n.inboxRefresh,
-            ),
-          ],
+        appBar: AppHeader(
+          title: l10n.inboxTitle,
+          alignLeft: true,
         ),
         body: LoadingOverlay(
           isLoading: state.isLoading,

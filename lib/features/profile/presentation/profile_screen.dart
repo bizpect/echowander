@@ -6,6 +6,7 @@ import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
+import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/app_button.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/session/session_manager.dart';
@@ -27,18 +28,15 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppHeader(
+        title: l10n.tabProfileLabel,
+        alignLeft: true,
+      ),
       body: SafeArea(
+        top: false,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
           children: [
-            Text(
-              l10n.tabProfileLabel,
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    color: AppColors.onBackground,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: AppSpacing.spacing20),
             _ProfileHeaderCard(
               l10n: l10n,
               displayName: displayName,

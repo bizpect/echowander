@@ -9,6 +9,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_typography.dart';
 import '../../../core/presentation/scaffolds/main_tab_controller.dart';
+import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/empty_state.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../l10n/app_localizations.dart';
@@ -110,28 +111,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     return Scaffold(
       backgroundColor: AppColors.black,
-      // AppBar 제거, 상단 헤더는 body 내부에 얇게 배치
+      appBar: AppHeader(
+        title: l10n.homeTitle,
+        alignLeft: true,
+      ),
       body: LoadingOverlay(
         isLoading: isLoading,
         child: SafeArea(
+          top: false,
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
-              // 상단 헤더 (얇고 밀도 높은 헤더)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.screenPaddingHorizontal,
-                  AppSpacing.screenPaddingTop,
-                  AppSpacing.screenPaddingHorizontal,
-                  AppSpacing.spacing16,
-                ),
-                child: Text(
-                  l10n.homeTitle,
-                  style: AppTypography.headlineMedium.copyWith(
-                    color: AppColors.onSurface,
-                  ),
-                ),
-              ),
               // 컨텐츠 영역 (정보 밀도 높게)
               Padding(
                 padding: const EdgeInsets.symmetric(

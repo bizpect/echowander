@@ -978,6 +978,66 @@ class AppLocalizationsKo extends AppLocalizations {
   String get appInfoLinkPreparingBody => '곧 이용할 수 있습니다.';
 
   @override
+  String get openLicenseTitle => '오픈 라이센스';
+
+  @override
+  String get openLicenseHeaderTitle => '오픈 소스 라이브러리';
+
+  @override
+  String get openLicenseHeaderBody => '이 앱은 다음 오픈 소스 라이브러리를 사용합니다.';
+
+  @override
+  String openLicenseChipVersion(Object version) {
+    return '버전: $version';
+  }
+
+  @override
+  String openLicenseChipLicense(Object license) {
+    return '라이센스: $license';
+  }
+
+  @override
+  String get openLicenseChipDetails => '세부정보';
+
+  @override
+  String get openLicenseTypeMit => 'MIT';
+
+  @override
+  String get openLicenseTypeApache => 'Apache 2.0';
+
+  @override
+  String get openLicenseTypeBsd3 => 'BSD 3-Clause';
+
+  @override
+  String get openLicenseTypeBsd2 => 'BSD 2-Clause';
+
+  @override
+  String get openLicenseTypeMpl2 => 'MPL 2.0';
+
+  @override
+  String get openLicenseTypeGpl => 'GPL';
+
+  @override
+  String get openLicenseTypeLgpl => 'LGPL';
+
+  @override
+  String get openLicenseTypeIsc => 'ISC';
+
+  @override
+  String get openLicenseTypeUnknown => '알 수 없음';
+
+  @override
+  String get openLicenseUnknown => '알 수 없음';
+
+  @override
+  String get openLicenseEmptyMessage => '라이센스 정보를 찾을 수 없습니다.';
+
+  @override
+  String openLicenseDetailTitle(Object package) {
+    return '$package 라이센스';
+  }
+
+  @override
   String get journeyDetailAnonymous => '익명';
 
   @override

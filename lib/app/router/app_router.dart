@@ -20,6 +20,7 @@ import '../../features/block/presentation/block_list_screen.dart';
 import '../../features/notifications/presentation/notification_inbox_screen.dart';
 import '../../features/settings/presentation/support/support_screen.dart';
 import '../../features/settings/presentation/app_info/app_info_screen.dart';
+import '../../features/settings/presentation/open_license/open_license_screen.dart';
 
 class AppRoutes {
   static const splash = '/splash';
@@ -37,6 +38,7 @@ class AppRoutes {
   static const notifications = '/notifications';
   static const support = '/support';
   static const appInfo = '/app-info';
+  static const openLicense = '/app-info/open-license';
   static const pushPreview = '/push-preview';
 }
 
@@ -118,6 +120,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.appInfo,
         builder: (context, state) => const AppInfoScreen(),
       ),
+      GoRoute(
+        path: AppRoutes.openLicense,
+        builder: (context, state) => const OpenLicenseScreen(),
+      ),
     ],
     redirect: (context, state) {
       final status = sessionStatus;
@@ -168,7 +174,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             location == AppRoutes.blockList ||
             location == AppRoutes.notifications ||
             location == AppRoutes.support ||
-            location == AppRoutes.appInfo) {
+            location == AppRoutes.appInfo ||
+            location == AppRoutes.openLicense) {
           return null;
         }
         return location == AppRoutes.home ? null : AppRoutes.home;

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class AppColors {
   // 기본 배경 및 서피스
   static const black = Color(0xFF000000); // 완전 블랙 배경 (온보딩 등 특수 화면용)
-  static const background = Color(0xFF0E1116); // 메인 배경 (매우 어두운 차콜)
+  static const background = Color(0xFF000000); // 메인 배경 (완전 블랙 배경)
   static const surface = Color(0xFF1C1F26); // 카드/컨테이너 배경
   static const surfaceVariant = Color(0xFF2A2D35); // 보조 서피스
   static const surfaceDim = Color(0xFF161920); // 딤 처리된 서피스

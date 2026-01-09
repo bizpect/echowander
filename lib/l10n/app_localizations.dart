@@ -1993,6 +1993,114 @@ abstract class AppLocalizations {
   /// **'This link will be available soon.'**
   String get appInfoLinkPreparingBody;
 
+  /// No description provided for @openLicenseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open licenses'**
+  String get openLicenseTitle;
+
+  /// No description provided for @openLicenseHeaderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open source libraries'**
+  String get openLicenseHeaderTitle;
+
+  /// No description provided for @openLicenseHeaderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This app uses the following open source libraries.'**
+  String get openLicenseHeaderBody;
+
+  /// No description provided for @openLicenseChipVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String openLicenseChipVersion(Object version);
+
+  /// No description provided for @openLicenseChipLicense.
+  ///
+  /// In en, this message translates to:
+  /// **'License: {license}'**
+  String openLicenseChipLicense(Object license);
+
+  /// No description provided for @openLicenseChipDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get openLicenseChipDetails;
+
+  /// No description provided for @openLicenseTypeMit.
+  ///
+  /// In en, this message translates to:
+  /// **'MIT'**
+  String get openLicenseTypeMit;
+
+  /// No description provided for @openLicenseTypeApache.
+  ///
+  /// In en, this message translates to:
+  /// **'Apache 2.0'**
+  String get openLicenseTypeApache;
+
+  /// No description provided for @openLicenseTypeBsd3.
+  ///
+  /// In en, this message translates to:
+  /// **'BSD 3-Clause'**
+  String get openLicenseTypeBsd3;
+
+  /// No description provided for @openLicenseTypeBsd2.
+  ///
+  /// In en, this message translates to:
+  /// **'BSD 2-Clause'**
+  String get openLicenseTypeBsd2;
+
+  /// No description provided for @openLicenseTypeMpl2.
+  ///
+  /// In en, this message translates to:
+  /// **'MPL 2.0'**
+  String get openLicenseTypeMpl2;
+
+  /// No description provided for @openLicenseTypeGpl.
+  ///
+  /// In en, this message translates to:
+  /// **'GPL'**
+  String get openLicenseTypeGpl;
+
+  /// No description provided for @openLicenseTypeLgpl.
+  ///
+  /// In en, this message translates to:
+  /// **'LGPL'**
+  String get openLicenseTypeLgpl;
+
+  /// No description provided for @openLicenseTypeIsc.
+  ///
+  /// In en, this message translates to:
+  /// **'ISC'**
+  String get openLicenseTypeIsc;
+
+  /// No description provided for @openLicenseTypeUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get openLicenseTypeUnknown;
+
+  /// No description provided for @openLicenseUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get openLicenseUnknown;
+
+  /// No description provided for @openLicenseEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No license information available.'**
+  String get openLicenseEmptyMessage;
+
+  /// No description provided for @openLicenseDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{package} license'**
+  String openLicenseDetailTitle(Object package);
+
   /// No description provided for @journeyDetailAnonymous.
   ///
   /// In en, this message translates to:

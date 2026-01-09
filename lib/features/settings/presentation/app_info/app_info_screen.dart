@@ -4,6 +4,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_radius.dart';
 import '../../../../app/theme/app_spacing.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../app/router/app_router.dart';
 import '../../../../core/presentation/widgets/app_dialog.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -187,11 +190,7 @@ class AppInfoOpenLicenseTile extends StatelessWidget {
           Icons.chevron_right,
           color: AppColors.onSurfaceVariant,
         ),
-        onTap: () => showLicensePage(
-          context: context,
-          applicationName: l10n.appTitle,
-          applicationVersion: l10n.appInfoVersionLabel(version),
-        ),
+        onTap: () => context.push(AppRoutes.openLicense),
       ),
     );
   }

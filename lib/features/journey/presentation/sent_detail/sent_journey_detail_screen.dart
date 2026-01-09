@@ -94,7 +94,7 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
           actions: const [],
         ),
         body: LoadingOverlay(
-          isLoading: state.isLoading || state.isRefreshing,
+          isLoading: state.isLoading,
           child: SafeArea(
             child: state.loadFailed
                 ? _buildError(l10n)

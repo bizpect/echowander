@@ -11,7 +11,6 @@ class SentJourneyDetailState {
     required this.detail,
     required this.responses,
     required this.isLoading,
-    required this.isRefreshing,
     required this.loadFailed,
     required this.responsesLoadFailed,
     required this.responsesMissing,
@@ -20,7 +19,6 @@ class SentJourneyDetailState {
   final SentJourneyDetail? detail;
   final List<SentJourneyResponse> responses;
   final bool isLoading;
-  final bool isRefreshing;
   final bool loadFailed;
   final bool responsesLoadFailed;
   final bool responsesMissing;
@@ -29,7 +27,6 @@ class SentJourneyDetailState {
     SentJourneyDetail? detail,
     List<SentJourneyResponse>? responses,
     bool? isLoading,
-    bool? isRefreshing,
     bool? loadFailed,
     bool? responsesLoadFailed,
     bool? responsesMissing,
@@ -38,7 +35,6 @@ class SentJourneyDetailState {
       detail: detail ?? this.detail,
       responses: responses ?? this.responses,
       isLoading: isLoading ?? this.isLoading,
-      isRefreshing: isRefreshing ?? this.isRefreshing,
       loadFailed: loadFailed ?? this.loadFailed,
       responsesLoadFailed: responsesLoadFailed ?? this.responsesLoadFailed,
       responsesMissing: responsesMissing ?? this.responsesMissing,
@@ -60,7 +56,6 @@ class SentJourneyDetailController extends Notifier<SentJourneyDetailState> {
       detail: null,
       responses: [],
       isLoading: false,
-      isRefreshing: false,
       loadFailed: false,
       responsesLoadFailed: false,
       responsesMissing: false,
@@ -146,23 +141,6 @@ class SentJourneyDetailController extends Notifier<SentJourneyDetailState> {
         loadFailed: true,
       );
     }
-  }
-
-  Future<void> refresh({
-    required String journeyId,
-    required String accessToken,
-    required String reqId,
-  }) async {
-    if (state.isRefreshing) {
-      return;
-    }
-    state = state.copyWith(isRefreshing: true);
-    await load(
-      journeyId: journeyId,
-      accessToken: accessToken,
-      reqId: reqId,
-    );
-    state = state.copyWith(isRefreshing: false);
   }
 
   void setUnlockState({

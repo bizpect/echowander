@@ -12,6 +12,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../core/ads/ad_reward_constants.dart';
 import '../../../core/ads/rewarded_ad_gate.dart';
+import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../core/session/session_manager.dart';
@@ -54,11 +55,9 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
 
     return Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: Text(l10n.journeyListTitle),
-          backgroundColor: AppColors.background,
-          elevation: 0,
-          scrolledUnderElevation: 0,
+        appBar: AppHeader(
+          title: l10n.journeyListTitle,
+          alignLeft: true,
         ),
         body: LoadingOverlay(
           isLoading: state.isLoading || _isAdLoading,
