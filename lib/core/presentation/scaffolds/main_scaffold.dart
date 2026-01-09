@@ -67,10 +67,11 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
     ref.read(mainTabControllerProvider.notifier).switchToTab(AppTab.fromIndex(index));
 
     // 탭 전환 시 해당 탭의 데이터 새로고침
+    // limit을 명시적으로 20으로 설정하여 홈 화면의 limit:3 로드가 덮어쓰지 않도록 보장
     if (index == AppTab.inbox.tabIndex) {
-      ref.read(journeyInboxControllerProvider.notifier).load();
+      ref.read(journeyInboxControllerProvider.notifier).load(limit: 20);
     } else if (index == AppTab.sent.tabIndex) {
-      ref.read(journeyListControllerProvider.notifier).load();
+      ref.read(journeyListControllerProvider.notifier).load(limit: 20);
     }
   }
 

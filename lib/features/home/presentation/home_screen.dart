@@ -8,6 +8,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_typography.dart';
+import '../../../core/presentation/scaffolds/main_tab_controller.dart';
 import '../../../core/presentation/widgets/empty_state.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../l10n/app_localizations.dart';
@@ -77,8 +78,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     });
 
     // 데이터 초기 로드
+    // 홈 화면에서는 보낸 메시지 리스트를 limit: 3으로 프리뷰만 로드
+    // 단, 이미 20개 이상 로드되어 있으면 로드하지 않음 (탭 리스트에서 로드한 경우)
     Future.microtask(() {
-      ref.read(journeyListControllerProvider.notifier).load(limit: 3);
+      final journeyListState = ref.read(journeyListControllerProvider);
+      // 리스트가 비어있거나 3개 이하일 때만 limit: 3으로 로드
+      // 이미 20개 이상 로드되어 있으면 탭 리스트에서 로드한 것이므로 건드리지 않음
+      if (journeyListState.items.isEmpty || journeyListState.items.length <= 3) {
+        ref.read(journeyListControllerProvider.notifier).load(limit: 3);
+      }
+      // 받은 메시지는 항상 limit: 20으로 로드 (홈 화면에서도 전체 목록 필요)
       ref.read(journeyInboxControllerProvider.notifier).load(limit: 20);
     });
   }
@@ -149,7 +158,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         title: l10n.homeInboxCardTitle,
                         description: l10n.homeInboxCardDescription,
                         badgeCount: inboxState.items.length,
-                        onTap: () => context.go(AppRoutes.inbox),
+                        onTap: () {
+                          // 받은 메시지 탭으로 이동
+                          ref.read(mainTabControllerProvider.notifier).switchToInboxTab();
+                          context.go(AppRoutes.home);
+                        },
                       ),
                     ),
                     // 하단 여백

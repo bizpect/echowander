@@ -579,7 +579,15 @@ class SupabaseJourneyRepository implements JourneyRepository {
         continue;
       }
       try {
+        final recipientIdRaw = row['recipient_id'];
+        if (recipientIdRaw == null) {
+          if (kDebugMode) {
+            debugPrint('[InboxTrace][Repo] fetchInboxJourneys - row $i missing recipient_id, skipping');
+          }
+          continue;
+        }
         final item = JourneyInboxItem(
+          recipientId: (recipientIdRaw as num).toInt(),
           journeyId: row['journey_id'] as String,
           senderUserId: row['sender_user_id'] as String? ?? '',
           content: row['content'] as String,
@@ -780,11 +788,72 @@ class SupabaseJourneyRepository implements JourneyRepository {
   }
 
   @override
+  Future<void> blockSenderAndPass({
+    required int recipientId,
+    String? reasonCode,
+    required String accessToken,
+    String? reqId,
+  }) async {
+    // Flutter 로그 2: RPC 직전 (reqId 포함)
+    if (kDebugMode) {
+      debugPrint('[$_logPrefix][blockSenderAndPass] reqId=${reqId ?? 'N/A'} rpc=block_sender_and_pass params={p_recipient_id:$recipientId, reasonCode:$reasonCode}');
+    }
+    
+    // A. bigint 매핑 안전화: recipientId는 int로 전달 (문자열 변환 금지)
+    // 차단 + 숨김 + 랜덤 재전송 RPC
+    // 주의: block_sender_and_pass는 journey_recipients.id (PK)를 받아서 정확한 recipient row를 조회합니다.
+    try {
+      await _executeSimpleJourneyAction(
+        rpc: 'block_sender_and_pass',
+        journeyId: recipientId.toString(), // 로그용 (실제로는 recipientId 사용)
+        accessToken: accessToken,
+        payload: {
+          'p_recipient_id': recipientId,  // 숫자 그대로 전달 (문자열 변환 금지)
+          if (reasonCode != null) 'p_reason_code': reasonCode,
+        },
+        meta: {
+          'recipientId': recipientId,
+          'reqId': reqId,
+          if (reasonCode != null) 'reason_code': reasonCode,
+        },
+      );
+      // Flutter 로그 3: RPC 성공 (reqId 포함)
+      if (kDebugMode) {
+        debugPrint('[$_logPrefix][blockSenderAndPass] reqId=${reqId ?? 'N/A'} result=OK');
+      }
+    } on JourneyActionException catch (e) {
+      // Flutter 로그 3: RPC 실패 (reqId 포함)
+      if (kDebugMode) {
+        debugPrint('[$_logPrefix][blockSenderAndPass] reqId=${reqId ?? 'N/A'} result=FAIL error=${e.error}');
+      }
+      rethrow;
+    } catch (e) {
+      // Flutter 로그 3: RPC 실패 (예상치 못한 예외)
+      if (kDebugMode) {
+        debugPrint('[$_logPrefix][blockSenderAndPass] reqId=${reqId ?? 'N/A'} result=FAIL exception=$e');
+      }
+      rethrow;
+    }
+  }
+
+  @override
   Future<void> reportJourney({
     required String journeyId,
     required String reasonCode,
     required String accessToken,
   }) async {
+    // 가드: reasonCode가 null이면 절대 호출하지 않음
+    if (reasonCode.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('[$_logPrefix][reportJourney] BLOCKED: reasonCode가 비어있어 호출하지 않음');
+      }
+      throw JourneyActionException(JourneyActionError.invalidPayload);
+    }
+    
+    if (kDebugMode) {
+      debugPrint('[$_logPrefix][reportJourney] RPC 호출 직전: rpc=report_journey, target_journey_id=$journeyId, reasonCode=$reasonCode');
+    }
+    
     await _executeSimpleJourneyAction(
       rpc: 'report_journey',
       journeyId: journeyId,
@@ -815,9 +884,18 @@ class SupabaseJourneyRepository implements JourneyRepository {
     final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/$rpc');
 
     try {
-      if (kDebugMode) {
-        debugPrint('[$_logPrefix][report_journey:journeyId=$journeyId] 신고 시작: reason=${meta?['reason_code'] ?? payload['reason_code']}');
-      }
+            if (kDebugMode) {
+              // RPC별로 적절한 로그 메시지 출력
+              if (rpc == 'report_journey') {
+                debugPrint('[$_logPrefix][$rpc:journeyId=$journeyId] 신고 시작: reason=${meta?['reason_code'] ?? payload['reason_code']}');
+              } else if (rpc == 'block_sender_and_pass') {
+                // recipientId로 명확히 표시 (journeyId 혼선 제거)
+                final recipientId = meta?['recipientId'] ?? payload['p_recipient_id'];
+                debugPrint('[$_logPrefix][$rpc:recipientId=$recipientId] 차단 시작: reason=${meta?['reason_code'] ?? payload['p_reason_code']}');
+              } else {
+                debugPrint('[$_logPrefix][$rpc:journeyId=$journeyId] 액션 시작');
+              }
+            }
       await _networkGuard.execute<void>(
         operation: () => _executeRpcPost(
           uri: uri,
@@ -832,13 +910,23 @@ class SupabaseJourneyRepository implements JourneyRepository {
         meta: {'journey_id': journeyId, ...?meta},
         accessToken: accessToken,
       );
-      if (kDebugMode) {
-        debugPrint('[$_logPrefix][report_journey:journeyId=$journeyId] 신고 성공 판정: NetworkGuard 완료');
-      }
+            if (kDebugMode) {
+              if (rpc == 'block_sender_and_pass') {
+                final recipientId = meta?['recipientId'] ?? payload['p_recipient_id'];
+                debugPrint('[$_logPrefix][$rpc:recipientId=$recipientId] 성공 판정: NetworkGuard 완료');
+              } else {
+                debugPrint('[$_logPrefix][$rpc:journeyId=$journeyId] 성공 판정: NetworkGuard 완료');
+              }
+            }
     } on NetworkRequestException catch (error) {
-      if (kDebugMode) {
-        debugPrint('[$_logPrefix][report_journey:journeyId=$journeyId] NetworkRequestException: type=${error.type}, statusCode=${error.statusCode}, message=${error.message}');
-      }
+          if (kDebugMode) {
+            if (rpc == 'block_sender_and_pass') {
+              final recipientId = meta?['recipientId'] ?? payload['p_recipient_id'];
+              debugPrint('[$_logPrefix][$rpc:recipientId=$recipientId] NetworkRequestException: type=${error.type}, statusCode=${error.statusCode}, message=${error.message}');
+            } else {
+              debugPrint('[$_logPrefix][$rpc:journeyId=$journeyId] NetworkRequestException: type=${error.type}, statusCode=${error.statusCode}, message=${error.message}');
+            }
+          }
       switch (error.type) {
         case NetworkErrorType.network:
         case NetworkErrorType.timeout:
@@ -853,16 +941,27 @@ class SupabaseJourneyRepository implements JourneyRepository {
         case NetworkErrorType.serverRejected:
         case NetworkErrorType.missingConfig:
         case NetworkErrorType.unknown:
-          if (kDebugMode) {
-            debugPrint('[$_logPrefix][report_journey:journeyId=$journeyId] serverRejected로 매핑: 원인 type=${error.type}, statusCode=${error.statusCode}, isEmpty=${error.isEmpty}, isHtml=${error.isHtml}, parsedErrorCode=${error.parsedErrorCode}');
-          }
+            if (kDebugMode) {
+              if (rpc == 'block_sender_and_pass') {
+                final recipientId = meta?['recipientId'] ?? payload['p_recipient_id'];
+                debugPrint('[$_logPrefix][$rpc:recipientId=$recipientId] serverRejected로 매핑: 원인 type=${error.type}, statusCode=${error.statusCode}, isEmpty=${error.isEmpty}, isHtml=${error.isHtml}, parsedErrorCode=${error.parsedErrorCode}');
+              } else {
+                debugPrint('[$_logPrefix][$rpc:journeyId=$journeyId] serverRejected로 매핑: 원인 type=${error.type}, statusCode=${error.statusCode}, isEmpty=${error.isEmpty}, isHtml=${error.isHtml}, parsedErrorCode=${error.parsedErrorCode}');
+              }
+            }
           throw JourneyActionException(JourneyActionError.serverRejected);
       }
     } catch (error, stackTrace) {
-      if (kDebugMode) {
-        debugPrint('[$_logPrefix][report_journey:journeyId=$journeyId] 예상치 못한 예외: $error');
-        debugPrint('[$_logPrefix][report_journey:journeyId=$journeyId] 스택 트레이스: $stackTrace');
-      }
+          if (kDebugMode) {
+            if (rpc == 'block_sender_and_pass') {
+              final recipientId = meta?['recipientId'] ?? payload['p_recipient_id'];
+              debugPrint('[$_logPrefix][$rpc:recipientId=$recipientId] 예상치 못한 예외: $error');
+              debugPrint('[$_logPrefix][$rpc:recipientId=$recipientId] 스택 트레이스: $stackTrace');
+            } else {
+              debugPrint('[$_logPrefix][$rpc:journeyId=$journeyId] 예상치 못한 예외: $error');
+              debugPrint('[$_logPrefix][$rpc:journeyId=$journeyId] 스택 트레이스: $stackTrace');
+            }
+          }
       // 예상치 못한 예외도 serverRejected로 매핑
       throw JourneyActionException(JourneyActionError.serverRejected);
     }

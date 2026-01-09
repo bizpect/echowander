@@ -329,6 +329,7 @@ grant execute on function public.match_pending_journeys(integer) to authenticate
 grant execute on function public.respond_journey(uuid, text) to authenticated;
 grant execute on function public.pass_journey(uuid) to authenticated;
 grant execute on function public.pass_inbox_item_and_forward(uuid) to authenticated;
+grant execute on function public.block_sender_and_pass(bigint, text) to authenticated;
 grant execute on function public.report_journey(uuid, text) to authenticated;
 grant execute on function public.report_journey_response(bigint, text) to authenticated;
 grant execute on function public.get_journey_progress(uuid) to authenticated;

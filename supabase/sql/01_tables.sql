@@ -48,6 +48,7 @@ create table if not exists public.user_profiles (
 create table if not exists public.user_blocks (
   blocker_user_id uuid not null,
   blocked_user_id uuid not null,
+  reason_code text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   primary key (blocker_user_id, blocked_user_id),

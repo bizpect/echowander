@@ -3,14 +3,10 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
-import '../../../core/block/supabase_block_repository.dart';
 import '../../../core/presentation/navigation/tab_navigation_helper.dart';
-import '../../../core/presentation/scaffolds/main_tab_controller.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../core/session/session_manager.dart';
@@ -357,11 +353,6 @@ class _JourneyInboxDetailScreenState
         debugPrint('[InboxReplyTrace][UI] _handleRespond - showing success dialog');
       }
       
-      // router와 controller를 사전에 캡처하여 context 안전성 보장
-      final router = GoRouter.of(context);
-      final tabController = ref.read(mainTabControllerProvider.notifier);
-      final inboxController = ref.read(journeyInboxControllerProvider.notifier);
-      
       await showAppAlertDialog(
         context: context,
         title: l10n.inboxRespondSuccessTitle,
@@ -369,16 +360,8 @@ class _JourneyInboxDetailScreenState
         confirmLabel: l10n.composeOk,
         onConfirm: () {
           // 알럿이 닫힌 후 실행됨
-          // 상세 화면 닫기 및 받은메세지 탭으로 이동
-          if (context.canPop()) {
-            context.pop();
-          }
-          // 받은메세지 화면으로 이동
-          router.go(AppRoutes.inbox);
-          // 받은메세지 탭 활성화
-          tabController.switchToInboxTab();
-          // 받은메세지 리스트 갱신 (답글 상태가 반영되도록)
-          inboxController.load();
+          // 받은메세지 탭 루트로 복귀 (TabNavigationHelper에서 이미 limit: 20으로 로드함)
+          TabNavigationHelper.goToInboxRoot(context, ref);
         },
       );
       if (kDebugMode) {
@@ -529,11 +512,8 @@ class _JourneyInboxDetailScreenState
       }
       
       // 신고 성공 시: 리스트에서 제거 (optimistic update)
-      ref.read(journeyInboxControllerProvider.notifier).removeItem(item.journeyId);
-      
-      // router와 ref를 사전에 캡처하여 context 안전성 보장
-      final router = GoRouter.of(context);
       final controllerNotifier = ref.read(journeyInboxControllerProvider.notifier);
+      controllerNotifier.removeItem(item.journeyId);
       
       // 성공 다이얼로그 표시 (확인 클릭 시 인박스로 이동)
       await showAppAlertDialog(
@@ -543,11 +523,8 @@ class _JourneyInboxDetailScreenState
         confirmLabel: l10n.composeOk,
         onConfirm: () {
           // 알럿이 닫힌 후 실행됨
-          // 상세 화면 닫기 및 인박스로 이동
-          // router.go는 자동으로 현재 경로를 스택에서 제거하고 새 경로로 이동
-          router.go(AppRoutes.inbox);
-          // 인박스 목록 갱신 트리거 (신고한 메시지가 숨김 처리되어 목록에서 제외됨)
-          controllerNotifier.load();
+          // 받은메세지 탭 루트로 복귀 (TabNavigationHelper에서 이미 limit: 20으로 로드함)
+          TabNavigationHelper.goToInboxRoot(context, ref);
         },
       );
     } on JourneyActionException catch (e) {
@@ -613,24 +590,64 @@ class _JourneyInboxDetailScreenState
     if (accessToken == null || accessToken.isEmpty) {
       return;
     }
+    
+    // Flutter 로그 1: UI 클릭 (reqId 포함)
+    final reqId = DateTime.now().microsecondsSinceEpoch.toString();
+    if (kDebugMode) {
+      debugPrint('[InboxBlockTrace][UI] block_click reqId=$reqId recipientId=${item.recipientId} journeyId=${item.journeyId} sender=${item.senderUserId}');
+    }
+    
     setState(() {
       _isActionLoading = true;
     });
     try {
-      await ref.read(blockRepositoryProvider).blockUser(
-            targetUserId: item.senderUserId,
+      // 차단 + 숨김 + 랜덤 재전송 RPC 호출
+      // 주의: recipientId는 journey_recipients.id (PK)입니다
+      await ref.read(journeyRepositoryProvider).blockSenderAndPass(
+            recipientId: item.recipientId,
+            reasonCode: null, // 차단 사유는 선택사항
             accessToken: accessToken,
+            reqId: reqId, // 로그 연계용
           );
       if (!mounted) {
         return;
       }
+      
+      // 차단 성공 시: 리스트에서 제거 (optimistic update)
+      final controllerNotifier = ref.read(journeyInboxControllerProvider.notifier);
+      controllerNotifier.removeItem(item.journeyId);
+      
+      // 성공 다이얼로그 표시 (확인 클릭 시 인박스로 이동)
       await showAppAlertDialog(
         context: context,
         title: l10n.inboxBlockSuccessTitle,
         message: l10n.inboxBlockSuccessBody,
         confirmLabel: l10n.composeOk,
+        onConfirm: () {
+          // 알럿이 닫힌 후 실행됨
+          // 받은메세지 탭 루트로 복귀 (TabNavigationHelper에서 이미 limit: 20으로 로드함)
+          TabNavigationHelper.goToInboxRoot(context, ref);
+        },
       );
-    } catch (_) {
+    } on JourneyActionException catch (e) {
+      if (kDebugMode) {
+        debugPrint('[InboxBlockTrace][UI] 차단 실패: JourneyActionException ${e.error}');
+      }
+      if (!mounted) {
+        return;
+      }
+      await showAppAlertDialog(
+        context: context,
+        title: l10n.composeErrorTitle,
+        message: l10n.inboxBlockFailed,
+        confirmLabel: l10n.composeOk,
+      );
+    } catch (e, stackTrace) {
+      // 예상치 못한 예외 로깅
+      if (kDebugMode) {
+        debugPrint('[InboxBlockTrace][UI] 차단 예상치 못한 예외: $e');
+        debugPrint('[InboxBlockTrace][UI] 스택 트레이스: $stackTrace');
+      }
       if (!mounted) {
         return;
       }

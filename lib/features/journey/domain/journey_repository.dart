@@ -65,6 +65,7 @@ class JourneyListException implements Exception {
 
 class JourneyInboxItem {
   JourneyInboxItem({
+    required this.recipientId,
     required this.journeyId,
     required this.senderUserId,
     required this.content,
@@ -73,6 +74,7 @@ class JourneyInboxItem {
     required this.recipientStatus,
   });
 
+  final int recipientId; // journey_recipients.id (PK)
   final String journeyId;
   final String senderUserId;
   final String content;
@@ -238,6 +240,13 @@ abstract class JourneyRepository {
   Future<void> passJourney({
     required String journeyId,
     required String accessToken,
+  });
+
+  Future<void> blockSenderAndPass({
+    required int recipientId,
+    String? reasonCode,
+    required String accessToken,
+    String? reqId,
   });
 
   Future<void> reportJourney({

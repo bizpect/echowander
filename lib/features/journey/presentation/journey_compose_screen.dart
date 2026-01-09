@@ -461,7 +461,8 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
             // 보낸메세지 탭 활성화
             tabController.switchToSentTab();
             // 보낸메세지 리스트 갱신 (방금 보낸 메시지가 바로 보이도록)
-            listController.load();
+            // limit: 20으로 명시적으로 로드하여 홈 화면의 limit:3 로드가 덮어쓰지 않도록 보장
+            listController.load(limit: 20);
           },
         );
         return;

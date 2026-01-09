@@ -2,14 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/presentation/scaffolds/main_tab_controller.dart';
 import '../../core/session/session_manager.dart';
 import '../../core/session/session_state.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../core/presentation/scaffolds/main_scaffold.dart';
 import '../../features/journey/presentation/journey_compose_screen.dart';
 import '../../features/journey/presentation/journey_inbox_detail_screen.dart';
-import '../../features/journey/presentation/journey_inbox_screen.dart';
-import '../../features/journey/presentation/journey_list_screen.dart';
 import '../../features/journey/presentation/journey_sent_detail_screen.dart';
 import '../../features/onboarding/application/onboarding_controller.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
@@ -72,10 +71,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const JourneyComposeScreen(),
       ),
       GoRoute(
-        path: AppRoutes.journeyList,
-        builder: (context, state) => const JourneyListScreen(),
-      ),
-      GoRoute(
         path: AppRoutes.journeyDetail,
         builder: (context, state) => JourneySentDetailScreen(
           journeyId: state.pathParameters['journeyId'] ?? '',
@@ -83,16 +78,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: AppRoutes.inbox,
-        builder: (context, state) => JourneyInboxScreen(
-          highlightJourneyId: state.uri.queryParameters['highlight'],
-        ),
-      ),
-      GoRoute(
         path: AppRoutes.inboxDetail,
-        builder: (context, state) => JourneyInboxDetailScreen(
-          item: state.extra as JourneyInboxItem?,
-        ),
+        builder: (context, state) =>
+            JourneyInboxDetailScreen(item: state.extra as JourneyInboxItem?),
       ),
       GoRoute(
         path: AppRoutes.journeyResults,
@@ -141,17 +129,29 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         }
         // ✅ unauthenticated 상태에서는 반드시 로그인으로 이동
         if (kDebugMode) {
-          debugPrint('[Router] redirect: status=unauthenticated, from=$location, to=${AppRoutes.login}');
+          debugPrint(
+            '[Router] redirect: status=unauthenticated, from=$location, to=${AppRoutes.login}',
+          );
         }
         return AppRoutes.login;
       }
 
       if (status == SessionStatus.authenticated) {
+        // 탭 없는 리스트 화면으로의 직접 접근을 막고 /home으로 리다이렉트하며 탭 활성화
+        if (location == AppRoutes.journeyList) {
+          // 보낸 메시지 탭 활성화 후 /home으로 리다이렉트
+          ref.read(mainTabControllerProvider.notifier).switchToSentTab();
+          return AppRoutes.home;
+        }
+        if (location == AppRoutes.inbox) {
+          // 받은 메시지 탭 활성화 후 /home으로 리다이렉트
+          ref.read(mainTabControllerProvider.notifier).switchToInboxTab();
+          return AppRoutes.home;
+        }
+
         if (location == AppRoutes.pushPreview ||
             location == AppRoutes.compose ||
-            location == AppRoutes.journeyList ||
             location.startsWith('/journeys/') ||
-            location == AppRoutes.inbox ||
             location.startsWith('/inbox/') ||
             location.startsWith('/results/') ||
             location == AppRoutes.settings ||

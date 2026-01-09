@@ -62,3 +62,20 @@
 - 모든 화면에서 SafeArea 상/하단을 적용합니다.
 - 키보드로 인한 오버플로우가 발생하지 않도록 입력 화면은 스크롤/뷰 인셋 처리를 적용합니다.
 - 사용자에게 노출되는 모든 화면에서는 user_id를 표시하지 않고 닉네임만 표시합니다.
+- 재전송(forward/pass 동일 로직)은 중복 실행되면 안 된다  → 동일 대상에 대해 여러 번 호출돼도 재전송은 1회만
+- 모든 백엔드 호출은 무조건 `NetworkGuard` 경유
+- 포함 범위: **Repository / Supabase RPC / REST / Storage / Functions** 전부
+- **직접 호출(direct supabase / direct http / direct storage) 금지**
+- 작업할 때마다 **direct 호출 탐지/차단 체크(= grep 증빙)**까지 포함
+- **NetworkGuard 내부에서 항상 “사전 네트워크 체크”를 선행**
+- 오프라인이면 서버 호출 자체를 하지 말고, 정책대로 UX 처리(토스트/다이얼로그/오버레이 등)
+- **에러 변환(표준화) + 정책 적용은 NetworkGuard가 책임**
+- status code / 서버 에러 바디를 표준 에러 타입으로 변환
+- 예 : `serverRejected(4xx/5xx)` / `unauthorized(401)` / `timeout` / `offline` 등
+- **재시도(RetryPolicy)는 NetworkGuard에서만**
+- 재시도 가능한 케이스만(타임아웃/일시적 네트워크/일부 5xx 등)
+- 재시도 불가(권한/검증 실패 등)는 즉시 실패 반환
+- **UX 규칙(로딩/블로킹/메시지)도 NetworkGuard에서 일관 적용**
+- 요청 종류에 따라 “전체 오버레이 로딩 vs non-blocking” 같은 규칙을 통일
+- **(추가로) Supabase 접근 정책**
+- AGENTS 기준으로는 **테이블 직접 CRUD보다 RPC 중심**으로 설계(가능한 한 RPC로 캡슐화)

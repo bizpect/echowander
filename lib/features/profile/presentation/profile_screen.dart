@@ -6,6 +6,7 @@ import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
+import '../../../core/presentation/scaffolds/main_tab_controller.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../features/notifications/application/notification_inbox_controller.dart';
@@ -170,7 +171,11 @@ class ProfileScreen extends ConsumerWidget {
                       Icons.chevron_right,
                       color: AppColors.onSurfaceVariant,
                     ),
-                    onTap: () => context.push(AppRoutes.journeyList),
+                    onTap: () {
+                      // 보낸 메시지 탭으로 이동
+                      ref.read(mainTabControllerProvider.notifier).switchToSentTab();
+                      context.go(AppRoutes.home);
+                    },
                   ),
                   Divider(
                     height: 1,

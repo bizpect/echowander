@@ -656,6 +656,7 @@ create or replace function public.list_inbox_journeys(
   page_offset integer
 )
 returns table (
+  recipient_id bigint,
   journey_id uuid,
   sender_user_id uuid,
   content text,
@@ -676,8 +677,10 @@ begin
     raise exception 'unauthorized';
   end if;
 
+  -- C. recipient_id 보장: 명시적으로 jr.id만 반환하고 WHERE 조건으로 수신자만 필터링
   return query
   select
+    jr.id as recipient_id,  -- 명시적 alias로 ambiguous 방지
     jr.journey_id,
     jr.sender_user_id,
     jr.snapshot_content as content,
@@ -685,7 +688,7 @@ begin
     jr.snapshot_image_count as image_count,
     jr.status_code as recipient_status
   from public.journey_recipients jr
-  where jr.recipient_user_id = current_user_id
+  where jr.recipient_user_id = current_user_id  -- 반드시 현재 사용자가 수신자인 row만
     -- 스냅샷 필드가 존재하는 경우만 (마이그레이션 이전 데이터 제외)
     and jr.sender_user_id is not null
     -- 숨김 처리된 메시지 제외 (신고 완료 등)
@@ -693,6 +696,8 @@ begin
   order by jr.created_at desc
   limit least(coalesce(page_size, 20), 50)
   offset greatest(coalesce(page_offset, 0), 0);
+  
+  -- 보장: 반환된 모든 row의 recipient_id는 반드시 current_user_id가 recipient_user_id인 journey_recipients.id입니다
 end;
 $$;
 
@@ -980,6 +985,328 @@ begin
   -- 5) 반환
   return query
   select true as success, _passed_at as passed_at, _forwarded_recipient_id as forwarded_recipient_id;
+end;
+$$;
+
+-- 차단 처리 + 랜덤 전송 + 숨김 (트랜잭션)
+-- pass_inbox_item_and_forward와 동일한 로직이지만 BLOCK action 기록 및 차단 관계 추가
+-- 파라미터: p_recipient_id는 journey_recipients.id (PK)를 받습니다
+-- 구버전 오버로드 제거 (bigint, text 버전만 유지)
+drop function if exists public.block_sender_and_pass(uuid, text);
+drop function if exists public.block_sender_and_pass(bigint, text);
+create or replace function public.block_sender_and_pass(
+  p_recipient_id bigint,
+  p_reason_code text default null
+)
+returns table (
+  success boolean,
+  recipient_id bigint,
+  blocked_user_id uuid,
+  forwarded_recipient_id uuid,
+  hidden_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  _recipient_id bigint;
+  _journey public.journeys%rowtype;
+  _sender_user_id uuid;
+  _journey_id uuid;
+  _remaining integer;
+  _forwarded_recipient_id uuid;
+  _hidden_at timestamptz := now();
+  _current_uid uuid;
+  _row_recipient_user_id uuid;
+  _row_status_code text;
+  _row_is_hidden boolean;
+begin
+  -- Server 로그 1: 함수 시작
+  _current_uid := auth.uid();
+  raise log '[block_sender_and_pass] START uid=% recipientId=%', 
+    _current_uid, p_recipient_id;
+
+  if _current_uid is null then
+    raise log '[block_sender_and_pass] FAIL: auth.uid() is null';
+    raise exception 'unauthorized: uid_null';
+  end if;
+  -- A. bigint 매핑 안전화: 입력 검증
+  if p_recipient_id is null then
+    raise log '[block_sender_and_pass] FAIL: p_recipient_id is null';
+    raise exception 'invalid_argument: recipient_id_null';
+  end if;
+  if p_recipient_id <= 0 then
+    raise log '[block_sender_and_pass] FAIL: p_recipient_id is invalid (<=0): %', p_recipient_id;
+    raise exception 'invalid_argument: recipient_id_invalid';
+  end if;
+
+  -- 1) journey_recipient 조회 및 권한 체크 (정확한 recipient row 조회)
+  -- 정책: 리스트에 보이는 건 모두 차단 가능 (list_inbox_journeys 조건과 일치)
+  -- list_inbox_journeys 조건: recipient_user_id = auth.uid() AND is_hidden = false (status_code 필터 없음)
+  -- 따라서 block_sender_and_pass도 동일 조건: recipient_user_id = auth.uid() AND is_hidden = false
+  
+  -- 먼저 row 존재 여부 및 상태 확인 (recipient_user_id 조건 없이)
+  select jr.recipient_user_id, jr.status_code, jr.is_hidden
+  into _row_recipient_user_id, _row_status_code, _row_is_hidden
+  from public.journey_recipients jr
+  where jr.id = p_recipient_id;
+
+  if not found then
+    raise log '[block_sender_and_pass] FAIL: recipient_not_found - p_recipient_id=%에 대한 row가 존재하지 않음, auth_uid=%', 
+      p_recipient_id, _current_uid;
+    raise exception 'unauthorized: recipient_not_found';
+  end if;
+
+  -- row는 존재하지만 recipient_user_id가 다름
+  if _row_recipient_user_id != _current_uid then
+    raise log '[block_sender_and_pass] FAIL: not_recipient - p_recipient_id=%의 recipient_user_id=%는 auth_uid=%와 불일치', 
+      p_recipient_id, _row_recipient_user_id, _current_uid;
+    raise exception 'unauthorized: not_recipient';
+  end if;
+
+  -- is_hidden 체크: 이미 숨김인 경우 에러 (리스트에 보이지 않으므로 차단 불가)
+  if _row_is_hidden then
+    raise log '[block_sender_and_pass] FAIL: recipient_hidden - p_recipient_id=%는 이미 숨김 처리됨 (is_hidden=true), auth_uid=%, hidden_reason=%', 
+      p_recipient_id, _current_uid, _row_status_code;
+    raise exception 'invalid_argument: recipient_hidden';
+  end if;
+
+  -- status_code는 체크하지 않음: 리스트에 보이면 어떤 상태든 차단 가능 (UX 정책)
+  -- 단, 로그에는 기록
+  raise log '[block_sender_and_pass] STATUS CHECK: p_recipient_id=%, status_code=%, is_hidden=%, auth_uid=%', 
+    p_recipient_id, _row_status_code, _row_is_hidden, _current_uid;
+
+  -- 권한 체크 통과 후 실제 데이터 조회 (status_code 조건 제거)
+  select jr.id, jr.sender_user_id, jr.journey_id
+  into _recipient_id, _sender_user_id, _journey_id
+  from public.journey_recipients jr
+  where jr.id = p_recipient_id
+    and jr.recipient_user_id = _current_uid
+    and jr.is_hidden = false;  -- status_code 조건 제거, is_hidden만 체크
+
+  -- Server 로그 2: row 조회 직후
+  raise log '[block_sender_and_pass] ROW recipient_user_id=% sender_user_id=% journey_id=% status=% hidden=%',
+    _row_recipient_user_id, _sender_user_id, _journey_id, _row_status_code, _row_is_hidden;
+
+  if _recipient_id is null then
+    -- 이 분기는 이론적으로 도달하지 않아야 하지만 안전장치
+    raise log '[block_sender_and_pass] FAIL: recipient_id is null after query (예상치 못한 상황), p_recipient_id=%, auth_uid=%', 
+      p_recipient_id, _current_uid;
+    raise exception 'unauthorized: not_recipient';
+  end if;
+  if _sender_user_id is null then
+    raise log '[block_sender_and_pass] FAIL: sender_user_id is null';
+    raise exception 'missing_sender';
+  end if;
+  if _journey_id is null then
+    raise log '[block_sender_and_pass] FAIL: journey_id is null';
+    raise exception 'missing_journey';
+  end if;
+
+  -- journey 조회
+  select * into _journey
+  from public.journeys
+  where id = _journey_id;
+
+  if not found then
+    raise log '[block_sender_and_pass] FAIL: journey not found for journey_id=%', _journey_id;
+    raise exception 'unauthorized: journey_not_found';
+  end if;
+
+  raise log '[block_sender_and_pass] JOURNEY LOADED: journey_id=%, user_id=%', 
+    _journey.id, _journey.user_id;
+
+  -- B. idempotent 보장: BLOCK action 존재 여부 확인 (중복 재전송 방지)
+  declare
+    _action_exists boolean;
+  begin
+    -- action이 이미 존재하는지 확인
+    select exists (
+      select 1
+      from public.journey_actions
+      where journey_recipient_id = _recipient_id
+        and actor_user_id = _current_uid
+        and action_type_code = 'BLOCK'
+    ) into _action_exists;
+
+    if _action_exists then
+      raise log '[block_sender_and_pass] ALREADY_PROCESSED: recipient_id=%는 이미 차단 처리됨, forward 스킵', _recipient_id;
+      -- 이미 처리된 경우: user_blocks upsert + 숨김 처리만 수행하고 forward 스킵
+      -- Server 로그 3: user_blocks upsert 직전
+      raise log '[block_sender_and_pass] UPSERT blocks blocker=% blocked=%',
+        _current_uid, _sender_user_id;
+      -- 2) user_blocks에 차단 기록 (idempotent)
+      -- blocked_user_id ambiguous 방지: constraint 이름 사용
+      insert into public.user_blocks (
+        blocker_user_id,
+        blocked_user_id,
+        reason_code
+      )
+      values (
+        _current_uid,
+        _sender_user_id,
+        p_reason_code
+      )
+      on conflict on constraint user_blocks_pkey
+      do update set
+        reason_code = coalesce(excluded.reason_code, user_blocks.reason_code),
+        updated_at = now();
+
+      -- Server 로그 4: 숨김 처리 직전
+      raise log '[block_sender_and_pass] HIDE recipientId=%', p_recipient_id;
+      -- 3) journey_recipient 숨김 처리 (이미 숨김일 수 있지만 안전하게)
+      update public.journey_recipients
+      set is_hidden = true,
+          hidden_reason_code = 'HIDE_BLOCKED',
+          hidden_at = _hidden_at,
+          updated_at = _hidden_at
+      where id = _recipient_id;
+
+      -- 이미 처리된 경우: forward 없이 반환
+      raise log '[block_sender_and_pass] SUCCESS (already_processed): recipient_id=%, blocked_user_id=%', 
+        _recipient_id, _sender_user_id;
+      return query
+      select 
+        true::boolean as success, 
+        _recipient_id::bigint as recipient_id,
+        _sender_user_id::uuid as blocked_user_id, 
+        null::uuid as forwarded_recipient_id,
+        _hidden_at::timestamptz as hidden_at;
+      return;  -- 함수 종료 (forward 스킵)
+    end if;
+
+    -- 첫 실행인 경우: action 기록
+    insert into public.journey_actions (
+      journey_recipient_id,
+      actor_user_id,
+      action_type_code
+    )
+    values (
+      _recipient_id,
+      _current_uid,
+      'BLOCK'
+    )
+    on conflict (actor_user_id, journey_recipient_id, action_type_code) do nothing;
+    
+    raise log '[block_sender_and_pass] FIRST_EXECUTION: recipient_id=% 차단 처리 시작 (action 기록 완료)', _recipient_id;
+  end;
+
+  -- Server 로그 3: user_blocks upsert 직전
+  raise log '[block_sender_and_pass] UPSERT blocks blocker=% blocked=%',
+    _current_uid, _sender_user_id;
+  -- 2) user_blocks에 차단 기록 (idempotent)
+  -- blocked_user_id ambiguous 방지: constraint 이름 사용
+  insert into public.user_blocks (
+    blocker_user_id,
+    blocked_user_id,
+    reason_code
+  )
+  values (
+    _current_uid,
+    _sender_user_id,
+    p_reason_code
+  )
+  on conflict on constraint user_blocks_pkey
+  do update set
+    reason_code = coalesce(excluded.reason_code, user_blocks.reason_code),
+    updated_at = now();
+
+  -- Server 로그 4: 숨김 처리 직전
+  raise log '[block_sender_and_pass] HIDE recipientId=%', p_recipient_id;
+  -- 3) journey_recipient 숨김 처리 (첫 실행인 경우만 도달)
+  update public.journey_recipients
+  set is_hidden = true,
+      hidden_reason_code = 'HIDE_BLOCKED',
+      hidden_at = _hidden_at,
+      updated_at = _hidden_at
+  where id = _recipient_id;
+
+  if not found then
+    raise log '[block_sender_and_pass] FAIL: update affected 0 rows (RLS blocked?)';
+    raise exception 'unauthorized: rls_blocked_update';
+  end if;
+
+  raise log '[block_sender_and_pass] UPDATE SUCCESS: recipient_id=% hidden', _recipient_id;
+
+  -- Server 로그 5: forward 직전
+  raise log '[block_sender_and_pass] FORWARD journey_id=% (dedupe enforced)', _journey_id;
+  -- 4) 랜덤 수신자 선정 및 전송 (pass_inbox_item_and_forward와 동일 로직)
+  -- 주의: 이미 처리된 경우는 위에서 return되었으므로 여기서는 첫 실행만 도달 (중복 재전송 방지)
+  select greatest(_journey.requested_recipient_count - count(*), 0)
+  into _remaining
+  from public.journey_recipients
+  where journey_recipients.journey_id = _journey.id;
+
+  if _remaining > 0 then
+    with candidates as (
+      select
+        users.user_id,
+        user_profiles.locale_tag
+      from public.users
+      left join public.user_profiles
+        on user_profiles.user_id = users.user_id
+      where users.user_id <> _journey.user_id
+        and users.is_deleted = false
+        and users.is_suspended = false
+        and (users.response_suspended_until is null
+          or users.response_suspended_until <= now())
+        and not exists (
+          select 1
+          from public.journey_recipients recipients
+          where recipients.journey_id = _journey.id
+            and recipients.recipient_user_id = users.user_id
+        )
+        and not exists (
+          select 1
+          from public.user_blocks blocks
+          where (blocks.blocker_user_id = _journey.user_id
+            and blocks.blocked_user_id = users.user_id)
+            or (blocks.blocker_user_id = users.user_id
+            and blocks.blocked_user_id = _journey.user_id)
+        )
+      order by random()
+      limit 1
+    ),
+    journey_image_count as (
+      select count(*)::integer as cnt
+      from public.journey_images
+      where journey_images.journey_id = _journey.id
+    ),
+    inserted as (
+      insert into public.journey_recipients (
+        journey_id,
+        recipient_user_id,
+        recipient_locale_tag,
+        sender_user_id,
+        snapshot_content,
+        snapshot_image_count
+      )
+      select
+        _journey.id,
+        candidates.user_id,
+        candidates.locale_tag,
+        _journey.user_id,
+        _journey.content,
+        (select cnt from journey_image_count)
+      from candidates
+      returning journey_recipients.recipient_user_id, journey_recipients.id
+    )
+    select inserted.recipient_user_id into _forwarded_recipient_id
+    from inserted
+    limit 1;
+  end if;
+
+  -- 6) 반환
+  raise log '[block_sender_and_pass] SUCCESS: recipient_id=%, blocked_user_id=%, forwarded_recipient_id=%', 
+    _recipient_id, _sender_user_id, _forwarded_recipient_id;
+  return query
+  select 
+    true::boolean as success, 
+    _recipient_id::bigint as recipient_id,
+    _sender_user_id::uuid as blocked_user_id, 
+    _forwarded_recipient_id::uuid as forwarded_recipient_id,
+    _hidden_at::timestamptz as hidden_at;
 end;
 $$;
 
