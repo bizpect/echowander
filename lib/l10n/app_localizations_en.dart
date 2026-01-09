@@ -974,6 +974,46 @@ class AppLocalizationsEn extends AppLocalizations {
       'This action will be available soon.';
 
   @override
+  String get appInfoTitle => 'App info';
+
+  @override
+  String appInfoVersionLabel(Object version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get appInfoVersionUnknown => 'Unknown version';
+
+  @override
+  String get appInfoOpenLicenseTitle => 'Open licenses';
+
+  @override
+  String get appInfoRelatedAppsTitle => 'BIZPECT related apps';
+
+  @override
+  String get appInfoRelatedApp1Title => 'Test app 1';
+
+  @override
+  String get appInfoRelatedApp1Description =>
+      'A sample app for testing related services.';
+
+  @override
+  String get appInfoRelatedApp2Title => 'Test app 2';
+
+  @override
+  String get appInfoRelatedApp2Description =>
+      'Another sample app for related integrations.';
+
+  @override
+  String get appInfoExternalLinkLabel => 'Open external link';
+
+  @override
+  String get appInfoLinkPreparingTitle => 'Coming soon';
+
+  @override
+  String get appInfoLinkPreparingBody => 'This link will be available soon.';
+
+  @override
   String get journeyDetailAnonymous => 'Anonymous';
 
   @override

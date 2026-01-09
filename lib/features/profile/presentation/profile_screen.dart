@@ -96,7 +96,7 @@ class ProfileScreen extends ConsumerWidget {
                   iconBackground: AppColors.surfaceVariant,
                   iconColor: AppColors.onSurfaceVariant,
                   title: l10n.profileMenuAppInfo,
-                  onTap: () => _showFeaturePreparingDialog(context, l10n),
+                  onTap: () => context.push(AppRoutes.appInfo),
                 ),
               ],
             ),

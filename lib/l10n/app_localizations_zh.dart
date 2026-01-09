@@ -932,6 +932,44 @@ class AppLocalizationsZh extends AppLocalizations {
   String get supportActionPreparingBody => '该操作即将开放。';
 
   @override
+  String get appInfoTitle => '应用信息';
+
+  @override
+  String appInfoVersionLabel(Object version) {
+    return '版本 $version';
+  }
+
+  @override
+  String get appInfoVersionUnknown => '未知';
+
+  @override
+  String get appInfoOpenLicenseTitle => '开源许可';
+
+  @override
+  String get appInfoRelatedAppsTitle => 'BIZPECT 相关应用';
+
+  @override
+  String get appInfoRelatedApp1Title => '测试应用 1';
+
+  @override
+  String get appInfoRelatedApp1Description => '用于相关服务测试的示例应用。';
+
+  @override
+  String get appInfoRelatedApp2Title => '测试应用 2';
+
+  @override
+  String get appInfoRelatedApp2Description => '用于相关集成的示例应用。';
+
+  @override
+  String get appInfoExternalLinkLabel => '打开外部链接';
+
+  @override
+  String get appInfoLinkPreparingTitle => '即将推出';
+
+  @override
+  String get appInfoLinkPreparingBody => '该链接即将开放。';
+
+  @override
   String get journeyDetailAnonymous => '匿名';
 
   @override

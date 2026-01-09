@@ -937,6 +937,44 @@ class AppLocalizationsJa extends AppLocalizations {
   String get supportActionPreparingBody => 'この操作はまもなく利用できます。';
 
   @override
+  String get appInfoTitle => 'アプリ情報';
+
+  @override
+  String appInfoVersionLabel(Object version) {
+    return 'バージョン $version';
+  }
+
+  @override
+  String get appInfoVersionUnknown => '不明';
+
+  @override
+  String get appInfoOpenLicenseTitle => 'オープンライセンス';
+
+  @override
+  String get appInfoRelatedAppsTitle => 'BIZPECT 関連アプリ';
+
+  @override
+  String get appInfoRelatedApp1Title => 'テストアプリ 1';
+
+  @override
+  String get appInfoRelatedApp1Description => '関連サービスのテスト用サンプルアプリです。';
+
+  @override
+  String get appInfoRelatedApp2Title => 'テストアプリ 2';
+
+  @override
+  String get appInfoRelatedApp2Description => '連携テスト用のサンプルアプリです。';
+
+  @override
+  String get appInfoExternalLinkLabel => '外部リンクを開く';
+
+  @override
+  String get appInfoLinkPreparingTitle => '準備中';
+
+  @override
+  String get appInfoLinkPreparingBody => 'まもなく利用できます。';
+
+  @override
   String get journeyDetailAnonymous => '匿名';
 
   @override

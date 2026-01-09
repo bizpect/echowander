@@ -989,6 +989,47 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cette action sera disponible prochainement.';
 
   @override
+  String get appInfoTitle => 'Infos sur l’app';
+
+  @override
+  String appInfoVersionLabel(Object version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get appInfoVersionUnknown => 'Inconnue';
+
+  @override
+  String get appInfoOpenLicenseTitle => 'Licences ouvertes';
+
+  @override
+  String get appInfoRelatedAppsTitle => 'Apps liées BIZPECT';
+
+  @override
+  String get appInfoRelatedApp1Title => 'Application test 1';
+
+  @override
+  String get appInfoRelatedApp1Description =>
+      'Application d’exemple pour tester les services liés.';
+
+  @override
+  String get appInfoRelatedApp2Title => 'Application test 2';
+
+  @override
+  String get appInfoRelatedApp2Description =>
+      'Autre application d’exemple pour les intégrations liées.';
+
+  @override
+  String get appInfoExternalLinkLabel => 'Ouvrir un lien externe';
+
+  @override
+  String get appInfoLinkPreparingTitle => 'Bientôt disponible';
+
+  @override
+  String get appInfoLinkPreparingBody =>
+      'Ce lien sera disponible prochainement.';
+
+  @override
   String get journeyDetailAnonymous => 'Anonyme';
 
   @override

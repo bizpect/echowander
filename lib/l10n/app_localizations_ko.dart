@@ -940,6 +940,44 @@ class AppLocalizationsKo extends AppLocalizations {
   String get supportActionPreparingBody => '곧 이용할 수 있습니다.';
 
   @override
+  String get appInfoTitle => '앱 정보';
+
+  @override
+  String appInfoVersionLabel(Object version) {
+    return '버전 $version';
+  }
+
+  @override
+  String get appInfoVersionUnknown => '알 수 없음';
+
+  @override
+  String get appInfoOpenLicenseTitle => '오픈 라이센스';
+
+  @override
+  String get appInfoRelatedAppsTitle => 'BIZPECT 관련 앱';
+
+  @override
+  String get appInfoRelatedApp1Title => '테스트 앱 1';
+
+  @override
+  String get appInfoRelatedApp1Description => '관련 서비스 테스트용 샘플 앱입니다.';
+
+  @override
+  String get appInfoRelatedApp2Title => '테스트 앱 2';
+
+  @override
+  String get appInfoRelatedApp2Description => '연동 테스트를 위한 샘플 앱입니다.';
+
+  @override
+  String get appInfoExternalLinkLabel => '외부 링크 열기';
+
+  @override
+  String get appInfoLinkPreparingTitle => '준비 중';
+
+  @override
+  String get appInfoLinkPreparingBody => '곧 이용할 수 있습니다.';
+
+  @override
   String get journeyDetailAnonymous => '익명';
 
   @override

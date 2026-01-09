@@ -1921,6 +1921,78 @@ abstract class AppLocalizations {
   /// **'This action will be available soon.'**
   String get supportActionPreparingBody;
 
+  /// No description provided for @appInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'App info'**
+  String get appInfoTitle;
+
+  /// No description provided for @appInfoVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String appInfoVersionLabel(Object version);
+
+  /// No description provided for @appInfoVersionUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown version'**
+  String get appInfoVersionUnknown;
+
+  /// No description provided for @appInfoOpenLicenseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open licenses'**
+  String get appInfoOpenLicenseTitle;
+
+  /// No description provided for @appInfoRelatedAppsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'BIZPECT related apps'**
+  String get appInfoRelatedAppsTitle;
+
+  /// No description provided for @appInfoRelatedApp1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Test app 1'**
+  String get appInfoRelatedApp1Title;
+
+  /// No description provided for @appInfoRelatedApp1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'A sample app for testing related services.'**
+  String get appInfoRelatedApp1Description;
+
+  /// No description provided for @appInfoRelatedApp2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Test app 2'**
+  String get appInfoRelatedApp2Title;
+
+  /// No description provided for @appInfoRelatedApp2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Another sample app for related integrations.'**
+  String get appInfoRelatedApp2Description;
+
+  /// No description provided for @appInfoExternalLinkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Open external link'**
+  String get appInfoExternalLinkLabel;
+
+  /// No description provided for @appInfoLinkPreparingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get appInfoLinkPreparingTitle;
+
+  /// No description provided for @appInfoLinkPreparingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This link will be available soon.'**
+  String get appInfoLinkPreparingBody;
+
   /// No description provided for @journeyDetailAnonymous.
   ///
   /// In en, this message translates to:

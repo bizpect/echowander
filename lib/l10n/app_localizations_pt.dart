@@ -987,6 +987,47 @@ class AppLocalizationsPt extends AppLocalizations {
       'Esta ação estará disponível em breve.';
 
   @override
+  String get appInfoTitle => 'Informações do app';
+
+  @override
+  String appInfoVersionLabel(Object version) {
+    return 'Versão $version';
+  }
+
+  @override
+  String get appInfoVersionUnknown => 'Desconhecida';
+
+  @override
+  String get appInfoOpenLicenseTitle => 'Licenças abertas';
+
+  @override
+  String get appInfoRelatedAppsTitle => 'Apps relacionados da BIZPECT';
+
+  @override
+  String get appInfoRelatedApp1Title => 'App de teste 1';
+
+  @override
+  String get appInfoRelatedApp1Description =>
+      'App de exemplo para testar serviços relacionados.';
+
+  @override
+  String get appInfoRelatedApp2Title => 'App de teste 2';
+
+  @override
+  String get appInfoRelatedApp2Description =>
+      'Outro app de exemplo para integrações relacionadas.';
+
+  @override
+  String get appInfoExternalLinkLabel => 'Abrir link externo';
+
+  @override
+  String get appInfoLinkPreparingTitle => 'Em breve';
+
+  @override
+  String get appInfoLinkPreparingBody =>
+      'Este link estará disponível em breve.';
+
+  @override
   String get journeyDetailAnonymous => 'Anónimo';
 
   @override
@@ -1995,6 +2036,47 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get supportActionPreparingBody =>
       'Esta ação estará disponível em breve.';
+
+  @override
+  String get appInfoTitle => 'Informações do app';
+
+  @override
+  String appInfoVersionLabel(Object version) {
+    return 'Versão $version';
+  }
+
+  @override
+  String get appInfoVersionUnknown => 'Desconhecida';
+
+  @override
+  String get appInfoOpenLicenseTitle => 'Licenças abertas';
+
+  @override
+  String get appInfoRelatedAppsTitle => 'Apps relacionados da BIZPECT';
+
+  @override
+  String get appInfoRelatedApp1Title => 'App de teste 1';
+
+  @override
+  String get appInfoRelatedApp1Description =>
+      'App de exemplo para testar serviços relacionados.';
+
+  @override
+  String get appInfoRelatedApp2Title => 'App de teste 2';
+
+  @override
+  String get appInfoRelatedApp2Description =>
+      'Outro app de exemplo para integrações relacionadas.';
+
+  @override
+  String get appInfoExternalLinkLabel => 'Abrir link externo';
+
+  @override
+  String get appInfoLinkPreparingTitle => 'Em breve';
+
+  @override
+  String get appInfoLinkPreparingBody =>
+      'Este link estará disponível em breve.';
 
   @override
   String get journeyDetailAnonymous => 'Anônimo';
