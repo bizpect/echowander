@@ -69,6 +69,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeRefresh => '更新';
 
   @override
+  String get homeExitTitle => 'アプリを終了しますか？';
+
+  @override
+  String get homeExitMessage => 'アプリを終了します。';
+
+  @override
+  String get homeExitCancel => 'キャンセル';
+
+  @override
+  String get homeExitConfirm => '終了';
+
+  @override
+  String get homeExitAdLoading => '広告を読み込み中…';
+
+  @override
   String get homeLoadFailed => 'データを読み込めませんでした。';
 
   @override
@@ -158,8 +173,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get errorLoginUserSyncFailed => 'アカウント情報を保存できませんでした。もう一度お試しください。';
 
   @override
-  String get errorLoginServiceUnavailable =>
-      'ログインサービスを利用できません。しばらくしてから再試行してください。';
+  String get errorLoginServiceUnavailable => 'ログインサービスを利用できません。しばらくしてから再試行してください。';
 
   @override
   String get errorSessionExpired => 'セッションの有効期限が切れました。もう一度ログインしてください。';
@@ -168,15 +182,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get errorForbiddenTitle => 'Permission Required';
 
   @override
-  String get errorForbiddenMessage =>
-      'You don\'t have permission to perform this action. Please check your login status or try again later.';
+  String get errorForbiddenMessage => 'You don\'t have permission to perform this action. Please check your login status or try again later.';
 
   @override
   String get journeyInboxForbiddenTitle => 'Cannot Load Inbox';
 
   @override
-  String get journeyInboxForbiddenMessage =>
-      'You don\'t have permission to view the inbox. If the problem persists, please sign in again.';
+  String get journeyInboxForbiddenMessage => 'You don\'t have permission to view the inbox. If the problem persists, please sign in again.';
 
   @override
   String get languageSectionTitle => '言語';
@@ -563,8 +575,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get journeyDetailResponsesMissingTitle => '一時的なエラー';
 
   @override
-  String get journeyDetailResponsesMissingBody =>
-      '返信を読み込めませんでした。もう一度お試しください。\n一覧に戻ります。';
+  String get journeyDetailResponsesMissingBody => '返信を読み込めませんでした。もう一度お試しください。\n一覧に戻ります。';
 
   @override
   String get journeyDetailGateConfigTitle => '広告準備中';
@@ -588,15 +599,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get journeyDetailUnlockFailedTitle => 'ロック解除の保存に失敗しました';
 
   @override
-  String get journeyDetailUnlockFailedBody =>
-      'ネットワーク/サーバーの問題でロック解除の保存に失敗しました。もう一度お試しください。';
+  String get journeyDetailUnlockFailedBody => 'ネットワーク/サーバーの問題でロック解除の保存に失敗しました。もう一度お試しください。';
 
   @override
   String get journeyDetailGateDialogTitle => 'リワード広告でロック解除';
 
   @override
-  String get journeyDetailGateDialogBody =>
-      'リワード広告の視聴でロック解除します。\n一度視聴すれば永久に解除されます。';
+  String get journeyDetailGateDialogBody => 'リワード広告の視聴でロック解除します。\n一度視聴すれば永久に解除されます。';
 
   @override
   String get journeyDetailGateDialogConfirm => 'ロック解除';
@@ -721,8 +730,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get onboardingGuidelineTitle => 'コミュニティガイドライン';
 
   @override
-  String get onboardingGuidelineDescription =>
-      '安全な利用のため、嫌がらせ、ヘイトスピーチ、個人情報の共有などを禁止します。違反時にはコンテンツが制限される場合があります。';
+  String get onboardingGuidelineDescription => '安全な利用のため、嫌がらせ、ヘイトスピーチ、個人情報の共有などを禁止します。違反時にはコンテンツが制限される場合があります。';
 
   @override
   String get onboardingAgreeGuidelines => 'コミュニティガイドラインに同意します。';
@@ -731,8 +739,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get onboardingContentPolicyTitle => 'コンテンツポリシー';
 
   @override
-  String get onboardingContentPolicyDescription =>
-      '違法、有害、暴力的なコンテンツは禁止されており、違反コンテンツは審査後に制限される場合があります。';
+  String get onboardingContentPolicyDescription => '違法、有害、暴力的なコンテンツは禁止されており、違反コンテンツは審査後に制限される場合があります。';
 
   @override
   String get onboardingAgreeContentPolicy => 'コンテンツポリシーに同意します。';
@@ -741,8 +748,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get onboardingSafetyTitle => '報告とブロック';
 
   @override
-  String get onboardingSafetyDescription =>
-      '不快または不適切なコンテンツを報告したり、特定のユーザーをブロックしてメッセージを受信しないようにできます。';
+  String get onboardingSafetyDescription => '不快または不適切なコンテンツを報告したり、特定のユーザーをブロックしてメッセージを受信しないようにできます。';
 
   @override
   String get onboardingConfirmSafety => '報告とブロックのポリシーを確認しました。';
@@ -894,8 +900,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get supportReleaseNotesBody =>
-      '• リレー体験と安定性を改善しました。\n• プロフィール/サポート画面のダークテーマを調整しました。\n• 軽微な不具合とパフォーマンスを改善しました。';
+  String get supportReleaseNotesBody => '• リレー体験と安定性を改善しました。\n• プロフィール/サポート画面のダークテーマを調整しました。\n• 軽微な不具合とパフォーマンスを改善しました。';
 
   @override
   String get supportVersionUnknown => '不明';

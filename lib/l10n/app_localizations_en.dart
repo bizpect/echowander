@@ -30,8 +30,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginApple => 'Continue with Apple';
 
   @override
-  String get loginTerms =>
-      'By signing in, you agree to our Terms of Service and Privacy Policy';
+  String get loginTerms => 'By signing in, you agree to our Terms of Service and Privacy Policy';
 
   @override
   String get homeTitle => 'Home';
@@ -49,15 +48,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeEmptyTitle => 'Welcome to EchoWander';
 
   @override
-  String get homeEmptyDescription =>
-      'Send your first relay message or check your inbox.';
+  String get homeEmptyDescription => 'Send your first relay message or check your inbox.';
 
   @override
   String get homeInboxCardTitle => 'Inbox';
 
   @override
-  String get homeInboxCardDescription =>
-      'Check and reply to messages you\'ve received.';
+  String get homeInboxCardDescription => 'Check and reply to messages you\'ve received.';
 
   @override
   String get homeCreateCardTitle => 'Create Message';
@@ -70,6 +67,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeRefresh => 'Refresh';
+
+  @override
+  String get homeExitTitle => 'Exit EchoWander?';
+
+  @override
+  String get homeExitMessage => 'Are you sure you want to close the app?';
+
+  @override
+  String get homeExitCancel => 'Cancel';
+
+  @override
+  String get homeExitConfirm => 'Exit';
+
+  @override
+  String get homeExitAdLoading => 'Loading ad...';
 
   @override
   String get homeLoadFailed => 'We couldn\'t load your data.';
@@ -89,8 +101,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pushPreviewTitle => 'Notification';
 
   @override
-  String get pushPreviewDescription =>
-      'This is a preview screen for push deep links.';
+  String get pushPreviewDescription => 'This is a preview screen for push deep links.';
 
   @override
   String get notificationTitle => 'New message';
@@ -120,8 +131,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationsDeleteTitle => 'Delete notification';
 
   @override
-  String get notificationsDeleteMessage =>
-      'Remove this notification from your inbox?';
+  String get notificationsDeleteMessage => 'Remove this notification from your inbox?';
 
   @override
   String get notificationsDeleteConfirm => 'Delete';
@@ -151,42 +161,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorLoginCancelled => 'Login was cancelled.';
 
   @override
-  String get errorLoginNetwork =>
-      'Please check your network connection and try again.';
+  String get errorLoginNetwork => 'Please check your network connection and try again.';
 
   @override
-  String get errorLoginInvalidToken =>
-      'Login verification failed. Please try again.';
+  String get errorLoginInvalidToken => 'Login verification failed. Please try again.';
 
   @override
-  String get errorLoginUnsupportedProvider =>
-      'This sign-in method is not supported.';
+  String get errorLoginUnsupportedProvider => 'This sign-in method is not supported.';
 
   @override
-  String get errorLoginUserSyncFailed =>
-      'We couldn\'t save your account. Please try again.';
+  String get errorLoginUserSyncFailed => 'We couldn\'t save your account. Please try again.';
 
   @override
-  String get errorLoginServiceUnavailable =>
-      'Sign-in is temporarily unavailable. Please try again later.';
+  String get errorLoginServiceUnavailable => 'Sign-in is temporarily unavailable. Please try again later.';
 
   @override
-  String get errorSessionExpired =>
-      'Your session expired. Please sign in again.';
+  String get errorSessionExpired => 'Your session expired. Please sign in again.';
 
   @override
   String get errorForbiddenTitle => 'Permission Required';
 
   @override
-  String get errorForbiddenMessage =>
-      'You don\'t have permission to perform this action. Please check your login status or try again later.';
+  String get errorForbiddenMessage => 'You don\'t have permission to perform this action. Please check your login status or try again later.';
 
   @override
   String get journeyInboxForbiddenTitle => 'Cannot Load Inbox';
 
   @override
-  String get journeyInboxForbiddenMessage =>
-      'You don\'t have permission to view the inbox. If the problem persists, please sign in again.';
+  String get journeyInboxForbiddenMessage => 'You don\'t have permission to view the inbox. If the problem persists, please sign in again.';
 
   @override
   String get languageSectionTitle => 'Language';
@@ -222,8 +224,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get composeWizardStep1Title => 'What will your journey say?';
 
   @override
-  String get composeWizardStep1Subtitle =>
-      'Write a short hook to start the relay.';
+  String get composeWizardStep1Subtitle => 'Write a short hook to start the relay.';
 
   @override
   String get composeWizardStep2Title => 'How many people should it reach?';
@@ -235,8 +236,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get composeWizardStep3Title => 'Add a photo? (optional)';
 
   @override
-  String get composeWizardStep3Subtitle =>
-      'Attach up to 3 photos, or send without one.';
+  String get composeWizardStep3Subtitle => 'Attach up to 3 photos, or send without one.';
 
   @override
   String get composeWizardBack => 'Back';
@@ -283,19 +283,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get composeImageLimit => 'You can attach up to 3 images.';
 
   @override
-  String get composePermissionDenied =>
-      'Photo access is needed to attach images.';
+  String get composePermissionDenied => 'Photo access is needed to attach images.';
 
   @override
   String get composeSessionMissing => 'Please sign in again.';
 
   @override
-  String get composeSubmitFailed =>
-      'We couldn\'t send your message. Try again.';
+  String get composeSubmitFailed => 'We couldn\'t send your message. Try again.';
 
   @override
-  String get composeServerMisconfigured =>
-      'Service setup is not ready yet. Please try again later.';
+  String get composeServerMisconfigured => 'Service setup is not ready yet. Please try again later.';
 
   @override
   String get composeSubmitSuccess => 'Your message was sent.';
@@ -315,8 +312,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get composeRecipientRequired => 'Select how many people to relay to.';
 
   @override
-  String get composeRecipientInvalid =>
-      'You can select between 1 and 5 people.';
+  String get composeRecipientInvalid => 'You can select between 1 and 5 people.';
 
   @override
   String get composeErrorTitle => 'Notice';
@@ -489,8 +485,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inboxPassedTitle => 'Passed message';
 
   @override
-  String get inboxPassedDetailUnavailable =>
-      'This message was passed and content is unavailable.';
+  String get inboxPassedDetailUnavailable => 'This message was passed and content is unavailable.';
 
   @override
   String get inboxReportCta => 'Report';
@@ -559,8 +554,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get journeyDetailResultsTitle => 'Replies';
 
   @override
-  String get journeyDetailResultsLocked =>
-      'Replies will appear after completion.';
+  String get journeyDetailResultsLocked => 'Replies will appear after completion.';
 
   @override
   String get journeyDetailResultsEmpty => 'No replies yet.';
@@ -572,8 +566,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonTemporaryErrorTitle => 'Temporary error';
 
   @override
-  String get sentDetailRepliesLoadFailedMessage =>
-      'We couldn\'t load the replies. We\'ll return to the list.';
+  String get sentDetailRepliesLoadFailedMessage => 'We couldn\'t load the replies. We\'ll return to the list.';
 
   @override
   String get commonOk => 'OK';
@@ -582,43 +575,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get journeyDetailResponsesMissingTitle => 'Temporary error';
 
   @override
-  String get journeyDetailResponsesMissingBody =>
-      'We couldn\'t load the responses. Please try again.\nWe\'ll return to the list.';
+  String get journeyDetailResponsesMissingBody => 'We couldn\'t load the responses. Please try again.\nWe\'ll return to the list.';
 
   @override
   String get journeyDetailGateConfigTitle => 'Ad not ready';
 
   @override
-  String get journeyDetailGateConfigBody =>
-      'Ads aren\'t configured yet. We\'ll open the details without an ad.';
+  String get journeyDetailGateConfigBody => 'Ads aren\'t configured yet. We\'ll open the details without an ad.';
 
   @override
   String get journeyDetailGateDismissedTitle => 'Ad not completed';
 
   @override
-  String get journeyDetailGateDismissedBody =>
-      'Please watch the ad to view details.';
+  String get journeyDetailGateDismissedBody => 'Please watch the ad to view details.';
 
   @override
   String get journeyDetailGateFailedTitle => 'Ad unavailable';
 
   @override
-  String get journeyDetailGateFailedBody =>
-      'We couldn\'t load the ad. Please try again.';
+  String get journeyDetailGateFailedBody => 'We couldn\'t load the ad. Please try again.';
 
   @override
   String get journeyDetailUnlockFailedTitle => 'Unlock failed';
 
   @override
-  String get journeyDetailUnlockFailedBody =>
-      'We couldn\'t save the unlock due to a network or server issue. Please try again.';
+  String get journeyDetailUnlockFailedBody => 'We couldn\'t save the unlock due to a network or server issue. Please try again.';
 
   @override
   String get journeyDetailGateDialogTitle => 'Unlock with a reward ad';
 
   @override
-  String get journeyDetailGateDialogBody =>
-      'Unlock by watching a reward ad.\nWatch once to unlock forever.';
+  String get journeyDetailGateDialogBody => 'Unlock by watching a reward ad.\nWatch once to unlock forever.';
 
   @override
   String get journeyDetailGateDialogConfirm => 'Unlock';
@@ -639,8 +626,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get journeyDetailAdFailedTitle => 'Ad unavailable';
 
   @override
-  String get journeyDetailAdFailedBody =>
-      'We couldn\'t load the ad. View results anyway?';
+  String get journeyDetailAdFailedBody => 'We couldn\'t load the ad. View results anyway?';
 
   @override
   String get journeyDetailAdFailedConfirm => 'View results';
@@ -720,12 +706,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingNotificationTitle => 'Notification permission';
 
   @override
-  String get onboardingNotificationDescription =>
-      'We\'ll notify you when relay messages arrive and results are ready.';
+  String get onboardingNotificationDescription => 'We\'ll notify you when relay messages arrive and results are ready.';
 
   @override
-  String get onboardingNotificationNote =>
-      'You can change this anytime in Settings. This step is optional.';
+  String get onboardingNotificationNote => 'You can change this anytime in Settings. This step is optional.';
 
   @override
   String get onboardingAllowNotifications => 'Allow';
@@ -734,12 +718,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingPhotoTitle => 'Photo access';
 
   @override
-  String get onboardingPhotoDescription =>
-      'Used only for setting profile images and attaching images to messages.';
+  String get onboardingPhotoDescription => 'Used only for setting profile images and attaching images to messages.';
 
   @override
-  String get onboardingPhotoNote =>
-      'We only access photos you select. This step is optional.';
+  String get onboardingPhotoNote => 'We only access photos you select. This step is optional.';
 
   @override
   String get onboardingAllowPhotos => 'Allow';
@@ -748,19 +730,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingGuidelineTitle => 'Community guidelines';
 
   @override
-  String get onboardingGuidelineDescription =>
-      'For safe use, harassment, hate speech, and sharing personal information are prohibited. Violations may result in content restrictions.';
+  String get onboardingGuidelineDescription => 'For safe use, harassment, hate speech, and sharing personal information are prohibited. Violations may result in content restrictions.';
 
   @override
-  String get onboardingAgreeGuidelines =>
-      'I agree to the community guidelines.';
+  String get onboardingAgreeGuidelines => 'I agree to the community guidelines.';
 
   @override
   String get onboardingContentPolicyTitle => 'Content policy';
 
   @override
-  String get onboardingContentPolicyDescription =>
-      'Illegal, harmful, and violent content is prohibited. Violating content may be restricted after review.';
+  String get onboardingContentPolicyDescription => 'Illegal, harmful, and violent content is prohibited. Violating content may be restricted after review.';
 
   @override
   String get onboardingAgreeContentPolicy => 'I agree to the content policy.';
@@ -769,12 +748,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingSafetyTitle => 'Report and block';
 
   @override
-  String get onboardingSafetyDescription =>
-      'You can report offensive or inappropriate content, or block specific users to stop receiving their messages.';
+  String get onboardingSafetyDescription => 'You can report offensive or inappropriate content, or block specific users to stop receiving their messages.';
 
   @override
-  String get onboardingConfirmSafety =>
-      'I understand the report and block policy.';
+  String get onboardingConfirmSafety => 'I understand the report and block policy.';
 
   @override
   String get onboardingSkip => 'Skip';
@@ -894,8 +871,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileWithdrawTitle => 'Delete account';
 
   @override
-  String get profileWithdrawMessage =>
-      'Are you sure you want to delete your account? This cannot be undone.';
+  String get profileWithdrawMessage => 'Are you sure you want to delete your account? This cannot be undone.';
 
   @override
   String get profileWithdrawConfirm => 'Delete';
@@ -904,8 +880,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileFeaturePreparingTitle => 'Coming soon';
 
   @override
-  String get profileFeaturePreparingBody =>
-      'This feature is not available yet.';
+  String get profileFeaturePreparingBody => 'This feature is not available yet.';
 
   @override
   String get profileAvatarSemantics => 'Profile avatar';
@@ -925,8 +900,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get supportReleaseNotesBody =>
-      '• Improved the relay experience and stability.\n• Polished dark theme visuals for profile and support.\n• Fixed minor bugs and performance issues.';
+  String get supportReleaseNotesBody => '• Improved the relay experience and stability.\n• Polished dark theme visuals for profile and support.\n• Fixed minor bugs and performance issues.';
 
   @override
   String get supportVersionUnknown => 'Unknown version';
@@ -947,43 +921,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get supportFaqQ1 => 'How can I create a team?';
 
   @override
-  String get supportFaqA1 =>
-      'Team features are coming soon. We\'ll announce details in future updates.';
+  String get supportFaqA1 => 'Team features are coming soon. We\'ll announce details in future updates.';
 
   @override
   String get supportFaqQ2 => 'How do I invite team members?';
 
   @override
-  String get supportFaqA2 =>
-      'Invites will be available once team features are released.';
+  String get supportFaqA2 => 'Invites will be available once team features are released.';
 
   @override
   String get supportFaqQ3 => 'How do I register game schedules?';
 
   @override
-  String get supportFaqA3 =>
-      'Schedule management will be supported in a future update.';
+  String get supportFaqA3 => 'Schedule management will be supported in a future update.';
 
   @override
   String get supportFaqQ4 => 'I am not receiving notifications.';
 
   @override
-  String get supportFaqA4 =>
-      'Check notification permissions in system settings and in-app settings.';
+  String get supportFaqA4 => 'Check notification permissions in system settings and in-app settings.';
 
   @override
   String get supportFaqQ5 => 'How do I delete my account?';
 
   @override
-  String get supportFaqA5 =>
-      'Go to Profile > Delete account and follow the confirmation steps.';
+  String get supportFaqA5 => 'Go to Profile > Delete account and follow the confirmation steps.';
 
   @override
   String get supportActionPreparingTitle => 'Coming soon';
 
   @override
-  String get supportActionPreparingBody =>
-      'This action will be available soon.';
+  String get supportActionPreparingBody => 'This action will be available soon.';
 
   @override
   String get appInfoTitle => 'App info';
@@ -1018,15 +986,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appInfoRelatedApp1Title => 'Test app 1';
 
   @override
-  String get appInfoRelatedApp1Description =>
-      'A sample app for testing related services.';
+  String get appInfoRelatedApp1Description => 'A sample app for testing related services.';
 
   @override
   String get appInfoRelatedApp2Title => 'Test app 2';
 
   @override
-  String get appInfoRelatedApp2Description =>
-      'Another sample app for related integrations.';
+  String get appInfoRelatedApp2Description => 'Another sample app for related integrations.';
 
   @override
   String get appInfoExternalLinkLabel => 'Open external link';
@@ -1044,15 +1010,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openLicenseHeaderTitle => 'Open source libraries';
 
   @override
-  String get openLicenseHeaderBody =>
-      'This app uses the following open source libraries.';
+  String get openLicenseHeaderBody => 'This app uses the following open source libraries.';
 
   @override
   String get openLicenseSectionTitle => 'License list';
 
   @override
-  String get openLicenseSectionSubtitle =>
-      'Review the open source packages in use.';
+  String get openLicenseSectionSubtitle => 'Review the open source packages in use.';
 
   @override
   String openLicenseChipVersion(Object version) {
@@ -1115,8 +1079,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorTimeout => 'Request timed out. Please try again.';
 
   @override
-  String get errorServerUnavailable =>
-      'Server is temporarily unavailable. Please try again later.';
+  String get errorServerUnavailable => 'Server is temporarily unavailable. Please try again later.';
 
   @override
   String get errorUnauthorized => 'Please sign in again.';
@@ -1128,6 +1091,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorCancel => 'Cancel';
 
   @override
-  String get errorAuthRefreshFailed =>
-      'Network is unstable. Please try again in a moment.';
+  String get errorAuthRefreshFailed => 'Network is unstable. Please try again in a moment.';
 }

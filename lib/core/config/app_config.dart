@@ -16,6 +16,8 @@ class AppConfig {
     required this.admobAppIdIos,
     required this.admobRewardedUnitIdAndroidProd,
     required this.admobRewardedUnitIdIosProd,
+    required this.admobNativeUnitIdAndroidProd,
+    required this.admobNativeUnitIdIosProd,
   });
 
   final AppEnvironment environment;
@@ -30,6 +32,8 @@ class AppConfig {
   final String admobAppIdIos;
   final String admobRewardedUnitIdAndroidProd;
   final String admobRewardedUnitIdIosProd;
+  final String admobNativeUnitIdAndroidProd;
+  final String admobNativeUnitIdIosProd;
 
   static AppConfig fromEnvironment() {
     final env =
@@ -80,6 +84,18 @@ class AppConfig {
           'ADMOB_REWARDED_UNIT_ID_IOS_PROD',
           defaultValue: '',
         );
+    final admobNativeUnitIdAndroidProd =
+        dotenv.env['ADMOB_NATIVE_UNIT_ID_ANDROID_PROD'] ??
+        const String.fromEnvironment(
+          'ADMOB_NATIVE_UNIT_ID_ANDROID_PROD',
+          defaultValue: '',
+        );
+    final admobNativeUnitIdIosProd =
+        dotenv.env['ADMOB_NATIVE_UNIT_ID_IOS_PROD'] ??
+        const String.fromEnvironment(
+          'ADMOB_NATIVE_UNIT_ID_IOS_PROD',
+          defaultValue: '',
+        );
     return AppConfig(
       environment: _parseEnv(env),
       authBaseUrl: authBaseUrl,
@@ -93,6 +109,8 @@ class AppConfig {
       admobAppIdIos: admobAppIdIos,
       admobRewardedUnitIdAndroidProd: admobRewardedUnitIdAndroidProd,
       admobRewardedUnitIdIosProd: admobRewardedUnitIdIosProd,
+      admobNativeUnitIdAndroidProd: admobNativeUnitIdAndroidProd,
+      admobNativeUnitIdIosProd: admobNativeUnitIdIosProd,
     );
   }
 

@@ -11,6 +11,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../core/presentation/navigation/tab_navigation_helper.dart';
 import '../../../core/presentation/scaffolds/main_tab_controller.dart';
 import '../../../core/presentation/widgets/app_card.dart';
 import '../../../core/presentation/widgets/app_header.dart';
@@ -45,7 +46,6 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
   ProviderSubscription<JourneyComposeState>? _messageSubscription;
   ProviderSubscription<String>? _contentSubscription;
   bool _isUpdatingController = false;
-  bool _allowPop = false;
   bool _isHandlingBack = false;
 
   // 3-step wizard 상태 (UI 전용)
@@ -55,7 +55,6 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
   String? _inlineMessage;
   bool _inlineMessageIsError = true;
   bool _showPhotoSettingsCta = false;
-  bool _showExitConfirmBar = false;
 
   @override
   void initState() {
@@ -153,7 +152,7 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
     final canSubmit = canGoNextFromMessage && canGoNextFromRecipient;
 
     return PopScope(
-      canPop: _allowPop,
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         // didPop이 true면 이미 pop이 일어났으므로 처리 불필요
         if (didPop) {
@@ -293,50 +292,35 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
                   ),
                 ),
                 // 고정 하단 액션 바 (Back/Next/Send)
-                if (_showExitConfirmBar)
-                  _ExitConfirmBar(
-                    onContinue: () {
-                      setState(() {
-                        _showExitConfirmBar = false;
-                      });
-                    },
-                    onLeave: () {
-                      setState(() {
-                        _showExitConfirmBar = false;
-                      });
-                      unawaited(_leaveCompose(context));
-                    },
-                  )
-                else
-                  ComposeBottomBar(
-                    stepIndex: _stepIndex,
-                    canGoNext: switch (_stepIndex) {
-                      0 => canGoNextFromMessage,
-                      1 => canGoNextFromRecipient,
-                      _ => canSubmit,
-                    },
-                    canSubmit: canSubmit,
-                    isSubmitting: state.isSubmitting,
-                    onBack: _stepIndex > 0
-                        ? () {
-                            setState(() {
-                              _stepIndex = (_stepIndex - 1).clamp(0, 2);
-                            });
-                          }
-                        : null,
-                    onNext: () => _handleNext(
-                      l10n: l10n,
-                      state: state,
-                      validationError: validationError,
-                    ),
-                    onSubmit: () => ref
-                        .read(journeyComposeControllerProvider.notifier)
-                        .submit(
-                          languageTag: Localizations.localeOf(
-                            context,
-                          ).toLanguageTag(),
-                        ),
+                ComposeBottomBar(
+                  stepIndex: _stepIndex,
+                  canGoNext: switch (_stepIndex) {
+                    0 => canGoNextFromMessage,
+                    1 => canGoNextFromRecipient,
+                    _ => canSubmit,
+                  },
+                  canSubmit: canSubmit,
+                  isSubmitting: state.isSubmitting,
+                  onBack: _stepIndex > 0
+                      ? () {
+                          setState(() {
+                            _stepIndex = (_stepIndex - 1).clamp(0, 2);
+                          });
+                        }
+                      : null,
+                  onNext: () => _handleNext(
+                    l10n: l10n,
+                    state: state,
+                    validationError: validationError,
                   ),
+                  onSubmit: () => ref
+                      .read(journeyComposeControllerProvider.notifier)
+                      .submit(
+                        languageTag: Localizations.localeOf(
+                          context,
+                        ).toLanguageTag(),
+                      ),
+                ),
               ],
             ),
           ],
@@ -476,9 +460,7 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
       debugPrint('[ComposeBackTrace] _handleBack 시작');
     }
 
-    // await 이전에 navigator 참조 확보 (lint 회피)
-    final navigator = Navigator.of(context);
-    final router = GoRouter.of(context);
+    // await 이전에 router/controller 참조 확보 (lint 회피)
     final controller = ref.read(journeyComposeControllerProvider.notifier);
 
     // 입력이 있으면 확인 다이얼로그 표시
@@ -488,68 +470,23 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
       if (kDebugMode) {
         debugPrint('[ComposeBackTrace] 입력 있음, confirm 다이얼로그 표시');
       }
-      setState(() {
-        _showExitConfirmBar = true;
-      });
+      final l10n = AppLocalizations.of(context)!;
+      final confirmed = await showExitConfirmDialog(
+        context,
+        title: l10n.exitConfirmTitle,
+        message: l10n.exitConfirmMessage,
+        continueLabel: l10n.exitConfirmContinue,
+        leaveLabel: l10n.exitConfirmLeave,
+      );
+      if (confirmed != true || !mounted) {
+        return;
+      }
+      await _leaveComposeToHome(controller);
       return;
     }
 
     // 입력이 없는 경우: 즉시 나가기
-    // 1) Focus/Keyboard 먼저 끊기
-    if (kDebugMode) {
-      debugPrint('[ComposeBackTrace] Focus unfocus 시작');
-    }
-    FocusManager.instance.primaryFocus?.unfocus();
-
-    // 2) Controller를 안전하게 비움 (text='' + selection=0)
-    if (kDebugMode) {
-      debugPrint('[ComposeBackTrace] Controller 안전하게 비우기');
-    }
-    _isUpdatingController = true;
-    _controller.value = const TextEditingValue(
-      text: '',
-      selection: TextSelection.collapsed(offset: 0),
-    );
-    _isUpdatingController = false;
-
-    // 3) Provider reset
-    if (kDebugMode) {
-      debugPrint('[ComposeBackTrace] Provider reset 시작');
-    }
-    controller.reset();
-
-    if (kDebugMode) {
-      debugPrint('[ComposeBackTrace] reset 완료, mounted 체크');
-    }
-
-    if (!mounted) {
-      if (kDebugMode) {
-        debugPrint('[ComposeBackTrace] reset 후 mounted 아님, 종료');
-      }
-      return;
-    }
-
-    // 4) PopScope가 pop을 통과하도록 허용
-    if (kDebugMode) {
-      debugPrint('[ComposeBackTrace] _allowPop = true 설정');
-    }
-    setState(() {
-      _allowPop = true;
-    });
-
-    // 5) Navigator.pop() 직접 호출 (maybePop 금지)
-    if (kDebugMode) {
-      debugPrint('[ComposeBackTrace] Navigator.pop() 시도');
-    }
-    // pop이 불가능한 경우를 대비해 fallback
-    if (navigator.canPop()) {
-      navigator.pop();
-    } else {
-      if (kDebugMode) {
-        debugPrint('[ComposeBackTrace] pop 불가, router.go(home) 실행');
-      }
-      router.go(AppRoutes.home);
-    }
+    await _leaveComposeToHome(controller);
   }
 
   Widget _buildStepBody({
@@ -700,11 +637,9 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
     }
   }
 
-  Future<void> _leaveCompose(BuildContext context) async {
-    final navigator = Navigator.of(context);
-    final router = GoRouter.of(context);
-    final controller = ref.read(journeyComposeControllerProvider.notifier);
-
+  Future<void> _leaveComposeToHome(
+    JourneyComposeController controller,
+  ) async {
     // 1) Focus/Keyboard 끊기
     FocusManager.instance.primaryFocus?.unfocus();
 
@@ -723,15 +658,7 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
       return;
     }
 
-    setState(() {
-      _allowPop = true;
-    });
-
-    if (navigator.canPop()) {
-      navigator.pop();
-    } else {
-      router.go(AppRoutes.home);
-    }
+    TabNavigationHelper.goToHomeTab(context, ref);
   }
 }
 
@@ -907,59 +834,3 @@ class _InlineActionCard extends StatelessWidget {
   }
 }
 
-class _ExitConfirmBar extends StatelessWidget {
-  const _ExitConfirmBar({required this.onContinue, required this.onLeave});
-
-  final VoidCallback onContinue;
-  final VoidCallback onLeave;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.screenPaddingHorizontal,
-        AppSpacing.spacing12,
-        AppSpacing.screenPaddingHorizontal,
-        AppSpacing.spacing12,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.outline, width: 1)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l10n.exitConfirmMessage,
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.spacing12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onContinue,
-                    child: Text(l10n.exitConfirmContinue),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.spacing12),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: onLeave,
-                    child: Text(l10n.exitConfirmLeave),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

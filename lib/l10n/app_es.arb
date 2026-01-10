@@ -20,6 +20,11 @@
   "homeCreateCardDescription": "Inicia un nuevo mensaje de relevo.",
   "homeJourneyCardViewDetails": "Ver detalles",
   "homeRefresh": "Actualizar",
+  "homeExitTitle": "¿Salir de la app?",
+  "homeExitMessage": "La app se cerrará.",
+  "homeExitCancel": "Cancelar",
+  "homeExitConfirm": "Salir",
+  "homeExitAdLoading": "Cargando anuncio...",
   "homeLoadFailed": "No pudimos cargar tus datos.",
   "homeInboxCount": "{count} nuevo(s)",
   "@homeInboxCount": {

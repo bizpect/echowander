@@ -67,6 +67,7 @@ final sessionManagerProvider = NotifierProvider<SessionManager, SessionState>(
 class SessionManager extends Notifier<SessionState> {
   late final TokenStore _tokenStore;
   late final AuthRpcClient _authRpcClient;
+  bool _bootCompleted = false;
 
   /// Single-flight 락: 동시에 여러 restoreSession 호출을 1회로 병합
   Completer<void>? _restoreCompleter;
@@ -444,7 +445,19 @@ class SessionManager extends Notifier<SessionState> {
   SessionState build() {
     _tokenStore = ref.read(tokenStoreProvider);
     _authRpcClient = ref.read(authRpcClientProvider);
+    _bootCompleted = false;
     return const SessionState.unknown();
+  }
+
+  void _completeBootIfNeeded(String reason) {
+    if (_bootCompleted) {
+      return;
+    }
+    _bootCompleted = true;
+    state = state.copyWith(bootState: SessionBootState.ready);
+    if (kDebugMode) {
+      debugPrint('$_logPrefix boot 완료: $reason');
+    }
   }
 
   /// 세션 복원 (single-flight + cooldown)
@@ -471,6 +484,7 @@ class SessionManager extends Notifier<SessionState> {
           '$_logPrefix restoreSession 차단: 이미 unauthenticated 상태 (루프 방지)',
         );
       }
+      _completeBootIfNeeded('restoreSession skipped (unauthenticated)');
       throw RestoreSessionFailedException();
     }
 
@@ -479,6 +493,7 @@ class SessionManager extends Notifier<SessionState> {
       if (kDebugMode) {
         debugPrint('$_logPrefix restoreSession 쿨다운 중 → 즉시 실패');
       }
+      _completeBootIfNeeded('restoreSession blocked (cooldown)');
       throw RestoreSessionBlockedException();
     }
 
@@ -524,6 +539,7 @@ class SessionManager extends Notifier<SessionState> {
             isBusy: false,
             accessToken: tokens.accessToken,
           );
+          _completeBootIfNeeded('restoreSession success');
           _lastRestoreFailedAt = null; // 쿨다운 해제
           if (kDebugMode) {
             debugPrint('$_logPrefix restoreSession done (success)');
@@ -538,6 +554,7 @@ class SessionManager extends Notifier<SessionState> {
             accessToken: null,
             message: SessionMessage.sessionExpired,
           );
+          _completeBootIfNeeded('restoreSession authFailed');
           _lastRestoreFailedAt = DateTime.now(); // 쿨다운 기록
           if (kDebugMode) {
             debugPrint('$_logPrefix restoreSession done (authFailed)');
@@ -553,6 +570,7 @@ class SessionManager extends Notifier<SessionState> {
             accessToken: currentTokens?.accessToken,
             message: SessionMessage.authRefreshFailed,
           );
+          _completeBootIfNeeded('restoreSession transient');
           _lastRestoreFailedAt = DateTime.now(); // 쿨다운 기록
           if (kDebugMode) {
             debugPrint('$_logPrefix restoreSession done (transient)');
@@ -588,6 +606,7 @@ class SessionManager extends Notifier<SessionState> {
           accessToken: currentTokens?.accessToken,
           message: SessionMessage.authRefreshFailed,
         );
+        _completeBootIfNeeded('restoreSession error');
       }
 
       // ✅ 6단계: completer 완료 (에러)

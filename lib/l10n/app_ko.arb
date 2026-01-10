@@ -20,6 +20,11 @@
   "homeCreateCardDescription": "새로운 릴레이 메시지를 시작하세요.",
   "homeJourneyCardViewDetails": "자세히 보기",
   "homeRefresh": "새로고침",
+  "homeExitTitle": "앱을 종료할까요?",
+  "homeExitMessage": "지금 앱을 종료합니다.",
+  "homeExitCancel": "취소",
+  "homeExitConfirm": "앱 종료",
+  "homeExitAdLoading": "광고 로딩 중...",
   "homeLoadFailed": "데이터를 불러올 수 없습니다.",
   "homeInboxCount": "{count}개의 새 메시지",
   "@homeInboxCount": {

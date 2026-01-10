@@ -69,6 +69,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeRefresh => '刷新';
 
   @override
+  String get homeExitTitle => '要退出应用吗？';
+
+  @override
+  String get homeExitMessage => '应用将被关闭。';
+
+  @override
+  String get homeExitCancel => '取消';
+
+  @override
+  String get homeExitConfirm => '退出';
+
+  @override
+  String get homeExitAdLoading => '正在加载广告...';
+
+  @override
   String get homeLoadFailed => '无法加载您的数据。';
 
   @override
@@ -167,15 +182,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errorForbiddenTitle => 'Permission Required';
 
   @override
-  String get errorForbiddenMessage =>
-      'You don\'t have permission to perform this action. Please check your login status or try again later.';
+  String get errorForbiddenMessage => 'You don\'t have permission to perform this action. Please check your login status or try again later.';
 
   @override
   String get journeyInboxForbiddenTitle => 'Cannot Load Inbox';
 
   @override
-  String get journeyInboxForbiddenMessage =>
-      'You don\'t have permission to view the inbox. If the problem persists, please sign in again.';
+  String get journeyInboxForbiddenMessage => 'You don\'t have permission to view the inbox. If the problem persists, please sign in again.';
 
   @override
   String get languageSectionTitle => '语言';
@@ -717,8 +730,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get onboardingGuidelineTitle => '社区准则';
 
   @override
-  String get onboardingGuidelineDescription =>
-      '为了安全使用，禁止骚扰、仇恨言论和分享个人信息。违规行为可能导致内容限制。';
+  String get onboardingGuidelineDescription => '为了安全使用，禁止骚扰、仇恨言论和分享个人信息。违规行为可能导致内容限制。';
 
   @override
   String get onboardingAgreeGuidelines => '我同意社区准则。';
@@ -727,8 +739,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get onboardingContentPolicyTitle => '内容政策';
 
   @override
-  String get onboardingContentPolicyDescription =>
-      '禁止非法、有害和暴力内容。违规内容经审核后可能会被限制。';
+  String get onboardingContentPolicyDescription => '禁止非法、有害和暴力内容。违规内容经审核后可能会被限制。';
 
   @override
   String get onboardingAgreeContentPolicy => '我同意内容政策。';
@@ -889,8 +900,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get supportReleaseNotesBody =>
-      '• 改进了转发体验与稳定性。\n• 优化了个人资料/支持页面的深色主题。\n• 修复了部分小问题并提升性能。';
+  String get supportReleaseNotesBody => '• 改进了转发体验与稳定性。\n• 优化了个人资料/支持页面的深色主题。\n• 修复了部分小问题并提升性能。';
 
   @override
   String get supportVersionUnknown => '未知';

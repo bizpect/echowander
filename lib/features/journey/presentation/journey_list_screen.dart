@@ -12,6 +12,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../core/ads/ad_reward_constants.dart';
 import '../../../core/ads/rewarded_ad_gate.dart';
+import '../../../core/presentation/navigation/tab_navigation_helper.dart';
 import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/app_empty_state.dart';
 import '../../../core/presentation/widgets/app_list_item.dart';
@@ -61,33 +62,46 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
       controller.clearMessage();
     });
 
-    return AppScaffold(
-      appBar: AppHeader(
-        title: l10n.journeyListTitle,
-        alignTitleLeft: true,
-      ),
-      bodyPadding: EdgeInsets.zero,
-      body: LoadingOverlay(
-        isLoading: state.isLoading || _isAdLoading,
-        child: RefreshIndicator(
-          onRefresh: () async {
-            // Pull-to-Refresh: 보낸메세지 리스트 갱신
-            await controller.load();
-          },
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 180),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeOut,
-            child: _buildBody(
-              context: context,
-              l10n: l10n,
-              state: state,
-              dateFormat: dateFormat,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          return;
+        }
+        _handleBack(context);
+      },
+      child: AppScaffold(
+        appBar: AppHeader(
+          title: l10n.journeyListTitle,
+          alignTitleLeft: true,
+        ),
+        bodyPadding: EdgeInsets.zero,
+        body: LoadingOverlay(
+          isLoading: state.isLoading || _isAdLoading,
+          child: RefreshIndicator(
+            onRefresh: () async {
+              // Pull-to-Refresh: 보낸메세지 리스트 갱신
+              await controller.load();
+            },
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeOut,
+              child: _buildBody(
+                context: context,
+                l10n: l10n,
+                state: state,
+                dateFormat: dateFormat,
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  void _handleBack(BuildContext context) {
+    TabNavigationHelper.goToHomeTab(context, ref);
   }
 
   Widget _buildBody({

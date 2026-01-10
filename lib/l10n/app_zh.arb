@@ -20,6 +20,11 @@
   "homeCreateCardDescription": "开始新的接力消息。",
   "homeJourneyCardViewDetails": "查看详情",
   "homeRefresh": "刷新",
+  "homeExitTitle": "要退出应用吗？",
+  "homeExitMessage": "应用将被关闭。",
+  "homeExitCancel": "取消",
+  "homeExitConfirm": "退出",
+  "homeExitAdLoading": "正在加载广告...",
   "homeLoadFailed": "无法加载您的数据。",
   "homeInboxCount": "{count}条新消息",
   "@homeInboxCount": {

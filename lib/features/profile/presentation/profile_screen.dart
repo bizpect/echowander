@@ -14,6 +14,7 @@ import '../../../core/presentation/widgets/app_icon_badge.dart';
 import '../../../core/presentation/widgets/app_scaffold.dart';
 import '../../../core/presentation/widgets/app_section.dart';
 import '../../../core/presentation/widgets/app_skeleton.dart';
+import '../../../core/presentation/navigation/tab_navigation_helper.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../core/session/session_state.dart';
 import '../../../l10n/app_localizations.dart';
@@ -28,91 +29,98 @@ class ProfileScreen extends ConsumerWidget {
     final sessionState = ref.watch(sessionManagerProvider);
     final displayName = l10n.profileDefaultNickname;
     final providerLabel = _resolveProviderLabel(l10n, null);
-    final isLoading =
-        sessionState.status == SessionStatus.unknown ||
-        sessionState.status == SessionStatus.refreshing;
+    final isLoading = sessionState.bootState == SessionBootState.booting;
 
-    return AppScaffold(
-      appBar: AppHeader(
-        title: l10n.tabProfileLabel,
-        alignTitleLeft: true,
-      ),
-      bodyPadding: EdgeInsets.zero,
-      body: ListView(
-        padding: AppSpacing.pagePadding.copyWith(bottom: AppSpacing.xxl),
-        children: [
-          _ProfileHeaderCard(
-            l10n: l10n,
-            displayName: displayName,
-            providerLabel: providerLabel,
-            isLoading: isLoading,
-            photoUrl: null,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Semantics(
-            button: true,
-            label: l10n.profileEditCta,
-            child: SizedBox(
-              height: AppSpacing.minTouchTarget,
-              width: double.infinity,
-              child: AppFilledButton(
-                onPressed: () => _showFeaturePreparingDialog(context, l10n),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.edit, size: 18),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(l10n.profileEditCta),
-                  ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          return;
+        }
+        TabNavigationHelper.goToHomeTab(context, ref);
+      },
+      child: AppScaffold(
+        appBar: AppHeader(
+          title: l10n.tabProfileLabel,
+          alignTitleLeft: true,
+        ),
+        bodyPadding: EdgeInsets.zero,
+        body: ListView(
+          padding: AppSpacing.pagePadding.copyWith(bottom: AppSpacing.xxl),
+          children: [
+            _ProfileHeaderCard(
+              l10n: l10n,
+              displayName: displayName,
+              providerLabel: providerLabel,
+              isLoading: isLoading,
+              photoUrl: null,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Semantics(
+              button: true,
+              label: l10n.profileEditCta,
+              child: SizedBox(
+                height: AppSpacing.minTouchTarget,
+                width: double.infinity,
+                child: AppFilledButton(
+                  onPressed: () => _showFeaturePreparingDialog(context, l10n),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.edit, size: 18),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(l10n.profileEditCta),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          AppSection(
-            title: l10n.profileMenuTitle,
-            subtitle: l10n.profileMenuSubtitle,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          _SettingsMenuCard(
-            items: [
-              _SettingsMenuItem(
-                icon: Icons.notifications_outlined,
-                iconBackground: AppColors.primaryContainer,
-                iconColor: AppColors.onPrimaryContainer,
-                title: l10n.profileMenuNotifications,
-                onTap: () => context.push(AppRoutes.settings),
-              ),
-              _SettingsMenuItem(
-                icon: Icons.campaign_outlined,
-                iconBackground: AppColors.secondaryContainer,
-                iconColor: AppColors.onSecondaryContainer,
-                title: l10n.profileMenuNotices,
-                onTap: () => context.push(AppRoutes.notifications),
-              ),
-              _SettingsMenuItem(
-                icon: Icons.volunteer_activism_outlined,
-                iconBackground: AppColors.warningContainer,
-                iconColor: AppColors.onWarningContainer,
-                title: l10n.profileMenuSupport,
-                onTap: () => context.push(AppRoutes.support),
-              ),
-              _SettingsMenuItem(
-                icon: Icons.info_outline,
-                iconBackground: AppColors.surfaceVariant,
-                iconColor: AppColors.onSurfaceVariant,
-                title: l10n.profileMenuAppInfo,
-                onTap: () => context.push(AppRoutes.appInfo),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          _DangerActionSection(
-            l10n: l10n,
-            onSignOut: () => _confirmSignOut(context, ref, l10n),
-            onWithdraw: () => _confirmWithdraw(context, l10n),
-          ),
-        ],
+            const SizedBox(height: AppSpacing.xl),
+            AppSection(
+              title: l10n.profileMenuTitle,
+              subtitle: l10n.profileMenuSubtitle,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _SettingsMenuCard(
+              items: [
+                _SettingsMenuItem(
+                  icon: Icons.notifications_outlined,
+                  iconBackground: AppColors.primaryContainer,
+                  iconColor: AppColors.onPrimaryContainer,
+                  title: l10n.profileMenuNotifications,
+                  onTap: () => context.push(AppRoutes.settings),
+                ),
+                _SettingsMenuItem(
+                  icon: Icons.campaign_outlined,
+                  iconBackground: AppColors.secondaryContainer,
+                  iconColor: AppColors.onSecondaryContainer,
+                  title: l10n.profileMenuNotices,
+                  onTap: () => context.push(AppRoutes.notifications),
+                ),
+                _SettingsMenuItem(
+                  icon: Icons.volunteer_activism_outlined,
+                  iconBackground: AppColors.warningContainer,
+                  iconColor: AppColors.onWarningContainer,
+                  title: l10n.profileMenuSupport,
+                  onTap: () => context.push(AppRoutes.support),
+                ),
+                _SettingsMenuItem(
+                  icon: Icons.info_outline,
+                  iconBackground: AppColors.surfaceVariant,
+                  iconColor: AppColors.onSurfaceVariant,
+                  title: l10n.profileMenuAppInfo,
+                  onTap: () => context.push(AppRoutes.appInfo),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            _DangerActionSection(
+              l10n: l10n,
+              onSignOut: () => _confirmSignOut(context, ref, l10n),
+              onWithdraw: () => _confirmWithdraw(context, l10n),
+            ),
+          ],
+        ),
       ),
     );
   }

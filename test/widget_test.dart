@@ -30,6 +30,8 @@ void main() {
       admobAppIdIos: '',
       admobRewardedUnitIdAndroidProd: '',
       admobRewardedUnitIdIosProd: '',
+      admobNativeUnitIdAndroidProd: '',
+      admobNativeUnitIdIosProd: '',
     );
 
     await tester.pumpWidget(

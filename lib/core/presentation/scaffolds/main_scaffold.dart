@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../app/router/app_router.dart';
+import '../../../features/home/presentation/widgets/exit_confirm_bottom_sheet.dart';
 import '../../../features/home/presentation/home_screen.dart';
 import '../../../features/journey/presentation/journey_inbox_screen.dart';
 import '../../../features/journey/presentation/journey_list_screen.dart';
@@ -26,6 +27,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
     with SingleTickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+  bool _isExitSheetVisible = false;
 
   @override
   void initState() {
@@ -81,15 +83,13 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
   Widget build(BuildContext context) {
     // Provider에서 현재 탭 인덱스 구독
     final currentIndex = ref.watch(mainTabControllerProvider);
-
     return PopScope(
-      // 루트 화면에서 뒤로가기 시 앱 종료 확인
-      canPop: currentIndex != AppTab.home.tabIndex,
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop && currentIndex != AppTab.home.tabIndex) {
-          // 다른 탭에서 뒤로가기 시 Home으로 이동
-          ref.read(mainTabControllerProvider.notifier).switchToTab(AppTab.home);
+        if (didPop) {
+          return;
         }
+        _handleBack();
       },
       child: Scaffold(
         body: FadeTransition(
@@ -132,6 +132,46 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
         ),
       ),
     );
+  }
+
+  Future<void> _handleBack() async {
+    final currentIndex = ref.read(mainTabControllerProvider);
+    if (currentIndex != AppTab.home.tabIndex) {
+      ref.read(mainTabControllerProvider.notifier).switchToTab(AppTab.home);
+      return;
+    }
+    await _showExitSheet();
+  }
+
+  Future<void> _showExitSheet() async {
+    if (_isExitSheetVisible) {
+      return;
+    }
+    setState(() {
+      _isExitSheetVisible = true;
+    });
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (sheetContext) {
+        return ExitConfirmBottomSheet(
+          onCancel: () => Navigator.of(sheetContext).pop(),
+          onExit: () {
+            Navigator.of(sheetContext).pop();
+            SystemNavigator.pop();
+          },
+        );
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _isExitSheetVisible = false;
+    });
   }
 
   /// 탭별 독립 Navigator 생성

@@ -20,6 +20,11 @@
   "homeCreateCardDescription": "Démarrez un nouveau message relais.",
   "homeJourneyCardViewDetails": "Voir les détails",
   "homeRefresh": "Actualiser",
+  "homeExitTitle": "Quitter l'application ?",
+  "homeExitMessage": "L'application va se fermer.",
+  "homeExitCancel": "Annuler",
+  "homeExitConfirm": "Quitter",
+  "homeExitAdLoading": "Chargement de l'annonce...",
   "homeLoadFailed": "Nous n'avons pas pu charger vos données.",
   "homeInboxCount": "{count} nouveau(x)",
   "@homeInboxCount": {

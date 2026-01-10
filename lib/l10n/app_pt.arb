@@ -20,6 +20,11 @@
   "homeCreateCardDescription": "Inicie uma nova mensagem de relé.",
   "homeJourneyCardViewDetails": "Ver detalhes",
   "homeRefresh": "Atualizar",
+  "homeExitTitle": "Sair da app?",
+  "homeExitMessage": "A app será encerrada.",
+  "homeExitCancel": "Cancelar",
+  "homeExitConfirm": "Sair",
+  "homeExitAdLoading": "Carregando anúncio...",
   "homeLoadFailed": "Não conseguimos carregar os seus dados.",
   "homeInboxCount": "{count} nova(s)",
   "@homeInboxCount": {

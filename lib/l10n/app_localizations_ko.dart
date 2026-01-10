@@ -69,6 +69,21 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeRefresh => '새로고침';
 
   @override
+  String get homeExitTitle => '앱을 종료할까요?';
+
+  @override
+  String get homeExitMessage => '지금 앱을 종료합니다.';
+
+  @override
+  String get homeExitCancel => '취소';
+
+  @override
+  String get homeExitConfirm => '앱 종료';
+
+  @override
+  String get homeExitAdLoading => '광고 로딩 중...';
+
+  @override
   String get homeLoadFailed => '데이터를 불러올 수 없습니다.';
 
   @override
@@ -158,8 +173,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get errorLoginUserSyncFailed => '계정 정보를 저장하지 못했습니다. 다시 시도해주세요.';
 
   @override
-  String get errorLoginServiceUnavailable =>
-      '로그인 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해주세요.';
+  String get errorLoginServiceUnavailable => '로그인 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해주세요.';
 
   @override
   String get errorSessionExpired => '세션이 만료되었습니다. 다시 로그인해주세요.';
@@ -168,15 +182,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get errorForbiddenTitle => '권한이 필요합니다';
 
   @override
-  String get errorForbiddenMessage =>
-      '요청한 작업을 수행할 권한이 없습니다. 로그인 상태를 확인하거나 잠시 후 다시 시도해주세요.';
+  String get errorForbiddenMessage => '요청한 작업을 수행할 권한이 없습니다. 로그인 상태를 확인하거나 잠시 후 다시 시도해주세요.';
 
   @override
   String get journeyInboxForbiddenTitle => '인박스를 불러올 수 없어요';
 
   @override
-  String get journeyInboxForbiddenMessage =>
-      '인박스를 조회할 권한이 없습니다. 문제가 계속되면 다시 로그인해 주세요.';
+  String get journeyInboxForbiddenMessage => '인박스를 조회할 권한이 없습니다. 문제가 계속되면 다시 로그인해 주세요.';
 
   @override
   String get languageSectionTitle => '언어';
@@ -280,8 +292,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get composeSubmitFailed => '메시지 전송에 실패했어요. 다시 시도해 주세요.';
 
   @override
-  String get composeServerMisconfigured =>
-      '서비스 설정이 아직 완료되지 않았어요. 잠시 후 다시 시도해 주세요.';
+  String get composeServerMisconfigured => '서비스 설정이 아직 완료되지 않았어요. 잠시 후 다시 시도해 주세요.';
 
   @override
   String get composeSubmitSuccess => '메시지를 보냈어요.';
@@ -555,8 +566,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get commonTemporaryErrorTitle => '일시적인 오류';
 
   @override
-  String get sentDetailRepliesLoadFailedMessage =>
-      '댓글을 불러오지 못했습니다.\n목록으로 이동합니다.';
+  String get sentDetailRepliesLoadFailedMessage => '댓글을 불러오지 못했습니다.\n목록으로 이동합니다.';
 
   @override
   String get commonOk => '확인';
@@ -565,8 +575,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get journeyDetailResponsesMissingTitle => '일시적인 오류';
 
   @override
-  String get journeyDetailResponsesMissingBody =>
-      '댓글을 불러오지 못했습니다. 다시 시도해 주세요.\n목록으로 이동합니다.';
+  String get journeyDetailResponsesMissingBody => '댓글을 불러오지 못했습니다. 다시 시도해 주세요.\n목록으로 이동합니다.';
 
   @override
   String get journeyDetailGateConfigTitle => '광고 준비 중';
@@ -590,15 +599,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get journeyDetailUnlockFailedTitle => '잠금해제 저장에 실패했어요';
 
   @override
-  String get journeyDetailUnlockFailedBody =>
-      '네트워크/서버 문제로 잠금해제에 실패했어요. 다시 시도해주세요.';
+  String get journeyDetailUnlockFailedBody => '네트워크/서버 문제로 잠금해제에 실패했어요. 다시 시도해주세요.';
 
   @override
   String get journeyDetailGateDialogTitle => '리워드 광고로 잠금해제';
 
   @override
-  String get journeyDetailGateDialogBody =>
-      '리워드 광고 시청으로 잠금해제 합니다.\n한 번 시청하면 영원히 잠금 풀립니다.';
+  String get journeyDetailGateDialogBody => '리워드 광고 시청으로 잠금해제 합니다.\n한 번 시청하면 영원히 잠금 풀립니다.';
 
   @override
   String get journeyDetailGateDialogConfirm => '잠금해제';
@@ -702,8 +709,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get onboardingNotificationDescription => '릴레이 메시지 도착과 결과 완료를 알려드립니다.';
 
   @override
-  String get onboardingNotificationNote =>
-      '설정에서 언제든 변경할 수 있으며, 이 단계는 건너뛸 수 있습니다.';
+  String get onboardingNotificationNote => '설정에서 언제든 변경할 수 있으며, 이 단계는 건너뛸 수 있습니다.';
 
   @override
   String get onboardingAllowNotifications => '허용';
@@ -724,8 +730,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get onboardingGuidelineTitle => '커뮤니티 가이드라인';
 
   @override
-  String get onboardingGuidelineDescription =>
-      '안전한 이용을 위해 혐오, 괴롭힘, 개인정보 노출 등의 행위를 금지합니다. 위반 시 콘텐츠가 제한될 수 있습니다.';
+  String get onboardingGuidelineDescription => '안전한 이용을 위해 혐오, 괴롭힘, 개인정보 노출 등의 행위를 금지합니다. 위반 시 콘텐츠가 제한될 수 있습니다.';
 
   @override
   String get onboardingAgreeGuidelines => '커뮤니티 가이드라인에 동의합니다.';
@@ -734,8 +739,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get onboardingContentPolicyTitle => '콘텐츠 정책';
 
   @override
-  String get onboardingContentPolicyDescription =>
-      '불법, 유해, 폭력적 콘텐츠는 금지되며, 위반 콘텐츠는 검토 후 제한될 수 있습니다.';
+  String get onboardingContentPolicyDescription => '불법, 유해, 폭력적 콘텐츠는 금지되며, 위반 콘텐츠는 검토 후 제한될 수 있습니다.';
 
   @override
   String get onboardingAgreeContentPolicy => '콘텐츠 정책에 동의합니다.';
@@ -744,8 +748,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get onboardingSafetyTitle => '신고 및 차단';
 
   @override
-  String get onboardingSafetyDescription =>
-      '불쾌하거나 부적절한 콘텐츠를 신고하거나, 특정 사용자를 차단하여 메시지를 받지 않을 수 있습니다.';
+  String get onboardingSafetyDescription => '불쾌하거나 부적절한 콘텐츠를 신고하거나, 특정 사용자를 차단하여 메시지를 받지 않을 수 있습니다.';
 
   @override
   String get onboardingConfirmSafety => '신고 및 차단 정책을 확인했습니다.';
@@ -897,8 +900,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get supportReleaseNotesBody =>
-      '• 릴레이 경험과 안정성이 개선되었습니다.\n• 프로필/지원하기 화면의 다크 테마가 개선되었습니다.\n• 경미한 버그와 성능 문제를 수정했습니다.';
+  String get supportReleaseNotesBody => '• 릴레이 경험과 안정성이 개선되었습니다.\n• 프로필/지원하기 화면의 다크 테마가 개선되었습니다.\n• 경미한 버그와 성능 문제를 수정했습니다.';
 
   @override
   String get supportVersionUnknown => '알 수 없음';

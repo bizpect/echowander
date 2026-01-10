@@ -12,6 +12,18 @@ import '../scaffolds/main_tab_controller.dart';
 /// 상세 화면에서 뒤로가기 시 각 탭의 루트 화면(리스트)으로 정확히 복귀하도록 보장합니다.
 /// 딥링크로 상세만 열린 경우에도 탭 루트를 구성하고 해당 탭을 활성화합니다.
 class TabNavigationHelper {
+  /// 홈 탭으로 복귀
+  ///
+  /// - 홈 탭 활성화
+  /// - /home으로 이동하여 탭 쉘 유지
+  static void goToHomeTab(BuildContext context, WidgetRef ref) {
+    final router = GoRouter.of(context);
+    final tabController = ref.read(mainTabControllerProvider.notifier);
+
+    tabController.switchToHomeTab();
+    router.go(AppRoutes.home);
+  }
+
   /// 받은 메시지 탭 루트로 복귀
   ///
   /// - 상세 화면이 스택에 있으면 pop

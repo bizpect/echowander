@@ -138,7 +138,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-
                   // Inbox 액션 카드 (애니메이션 index 1)
                   _buildAnimatedCard(
                     index: 1,

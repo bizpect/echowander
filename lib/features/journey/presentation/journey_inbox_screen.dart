@@ -10,6 +10,7 @@ import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
+import '../../../core/presentation/navigation/tab_navigation_helper.dart';
 import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/app_empty_state.dart';
@@ -229,11 +230,7 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
   }
 
   void _handleBack(BuildContext context) {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go(AppRoutes.home);
-    }
+    TabNavigationHelper.goToHomeTab(context, ref);
   }
 }
 

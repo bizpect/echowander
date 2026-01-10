@@ -43,9 +43,12 @@ class AppRoutes {
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  // ✅ 라우팅은 status만 구독 (isBusy/message 변화로 재생성 방지)
+  // ✅ 라우팅은 status/bootState만 구독 (isBusy/message 변화로 재생성 방지)
   final sessionStatus = ref.watch(
     sessionManagerProvider.select((state) => state.status),
+  );
+  final bootState = ref.watch(
+    sessionManagerProvider.select((state) => state.bootState),
   );
   // redirect에 필요한 onboardingStatus만 select로 watch
   // 체크 토글 시 전체 state 변경이 router 재생성을 유발하지 않도록 방지
@@ -129,7 +132,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final status = sessionStatus;
       final location = state.matchedLocation;
 
-      if (status == SessionStatus.unknown ||
+      if (bootState == SessionBootState.booting ||
           onboardingStatus == OnboardingStatus.unknown) {
         return location == AppRoutes.splash ? null : AppRoutes.splash;
       }

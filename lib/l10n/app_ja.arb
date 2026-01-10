@@ -20,6 +20,11 @@
   "homeCreateCardDescription": "新しいリレーメッセージを開始します。",
   "homeJourneyCardViewDetails": "詳細を見る",
   "homeRefresh": "更新",
+  "homeExitTitle": "アプリを終了しますか？",
+  "homeExitMessage": "アプリを終了します。",
+  "homeExitCancel": "キャンセル",
+  "homeExitConfirm": "終了",
+  "homeExitAdLoading": "広告を読み込み中…",
   "homeLoadFailed": "データを読み込めませんでした。",
   "homeInboxCount": "{count}件の新着",
   "@homeInboxCount": {

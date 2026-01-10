@@ -26,6 +26,11 @@ class MainTabController extends Notifier<int> {
   void switchToInboxTab() {
     switchToTab(AppTab.inbox);
   }
+
+  /// 홈 탭으로 전환
+  void switchToHomeTab() {
+    switchToTab(AppTab.home);
+  }
 }
 
 final mainTabControllerProvider = NotifierProvider<MainTabController, int>(

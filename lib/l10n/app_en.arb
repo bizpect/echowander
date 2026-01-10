@@ -20,6 +20,11 @@
   "homeCreateCardDescription": "Start a new relay message.",
   "homeJourneyCardViewDetails": "View details",
   "homeRefresh": "Refresh",
+  "homeExitTitle": "Exit EchoWander?",
+  "homeExitMessage": "Are you sure you want to close the app?",
+  "homeExitCancel": "Cancel",
+  "homeExitConfirm": "Exit",
+  "homeExitAdLoading": "Loading ad...",
   "homeLoadFailed": "We couldn't load your data.",
   "homeInboxCount": "{count} new",
   "@homeInboxCount": {
