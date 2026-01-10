@@ -8,6 +8,8 @@ import '../../../../app/theme/app_spacing.dart';
 import '../../../../core/presentation/navigation/tab_navigation_helper.dart';
 import '../../../../core/presentation/widgets/app_button.dart';
 import '../../../../core/presentation/widgets/app_dialog.dart';
+import '../../../../core/presentation/widgets/app_header.dart';
+import '../../../../core/presentation/widgets/app_scaffold.dart';
 import '../../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../../core/session/session_manager.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -26,10 +28,12 @@ class SentJourneyDetailScreen extends ConsumerStatefulWidget {
   final bool fromNotification;
 
   @override
-  ConsumerState<SentJourneyDetailScreen> createState() => _SentJourneyDetailScreenState();
+  ConsumerState<SentJourneyDetailScreen> createState() =>
+      _SentJourneyDetailScreenState();
 }
 
-class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScreen> {
+class _SentJourneyDetailScreenState
+    extends ConsumerState<SentJourneyDetailScreen> {
   late final String _reqId;
   bool _didShowMissingAlert = false;
 
@@ -55,7 +59,9 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
       );
       return;
     }
-    await ref.read(sentJourneyDetailControllerProvider.notifier).load(
+    await ref
+        .read(sentJourneyDetailControllerProvider.notifier)
+        .load(
           journeyId: widget.journeyId,
           accessToken: accessToken,
           reqId: _reqId,
@@ -66,7 +72,8 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(sentJourneyDetailControllerProvider);
-    if ((state.responsesMissing || state.responsesLoadFailed) && !_didShowMissingAlert) {
+    if ((state.responsesMissing || state.responsesLoadFailed) &&
+        !_didShowMissingAlert) {
       _didShowMissingAlert = true;
       Future.microtask(() => _showMissingResponsesAlert(l10n));
     }
@@ -79,37 +86,30 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
         }
         TabNavigationHelper.goToSentRoot(context, ref);
       },
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: Text(l10n.journeyDetailTitle),
-          backgroundColor: AppColors.background,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          leading: IconButton(
-            onPressed: () => TabNavigationHelper.goToSentRoot(context, ref),
-            icon: const Icon(Icons.arrow_back),
-            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          ),
-          actions: const [],
+      child: AppScaffold(
+        appBar: AppHeader(
+          title: l10n.journeyDetailTitle,
+          leadingIcon: Icons.arrow_back,
+          onLeadingTap: () => TabNavigationHelper.goToSentRoot(context, ref),
+          leadingSemanticLabel: MaterialLocalizations.of(
+            context,
+          ).backButtonTooltip,
         ),
         body: LoadingOverlay(
           isLoading: state.isLoading,
-          child: SafeArea(
-            child: state.loadFailed
-                ? _buildError(l10n)
-                : state.detail == null
-                    ? const SizedBox.shrink()
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                        child: _buildContent(
-                          l10n,
-                          state.detail!,
-                          state.responses,
-                          state.responsesLoadFailed,
-                        ),
-                      ),
-          ),
+          child: state.loadFailed
+              ? _buildError(l10n)
+              : state.detail == null
+              ? const SizedBox.shrink()
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  child: _buildContent(
+                    l10n,
+                    state.detail!,
+                    state.responses,
+                    state.responsesLoadFailed,
+                  ),
+                ),
         ),
       ),
     );
@@ -122,17 +122,13 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: AppColors.error,
-            ),
+            Icon(Icons.error_outline, size: 64, color: AppColors.error),
             SizedBox(height: AppSpacing.spacing16),
             Text(
               l10n.journeyDetailLoadFailed,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.onSurface,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(color: AppColors.onSurface),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: AppSpacing.spacing24),
@@ -195,25 +191,17 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            _buildStatusBadge(l10n, detail.statusCode),
-          ],
-        ),
+        Row(children: [_buildStatusBadge(l10n, detail.statusCode)]),
         SizedBox(height: AppSpacing.spacing12),
         Row(
           children: [
-            Icon(
-              Icons.schedule,
-              size: 14,
-              color: AppColors.onSurfaceVariant,
-            ),
+            Icon(Icons.schedule, size: 14, color: AppColors.onSurfaceVariant),
             SizedBox(width: AppSpacing.spacing4),
             Text(
               dateFormat.format(detail.createdAt.toLocal()),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                  ),
+                color: AppColors.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -225,9 +213,7 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
     return Card(
       color: AppColors.surface,
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.medium,
-      ),
+      shape: RoundedRectangleBorder(borderRadius: AppRadius.medium),
       child: Padding(
         padding: EdgeInsets.all(AppSpacing.spacing20),
         child: Column(
@@ -236,10 +222,10 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
             Text(
               detail.content,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.onSurface,
-                    fontWeight: FontWeight.w500,
-                    height: 1.5,
-                  ),
+                color: AppColors.onSurface,
+                fontWeight: FontWeight.w500,
+                height: 1.5,
+              ),
             ),
             if (detail.imageCount > 0) ...[
               SizedBox(height: AppSpacing.spacing12),
@@ -254,8 +240,8 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
                   Text(
                     '${detail.imageCount}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                        ),
+                      color: AppColors.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -278,14 +264,13 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
         ? BoxDecoration(
             color: AppColors.primary.withValues(alpha: 0.08),
             borderRadius: AppRadius.medium,
-            border: Border.all(
-              color: AppColors.primary,
-              width: 1.5,
-            ),
+            border: Border.all(color: AppColors.primary, width: 1.5),
           )
         : null;
     return Container(
-      padding: widget.fromNotification ? EdgeInsets.all(AppSpacing.spacing16) : EdgeInsets.zero,
+      padding: widget.fromNotification
+          ? EdgeInsets.all(AppSpacing.spacing16)
+          : EdgeInsets.zero,
       decoration: highlightDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,9 +286,9 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
               Text(
                 l10n.journeyDetailResultsTitle,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.onSurface,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  color: AppColors.onSurface,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -323,9 +308,7 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
     return Card(
       color: AppColors.warning.withValues(alpha: 0.1),
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.medium,
-      ),
+      shape: RoundedRectangleBorder(borderRadius: AppRadius.medium),
       child: Padding(
         padding: EdgeInsets.all(AppSpacing.spacing16),
         child: Row(
@@ -335,9 +318,9 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
             Expanded(
               child: Text(
                 l10n.journeyDetailResultsLocked,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.onSurface,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.onSurface),
               ),
             ),
           ],
@@ -361,9 +344,7 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
         return Card(
           color: AppColors.surface,
           elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.medium,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.medium),
           child: Padding(
             padding: EdgeInsets.all(AppSpacing.spacing16),
             child: Column(
@@ -375,15 +356,15 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
                     Text(
                       response.responderNickname,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     Text(
                       dateFormat.format(response.createdAt.toLocal()),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.onSurfaceVariant,
-                          ),
+                        color: AppColors.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -391,10 +372,10 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
                 Text(
                   response.content,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.onSurface,
-                        height: 1.6,
-                        fontSize: 16,
-                      ),
+                    color: AppColors.onSurface,
+                    height: 1.6,
+                    fontSize: 16,
+                  ),
                 ),
               ],
             ),
@@ -417,10 +398,7 @@ class _SentJourneyDetailScreenState extends ConsumerState<SentJourneyDetailScree
       decoration: BoxDecoration(
         color: statusColor.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: statusColor.withValues(alpha: 0.4),
-          width: 1,
-        ),
+        border: Border.all(color: statusColor.withValues(alpha: 0.4), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

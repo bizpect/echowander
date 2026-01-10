@@ -11,10 +11,12 @@ import 'ad_reward_constants.dart';
 
 class AdRewardLogger {
   AdRewardLogger({required AppConfig config})
-      : _config = config,
-        _errorLogger = ServerErrorLogger(config: config),
-        _networkGuard = NetworkGuard(errorLogger: ServerErrorLogger(config: config)),
-        _client = HttpClient();
+    : _config = config,
+      _errorLogger = ServerErrorLogger(config: config),
+      _networkGuard = NetworkGuard(
+        errorLogger: ServerErrorLogger(config: config),
+      ),
+      _client = HttpClient();
 
   final AppConfig _config;
   final ServerErrorLogger _errorLogger;
@@ -38,7 +40,9 @@ class AdRewardLogger {
       return;
     }
 
-    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/log_ad_reward_event');
+    final uri = Uri.parse(
+      '${_config.supabaseUrl}/rest/v1/rpc/log_ad_reward_event',
+    );
 
     try {
       await _networkGuard.execute<void>(
@@ -101,7 +105,10 @@ class AdRewardLogger {
     Map<String, dynamic>? metadata,
   }) async {
     final request = await _client.postUrl(uri);
-    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
     request.headers.set('apikey', _config.supabaseAnonKey);
     request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
     request.add(

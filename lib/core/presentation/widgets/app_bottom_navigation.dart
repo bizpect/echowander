@@ -116,7 +116,7 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
         color: AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: AppColors.overlaySubtle,
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -208,9 +208,7 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.symmetric(
-              vertical: AppSpacing.spacing8,
-            ),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.spacing8),
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -223,23 +221,24 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
                       final opacity = 0.6 + (0.4 * controller.value);
                       return Transform.scale(
                         scale: scale,
-                        child: Opacity(
-                          opacity: opacity,
-                          child: child,
-                        ),
+                        child: Opacity(opacity: opacity, child: child),
                       );
                     },
                     child: Icon(
                       isSelected ? selectedIcon : icon,
                       size: 28,
-                      color: isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.onSurfaceVariant,
                     ),
                   )
                 else
                   Icon(
                     isSelected ? selectedIcon : icon,
                     size: 28,
-                    color: isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.onSurfaceVariant,
                   ),
               ],
             ),
@@ -276,17 +275,16 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
                 final opacity = 0.6 + (0.4 * controller.value);
                 return Transform.scale(
                   scale: scale,
-                  child: Opacity(
-                    opacity: opacity,
-                    child: child,
-                  ),
+                  child: Opacity(opacity: opacity, child: child),
                 );
               },
               child: Container(
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primaryContainer : AppColors.primary,
+                  color: isSelected
+                      ? AppColors.primaryContainer
+                      : AppColors.primary,
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
@@ -299,7 +297,9 @@ class _AppBottomNavigationState extends State<AppBottomNavigation>
                 child: Icon(
                   isSelected ? Icons.edit : Icons.add,
                   size: 28,
-                  color: isSelected ? AppColors.onPrimaryContainer : AppColors.onPrimary,
+                  color: isSelected
+                      ? AppColors.onPrimaryContainer
+                      : AppColors.onPrimary,
                 ),
               ),
             ),

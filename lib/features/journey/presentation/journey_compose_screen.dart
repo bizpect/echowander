@@ -10,9 +10,12 @@ import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
+import '../../../app/theme/app_text_styles.dart';
 import '../../../core/presentation/scaffolds/main_tab_controller.dart';
+import '../../../core/presentation/widgets/app_card.dart';
 import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
+import '../../../core/presentation/widgets/app_scaffold.dart';
 import '../../../core/validation/text_rules.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/journey_compose_controller.dart';
@@ -33,7 +36,8 @@ class JourneyComposeScreen extends ConsumerStatefulWidget {
   const JourneyComposeScreen({super.key});
 
   @override
-  ConsumerState<JourneyComposeScreen> createState() => _JourneyComposeScreenState();
+  ConsumerState<JourneyComposeScreen> createState() =>
+      _JourneyComposeScreenState();
 }
 
 class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
@@ -78,7 +82,9 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
     final currentText = _controller.text;
     final currentState = ref.read(journeyComposeControllerProvider);
     if (currentText != currentState.content) {
-      ref.read(journeyComposeControllerProvider.notifier).updateContent(currentText);
+      ref
+          .read(journeyComposeControllerProvider.notifier)
+          .updateContent(currentText);
     }
   }
 
@@ -168,180 +174,172 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
           _isHandlingBack = false;
         }
       },
-      child: Scaffold(
-        backgroundColor: AppColors.background,
+      child: AppScaffold(
         appBar: AppHeader(
           title: l10n.composeTitle,
-          alignLeft: true,
-          extraTopPadding: AppSpacing.spacing8,
+          alignTitleLeft: true,
           trailingIcon: Icons.close,
           onTrailingTap: () => _handleBack(context, state),
-          trailingSemanticLabel: MaterialLocalizations.of(context).closeButtonTooltip,
+          trailingSemanticLabel: l10n.commonClose,
         ),
+        bodyPadding: EdgeInsets.zero,
         resizeToAvoidBottomInset: true,
-        body: SafeArea(
-          child: Stack(
-            children: [
-              // 배경 데코 (하드코딩 컬러 금지: 토큰 기반 파생 색상 사용)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        center: const Alignment(-0.8, -0.9),
-                        radius: 1.2,
-                        colors: [
-                          AppColors.secondary.withValues(alpha: 0.18),
-                          AppColors.background,
-                        ],
-                        stops: const [0, 0.7],
-                      ),
+        body: Stack(
+          children: [
+            // 배경 데코 (토큰 기반 글로우 색상 사용)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(-0.8, -0.9),
+                      radius: 1.2,
+                      colors: [
+                        AppColors.secondaryGlowStrong,
+                        AppColors.background,
+                      ],
+                      stops: const [0, 0.7],
                     ),
                   ),
                 ),
               ),
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        center: const Alignment(0.9, 0.6),
-                        radius: 1.1,
-                        colors: [
-                          AppColors.secondary.withValues(alpha: 0.12),
-                          AppColors.background,
-                        ],
-                        stops: const [0, 0.75],
-                      ),
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(0.9, 0.6),
+                      radius: 1.1,
+                      colors: [
+                        AppColors.secondaryGlowSoft,
+                        AppColors.background,
+                      ],
+                      stops: const [0, 0.75],
                     ),
                   ),
                 ),
               ),
-
-              Column(
-                children: [
-                  // 상단 진행 표시 + 스토리 헤더
-                  Padding(
+            ),
+            Column(
+              children: [
+                // 상단 진행 표시 + 스토리 헤더
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.screenPaddingHorizontal,
+                    AppSpacing.screenPaddingTop,
+                    AppSpacing.screenPaddingHorizontal,
+                    AppSpacing.spacing12,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _ComposeProgressIndicator(stepIndex: _stepIndex),
+                      const SizedBox(height: AppSpacing.spacing12),
+                      _StoryHeader(
+                        title: _stepTitle(l10n, _stepIndex),
+                        subtitle: _stepSubtitle(l10n, _stepIndex),
+                      ),
+                      if (_inlineMessage != null) ...[
+                        const SizedBox(height: AppSpacing.spacing12),
+                        _InlineMessageBanner(
+                          message: _inlineMessage!,
+                          isError: _inlineMessageIsError,
+                          onRetry: _inlineMessageIsError
+                              ? _onInlineRetry
+                              : null,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                // 스크롤 가능한 본문 영역
+                Expanded(
+                  child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(
                       AppSpacing.screenPaddingHorizontal,
-                      AppSpacing.screenPaddingTop,
+                      0,
                       AppSpacing.screenPaddingHorizontal,
-                      AppSpacing.spacing12,
+                      AppSpacing.sectionGap,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _ComposeProgressIndicator(
-                          stepIndex: _stepIndex,
-                        ),
-                        const SizedBox(height: AppSpacing.spacing12),
-                        _StoryHeader(
-                          title: _stepTitle(l10n, _stepIndex),
-                          subtitle: _stepSubtitle(l10n, _stepIndex),
-                        ),
-                        if (_inlineMessage != null) ...[
-                          const SizedBox(height: AppSpacing.spacing12),
-                          _InlineMessageBanner(
-                            message: _inlineMessage!,
-                            isError: _inlineMessageIsError,
-                            onRetry: _inlineMessageIsError ? _onInlineRetry : null,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-
-                  // 스크롤 가능한 본문 영역
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.screenPaddingHorizontal,
-                        0,
-                        AppSpacing.screenPaddingHorizontal,
-                        AppSpacing.sectionGap,
-                      ),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 240),
-                        switchInCurve: Curves.easeOut,
-                        switchOutCurve: Curves.easeIn,
-                        transitionBuilder: (child, animation) {
-                          final fade = CurvedAnimation(
-                            parent: animation,
-                            curve: Curves.easeInOut,
-                          );
-                          final slide = Tween<Offset>(
-                            begin: const Offset(0.04, 0),
-                            end: Offset.zero,
-                          ).animate(fade);
-                          return FadeTransition(
-                            opacity: fade,
-                            child: SlideTransition(
-                              position: slide,
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: KeyedSubtree(
-                          key: ValueKey(_stepIndex),
-                          child: _buildStepBody(
-                            context: context,
-                            l10n: l10n,
-                            state: state,
-                            validationError: validationError,
-                          ),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 240),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeIn,
+                      transitionBuilder: (child, animation) {
+                        final fade = CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeInOut,
+                        );
+                        final slide = Tween<Offset>(
+                          begin: const Offset(0.04, 0),
+                          end: Offset.zero,
+                        ).animate(fade);
+                        return FadeTransition(
+                          opacity: fade,
+                          child: SlideTransition(position: slide, child: child),
+                        );
+                      },
+                      child: KeyedSubtree(
+                        key: ValueKey(_stepIndex),
+                        child: _buildStepBody(
+                          context: context,
+                          l10n: l10n,
+                          state: state,
+                          validationError: validationError,
                         ),
                       ),
                     ),
                   ),
-
-                  // 고정 하단 액션 바 (Back/Next/Send)
-                  if (_showExitConfirmBar)
-                    _ExitConfirmBar(
-                      onContinue: () {
-                        setState(() {
-                          _showExitConfirmBar = false;
-                        });
-                      },
-                      onLeave: () {
-                        setState(() {
-                          _showExitConfirmBar = false;
-                        });
-                        unawaited(_leaveCompose(context));
-                      },
-                    )
-                  else
-                    ComposeBottomBar(
-                      stepIndex: _stepIndex,
-                      canGoNext: switch (_stepIndex) {
-                        0 => canGoNextFromMessage,
-                        1 => canGoNextFromRecipient,
-                        _ => canSubmit,
-                      },
-                      canSubmit: canSubmit,
-                      isSubmitting: state.isSubmitting,
-                      onBack: _stepIndex > 0
-                          ? () {
-                              setState(() {
-                                _stepIndex = (_stepIndex - 1).clamp(0, 2);
-                              });
-                            }
-                          : null,
-                      onNext: () => _handleNext(
-                        l10n: l10n,
-                        state: state,
-                        validationError: validationError,
-                      ),
-                      onSubmit: () => ref
-                          .read(journeyComposeControllerProvider.notifier)
-                          .submit(
-                            languageTag:
-                                Localizations.localeOf(context).toLanguageTag(),
-                          ),
+                ),
+                // 고정 하단 액션 바 (Back/Next/Send)
+                if (_showExitConfirmBar)
+                  _ExitConfirmBar(
+                    onContinue: () {
+                      setState(() {
+                        _showExitConfirmBar = false;
+                      });
+                    },
+                    onLeave: () {
+                      setState(() {
+                        _showExitConfirmBar = false;
+                      });
+                      unawaited(_leaveCompose(context));
+                    },
+                  )
+                else
+                  ComposeBottomBar(
+                    stepIndex: _stepIndex,
+                    canGoNext: switch (_stepIndex) {
+                      0 => canGoNextFromMessage,
+                      1 => canGoNextFromRecipient,
+                      _ => canSubmit,
+                    },
+                    canSubmit: canSubmit,
+                    isSubmitting: state.isSubmitting,
+                    onBack: _stepIndex > 0
+                        ? () {
+                            setState(() {
+                              _stepIndex = (_stepIndex - 1).clamp(0, 2);
+                            });
+                          }
+                        : null,
+                    onNext: () => _handleNext(
+                      l10n: l10n,
+                      state: state,
+                      validationError: validationError,
                     ),
-                ],
-              ),
-            ],
-          ),
+                    onSubmit: () => ref
+                        .read(journeyComposeControllerProvider.notifier)
+                        .submit(
+                          languageTag: Localizations.localeOf(
+                            context,
+                          ).toLanguageTag(),
+                        ),
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -360,7 +358,10 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
     return null;
   }
 
-  Future<void> _handleMessage(AppLocalizations l10n, JourneyComposeMessage message) async {
+  Future<void> _handleMessage(
+    AppLocalizations l10n,
+    JourneyComposeMessage message,
+  ) async {
     switch (message) {
       case JourneyComposeMessage.emptyContent:
         setState(() {
@@ -436,12 +437,12 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
           _inlineMessageIsError = false;
           _stepIndex = 2;
         });
-        
+
         // router와 controller를 사전에 캡처하여 context 안전성 보장
         final router = GoRouter.of(context);
         final tabController = ref.read(mainTabControllerProvider.notifier);
         final listController = ref.read(journeyListControllerProvider.notifier);
-        
+
         // 성공 알럿 표시 (확인 클릭 시 보낸메세지 탭으로 이동)
         await showAppAlertDialog(
           context: context,
@@ -467,7 +468,10 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
     }
   }
 
-  Future<void> _handleBack(BuildContext context, JourneyComposeState state) async {
+  Future<void> _handleBack(
+    BuildContext context,
+    JourneyComposeState state,
+  ) async {
     if (kDebugMode) {
       debugPrint('[ComposeBackTrace] _handleBack 시작');
     }
@@ -666,9 +670,9 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
       setState(() {
         _inlineMessage = null;
       });
-      ref.read(journeyComposeControllerProvider.notifier).submit(
-            languageTag: Localizations.localeOf(context).toLanguageTag(),
-          );
+      ref
+          .read(journeyComposeControllerProvider.notifier)
+          .submit(languageTag: Localizations.localeOf(context).toLanguageTag());
     }
   }
 
@@ -732,9 +736,7 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
 }
 
 class _ComposeProgressIndicator extends StatelessWidget {
-  const _ComposeProgressIndicator({
-    required this.stepIndex,
-  });
+  const _ComposeProgressIndicator({required this.stepIndex});
 
   final int stepIndex;
 
@@ -763,33 +765,24 @@ class _ComposeProgressIndicator extends StatelessWidget {
 }
 
 class _StoryHeader extends StatelessWidget {
-  const _StoryHeader({
-    required this.title,
-    required this.subtitle,
-  });
+  const _StoryHeader({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: AppColors.onBackground,
-            fontWeight: FontWeight.w700,
-          ),
+          style: AppTextStyles.titleLg.copyWith(color: AppColors.textPrimary),
         ),
         const SizedBox(height: AppSpacing.spacing4),
         Text(
           subtitle,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: AppColors.onSurfaceVariant,
-          ),
+          style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
         ),
       ],
     );
@@ -797,40 +790,18 @@ class _StoryHeader extends StatelessWidget {
 }
 
 class _StepCard extends StatelessWidget {
-  const _StepCard({
-    required this.child,
-    this.accentBorder = false,
-  });
+  const _StepCard({required this.child, this.accentBorder = false});
 
   final Widget child;
   final bool accentBorder;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: AppRadius.large,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.25),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: AppRadius.large,
-          border: Border.all(
-            color: accentBorder
-                ? AppColors.secondary.withValues(alpha: 0.45)
-                : AppColors.outlineVariant,
-            width: accentBorder ? 1.2 : 1,
-          ),
-        ),
-        child: child,
-      ),
+    return AppCard(
+      padding: EdgeInsets.zero,
+      borderColor: accentBorder ? AppColors.secondary : AppColors.borderSubtle,
+      borderWidth: accentBorder ? 1.2 : 1,
+      child: child,
     );
   }
 }
@@ -849,33 +820,34 @@ class _InlineMessageBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.spacing12),
       decoration: BoxDecoration(
         color: isError
-            ? AppColors.errorContainer.withValues(alpha: 0.55)
-            : AppColors.secondaryContainer.withValues(alpha: 0.55),
+            ? AppColors.inlineErrorBackground
+            : AppColors.inlineInfoBackground,
         borderRadius: AppRadius.medium,
         border: Border.all(
           color: isError
-              ? AppColors.error.withValues(alpha: 0.4)
-              : AppColors.secondary.withValues(alpha: 0.4),
+              ? AppColors.inlineErrorBorder
+              : AppColors.inlineInfoBorder,
         ),
       ),
       child: Row(
         children: [
           Icon(
             isError ? Icons.error_outline : Icons.check_circle_outline,
-            color: isError ? AppColors.onErrorContainer : AppColors.onSecondaryContainer,
+            color: isError
+                ? AppColors.onErrorContainer
+                : AppColors.onSecondaryContainer,
             size: 18,
           ),
           const SizedBox(width: AppSpacing.spacing8),
           Expanded(
             child: Text(
               message,
-              style: theme.textTheme.bodySmall?.copyWith(
+              style: AppTextStyles.caption.copyWith(
                 color: isError
                     ? AppColors.onErrorContainer
                     : AppColors.onSecondaryContainer,
@@ -884,10 +856,7 @@ class _InlineMessageBanner extends StatelessWidget {
           ),
           if (onRetry != null) ...[
             const SizedBox(width: AppSpacing.spacing8),
-            TextButton(
-              onPressed: onRetry,
-              child: Text(l10n.errorRetry),
-            ),
+            TextButton(onPressed: onRetry, child: Text(l10n.errorRetry)),
           ],
         ],
       ),
@@ -910,37 +879,28 @@ class _InlineActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
+    return AppCard(
       padding: const EdgeInsets.all(AppSpacing.spacing12),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
-        borderRadius: AppRadius.medium,
-        border: Border.all(color: AppColors.outlineVariant),
-      ),
+      borderColor: AppColors.outlineVariant,
+      borderWidth: 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             title,
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: AppColors.onSurface,
-              fontWeight: FontWeight.w700,
+            style: AppTextStyles.bodyStrong.copyWith(
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: AppSpacing.spacing4),
           Text(
             message,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: AppColors.onSurfaceVariant,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: AppSpacing.spacing12),
-          OutlinedButton(
-            onPressed: onAction,
-            child: Text(actionLabel),
-          ),
+          OutlinedButton(onPressed: onAction, child: Text(actionLabel)),
         ],
       ),
     );
@@ -948,10 +908,7 @@ class _InlineActionCard extends StatelessWidget {
 }
 
 class _ExitConfirmBar extends StatelessWidget {
-  const _ExitConfirmBar({
-    required this.onContinue,
-    required this.onLeave,
-  });
+  const _ExitConfirmBar({required this.onContinue, required this.onLeave});
 
   final VoidCallback onContinue;
   final VoidCallback onLeave;
@@ -969,12 +926,7 @@ class _ExitConfirmBar extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        border: Border(
-          top: BorderSide(
-            color: AppColors.outline,
-            width: 1,
-          ),
-        ),
+        border: Border(top: BorderSide(color: AppColors.outline, width: 1)),
       ),
       child: SafeArea(
         top: false,
@@ -983,9 +935,9 @@ class _ExitConfirmBar extends StatelessWidget {
           children: [
             Text(
               l10n.exitConfirmMessage,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                  ),
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(height: AppSpacing.spacing12),
             Row(

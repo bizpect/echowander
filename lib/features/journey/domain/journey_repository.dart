@@ -2,10 +2,7 @@ import 'sent_journey_detail.dart';
 import 'sent_journey_response.dart';
 
 class JourneyCreationResult {
-  JourneyCreationResult({
-    required this.journeyId,
-    required this.createdAt,
-  });
+  JourneyCreationResult({required this.journeyId, required this.createdAt});
 
   final String journeyId;
   final DateTime createdAt;
@@ -230,9 +227,7 @@ abstract class JourneyRepository {
   });
 
   /// 디버그용: auth.uid() 값 확인
-  Future<String> debugAuth({
-    required String accessToken,
-  });
+  Future<String> debugAuth({required String accessToken});
 
   Future<List<String>> fetchInboxJourneyImageUrls({
     required String journeyId,

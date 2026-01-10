@@ -74,19 +74,15 @@ class _ErrorStateWidgetState extends State<ErrorStateWidget>
             mainAxisSize: MainAxisSize.min,
             children: [
               // 아이콘 (에러 색상)
-              Icon(
-                widget.icon,
-                size: 80,
-                color: AppColors.error,
-              ),
+              Icon(widget.icon, size: 80, color: AppColors.error),
               const SizedBox(height: AppSpacing.spacing16),
 
               // 타이틀
               Text(
                 widget.title,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColors.onSurface,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(color: AppColors.onSurface),
                 textAlign: TextAlign.center,
               ),
 
@@ -96,8 +92,8 @@ class _ErrorStateWidgetState extends State<ErrorStateWidget>
                 Text(
                   widget.description!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.onSurfaceVariant,
-                      ),
+                    color: AppColors.onSurfaceVariant,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ],

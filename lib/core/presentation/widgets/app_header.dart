@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
-import '../../../app/theme/app_typography.dart';
+import '../../../app/theme/app_text_styles.dart';
 
 /// 앱 공통 헤더(AppBar) UI 규격을 고정하는 위젯
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
@@ -15,17 +15,19 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.trailingIcon,
     this.onTrailingTap,
     this.trailingSemanticLabel,
-    this.alignLeft = false,
-    this.extraTopPadding = 0,
+    this.topPadding = AppSpacing.spacing8,
     this.showDivider = false,
+    this.alignTitleLeft = false,
   });
 
   static const double kHeaderHeight = 56;
   static const double kHeaderIconSize = 24;
   static const double kHeaderIconHitBox = AppSpacing.minTouchTarget;
-  static const double kHeaderHorizontalPadding = AppSpacing.screenPaddingHorizontal;
+  static const double kHeaderHorizontalPadding =
+      AppSpacing.screenPaddingHorizontal;
   static const double kHeaderTitleGap = AppSpacing.spacing12;
-  static const TextStyle kHeaderTitleTextStyle = AppTypography.headlineLarge;
+  static TextStyle get kHeaderTitleTextStyle => AppTextStyles.titleLg;
+  static const Duration kHeaderAnimationDuration = Duration(milliseconds: 180);
 
   final String title;
   final IconData? leadingIcon;
@@ -34,12 +36,12 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final IconData? trailingIcon;
   final VoidCallback? onTrailingTap;
   final String? trailingSemanticLabel;
-  final bool alignLeft;
-  final double extraTopPadding;
+  final double topPadding;
   final bool showDivider;
+  final bool alignTitleLeft;
 
   @override
-  Size get preferredSize => Size.fromHeight(kHeaderHeight + extraTopPadding);
+  Size get preferredSize => Size.fromHeight(kHeaderHeight + topPadding);
 
   @override
   Widget build(BuildContext context) {
@@ -48,21 +50,16 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
       child: SafeArea(
         bottom: false,
         child: Container(
-          height: kHeaderHeight + extraTopPadding,
+          height: kHeaderHeight + topPadding,
           padding: EdgeInsets.fromLTRB(
             kHeaderHorizontalPadding,
-            extraTopPadding,
+            topPadding,
             kHeaderHorizontalPadding,
             0,
           ),
           decoration: BoxDecoration(
             border: showDivider
-                ? Border(
-                    bottom: BorderSide(
-                      color: AppColors.surfaceVariant.withValues(alpha: 0.6),
-                      width: 1,
-                    ),
-                  )
+                ? Border(bottom: BorderSide(color: AppColors.divider, width: 1))
                 : null,
           ),
           child: Row(
@@ -72,17 +69,29 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                 icon: leadingIcon,
                 onTap: onLeadingTap,
                 semanticLabel: leadingSemanticLabel,
-                keepSpace: !alignLeft,
+                reserveSpace: !alignTitleLeft,
               ),
-              SizedBox(width: alignLeft ? 0 : kHeaderTitleGap),
+              SizedBox(width: alignTitleLeft ? 0 : kHeaderTitleGap),
               Expanded(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: kHeaderTitleTextStyle.copyWith(
-                    color: AppColors.onBackground,
-                    fontWeight: FontWeight.bold,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: AnimatedSwitcher(
+                    duration: kHeaderAnimationDuration,
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeOut,
+                    transitionBuilder: (child, animation) =>
+                        FadeTransition(opacity: animation, child: child),
+                    child: Text(
+                      title,
+                      key: ValueKey(title),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.left,
+                      style: kHeaderTitleTextStyle.copyWith(
+                        color: AppColors.onBackground,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -91,6 +100,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                 icon: trailingIcon,
                 onTap: onTrailingTap,
                 semanticLabel: trailingSemanticLabel,
+                reserveSpace: true,
               ),
             ],
           ),
@@ -105,42 +115,81 @@ class _HeaderIconSlot extends StatelessWidget {
     required this.icon,
     required this.onTap,
     required this.semanticLabel,
-    this.keepSpace = true,
+    required this.reserveSpace,
   });
 
   final IconData? icon;
   final VoidCallback? onTap;
   final String? semanticLabel;
-  final bool keepSpace;
+  final bool reserveSpace;
 
   @override
   Widget build(BuildContext context) {
     if (icon == null) {
-      if (!keepSpace) {
-        return const SizedBox.shrink();
-      }
-      return const SizedBox(
-        width: AppHeader.kHeaderIconHitBox,
+      return SizedBox(
+        width: reserveSpace ? AppHeader.kHeaderIconHitBox : 0,
         height: AppHeader.kHeaderIconHitBox,
       );
     }
 
+    return _HeaderIconButton(
+      icon: icon!,
+      onTap: onTap,
+      semanticLabel: semanticLabel,
+    );
+  }
+}
+
+class _HeaderIconButton extends StatefulWidget {
+  const _HeaderIconButton({
+    required this.icon,
+    required this.onTap,
+    required this.semanticLabel,
+  });
+
+  final IconData icon;
+  final VoidCallback? onTap;
+  final String? semanticLabel;
+
+  @override
+  State<_HeaderIconButton> createState() => _HeaderIconButtonState();
+}
+
+class _HeaderIconButtonState extends State<_HeaderIconButton> {
+  bool _isPressed = false;
+
+  void _handleHighlightChanged(bool isPressed) {
+    if (_isPressed == isPressed) {
+      return;
+    }
+    setState(() {
+      _isPressed = isPressed;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Semantics(
-      label: semanticLabel,
+      label: widget.semanticLabel,
       button: true,
-      child: IconButton(
-        onPressed: onTap,
-        icon: Icon(
-          icon,
-          size: AppHeader.kHeaderIconSize,
-          color: AppColors.onBackground,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.98 : 1,
+        duration: AppHeader.kHeaderAnimationDuration,
+        curve: Curves.easeOut,
+        child: InkResponse(
+          onTap: widget.onTap,
+          onHighlightChanged: _handleHighlightChanged,
+          radius: AppHeader.kHeaderIconHitBox / 2,
+          child: SizedBox(
+            width: AppHeader.kHeaderIconHitBox,
+            height: AppHeader.kHeaderIconHitBox,
+            child: Icon(
+              widget.icon,
+              size: AppHeader.kHeaderIconSize,
+              color: AppColors.onBackground,
+            ),
+          ),
         ),
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints.tightFor(
-          width: AppHeader.kHeaderIconHitBox,
-          height: AppHeader.kHeaderIconHitBox,
-        ),
-        splashRadius: AppHeader.kHeaderIconHitBox / 2,
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/theme/app_colors.dart';
 import '../../onboarding/application/onboarding_controller.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -66,7 +67,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.4),
                           blurRadius: 24,
                           spreadRadius: 4,
                         ),
@@ -75,7 +78,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     child: const Icon(
                       Icons.explore,
                       size: 40,
-                      color: Colors.white,
+                      color: AppColors.onBackground,
                     ),
                   ),
                 ),

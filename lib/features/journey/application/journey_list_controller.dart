@@ -7,10 +7,7 @@ import '../domain/journey_repository.dart';
 
 const _logPrefix = '[JourneyList]';
 
-enum JourneyListMessage {
-  missingSession,
-  loadFailed,
-}
+enum JourneyListMessage { missingSession, loadFailed }
 
 class JourneyListState {
   const JourneyListState({
@@ -39,22 +36,19 @@ class JourneyListState {
 
 final journeyListControllerProvider =
     NotifierProvider<JourneyListController, JourneyListState>(
-  JourneyListController.new,
-);
+      JourneyListController.new,
+    );
 
 class JourneyListController extends Notifier<JourneyListState> {
   static const int _defaultLimit = 20;
 
   /// build 재호출 시 LateInitializationError 방지를 위해 getter로 접근
-  JourneyRepository get _journeyRepository => ref.read(journeyRepositoryProvider);
+  JourneyRepository get _journeyRepository =>
+      ref.read(journeyRepositoryProvider);
 
   @override
   JourneyListState build() {
-    return const JourneyListState(
-      items: [],
-      isLoading: false,
-      message: null,
-    );
+    return const JourneyListState(items: [], isLoading: false, message: null);
   }
 
   Future<void> load({int limit = _defaultLimit, int offset = 0}) async {
@@ -80,7 +74,8 @@ class JourneyListController extends Notifier<JourneyListState> {
           accessToken: accessToken,
         ),
         isUnauthorized: (error) =>
-            error is JourneyListException && error.error == JourneyListError.unauthorized,
+            error is JourneyListException &&
+            error.error == JourneyListError.unauthorized,
       );
 
       switch (result) {
@@ -88,10 +83,7 @@ class JourneyListController extends Notifier<JourneyListState> {
           if (kDebugMode) {
             debugPrint('$_logPrefix load - completed, items: ${data.length}');
           }
-          state = state.copyWith(
-            items: data,
-            isLoading: false,
-          );
+          state = state.copyWith(items: data, isLoading: false);
         case AuthExecutorNoSession<List<JourneySummary>>():
           if (kDebugMode) {
             debugPrint('$_logPrefix load - missing accessToken');

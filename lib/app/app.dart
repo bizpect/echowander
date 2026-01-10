@@ -83,13 +83,16 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
     // ✅ unauthenticated 상태에서는 restoreSession 호출 금지 (루프 방지)
     if (sessionState.status == SessionStatus.unauthenticated) {
       if (kDebugMode) {
-        debugPrint('[App] ensureSessionReady 차단: 이미 unauthenticated 상태 (루프 방지)');
+        debugPrint(
+          '[App] ensureSessionReady 차단: 이미 unauthenticated 상태 (루프 방지)',
+        );
       }
       return;
     }
 
     final accessToken = sessionState.accessToken;
-    final needsRestore = accessToken == null ||
+    final needsRestore =
+        accessToken == null ||
         accessToken.isEmpty ||
         JwtUtils.isExpiringSoon(accessToken, thresholdSeconds: 60);
 
@@ -211,6 +214,7 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
           context: context,
           title: l10n.errorTitle,
           message: message,
+          confirmLabel: l10n.commonOk,
         ).then((_) {
           ref.read(sessionManagerProvider.notifier).clearMessage();
           _lastShownMessage = null;
@@ -244,7 +248,7 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
             // ✅ router를 사전에 확보 (컨텍스트/redirect 충돌 방지)
             final router = ref.read(appRouterProvider);
             final sessionManager = ref.read(sessionManagerProvider.notifier);
-            
+
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) {
                 return;
@@ -253,16 +257,18 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
               if (l10n == null) {
                 return;
               }
-              
+
               // ✅ 현재 위치 확인 (router 인스턴스 확보 후)
-              final currentLocation = router.routerDelegate.currentConfiguration.uri.path;
-              
+              final currentLocation =
+                  router.routerDelegate.currentConfiguration.uri.path;
+
               // 이미 로그인 화면이면 알럿만 표시
               if (currentLocation == AppRoutes.login) {
                 showAppAlertDialog(
                   context: context,
                   title: l10n.errorTitle,
                   message: l10n.errorSessionExpired,
+                  confirmLabel: l10n.commonOk,
                 ).then((_) {
                   if (!mounted) {
                     return;
@@ -276,6 +282,7 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
                   context: context,
                   title: l10n.errorTitle,
                   message: l10n.errorSessionExpired,
+                  confirmLabel: l10n.commonOk,
                 ).then((_) {
                   if (!mounted) {
                     return;
@@ -384,7 +391,9 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
             FilledButton(
               onPressed: () {
                 messenger.hideCurrentMaterialBanner();
-                ref.read(deepLinkCoordinatorProvider.notifier).enqueuePath(message.route!);
+                ref
+                    .read(deepLinkCoordinatorProvider.notifier)
+                    .enqueuePath(message.route!);
               },
               child: Text(l10n.notificationOpen),
             ),

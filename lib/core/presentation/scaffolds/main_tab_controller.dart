@@ -28,5 +28,6 @@ class MainTabController extends Notifier<int> {
   }
 }
 
-final mainTabControllerProvider =
-    NotifierProvider<MainTabController, int>(MainTabController.new);
+final mainTabControllerProvider = NotifierProvider<MainTabController, int>(
+  MainTabController.new,
+);

@@ -42,9 +42,10 @@ class _AppFilledButtonState extends State<AppFilledButton>
       duration: const Duration(milliseconds: 100),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -133,9 +134,10 @@ class _AppOutlinedButtonState extends State<AppOutlinedButton>
       duration: const Duration(milliseconds: 100),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -166,10 +168,7 @@ class _AppOutlinedButtonState extends State<AppOutlinedButton>
       onTapCancel: _onTapCancel,
       child: ScaleTransition(
         scale: _scaleAnimation,
-        child: OutlinedButton(
-          onPressed: widget.onPressed,
-          child: widget.child,
-        ),
+        child: OutlinedButton(onPressed: widget.onPressed, child: widget.child),
       ),
     );
   }

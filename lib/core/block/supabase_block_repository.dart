@@ -16,10 +16,12 @@ final blockRepositoryProvider = Provider<BlockRepository>((ref) {
 
 class SupabaseBlockRepository implements BlockRepository {
   SupabaseBlockRepository({required AppConfig config})
-      : _config = config,
-        _errorLogger = ServerErrorLogger(config: config),
-        _networkGuard = NetworkGuard(errorLogger: ServerErrorLogger(config: config)),
-        _client = HttpClient();
+    : _config = config,
+      _errorLogger = ServerErrorLogger(config: config),
+      _networkGuard = NetworkGuard(
+        errorLogger: ServerErrorLogger(config: config),
+      ),
+      _client = HttpClient();
 
   final AppConfig _config;
   final ServerErrorLogger _errorLogger;
@@ -53,10 +55,7 @@ class SupabaseBlockRepository implements BlockRepository {
         context: 'list_my_blocks',
         uri: uri,
         method: 'POST',
-        meta: {
-          'limit': limit,
-          'offset': offset,
-        },
+        meta: {'limit': limit, 'offset': offset},
         accessToken: accessToken,
       );
       return result;
@@ -92,16 +91,14 @@ class SupabaseBlockRepository implements BlockRepository {
     required String accessToken,
   }) async {
     final request = await _client.postUrl(uri);
-    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
     request.headers.set('apikey', _config.supabaseAnonKey);
     request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
     request.add(
-      utf8.encode(
-        jsonEncode({
-          'page_size': limit,
-          'page_offset': offset,
-        }),
-      ),
+      utf8.encode(jsonEncode({'page_size': limit, 'page_offset': offset})),
     );
     final response = await request.close();
     final body = await response.transform(utf8.decoder).join();
@@ -116,10 +113,7 @@ class SupabaseBlockRepository implements BlockRepository {
         method: 'POST',
         statusCode: response.statusCode,
         errorMessage: body,
-        meta: {
-          'limit': limit,
-          'offset': offset,
-        },
+        meta: {'limit': limit, 'offset': offset},
         accessToken: accessToken,
       );
 
@@ -258,7 +252,10 @@ class SupabaseBlockRepository implements BlockRepository {
     required String accessToken,
   }) async {
     final request = await _client.postUrl(uri);
-    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
     request.headers.set('apikey', _config.supabaseAnonKey);
     request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
     request.add(utf8.encode(jsonEncode(payload)));

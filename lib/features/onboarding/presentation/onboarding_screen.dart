@@ -46,9 +46,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
 
     if (kDebugMode) {
-      debugPrint(
-        '$_logPrefix build() - stepIndex: $stepIndex',
-      );
+      debugPrint('$_logPrefix build() - stepIndex: $stepIndex');
     }
 
     const totalSteps = 5;
@@ -78,43 +76,43 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   totalSteps: totalSteps,
                 ),
               ),
-            // 중앙: 아이콘 중심 카드 (애니메이션 래퍼로 분리)
-            // 고정 key로 트리에서 절대 제거되지 않도록 보장
-            Expanded(
-              child: _AnimatedStepCard(
-                key: const ValueKey('step-card'),
-                stepIndex: stepIndex,
-                child: Builder(
-                  builder: (context) {
-                    final l10n = AppLocalizations.of(context)!;
-                    return _buildStepCard(
-                      context: context,
-                      l10n: l10n,
-                      stepIndex: stepIndex,
-                    );
-                  },
+              // 중앙: 아이콘 중심 카드 (애니메이션 래퍼로 분리)
+              // 고정 key로 트리에서 절대 제거되지 않도록 보장
+              Expanded(
+                child: _AnimatedStepCard(
+                  key: const ValueKey('step-card'),
+                  stepIndex: stepIndex,
+                  child: Builder(
+                    builder: (context) {
+                      final l10n = AppLocalizations.of(context)!;
+                      return _buildStepCard(
+                        context: context,
+                        l10n: l10n,
+                        stepIndex: stepIndex,
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-            // 하단: 단일 CTA (애니메이션 래퍼로 분리)
-            // 고정 key로 트리에서 절대 제거되지 않도록 보장
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.screenPaddingHorizontal,
-                AppSpacing.spacing24,
-                AppSpacing.screenPaddingHorizontal,
-                AppSpacing.screenPaddingBottom,
+              // 하단: 단일 CTA (애니메이션 래퍼로 분리)
+              // 고정 key로 트리에서 절대 제거되지 않도록 보장
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screenPaddingHorizontal,
+                  AppSpacing.spacing24,
+                  AppSpacing.screenPaddingHorizontal,
+                  AppSpacing.screenPaddingBottom,
+                ),
+                child: _AnimatedStepCard(
+                  key: const ValueKey('step-actions'),
+                  stepIndex: stepIndex,
+                  child: _OnboardingActions(stepIndex: stepIndex),
+                ),
               ),
-              child: _AnimatedStepCard(
-                key: const ValueKey('step-actions'),
-                stepIndex: stepIndex,
-                child: _OnboardingActions(stepIndex: stepIndex),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -123,7 +121,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     required AppLocalizations l10n,
     required int stepIndex,
   }) {
-
     switch (stepIndex) {
       case 0:
         return _PermissionCard(
@@ -214,34 +211,20 @@ class _AnimatedStepCardState extends State<_AnimatedStepCard>
       duration: const Duration(milliseconds: 600),
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOut,
-      ),
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0.3, 0),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOutCubic,
-      ),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0.3, 0), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.95,
-      end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOut,
-      ),
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
     // 초기 애니메이션 실행
@@ -329,33 +312,28 @@ class _VisualStepNavigator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(
-        totalSteps,
-        (index) {
-          final isActive = index == currentStep;
-          final isCompleted = index < currentStep;
+      children: List.generate(totalSteps, (index) {
+        final isActive = index == currentStep;
+        final isCompleted = index < currentStep;
 
-          return Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppSpacing.spacing4,
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.spacing4),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+            width: isActive ? 32 : 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: isActive
+                  ? AppColors.primary
+                  : isCompleted
+                  ? AppColors.primary.withValues(alpha: 0.5)
+                  : AppColors.onSurfaceVariant.withValues(alpha: 0.3),
+              borderRadius: AppRadius.full,
             ),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-              width: isActive ? 32 : 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: isActive
-                    ? AppColors.primary
-                    : isCompleted
-                        ? AppColors.primary.withValues(alpha: 0.5)
-                        : AppColors.onSurfaceVariant.withValues(alpha: 0.3),
-                borderRadius: AppRadius.full,
-              ),
-            ),
-          );
-        },
-      ),
+          ),
+        );
+      }),
     );
   }
 }
@@ -399,11 +377,7 @@ class _PermissionCard extends StatelessWidget {
                 color: iconColor.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 64,
-                color: iconColor,
-              ),
+              child: Icon(icon, size: 64, color: iconColor),
             ),
             const SizedBox(height: AppSpacing.spacing32),
             // 제목
@@ -484,11 +458,7 @@ class _AgreementCard extends StatelessWidget {
                 color: iconColor.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 52,
-                color: iconColor,
-              ),
+              child: Icon(icon, size: 52, color: iconColor),
             ),
             const SizedBox(height: AppSpacing.spacing24),
             // 제목

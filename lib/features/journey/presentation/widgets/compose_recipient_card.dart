@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_radius.dart';
 import '../../../../app/theme/app_spacing.dart';
-import '../../../../app/theme/app_typography.dart';
+import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/presentation/widgets/app_card.dart';
+import '../../../../core/presentation/widgets/app_pill.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// 수신자 선택 카드
@@ -24,18 +26,11 @@ class ComposeRecipientCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final current = recipientCount;
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppRadius.medium,
-        border: Border.all(
-          color: recipientCount != null
-              ? AppColors.primary.withValues(alpha: 0.3)
-              : AppColors.outline,
-          width: 1,
-        ),
-      ),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      borderColor: recipientCount != null
+          ? AppColors.primary
+          : AppColors.borderSubtle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -45,28 +40,14 @@ class ComposeRecipientCard extends StatelessWidget {
             children: [
               Text(
                 l10n.composeRecipientCountLabel,
-                style: AppTypography.titleMedium.copyWith(
-                  color: AppColors.onSurface,
-                  fontWeight: FontWeight.w600,
+                style: AppTextStyles.bodyStrong.copyWith(
+                  color: AppColors.textPrimary,
                 ),
               ),
               if (recipientCount != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.spacing8,
-                    vertical: AppSpacing.spacing4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.secondaryContainer,
-                    borderRadius: AppRadius.small,
-                  ),
-                  child: Text(
-                    l10n.composeRecipientCountOption(recipientCount!),
-                    style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.onSecondaryContainer,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                AppPill(
+                  label: l10n.composeRecipientCountOption(recipientCount!),
+                  tone: AppPillTone.neutral,
                 ),
             ],
           ),
@@ -91,10 +72,9 @@ class ComposeRecipientCard extends StatelessWidget {
                 child: SliderTheme(
                   data: SliderTheme.of(context).copyWith(
                     activeTrackColor: AppColors.secondary,
-                    inactiveTrackColor:
-                        AppColors.outlineVariant.withValues(alpha: 0.9),
+                    inactiveTrackColor: AppColors.outlineVariant,
                     thumbColor: AppColors.secondary,
-                    overlayColor: AppColors.secondary.withValues(alpha: 0.16),
+                    overlayColor: AppColors.secondaryContainer,
                   ),
                   child: Slider(
                     min: 1,
@@ -118,9 +98,8 @@ class ComposeRecipientCard extends StatelessWidget {
                 ),
                 child: Text(
                   l10n.composeRecipientCountOption(current ?? 3),
-                  style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.onSurface,
-                    fontWeight: FontWeight.w700,
+                  style: AppTextStyles.meta.copyWith(
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -129,8 +108,8 @@ class ComposeRecipientCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.spacing8),
           Text(
             l10n.composeRecipientCountHint,
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColors.onSurfaceVariant,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textSecondary,
             ),
           ),
         ],
@@ -156,17 +135,17 @@ class _RecipientChip extends StatelessWidget {
       button: true,
       selected: isSelected,
       child: AnimatedScale(
-        duration: const Duration(milliseconds: 140),
+        duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
-        scale: isSelected ? 1.04 : 1.0,
+        scale: isSelected ? 1.02 : 1.0,
         child: InkWell(
           onTap: onTap,
           borderRadius: AppRadius.full,
           child: Container(
             constraints: const BoxConstraints(minHeight: 48),
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.spacing12,
-              vertical: AppSpacing.spacing8,
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
             ),
             decoration: BoxDecoration(
               color: isSelected
@@ -175,18 +154,17 @@ class _RecipientChip extends StatelessWidget {
               borderRadius: AppRadius.full,
               border: Border.all(
                 color: isSelected
-                    ? AppColors.secondary.withValues(alpha: 0.55)
+                    ? AppColors.secondary
                     : AppColors.outlineVariant,
               ),
             ),
             child: Center(
               child: Text(
                 label,
-                style: AppTypography.labelMedium.copyWith(
+                style: AppTextStyles.meta.copyWith(
                   color: isSelected
                       ? AppColors.onSecondaryContainer
-                      : AppColors.onSurface,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                      : AppColors.textPrimary,
                 ),
               ),
             ),
@@ -196,4 +174,3 @@ class _RecipientChip extends StatelessWidget {
     );
   }
 }
-

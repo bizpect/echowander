@@ -12,11 +12,11 @@ import '../push/device_id_store.dart';
 /// 에러 로깅 자체가 실패하면 조용히 swallow 처리합니다 (재귀 로깅/무한 루프 방지).
 class ClientErrorLogRepository {
   ClientErrorLogRepository({required AppConfig config})
-      : _config = config,
-        // 순환 의존성 방지: errorLogger를 null로 전달
-        // 에러 로깅 실패는 재귀적으로 로깅하지 않음
-        _networkGuard = NetworkGuard(),
-        _client = HttpClient();
+    : _config = config,
+      // 순환 의존성 방지: errorLogger를 null로 전달
+      // 에러 로깅 실패는 재귀적으로 로깅하지 않음
+      _networkGuard = NetworkGuard(),
+      _client = HttpClient();
 
   final AppConfig _config;
   final NetworkGuard _networkGuard;
@@ -38,7 +38,9 @@ class ClientErrorLogRepository {
     }
 
     final deviceId = await DeviceIdStore().getOrCreate();
-    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/log_client_error');
+    final uri = Uri.parse(
+      '${_config.supabaseUrl}/rest/v1/rpc/log_client_error',
+    );
     final payload = {
       'error_context': context,
       'status_code': statusCode,
@@ -72,11 +74,8 @@ class ClientErrorLogRepository {
 
       // 익명 시도
       await _networkGuard.execute<void>(
-        operation: () => _executePostLog(
-          uri: uri,
-          payload: payload,
-          accessToken: null,
-        ),
+        operation: () =>
+            _executePostLog(uri: uri, payload: payload, accessToken: null),
         retryPolicy: RetryPolicy.none,
         context: 'log_client_error',
         uri: uri,
@@ -97,10 +96,16 @@ class ClientErrorLogRepository {
     required String? accessToken,
   }) async {
     final request = await _client.postUrl(uri);
-    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
     request.headers.set('apikey', _config.supabaseAnonKey);
     if (accessToken != null && accessToken.isNotEmpty) {
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+      request.headers.set(
+        HttpHeaders.authorizationHeader,
+        'Bearer $accessToken',
+      );
     }
     request.add(utf8.encode(jsonEncode(payload)));
 

@@ -129,7 +129,9 @@ class AuthExecutor {
         // ✅ unauthenticated로 전환되었으면 noSession 반환
         if (newSessionState.status == SessionStatus.unauthenticated) {
           if (kDebugMode) {
-            debugPrint('$_logPrefix restoreInFlight 완료 후 unauthenticated → noSession');
+            debugPrint(
+              '$_logPrefix restoreInFlight 완료 후 unauthenticated → noSession',
+            );
           }
           return const AuthExecutorResult.noSession();
         }
@@ -144,7 +146,9 @@ class AuthExecutor {
         return const AuthExecutorResult.unauthorized();
       } catch (error) {
         if (kDebugMode) {
-          debugPrint('$_logPrefix restoreInFlight await 중 예외: $error → transientError');
+          debugPrint(
+            '$_logPrefix restoreInFlight await 중 예외: $error → transientError',
+          );
         }
         return const AuthExecutorResult.transientError();
       }
@@ -182,7 +186,9 @@ class AuthExecutor {
         final newSessionState = _ref.read(sessionManagerProvider);
         if (newSessionState.status == SessionStatus.unauthenticated) {
           if (kDebugMode) {
-            debugPrint('$_logPrefix silentRefresh 완료 후 unauthenticated → noSession');
+            debugPrint(
+              '$_logPrefix silentRefresh 완료 후 unauthenticated → noSession',
+            );
           }
           return const AuthExecutorResult.noSession();
         }
@@ -193,7 +199,9 @@ class AuthExecutor {
       } catch (error) {
         // silent refresh 실패는 일시 장애로 처리 (로그아웃 아님)
         if (kDebugMode) {
-          debugPrint('$_logPrefix silentRefresh 기타 오류: $error → transientError');
+          debugPrint(
+            '$_logPrefix silentRefresh 기타 오류: $error → transientError',
+          );
         }
         return const AuthExecutorResult.transientError();
       }
@@ -205,7 +213,8 @@ class AuthExecutor {
       return AuthExecutorResult.success(result);
     } catch (error) {
       // ✅ forbidden(403, 42501)은 refresh로 해결 불가 → 즉시 반환
-      if (error is NetworkRequestException && error.type == NetworkErrorType.forbidden) {
+      if (error is NetworkRequestException &&
+          error.type == NetworkErrorType.forbidden) {
         if (kDebugMode) {
           debugPrint('$_logPrefix forbidden(403) 발생 → refresh 불가, 즉시 반환');
         }
@@ -255,7 +264,8 @@ class AuthExecutor {
       return AuthExecutorResult.success(result);
     } catch (error) {
       // ✅ forbidden(403, 42501)은 refresh로 해결 불가 → 즉시 반환
-      if (error is NetworkRequestException && error.type == NetworkErrorType.forbidden) {
+      if (error is NetworkRequestException &&
+          error.type == NetworkErrorType.forbidden) {
         if (kDebugMode) {
           debugPrint('$_logPrefix 재시도 후에도 forbidden(403) → 즉시 반환');
         }

@@ -29,10 +29,10 @@ class SessionState {
   });
 
   const SessionState.unknown()
-      : status = SessionStatus.unknown,
-        isBusy = false,
-        message = null,
-        accessToken = null;
+    : status = SessionStatus.unknown,
+      isBusy = false,
+      message = null,
+      accessToken = null;
 
   final SessionStatus status;
   final bool isBusy;

@@ -13,9 +13,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.windows:
       case TargetPlatform.linux:
       case TargetPlatform.fuchsia:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions는 현재 플랫폼을 지원하지 않습니다.',
-        );
+        throw UnsupportedError('DefaultFirebaseOptions는 현재 플랫폼을 지원하지 않습니다.');
     }
   }
 

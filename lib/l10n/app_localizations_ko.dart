@@ -325,6 +325,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get composeOpenSettings => '설정 열기';
 
   @override
+  String get commonClose => '닫기';
+
+  @override
   String get journeyListTitle => '보낸 메시지';
 
   @override
@@ -853,6 +856,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get profileMenuAppInfo => '앱 정보';
 
   @override
+  String get profileMenuTitle => '메뉴';
+
+  @override
+  String get profileMenuSubtitle => '자주 쓰는 설정을 모아뒀어요.';
+
+  @override
   String get profileWithdrawCta => '탈퇴하기';
 
   @override
@@ -904,6 +913,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get supportFaqTitle => '자주묻는질문';
 
   @override
+  String get supportFaqSubtitle => '많이 묻는 질문을 확인하세요.';
+
+  @override
   String get supportFaqQ1 => '팀을 어떻게 만들 수 있나요?';
 
   @override
@@ -941,6 +953,18 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get appInfoTitle => '앱 정보';
+
+  @override
+  String get appInfoSettingsTitle => '앱 설정';
+
+  @override
+  String get appInfoSettingsSubtitle => '라이선스와 정책을 확인하세요.';
+
+  @override
+  String get appInfoSectionTitle => '연결된 서비스';
+
+  @override
+  String get appInfoSectionSubtitle => '서비스와 연동된 앱을 확인하세요.';
 
   @override
   String appInfoVersionLabel(Object version) {
@@ -985,6 +1009,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get openLicenseHeaderBody => '이 앱은 다음 오픈 소스 라이브러리를 사용합니다.';
+
+  @override
+  String get openLicenseSectionTitle => '라이선스 목록';
+
+  @override
+  String get openLicenseSectionSubtitle => '사용 중인 오픈소스를 확인하세요.';
 
   @override
   String openLicenseChipVersion(Object version) {

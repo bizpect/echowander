@@ -9,11 +9,7 @@ import '../domain/notification_repository.dart';
 
 const _logPrefix = '[NotificationInbox]';
 
-enum NotificationInboxMessage {
-  missingSession,
-  loadFailed,
-  actionFailed,
-}
+enum NotificationInboxMessage { missingSession, loadFailed, actionFailed }
 
 class NotificationInboxState {
   const NotificationInboxState({
@@ -50,14 +46,15 @@ class NotificationInboxState {
 
 final notificationInboxControllerProvider =
     NotifierProvider<NotificationInboxController, NotificationInboxState>(
-  NotificationInboxController.new,
-);
+      NotificationInboxController.new,
+    );
 
 class NotificationInboxController extends Notifier<NotificationInboxState> {
   static const int _defaultLimit = 50;
 
   /// build 재호출 시 LateInitializationError 방지를 위해 getter로 접근
-  NotificationRepository get _repository => ref.read(notificationRepositoryProvider);
+  NotificationRepository get _repository =>
+      ref.read(notificationRepositoryProvider);
 
   @override
   NotificationInboxState build() {
@@ -101,7 +98,9 @@ class NotificationInboxController extends Notifier<NotificationInboxState> {
         case AuthExecutorSuccess<(List<NotificationItem>, int)>(:final data):
           final (items, unreadCount) = data;
           if (kDebugMode) {
-            debugPrint('$_logPrefix load - completed, items: ${items.length}, unread: $unreadCount');
+            debugPrint(
+              '$_logPrefix load - completed, items: ${items.length}, unread: $unreadCount',
+            );
           }
           state = state.copyWith(
             items: items,
@@ -137,7 +136,9 @@ class NotificationInboxController extends Notifier<NotificationInboxState> {
     } on NotificationInboxException catch (error) {
       // 네트워크 오류 등 401이 아닌 예외
       if (kDebugMode) {
-        debugPrint('$_logPrefix load - NotificationInboxException: ${error.error}');
+        debugPrint(
+          '$_logPrefix load - NotificationInboxException: ${error.error}',
+        );
       }
       state = state.copyWith(
         isLoading: false,
@@ -194,7 +195,10 @@ class NotificationInboxController extends Notifier<NotificationInboxState> {
           : NotificationInboxMessage.actionFailed;
       state = state.copyWith(isLoading: false, message: message);
     } catch (_) {
-      state = state.copyWith(isLoading: false, message: NotificationInboxMessage.actionFailed);
+      state = state.copyWith(
+        isLoading: false,
+        message: NotificationInboxMessage.actionFailed,
+      );
     }
   }
 
@@ -210,7 +214,9 @@ class NotificationInboxController extends Notifier<NotificationInboxState> {
         notificationId: notificationId,
         accessToken: accessToken,
       );
-      final items = state.items.where((item) => item.id != notificationId).toList();
+      final items = state.items
+          .where((item) => item.id != notificationId)
+          .toList();
       final unreadCount = await _repository.fetchUnreadCount(
         accessToken: accessToken,
       );
@@ -225,7 +231,10 @@ class NotificationInboxController extends Notifier<NotificationInboxState> {
           : NotificationInboxMessage.actionFailed;
       state = state.copyWith(isLoading: false, message: message);
     } catch (_) {
-      state = state.copyWith(isLoading: false, message: NotificationInboxMessage.actionFailed);
+      state = state.copyWith(
+        isLoading: false,
+        message: NotificationInboxMessage.actionFailed,
+      );
     }
   }
 
@@ -237,9 +246,8 @@ class NotificationInboxController extends Notifier<NotificationInboxState> {
     try {
       final executor = AuthExecutor(ref);
       final result = await executor.execute<int>(
-        operation: (accessToken) => _repository.fetchUnreadCount(
-          accessToken: accessToken,
-        ),
+        operation: (accessToken) =>
+            _repository.fetchUnreadCount(accessToken: accessToken),
         isUnauthorized: (error) =>
             error is NotificationInboxException &&
             error.error == NotificationInboxError.unauthorized,
@@ -255,18 +263,26 @@ class NotificationInboxController extends Notifier<NotificationInboxState> {
           if (kDebugMode) {
             debugPrint('$_logPrefix loadUnreadCount - missing accessToken');
           }
-          state = state.copyWith(message: NotificationInboxMessage.missingSession);
+          state = state.copyWith(
+            message: NotificationInboxMessage.missingSession,
+          );
         case AuthExecutorUnauthorized<int>():
           if (kDebugMode) {
-            debugPrint('$_logPrefix loadUnreadCount - unauthorized after retry');
+            debugPrint(
+              '$_logPrefix loadUnreadCount - unauthorized after retry',
+            );
           }
-          state = state.copyWith(message: NotificationInboxMessage.missingSession);
+          state = state.copyWith(
+            message: NotificationInboxMessage.missingSession,
+          );
         case AuthExecutorTransientError<int>():
           // 일시 장애: unreadCount 갱신 실패만, 로그아웃 아님
           if (kDebugMode) {
-            debugPrint('$_logPrefix loadUnreadCount - transient error (network/server)');
+            debugPrint(
+              '$_logPrefix loadUnreadCount - transient error (network/server)',
+            );
           }
-          // unreadCount는 실패해도 UI에 큰 영향 없음, 메시지 없이 무시
+        // unreadCount는 실패해도 UI에 큰 영향 없음, 메시지 없이 무시
       }
     } on NotificationInboxException catch (error) {
       // 네트워크 오류 등 401이 아닌 예외는 무시 (unreadCount 갱신 실패만)

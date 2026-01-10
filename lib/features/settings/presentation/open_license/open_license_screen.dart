@@ -3,8 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_radius.dart';
 import '../../../../app/theme/app_spacing.dart';
+import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/presentation/widgets/app_card.dart';
+import '../../../../core/presentation/widgets/app_empty_state.dart';
+import '../../../../core/presentation/widgets/app_header.dart';
+import '../../../../core/presentation/widgets/app_pill.dart';
+import '../../../../core/presentation/widgets/app_scaffold.dart';
+import '../../../../core/presentation/widgets/app_section.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/open_license_service.dart';
 import '../../domain/open_license_item.dart';
@@ -34,43 +40,46 @@ class _OpenLicenseScreenState extends ConsumerState<OpenLicenseScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.openLicenseTitle),
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(Icons.arrow_back),
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-        ),
+    return AppScaffold(
+      appBar: AppHeader(
+        title: l10n.openLicenseTitle,
+        leadingIcon: Icons.arrow_back,
+        onLeadingTap: () => Navigator.of(context).maybePop(),
+        leadingSemanticLabel: MaterialLocalizations.of(
+          context,
+        ).backButtonTooltip,
       ),
-      body: SafeArea(
-        child: FutureBuilder<List<OpenLicenseItem>>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final items = snapshot.data ?? [];
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-              children: [
-                _OpenLicenseHeaderCard(
-                  title: l10n.openLicenseHeaderTitle,
-                  body: l10n.openLicenseHeaderBody,
-                ),
-                const SizedBox(height: AppSpacing.spacing16),
-                if (items.isEmpty)
-                  _OpenLicenseEmptyState(message: l10n.openLicenseEmptyMessage)
-                else
-                  ...items.map((item) => _OpenLicenseCard(item: item)),
-              ],
-            );
-          },
-        ),
+      bodyPadding: EdgeInsets.zero,
+      body: FutureBuilder<List<OpenLicenseItem>>(
+        future: _future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final items = snapshot.data ?? [];
+          return ListView(
+            padding: AppSpacing.pagePadding.copyWith(bottom: AppSpacing.xxl),
+            children: [
+              _OpenLicenseHeaderCard(
+                title: l10n.openLicenseHeaderTitle,
+                body: l10n.openLicenseHeaderBody,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              AppSection(
+                title: l10n.openLicenseSectionTitle,
+                subtitle: l10n.openLicenseSectionSubtitle,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              if (items.isEmpty)
+                AppEmptyState(
+                  icon: Icons.library_books_outlined,
+                  title: l10n.openLicenseEmptyMessage,
+                )
+              else
+                ...items.map((item) => _OpenLicenseCard(item: item)),
+            ],
+          );
+        },
       ),
     );
   }
@@ -84,60 +93,24 @@ class _OpenLicenseHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: AppRadius.large,
-        color: AppColors.surface,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.25),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: AppTextStyles.titleSm.copyWith(color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            body,
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
           ),
         ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.spacing20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.onSurface,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: AppSpacing.spacing8),
-            Text(
-              body,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                    height: 1.4,
-                  ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _OpenLicenseEmptyState extends StatelessWidget {
-  const _OpenLicenseEmptyState({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.spacing24),
-      child: Text(
-        message,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.onSurfaceVariant,
-            ),
-        textAlign: TextAlign.center,
       ),
     );
   }
@@ -157,60 +130,50 @@ class _OpenLicenseCard extends StatelessWidget {
     final licenseLabel = _resolveLicenseLabel(l10n, item.licenseType);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.spacing16),
-      child: Card(
-        color: AppColors.surface,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.large,
-          side: BorderSide(color: AppColors.outlineVariant),
-        ),
-        child: InkWell(
-          borderRadius: AppRadius.large,
-          onTap: () {
-            if (kDebugMode) {
-              debugPrint(
-                '[OpenLicense] tap: package=${item.packageName}, version=${item.version}, type=${item.licenseType}',
-              );
-            }
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => OpenLicenseDetailScreen(item: item),
-              ),
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: AppCard(
+        borderColor: AppColors.borderSubtle,
+        onTap: () {
+          if (kDebugMode) {
+            debugPrint(
+              '[OpenLicense] tap: package=${item.packageName}, version=${item.version}, type=${item.licenseType}',
             );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.spacing16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          }
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => OpenLicenseDetailScreen(item: item),
+            ),
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              item.packageName,
+              style: AppTextStyles.bodyStrong.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
               children: [
-                Text(
-                  item.packageName,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.onSurface,
-                        fontWeight: FontWeight.w600,
-                      ),
+                AppPill(
+                  label: l10n.openLicenseChipVersion(version),
+                  tone: AppPillTone.neutral,
                 ),
-                const SizedBox(height: AppSpacing.spacing12),
-                Wrap(
-                  spacing: AppSpacing.spacing8,
-                  runSpacing: AppSpacing.spacing8,
-                  children: [
-                    _LicenseChip(
-                      label: l10n.openLicenseChipVersion(version),
-                    ),
-                    _LicenseChip(
-                      label: l10n.openLicenseChipLicense(licenseLabel),
-                    ),
-                    _LicenseChip(
-                      label: l10n.openLicenseChipDetails,
-                      icon: Icons.open_in_new,
-                    ),
-                  ],
+                AppPill(
+                  label: l10n.openLicenseChipLicense(licenseLabel),
+                  tone: AppPillTone.neutral,
+                ),
+                AppPill(
+                  label: l10n.openLicenseChipDetails,
+                  tone: AppPillTone.neutral,
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -237,42 +200,5 @@ class _OpenLicenseCard extends StatelessWidget {
       case OpenLicenseType.unknown:
         return l10n.openLicenseTypeUnknown;
     }
-  }
-}
-
-class _LicenseChip extends StatelessWidget {
-  const _LicenseChip({required this.label, this.icon});
-
-  final String label;
-  final IconData? icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.spacing12,
-        vertical: AppSpacing.spacing8,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.outlineVariant),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 14, color: AppColors.onSurfaceVariant),
-            const SizedBox(width: AppSpacing.spacing4),
-          ],
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.onSurfaceVariant,
-                ),
-          ),
-        ],
-      ),
-    );
   }
 }

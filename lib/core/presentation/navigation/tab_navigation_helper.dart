@@ -25,10 +25,10 @@ class TabNavigationHelper {
 
     // 받은 메시지 탭 활성화 (먼저 탭 전환)
     tabController.switchToInboxTab();
-    
+
     // limit: 20으로 명시적으로 로드하여 홈 화면의 limit:3 로드가 덮어쓰지 않도록 보장
     inboxController.load(limit: 20);
-    
+
     // /home으로 이동하여 탭 쉘 내부의 받은 메시지 리스트로 복귀
     router.go(AppRoutes.home);
   }
@@ -46,10 +46,10 @@ class TabNavigationHelper {
 
     // 보낸 메시지 탭 활성화 (먼저 탭 전환)
     tabController.switchToSentTab();
-    
+
     // limit: 20으로 명시적으로 로드하여 홈 화면의 limit:3 로드가 덮어쓰지 않도록 보장
     listController.load(limit: 20);
-    
+
     // /home으로 이동하여 탭 쉘 내부의 보낸 메시지 리스트로 복귀
     router.go(AppRoutes.home);
   }

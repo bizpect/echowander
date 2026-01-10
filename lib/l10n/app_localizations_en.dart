@@ -340,6 +340,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get composeOpenSettings => 'Open settings';
 
   @override
+  String get commonClose => 'Close';
+
+  @override
   String get journeyListTitle => 'Sent Messages';
 
   @override
@@ -879,6 +882,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileMenuAppInfo => 'App info';
 
   @override
+  String get profileMenuTitle => 'Menu';
+
+  @override
+  String get profileMenuSubtitle => 'Quick access to common settings.';
+
+  @override
   String get profileWithdrawCta => 'Delete account';
 
   @override
@@ -932,6 +941,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get supportFaqTitle => 'FAQ';
 
   @override
+  String get supportFaqSubtitle => 'Check common questions.';
+
+  @override
   String get supportFaqQ1 => 'How can I create a team?';
 
   @override
@@ -975,6 +987,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appInfoTitle => 'App info';
+
+  @override
+  String get appInfoSettingsTitle => 'App settings';
+
+  @override
+  String get appInfoSettingsSubtitle => 'Review licenses and policies.';
+
+  @override
+  String get appInfoSectionTitle => 'Connected services';
+
+  @override
+  String get appInfoSectionSubtitle => 'See apps linked to this service.';
 
   @override
   String appInfoVersionLabel(Object version) {
@@ -1022,6 +1046,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get openLicenseHeaderBody =>
       'This app uses the following open source libraries.';
+
+  @override
+  String get openLicenseSectionTitle => 'License list';
+
+  @override
+  String get openLicenseSectionSubtitle =>
+      'Review the open source packages in use.';
 
   @override
   String openLicenseChipVersion(Object version) {

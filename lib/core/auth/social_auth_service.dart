@@ -5,12 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../config/app_config.dart';
 
-enum SocialAuthStatus {
-  success,
-  cancelled,
-  networkError,
-  failed,
-}
+enum SocialAuthStatus { success, cancelled, networkError, failed }
 
 class SocialAuthResult {
   const SocialAuthResult._(this.status, this.token);
@@ -18,9 +13,11 @@ class SocialAuthResult {
   final SocialAuthStatus status;
   final String? token;
 
-  const SocialAuthResult.success(String token) : this._(SocialAuthStatus.success, token);
+  const SocialAuthResult.success(String token)
+    : this._(SocialAuthStatus.success, token);
   const SocialAuthResult.cancelled() : this._(SocialAuthStatus.cancelled, null);
-  const SocialAuthResult.networkError() : this._(SocialAuthStatus.networkError, null);
+  const SocialAuthResult.networkError()
+    : this._(SocialAuthStatus.networkError, null);
   const SocialAuthResult.failed() : this._(SocialAuthStatus.failed, null);
 }
 
@@ -34,9 +31,12 @@ class SocialAuthService {
     try {
       if (!_googleInitialized) {
         await GoogleSignIn.instance.initialize(
-          clientId: _config.googleIosClientId.isEmpty ? null : _config.googleIosClientId,
-          serverClientId:
-              _config.googleServerClientId.isEmpty ? null : _config.googleServerClientId,
+          clientId: _config.googleIosClientId.isEmpty
+              ? null
+              : _config.googleIosClientId,
+          serverClientId: _config.googleServerClientId.isEmpty
+              ? null
+              : _config.googleServerClientId,
         );
         _googleInitialized = true;
       }

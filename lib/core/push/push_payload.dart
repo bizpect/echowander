@@ -1,9 +1,5 @@
 class PushPayload {
-  const PushPayload({
-    required this.title,
-    required this.body,
-    this.route,
-  });
+  const PushPayload({required this.title, required this.body, this.route});
 
   final String title;
   final String body;

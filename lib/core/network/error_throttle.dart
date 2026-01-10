@@ -5,9 +5,7 @@ import 'package:flutter/foundation.dart';
 /// 동일 화면/동일 에러 타입으로 연속 실패 시
 /// 스낵바/배너가 계속 뜨지 않게 쿨다운 적용
 class ErrorThrottle {
-  ErrorThrottle({
-    this.cooldownDuration = const Duration(seconds: 5),
-  });
+  ErrorThrottle({this.cooldownDuration = const Duration(seconds: 5)});
 
   final Duration cooldownDuration;
   final Map<String, DateTime> _lastShownMap = {};
@@ -30,7 +28,9 @@ class ErrorThrottle {
 
     if (kDebugMode) {
       final remaining = cooldownDuration - now.difference(lastShown);
-      debugPrint('[ErrorThrottle] 쿨다운 중: $key (남은 시간: ${remaining.inSeconds}초)');
+      debugPrint(
+        '[ErrorThrottle] 쿨다운 중: $key (남은 시간: ${remaining.inSeconds}초)',
+      );
     }
     return false;
   }

@@ -53,8 +53,7 @@ class OpenLicenseService {
         licenseType: licenseType,
         licenseText: entry.value,
       );
-    }).toList()
-      ..sort((a, b) => a.packageName.compareTo(b.packageName));
+    }).toList()..sort((a, b) => a.packageName.compareTo(b.packageName));
 
     if (kDebugMode) {
       debugPrint(
@@ -87,7 +86,9 @@ class OpenLicenseService {
         }
       }
       if (kDebugMode) {
-        debugPrint('[OpenLicense] pubspecLock: loaded=true, count=${result.length}');
+        debugPrint(
+          '[OpenLicense] pubspecLock: loaded=true, count=${result.length}',
+        );
       }
       return result;
     } catch (error) {
@@ -103,18 +104,22 @@ class OpenLicenseService {
     if (normalized.contains('mit license')) {
       return OpenLicenseType.mit;
     }
-    if (normalized.contains('apache license') && normalized.contains('version 2')) {
+    if (normalized.contains('apache license') &&
+        normalized.contains('version 2')) {
       return OpenLicenseType.apache2;
     }
     if (normalized.contains('bsd 3-clause') ||
-        normalized.contains('redistribution and use in source and binary forms') &&
+        normalized.contains(
+              'redistribution and use in source and binary forms',
+            ) &&
             normalized.contains('neither the name')) {
       return OpenLicenseType.bsd3;
     }
     if (normalized.contains('bsd 2-clause')) {
       return OpenLicenseType.bsd2;
     }
-    if (normalized.contains('mozilla public license') && normalized.contains('2.0')) {
+    if (normalized.contains('mozilla public license') &&
+        normalized.contains('2.0')) {
       return OpenLicenseType.mpl2;
     }
     if (normalized.contains('gnu general public license')) {

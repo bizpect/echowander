@@ -10,6 +10,8 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
+import '../../../core/presentation/widgets/app_header.dart';
+import '../../../core/presentation/widgets/app_scaffold.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../core/presentation/widgets/empty_state.dart';
 import '../../../l10n/app_localizations.dart';
@@ -27,10 +29,12 @@ class NotificationInboxScreen extends ConsumerStatefulWidget {
   const NotificationInboxScreen({super.key});
 
   @override
-  ConsumerState<NotificationInboxScreen> createState() => _NotificationInboxScreenState();
+  ConsumerState<NotificationInboxScreen> createState() =>
+      _NotificationInboxScreenState();
 }
 
-class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScreen> {
+class _NotificationInboxScreenState
+    extends ConsumerState<NotificationInboxScreen> {
   @override
   void initState() {
     super.initState();
@@ -45,8 +49,10 @@ class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScree
     final state = ref.watch(notificationInboxControllerProvider);
     final controller = ref.read(notificationInboxControllerProvider.notifier);
 
-    ref.listen<NotificationInboxState>(notificationInboxControllerProvider,
-        (previous, next) {
+    ref.listen<NotificationInboxState>(notificationInboxControllerProvider, (
+      previous,
+      next,
+    ) {
       if (next.message == null || next.message == previous?.message) {
         return;
       }
@@ -62,27 +68,18 @@ class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScree
         }
         _handleBack(context);
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l10n.notificationsTitle),
-          leading: IconButton(
-            onPressed: () => _handleBack(context),
-            icon: const Icon(Icons.arrow_back),
-            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          ),
-          actions: [
-            IconButton(
-              onPressed: () => controller.load(),
-              icon: const Icon(Icons.refresh),
-              tooltip: l10n.inboxRefresh,
-            ),
-          ],
+      child: AppScaffold(
+        appBar: AppHeader(
+          title: l10n.notificationsTitle,
+          leadingIcon: Icons.arrow_back,
+          onLeadingTap: () => _handleBack(context),
+          leadingSemanticLabel: MaterialLocalizations.of(
+            context,
+          ).backButtonTooltip,
         ),
         body: LoadingOverlay(
           isLoading: state.isLoading,
-          child: SafeArea(
-            child: _buildBody(context, l10n, state, controller),
-          ),
+          child: _buildBody(context, l10n, state, controller),
         ),
       ),
     );
@@ -128,7 +125,8 @@ class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScree
                 AppSpacing.spacing24,
               ),
               itemCount: state.items.length,
-              separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.spacing12),
+              separatorBuilder: (context, index) =>
+                  const SizedBox(height: AppSpacing.spacing12),
               itemBuilder: (context, index) {
                 final item = state.items[index];
                 return _NotificationCard(
@@ -157,7 +155,10 @@ class _NotificationInboxScreenState extends ConsumerState<NotificationInboxScree
     }
   }
 
-  Future<void> _confirmDelete(AppLocalizations l10n, NotificationItem item) async {
+  Future<void> _confirmDelete(
+    AppLocalizations l10n,
+    NotificationItem item,
+  ) async {
     final confirmed = await showAppConfirmDialog(
       context: context,
       title: l10n.notificationsDeleteTitle,
@@ -263,9 +264,7 @@ class _NotificationCard extends StatelessWidget {
     return Card(
       color: backgroundColor,
       elevation: elevation,
-      shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.medium,
-      ),
+      shape: RoundedRectangleBorder(borderRadius: AppRadius.medium),
       child: InkWell(
         onTap: onTap,
         borderRadius: AppRadius.medium,
@@ -303,9 +302,12 @@ class _NotificationCard extends StatelessWidget {
                             item.title.isNotEmpty
                                 ? item.title
                                 : l10n.notificationTitle,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
                                   color: AppColors.onSurface,
-                                  fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+                                  fontWeight: isRead
+                                      ? FontWeight.normal
+                                      : FontWeight.bold,
                                 ),
                           ),
                         ),
@@ -313,7 +315,9 @@ class _NotificationCard extends StatelessWidget {
                           Container(
                             width: 8,
                             height: 8,
-                            margin: const EdgeInsets.only(left: AppSpacing.spacing8),
+                            margin: const EdgeInsets.only(
+                              left: AppSpacing.spacing8,
+                            ),
                             decoration: const BoxDecoration(
                               color: AppColors.primary,
                               shape: BoxShape.circle,
@@ -326,8 +330,8 @@ class _NotificationCard extends StatelessWidget {
                       Text(
                         item.body,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.onSurfaceVariant,
-                            ),
+                          color: AppColors.onSurfaceVariant,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -345,25 +349,28 @@ class _NotificationCard extends StatelessWidget {
                         const SizedBox(width: AppSpacing.spacing4),
                         Text(
                           dateFormat.format(item.createdAt.toLocal()),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.onSurfaceVariant,
-                              ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.onSurfaceVariant),
                         ),
                         const SizedBox(width: AppSpacing.spacing8),
                         Text(
                           '•',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.onSurfaceVariant,
-                              ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.onSurfaceVariant),
                         ),
                         const SizedBox(width: AppSpacing.spacing8),
                         Text(
-                          isRead ? l10n.notificationsRead : l10n.notificationsUnread,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          isRead
+                              ? l10n.notificationsRead
+                              : l10n.notificationsUnread,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
                                 color: isRead
                                     ? AppColors.onSurfaceVariant
                                     : AppColors.primary,
-                                fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+                                fontWeight: isRead
+                                    ? FontWeight.normal
+                                    : FontWeight.bold,
                               ),
                         ),
                       ],
@@ -379,10 +386,7 @@ class _NotificationCard extends StatelessWidget {
                 iconSize: 20,
                 color: AppColors.onSurfaceVariant,
                 tooltip: l10n.notificationsDeleteConfirm,
-                constraints: const BoxConstraints(
-                  minWidth: 48,
-                  minHeight: 48,
-                ),
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
               ),
             ],
           ),
@@ -401,7 +405,9 @@ class _NotificationCard extends StatelessWidget {
         icon: Icons.celebration,
         color: AppColors.success,
       );
-    } else if (title.contains('new') || title.contains('message') || route.contains('inbox')) {
+    } else if (title.contains('new') ||
+        title.contains('message') ||
+        route.contains('inbox')) {
       return _NotificationInfo(
         icon: Icons.mail_outline,
         color: AppColors.primary,
@@ -417,10 +423,7 @@ class _NotificationCard extends StatelessWidget {
 
 /// 알림 타입 정보 (아이콘 + 색상)
 class _NotificationInfo {
-  const _NotificationInfo({
-    required this.icon,
-    required this.color,
-  });
+  const _NotificationInfo({required this.icon, required this.color});
 
   final IconData icon;
   final Color color;

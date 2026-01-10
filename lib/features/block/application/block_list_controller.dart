@@ -8,11 +8,7 @@ import '../../../core/session/session_manager.dart';
 
 const _logPrefix = '[BlockList]';
 
-enum BlockListMessage {
-  missingSession,
-  loadFailed,
-  unblockFailed,
-}
+enum BlockListMessage { missingSession, loadFailed, unblockFailed }
 
 class BlockListState {
   const BlockListState({
@@ -41,8 +37,8 @@ class BlockListState {
 
 final blockListControllerProvider =
     NotifierProvider<BlockListController, BlockListState>(
-  BlockListController.new,
-);
+      BlockListController.new,
+    );
 
 class BlockListController extends Notifier<BlockListState> {
   static const int _defaultLimit = 50;
@@ -52,11 +48,7 @@ class BlockListController extends Notifier<BlockListState> {
 
   @override
   BlockListState build() {
-    return const BlockListState(
-      items: [],
-      isLoading: false,
-      message: null,
-    );
+    return const BlockListState(items: [], isLoading: false, message: null);
   }
 
   Future<void> load({int limit = _defaultLimit, int offset = 0}) async {
@@ -114,12 +106,18 @@ class BlockListController extends Notifier<BlockListState> {
       if (kDebugMode) {
         debugPrint('$_logPrefix load - BlockException: ${error.error}');
       }
-      state = state.copyWith(isLoading: false, message: BlockListMessage.loadFailed);
+      state = state.copyWith(
+        isLoading: false,
+        message: BlockListMessage.loadFailed,
+      );
     } catch (error) {
       if (kDebugMode) {
         debugPrint('$_logPrefix load - unknown error: $error');
       }
-      state = state.copyWith(isLoading: false, message: BlockListMessage.loadFailed);
+      state = state.copyWith(
+        isLoading: false,
+        message: BlockListMessage.loadFailed,
+      );
     }
   }
 
@@ -135,7 +133,9 @@ class BlockListController extends Notifier<BlockListState> {
         targetUserId: targetUserId,
         accessToken: accessToken,
       );
-      final items = state.items.where((item) => item.userId != targetUserId).toList();
+      final items = state.items
+          .where((item) => item.userId != targetUserId)
+          .toList();
       state = state.copyWith(items: items, isLoading: false);
     } on BlockException catch (error) {
       if (kDebugMode) {
@@ -149,7 +149,10 @@ class BlockListController extends Notifier<BlockListState> {
       if (kDebugMode) {
         debugPrint('block: 차단 해제 알 수 없는 오류');
       }
-      state = state.copyWith(isLoading: false, message: BlockListMessage.unblockFailed);
+      state = state.copyWith(
+        isLoading: false,
+        message: BlockListMessage.unblockFailed,
+      );
     }
   }
 

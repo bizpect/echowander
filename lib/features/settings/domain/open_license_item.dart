@@ -12,14 +12,4 @@ class OpenLicenseItem {
   final String licenseText;
 }
 
-enum OpenLicenseType {
-  mit,
-  apache2,
-  bsd3,
-  bsd2,
-  mpl2,
-  gpl,
-  lgpl,
-  isc,
-  unknown,
-}
+enum OpenLicenseType { mit, apache2, bsd3, bsd2, mpl2, gpl, lgpl, isc, unknown }

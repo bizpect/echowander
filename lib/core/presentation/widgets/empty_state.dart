@@ -77,16 +77,17 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
               Icon(
                 widget.icon,
                 size: 80,
-                color: AppColors.onSurfaceVariant, // 가시성 개선 (기존: surfaceVariant)
+                color:
+                    AppColors.onSurfaceVariant, // 가시성 개선 (기존: surfaceVariant)
               ),
               const SizedBox(height: AppSpacing.spacing16),
 
               // 타이틀
               Text(
                 widget.title,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColors.onSurface,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(color: AppColors.onSurface),
                 textAlign: TextAlign.center,
               ),
 
@@ -96,8 +97,8 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
                 Text(
                   widget.description!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.onSurfaceVariant,
-                      ),
+                    color: AppColors.onSurfaceVariant,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ],

@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_radius.dart';
 import '../../../../app/theme/app_spacing.dart';
+import '../../../../app/theme/app_text_styles.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../core/presentation/widgets/app_card.dart';
 import '../../../../core/presentation/widgets/app_dialog.dart';
+import '../../../../core/presentation/widgets/app_header.dart';
+import '../../../../core/presentation/widgets/app_icon_badge.dart';
+import '../../../../core/presentation/widgets/app_scaffold.dart';
+import '../../../../core/presentation/widgets/app_section.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class AppInfoScreen extends StatefulWidget {
@@ -50,41 +55,46 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
     final l10n = AppLocalizations.of(context)!;
     final version = _version ?? l10n.appInfoVersionUnknown;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.appInfoTitle),
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(Icons.arrow_back),
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-        ),
+    return AppScaffold(
+      appBar: AppHeader(
+        title: l10n.appInfoTitle,
+        leadingIcon: Icons.arrow_back,
+        onLeadingTap: () => Navigator.of(context).maybePop(),
+        leadingSemanticLabel: MaterialLocalizations.of(
+          context,
+        ).backButtonTooltip,
       ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          children: [
-            AppInfoVersionCard(versionLabel: l10n.appInfoVersionLabel(version)),
-            const SizedBox(height: AppSpacing.spacing16),
-            AppInfoOpenLicenseTile(version: version),
-            const SizedBox(height: AppSpacing.spacing16),
-            _AppInfoRelatedAppsExpansion(
-              items: [
-                _RelatedAppItem(
-                  title: l10n.appInfoRelatedApp1Title,
-                  description: l10n.appInfoRelatedApp1Description,
-                ),
-                _RelatedAppItem(
-                  title: l10n.appInfoRelatedApp2Title,
-                  description: l10n.appInfoRelatedApp2Description,
-                ),
-              ],
-            ),
-          ],
-        ),
+      bodyPadding: EdgeInsets.zero,
+      body: ListView(
+        padding: AppSpacing.pagePadding.copyWith(bottom: AppSpacing.xxl),
+        children: [
+          AppInfoVersionCard(versionLabel: l10n.appInfoVersionLabel(version)),
+          const SizedBox(height: AppSpacing.lg),
+          AppSection(
+            title: l10n.appInfoSettingsTitle,
+            subtitle: l10n.appInfoSettingsSubtitle,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          AppInfoOpenLicenseTile(version: version),
+          const SizedBox(height: AppSpacing.lg),
+          AppSection(
+            title: l10n.appInfoSectionTitle,
+            subtitle: l10n.appInfoSectionSubtitle,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _AppInfoRelatedAppsExpansion(
+            items: [
+              _RelatedAppItem(
+                title: l10n.appInfoRelatedApp1Title,
+                description: l10n.appInfoRelatedApp1Description,
+              ),
+              _RelatedAppItem(
+                title: l10n.appInfoRelatedApp2Title,
+                description: l10n.appInfoRelatedApp2Description,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -97,52 +107,24 @@ class AppInfoVersionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: AppRadius.large,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.surface,
-            AppColors.surfaceVariant,
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.25),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        children: [
+          const AppIconBadge(
+            icon: Icons.apps,
+            backgroundColor: AppColors.primaryContainer,
+            iconColor: AppColors.onPrimaryContainer,
+            size: 72,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            versionLabel,
+            style: AppTextStyles.bodyStrong.copyWith(
+              color: AppColors.textPrimary,
+            ),
           ),
         ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.spacing20),
-        child: Column(
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Icon(
-                Icons.apps,
-                color: AppColors.primary,
-                size: 32,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.spacing16),
-            Text(
-              versionLabel,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.onSurface,
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -156,42 +138,20 @@ class AppInfoOpenLicenseTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Card(
-      color: AppColors.surface,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.large,
-        side: BorderSide(color: AppColors.outlineVariant),
+    return AppCardRow(
+      title: l10n.appInfoOpenLicenseTitle,
+      leading: const AppIconBadge(
+        icon: Icons.library_books_outlined,
+        backgroundColor: AppColors.surfaceVariant,
+        iconColor: AppColors.onSurfaceVariant,
+        size: 40,
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.spacing16,
-          vertical: AppSpacing.spacing4,
-        ),
-        leading: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceVariant,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            Icons.library_books_outlined,
-            color: AppColors.onSurfaceVariant,
-          ),
-        ),
-        title: Text(
-          l10n.appInfoOpenLicenseTitle,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColors.onSurface,
-              ),
-        ),
-        trailing: Icon(
-          Icons.chevron_right,
-          color: AppColors.onSurfaceVariant,
-        ),
-        onTap: () => context.push(AppRoutes.openLicense),
+      trailing: const Icon(
+        Icons.chevron_right,
+        color: AppColors.iconMuted,
+        size: 18,
       ),
+      onTap: () => context.push(AppRoutes.openLicense),
     );
   }
 }
@@ -211,42 +171,38 @@ class _AppInfoRelatedAppsExpansion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Card(
-      color: AppColors.surface,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.large,
-        side: BorderSide(color: AppColors.outlineVariant),
-      ),
+    return AppCard(
+      padding: EdgeInsets.zero,
+      borderColor: AppColors.borderSubtle,
       child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        data: Theme.of(context).copyWith(dividerColor: AppColors.transparent),
         child: ExpansionTile(
           initiallyExpanded: true,
           tilePadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.spacing16,
-            vertical: AppSpacing.spacing8,
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.sm,
           ),
-          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          collapsedIconColor: AppColors.onSurfaceVariant,
-          iconColor: AppColors.onSurfaceVariant,
+          childrenPadding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            0,
+            AppSpacing.lg,
+            AppSpacing.lg,
+          ),
+          collapsedIconColor: AppColors.iconMuted,
+          iconColor: AppColors.iconMuted,
           title: Text(
             l10n.appInfoRelatedAppsTitle,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.onSurface,
-                  fontWeight: FontWeight.w600,
-                ),
+            style: AppTextStyles.bodyStrong.copyWith(
+              color: AppColors.textPrimary,
+            ),
           ),
           children: List.generate(items.length, (index) {
             final item = items[index];
-            return Column(
-              children: [
-                _RelatedAppRow(item: item),
-                if (index != items.length - 1)
-                  Divider(
-                    height: 1,
-                    color: AppColors.divider,
-                  ),
-              ],
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: index == items.length - 1 ? 0 : AppSpacing.sm,
+              ),
+              child: _RelatedAppRow(item: item),
             );
           }),
         ),
@@ -263,58 +219,25 @@ class _RelatedAppRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return InkWell(
-      onTap: () => _showPreparingDialog(context, l10n),
-      borderRadius: AppRadius.medium,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.spacing12),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.apps,
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.spacing12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: AppColors.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  const SizedBox(height: AppSpacing.spacing4),
-                  Text(
-                    item.description,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                  ),
-                ],
-              ),
-            ),
-            Semantics(
-              button: true,
-              label: l10n.appInfoExternalLinkLabel,
-              child: Icon(
-                Icons.open_in_new,
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
-          ],
+    return AppCardRow(
+      title: item.title,
+      subtitle: item.description,
+      leading: const AppIconBadge(
+        icon: Icons.apps,
+        backgroundColor: AppColors.surfaceVariant,
+        iconColor: AppColors.onSurfaceVariant,
+        size: 40,
+      ),
+      trailing: Semantics(
+        button: true,
+        label: l10n.appInfoExternalLinkLabel,
+        child: const Icon(
+          Icons.open_in_new,
+          color: AppColors.iconMuted,
+          size: 18,
         ),
       ),
+      onTap: () => _showPreparingDialog(context, l10n),
     );
   }
 

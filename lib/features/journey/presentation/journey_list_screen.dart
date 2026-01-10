@@ -13,6 +13,11 @@ import '../../../app/theme/app_radius.dart';
 import '../../../core/ads/ad_reward_constants.dart';
 import '../../../core/ads/rewarded_ad_gate.dart';
 import '../../../core/presentation/widgets/app_header.dart';
+import '../../../core/presentation/widgets/app_empty_state.dart';
+import '../../../core/presentation/widgets/app_list_item.dart';
+import '../../../core/presentation/widgets/app_pill.dart';
+import '../../../core/presentation/widgets/app_scaffold.dart';
+import '../../../core/presentation/widgets/app_skeleton.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../core/session/session_manager.dart';
@@ -45,7 +50,10 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
     final controller = ref.read(journeyListControllerProvider.notifier);
     final dateFormat = DateFormat.yMMMd(l10n.localeName).add_Hm();
 
-    ref.listen<JourneyListState>(journeyListControllerProvider, (previous, next) {
+    ref.listen<JourneyListState>(journeyListControllerProvider, (
+      previous,
+      next,
+    ) {
       if (next.message == null || next.message == previous?.message) {
         return;
       }
@@ -53,168 +61,107 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
       controller.clearMessage();
     });
 
-    return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppHeader(
-          title: l10n.journeyListTitle,
-          alignLeft: true,
-          extraTopPadding: AppSpacing.spacing8,
-        ),
-        body: LoadingOverlay(
-          isLoading: state.isLoading || _isAdLoading,
-          child: SafeArea(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                // Pull-to-Refresh: 보낸메세지 리스트 갱신
-                await controller.load();
-              },
-              child: state.items.isEmpty
-                  ? ListView(
-                      padding: EdgeInsets.all(AppSpacing.spacing24),
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        Center(
-                          child: Text(
-                            l10n.journeyListEmpty,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: AppColors.onSurfaceVariant,
-                                ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      itemCount: state.items.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 16),
-                    itemBuilder: (context, index) {
-                      final item = state.items[index];
-                      final isCompleted = item.statusCode == 'COMPLETED';
-
-                      return Card(
-                        color: AppColors.surface,
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: AppRadius.medium,
-                        ),
-                        child: InkWell(
-                          onTap: isCompleted
-                              ? () => _handleCompletedTap(item)
-                              : null,
-                          borderRadius: AppRadius.medium,
-                          child: Padding(
-                            padding: EdgeInsets.all(AppSpacing.spacing20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // 상태 배지
-                                _buildStatusBadge(
-                                  l10n: l10n,
-                                  statusCode: item.statusCode,
-                                  filterCode: item.filterCode,
-                                ),
-                                SizedBox(height: AppSpacing.spacing12),
-
-                                // 메시지 내용
-                                Text(
-                                  item.content,
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        color: AppColors.onSurface,
-                                        fontWeight: FontWeight.w500,
-                                        height: 1.5,
-                                      ),
-                                ),
-                                SizedBox(height: AppSpacing.spacing12),
-
-                                // 날짜 + 이미지 수
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.schedule,
-                                      size: 14,
-                                      color: AppColors.onSurfaceVariant,
-                                    ),
-                                    SizedBox(width: AppSpacing.spacing4),
-                                    Text(
-                                      dateFormat.format(item.createdAt.toLocal()),
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                            color: AppColors.onSurfaceVariant,
-                                          ),
-                                    ),
-                                    if (item.imageCount > 0) ...[
-                                      SizedBox(width: AppSpacing.spacing8),
-                                      Text('•', style: TextStyle(color: AppColors.onSurfaceVariant)),
-                                      SizedBox(width: AppSpacing.spacing8),
-                                      Icon(
-                                        Icons.image,
-                                        size: 14,
-                                        color: AppColors.onSurfaceVariant,
-                                      ),
-                                      SizedBox(width: AppSpacing.spacing4),
-                                      Text(
-                                        '${item.imageCount}',
-                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                              color: AppColors.onSurfaceVariant,
-                                            ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-
-                                // 진행중 안내 (미완료일 때만)
-                                if (!isCompleted) ...[
-                                  SizedBox(height: AppSpacing.spacing12),
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: AppSpacing.spacing12,
-                                      vertical: AppSpacing.spacing8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.warning.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(
-                                        color: AppColors.warning.withValues(alpha: 0.3),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.info_outline,
-                                          size: 16,
-                                          color: AppColors.warning,
-                                        ),
-                                        SizedBox(width: AppSpacing.spacing8),
-                                        Expanded(
-                                          child: Text(
-                                            l10n.journeyInProgressHint,
-                                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                  color: AppColors.onSurface,
-                                                  fontSize: 12,
-                                                ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+    return AppScaffold(
+      appBar: AppHeader(
+        title: l10n.journeyListTitle,
+        alignTitleLeft: true,
+      ),
+      bodyPadding: EdgeInsets.zero,
+      body: LoadingOverlay(
+        isLoading: state.isLoading || _isAdLoading,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            // Pull-to-Refresh: 보낸메세지 리스트 갱신
+            await controller.load();
+          },
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeOut,
+            child: _buildBody(
+              context: context,
+              l10n: l10n,
+              state: state,
+              dateFormat: dateFormat,
             ),
           ),
         ),
+      ),
     );
   }
 
-  Future<void> _handleMessage(AppLocalizations l10n, JourneyListMessage message) async {
+  Widget _buildBody({
+    required BuildContext context,
+    required AppLocalizations l10n,
+    required JourneyListState state,
+    required DateFormat dateFormat,
+  }) {
+    if (state.isLoading && state.items.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          const Padding(
+            padding: AppSpacing.pagePadding,
+            child: AppListSkeleton(),
+          ),
+        ],
+      );
+    }
+
+    if (state.items.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          AppEmptyState(
+            icon: Icons.send_outlined,
+            title: l10n.journeyListEmpty,
+            description: l10n.journeyInProgressHint,
+          ),
+        ],
+      );
+    }
+
+    return ListView.separated(
+      padding: AppSpacing.pagePadding.copyWith(top: 0, bottom: AppSpacing.xl),
+      physics: const AlwaysScrollableScrollPhysics(),
+      itemCount: state.items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
+      itemBuilder: (context, index) {
+        final item = state.items[index];
+        final meta = dateFormat.format(item.createdAt.toLocal());
+        final status = _buildStatusPills(
+          l10n: l10n,
+          statusCode: item.statusCode,
+          filterCode: item.filterCode,
+        );
+
+        return AppListItem(
+          title: _statusLabel(l10n, item.statusCode),
+          subtitle: item.content,
+          meta: meta,
+          status: status,
+          leading: _ListLeadingIcon(
+            icon: item.statusCode == 'COMPLETED'
+                ? Icons.check_circle
+                : Icons.schedule,
+          ),
+          trailing: const Icon(
+            Icons.chevron_right,
+            color: AppColors.iconMuted,
+            size: 20,
+          ),
+          onTap: item.statusCode == 'COMPLETED'
+              ? () => _handleCompletedTap(item)
+              : null,
+        );
+      },
+    );
+  }
+
+  Future<void> _handleMessage(
+    AppLocalizations l10n,
+    JourneyListMessage message,
+  ) async {
     switch (message) {
       case JourneyListMessage.missingSession:
         await showAppAlertDialog(
@@ -348,78 +295,25 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
     if (kDebugMode) {
       debugPrint('[Nav] toDetail reqId=$reqId journeyId=${item.journeyId}');
     }
-    context.go(
-      '${AppRoutes.journeyList}/${item.journeyId}',
-      extra: item,
-    );
+    context.go('${AppRoutes.journeyList}/${item.journeyId}', extra: item);
   }
 
-  Widget _buildStatusBadge({
+  Widget _buildStatusPills({
     required AppLocalizations l10n,
     required String statusCode,
     required String filterCode,
   }) {
     final isCompleted = statusCode == 'COMPLETED';
-    final statusLabel = _statusLabel(l10n, statusCode);
-    final statusColor = isCompleted ? AppColors.success : AppColors.warning;
-    final statusIcon = isCompleted ? Icons.check_circle : Icons.schedule;
+    final statusTone = isCompleted ? AppPillTone.success : AppPillTone.warning;
+    final filterTone = filterCode == 'OK' ? null : AppPillTone.danger;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.spacing12,
-            vertical: AppSpacing.spacing4,
-          ),
-          decoration: BoxDecoration(
-            color: statusColor.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: statusColor.withValues(alpha: 0.4),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                statusIcon,
-                size: 14,
-                color: statusColor,
-              ),
-              SizedBox(width: AppSpacing.spacing4),
-              Text(
-                statusLabel,
-                style: TextStyle(
-                  color: statusColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (filterCode != 'OK') ...[
-          SizedBox(width: AppSpacing.spacing8),
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppSpacing.spacing8,
-              vertical: AppSpacing.spacing4,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.error.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              _filterLabel(l10n, filterCode),
-              style: TextStyle(
-                color: AppColors.error,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
+        AppPill(label: _statusLabel(l10n, statusCode), tone: statusTone),
+        if (filterTone != null) ...[
+          const SizedBox(width: AppSpacing.sm),
+          AppPill(label: _filterLabel(l10n, filterCode), tone: filterTone),
         ],
       ],
     );
@@ -448,5 +342,24 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
       default:
         return l10n.journeyFilterUnknown;
     }
+  }
+}
+
+class _ListLeadingIcon extends StatelessWidget {
+  const _ListLeadingIcon({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: AppRadius.full,
+      ),
+      child: Icon(icon, size: 18, color: AppColors.iconPrimary),
+    );
   }
 }

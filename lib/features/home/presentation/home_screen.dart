@@ -6,11 +6,14 @@ import 'package:intl/intl.dart';
 import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
-import '../../../app/theme/app_radius.dart';
-import '../../../app/theme/app_typography.dart';
+import '../../../app/theme/app_text_styles.dart';
 import '../../../core/presentation/scaffolds/main_tab_controller.dart';
+import '../../../core/presentation/widgets/app_card.dart';
+import '../../../core/presentation/widgets/app_empty_state.dart';
 import '../../../core/presentation/widgets/app_header.dart';
-import '../../../core/presentation/widgets/empty_state.dart';
+import '../../../core/presentation/widgets/app_icon_badge.dart';
+import '../../../core/presentation/widgets/app_pill.dart';
+import '../../../core/presentation/widgets/app_scaffold.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../journey/application/journey_list_controller.dart';
@@ -50,21 +53,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     // Fade 애니메이션
     _fadeAnimations = _controllers
-        .map((controller) => CurvedAnimation(
-              parent: controller,
-              curve: Curves.easeOut,
-            ))
+        .map(
+          (controller) =>
+              CurvedAnimation(parent: controller, curve: Curves.easeOut),
+        )
         .toList();
 
     // Slide Up 애니메이션
     _slideAnimations = _controllers
-        .map((controller) => Tween<Offset>(
-              begin: const Offset(0, 0.1), // 약간 아래에서 시작
-              end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: controller,
-              curve: Curves.easeOut,
-            )))
+        .map(
+          (controller) => Tween<Offset>(
+            begin: const Offset(0, 0.1), // 약간 아래에서 시작
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOut)),
+        )
         .toList();
 
     // Staggered 애니메이션 시작 (50ms 간격)
@@ -85,7 +87,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       final journeyListState = ref.read(journeyListControllerProvider);
       // 리스트가 비어있거나 3개 이하일 때만 limit: 3으로 로드
       // 이미 20개 이상 로드되어 있으면 탭 리스트에서 로드한 것이므로 건드리지 않음
-      if (journeyListState.items.isEmpty || journeyListState.items.length <= 3) {
+      if (journeyListState.items.isEmpty ||
+          journeyListState.items.length <= 3) {
         ref.read(journeyListControllerProvider.notifier).load(limit: 3);
       }
       // 받은 메시지는 항상 limit: 20으로 로드 (홈 화면에서도 전체 목록 필요)
@@ -109,60 +112,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     final isLoading = journeyListState.isLoading || inboxState.isLoading;
 
-    return Scaffold(
-      backgroundColor: AppColors.black,
+    return AppScaffold(
       appBar: AppHeader(
         title: l10n.homeTitle,
-        alignLeft: true,
-        extraTopPadding: AppSpacing.spacing8,
+        alignTitleLeft: true,
       ),
+      bodyPadding: EdgeInsets.zero,
       body: LoadingOverlay(
         isLoading: isLoading,
-        child: SafeArea(
-          top: false,
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              // 컨텐츠 영역 (정보 밀도 높게)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.screenPaddingHorizontal,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 최근 보낸 Journey 섹션 (애니메이션 index 0)
-                    _buildAnimatedCard(
-                      index: 0,
-                      child: _RecentJourneysSection(
-                        items: journeyListState.items,
-                        hasError: journeyListState.message != null,
-                      ),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            // 컨텐츠 영역 (정보 밀도 높게)
+            Padding(
+              padding: AppSpacing.pagePadding,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 최근 보낸 Journey 섹션 (애니메이션 index 0)
+                  _buildAnimatedCard(
+                    index: 0,
+                    child: _RecentJourneysSection(
+                      items: journeyListState.items,
+                      hasError: journeyListState.message != null,
                     ),
-                    const SizedBox(height: AppSpacing.spacing16),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
 
-                    // Inbox 액션 카드 (애니메이션 index 1)
-                    _buildAnimatedCard(
-                      index: 1,
-                      child: _ActionCard(
-                        icon: Icons.inbox,
-                        title: l10n.homeInboxCardTitle,
-                        description: l10n.homeInboxCardDescription,
-                        badgeCount: inboxState.items.length,
-                        onTap: () {
-                          // 받은 메시지 탭으로 이동
-                          ref.read(mainTabControllerProvider.notifier).switchToInboxTab();
-                          context.go(AppRoutes.home);
-                        },
-                      ),
+                  // Inbox 액션 카드 (애니메이션 index 1)
+                  _buildAnimatedCard(
+                    index: 1,
+                    child: _ActionCard(
+                      icon: Icons.inbox,
+                      title: l10n.homeInboxCardTitle,
+                      description: l10n.homeInboxCardDescription,
+                      badgeCount: inboxState.items.length,
+                      onTap: () {
+                        // 받은 메시지 탭으로 이동
+                        ref
+                            .read(mainTabControllerProvider.notifier)
+                            .switchToInboxTab();
+                        context.go(AppRoutes.home);
+                      },
                     ),
-                    // 하단 여백
-                    SizedBox(height: AppSpacing.screenPaddingBottom),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -176,20 +174,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     return FadeTransition(
       opacity: _fadeAnimations[index],
-      child: SlideTransition(
-        position: _slideAnimations[index],
-        child: child,
-      ),
+      child: SlideTransition(position: _slideAnimations[index], child: child),
     );
   }
 }
 
 /// 최근 보낸 Journey 섹션
 class _RecentJourneysSection extends StatelessWidget {
-  const _RecentJourneysSection({
-    required this.items,
-    required this.hasError,
-  });
+  const _RecentJourneysSection({required this.items, required this.hasError});
 
   final List<dynamic> items;
   final bool hasError;
@@ -200,7 +192,7 @@ class _RecentJourneysSection extends StatelessWidget {
 
     // 에러 상태 (새로고침 버튼 제거)
     if (hasError) {
-      return EmptyStateWidget(
+      return AppEmptyState(
         icon: Icons.error_outline,
         title: l10n.homeLoadFailed,
       );
@@ -208,7 +200,7 @@ class _RecentJourneysSection extends StatelessWidget {
 
     // 빈 상태
     if (items.isEmpty) {
-      return EmptyStateWidget(
+      return AppEmptyState(
         icon: Icons.explore_outlined,
         title: l10n.homeEmptyTitle,
         description: l10n.homeEmptyDescription,
@@ -218,19 +210,7 @@ class _RecentJourneysSection extends StatelessWidget {
     // 최근 Journey 카드 표시
     final recentJourney = items.first;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.homeRecentJourneysTitle,
-          style: AppTypography.titleLarge.copyWith(
-            color: AppColors.onSurface,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.spacing12),
-        _JourneyCard(journey: recentJourney),
-      ],
-    );
+    return _JourneyCard(journey: recentJourney);
   }
 }
 
@@ -248,70 +228,46 @@ class _JourneyCard extends StatelessWidget {
     // statusCode에 따른 라벨 매핑
     final statusLabel = _getStatusLabel(l10n, journey.statusCode);
 
-    return Card(
-      color: AppColors.surface,
-      child: InkWell(
-        onTap: () => context.go('${AppRoutes.journeyList}/${journey.journeyId}'),
-        borderRadius: AppRadius.medium,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.spacing16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return AppCard(
+      onTap: () => context.go('${AppRoutes.journeyList}/${journey.journeyId}'),
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            journey.content,
+            style: AppTextStyles.bodyStrong.copyWith(
+              color: AppColors.textPrimary,
+            ),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
             children: [
-              // 메시지 내용 (정보 밀도 높게: maxLines 증가)
-              Text(
-                journey.content,
-                style: AppTypography.bodyLarge.copyWith(
-                  color: AppColors.onSurface,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+              AppPill(
+                label: statusLabel,
+                tone: journey.statusCode == 'COMPLETED'
+                    ? AppPillTone.success
+                    : AppPillTone.warning,
               ),
-              const SizedBox(height: AppSpacing.spacing12),
-
-              // 상태 및 날짜
-              Row(
-                children: [
-                  // 상태 칩
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.spacing8,
-                      vertical: AppSpacing.spacing4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryContainer,
-                      borderRadius: AppRadius.small,
-                    ),
-                    child: Text(
-                      statusLabel,
-                      style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.onPrimaryContainer,
-                      ),
-                    ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  dateFormat.format(journey.createdAt.toLocal()),
+                  style: AppTextStyles.meta.copyWith(
+                    color: AppColors.textMuted,
                   ),
-                  const SizedBox(width: AppSpacing.spacing8),
-
-                  // 날짜
-                  Expanded(
-                    child: Text(
-                      dateFormat.format(journey.createdAt.toLocal()),
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-
-                  // 자세히 보기 아이콘
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 16,
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right,
+                size: 18,
+                color: AppColors.iconMuted,
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
@@ -350,92 +306,57 @@ class _ActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Card(
-      color: AppColors.surface,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: AppRadius.medium,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.spacing16),
-          child: Row(
-            children: [
-              // 아이콘
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryContainer,
-                  borderRadius: AppRadius.small,
-                ),
-                child: Icon(
-                  icon,
-                  color: AppColors.onPrimaryContainer,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.spacing16),
-
-              // 텍스트
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return AppCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Row(
+        children: [
+          AppIconBadge(
+            icon: icon,
+            backgroundColor: AppColors.primaryContainer,
+            iconColor: AppColors.onPrimaryContainer,
+            size: 44,
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            title,
-                            style: AppTypography.titleMedium.copyWith(
-                              color: AppColors.onSurface,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                    Flexible(
+                      child: Text(
+                        title,
+                        style: AppTextStyles.bodyStrong.copyWith(
+                          color: AppColors.textPrimary,
                         ),
-                        if (badgeCount > 0) ...[
-                          const SizedBox(width: AppSpacing.spacing8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.spacing8,
-                              vertical: AppSpacing.spacing4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.error,
-                              borderRadius: AppRadius.small,
-                            ),
-                            child: Text(
-                              l10n.homeInboxCount(badgeCount),
-                              style: AppTypography.labelSmall.copyWith(
-                                color: AppColors.onError,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.spacing4),
-                    Text(
-                      description,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
+                    if (badgeCount > 0) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      AppPill(
+                        label: l10n.homeInboxCount(badgeCount),
+                        tone: AppPillTone.danger,
+                      ),
+                    ],
                   ],
                 ),
-              ),
-
-              // 화살표 아이콘
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: AppColors.onSurfaceVariant,
-              ),
-            ],
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  description,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
-        ),
+          const Icon(Icons.chevron_right, size: 18, color: AppColors.iconMuted),
+        ],
       ),
     );
   }

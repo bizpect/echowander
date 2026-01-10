@@ -31,9 +31,7 @@ class NotificationItem {
     );
   }
 
-  NotificationItem copyWith({
-    DateTime? readAt,
-  }) {
+  NotificationItem copyWith({DateTime? readAt}) {
     return NotificationItem(
       id: id,
       title: title,

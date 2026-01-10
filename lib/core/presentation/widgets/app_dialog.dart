@@ -9,14 +9,14 @@ Future<bool?> showAppConfirmDialog({
   required BuildContext context,
   required String title,
   required String message,
-  String confirmLabel = 'OK',
-  String cancelLabel = 'Cancel',
+  required String confirmLabel,
+  required String cancelLabel,
 }) {
-  return showDialog<bool>(
+  return showGeneralDialog<bool>(
     context: context,
     barrierDismissible: false,
-    useRootNavigator: true,
-    builder: (context) {
+    barrierLabel: '',
+    pageBuilder: (context, animation, secondaryAnimation) {
       return AlertDialog(
         title: Text(title),
         content: Text(message),
@@ -34,6 +34,22 @@ Future<bool?> showAppConfirmDialog({
         ],
       );
     },
+    transitionDuration: const Duration(milliseconds: 200),
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      final offsetTween = Tween<Offset>(
+        begin: const Offset(0, 0.05),
+        end: Offset.zero,
+      );
+      return FadeTransition(
+        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+        child: SlideTransition(
+          position: offsetTween.animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOut),
+          ),
+          child: child,
+        ),
+      );
+    },
   );
 }
 
@@ -45,13 +61,14 @@ Future<void> showAppAlertDialog({
   required BuildContext context,
   required String title,
   required String message,
-  String confirmLabel = 'OK',
+  required String confirmLabel,
   VoidCallback? onConfirm,
 }) {
-  return showDialog<void>(
+  return showGeneralDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (context) {
+    barrierLabel: '',
+    pageBuilder: (context, animation, secondaryAnimation) {
       return AlertDialog(
         title: Text(title),
         content: Text(message),
@@ -64,6 +81,22 @@ Future<void> showAppAlertDialog({
             child: Text(confirmLabel),
           ),
         ],
+      );
+    },
+    transitionDuration: const Duration(milliseconds: 200),
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      final offsetTween = Tween<Offset>(
+        begin: const Offset(0, 0.05),
+        end: Offset.zero,
+      );
+      return FadeTransition(
+        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+        child: SlideTransition(
+          position: offsetTween.animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOut),
+          ),
+          child: child,
+        ),
       );
     },
   );
@@ -94,10 +127,11 @@ Future<bool?> showExitConfirmDialog(
   required String continueLabel,
   required String leaveLabel,
 }) {
-  return showDialog<bool>(
+  return showGeneralDialog<bool>(
     context: context,
     barrierDismissible: false,
-    builder: (context) {
+    barrierLabel: '',
+    pageBuilder: (context, animation, secondaryAnimation) {
       return AlertDialog(
         title: Text(title),
         content: Text(message),
@@ -111,6 +145,22 @@ Future<bool?> showExitConfirmDialog(
             child: Text(leaveLabel),
           ),
         ],
+      );
+    },
+    transitionDuration: const Duration(milliseconds: 200),
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      final offsetTween = Tween<Offset>(
+        begin: const Offset(0, 0.05),
+        end: Offset.zero,
+      );
+      return FadeTransition(
+        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+        child: SlideTransition(
+          position: offsetTween.animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOut),
+          ),
+          child: child,
+        ),
       );
     },
   );

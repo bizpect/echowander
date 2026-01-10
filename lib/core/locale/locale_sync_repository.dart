@@ -8,10 +8,12 @@ import '../network/network_guard.dart';
 
 class LocaleSyncRepository {
   LocaleSyncRepository({required AppConfig config})
-      : _config = config,
-        _errorLogger = ServerErrorLogger(config: config),
-        _networkGuard = NetworkGuard(errorLogger: ServerErrorLogger(config: config)),
-        _client = HttpClient();
+    : _config = config,
+      _errorLogger = ServerErrorLogger(config: config),
+      _networkGuard = NetworkGuard(
+        errorLogger: ServerErrorLogger(config: config),
+      ),
+      _client = HttpClient();
 
   final AppConfig _config;
   final ServerErrorLogger _errorLogger;
@@ -30,7 +32,9 @@ class LocaleSyncRepository {
       return;
     }
 
-    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/update_my_locale');
+    final uri = Uri.parse(
+      '${_config.supabaseUrl}/rest/v1/rpc/update_my_locale',
+    );
 
     try {
       // NetworkGuard를 통한 요청 실행 (백그라운드: 짧은 재시도)
@@ -60,16 +64,13 @@ class LocaleSyncRepository {
     required String accessToken,
   }) async {
     final request = await _client.postUrl(uri);
-    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
     request.headers.set('apikey', _config.supabaseAnonKey);
     request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-    request.add(
-      utf8.encode(
-        jsonEncode({
-          '_locale_tag': localeTag,
-        }),
-      ),
-    );
+    request.add(utf8.encode(jsonEncode({'_locale_tag': localeTag})));
 
     final response = await request.close();
     final body = await response.transform(utf8.decoder).join();

@@ -10,13 +10,7 @@ import 'ad_reward_constants.dart';
 import 'ad_reward_logger.dart';
 import 'reward_unlock_repository.dart';
 
-enum RewardGateResult {
-  earned,
-  dismissed,
-  failLoad,
-  failShow,
-  failConfig,
-}
+enum RewardGateResult { earned, dismissed, failLoad, failShow, failConfig }
 
 enum RewardGateState {
   idle,
@@ -28,10 +22,7 @@ enum RewardGateState {
   completedFailed,
 }
 
-enum AdLoadContext {
-  preload,
-  userAttempt,
-}
+enum AdLoadContext { preload, userAttempt }
 
 class RewardGateOutcome {
   const RewardGateOutcome({
@@ -88,9 +79,9 @@ class RewardedAdGate {
     required AppConfig config,
     required AdRewardLogger logger,
     required RewardUnlockRepository unlockRepository,
-  })  : _config = config,
-        _logger = logger,
-        _unlockRepository = unlockRepository;
+  }) : _config = config,
+       _logger = logger,
+       _unlockRepository = unlockRepository;
 
   final AppConfig _config;
   final AdRewardLogger _logger;
@@ -107,7 +98,9 @@ class RewardedAdGate {
     required String accessToken,
     required String reqId,
   }) async {
-    if (_inFlight || _state == RewardGateState.loading || _state == RewardGateState.showing) {
+    if (_inFlight ||
+        _state == RewardGateState.loading ||
+        _state == RewardGateState.showing) {
       return;
     }
     if (_preloadedAd != null && _state == RewardGateState.ready) {
@@ -127,12 +120,11 @@ class RewardedAdGate {
         eventCode: AdRewardEventCodes.failConfig,
         accessToken: accessToken,
         reqId: reqId,
-        metadata: {
-          'context': 'preload',
-          'reason': 'missing_ad_unit_id',
-        },
+        metadata: {'context': 'preload', 'reason': 'missing_ad_unit_id'},
       );
-      if (_state == RewardGateState.loading && !_inFlight && _preloadCounter == preloadToken) {
+      if (_state == RewardGateState.loading &&
+          !_inFlight &&
+          _preloadCounter == preloadToken) {
         _state = RewardGateState.idle;
       }
       return;
@@ -147,12 +139,16 @@ class RewardedAdGate {
       context: AdLoadContext.preload,
     );
     if (ad == null) {
-      if (_state == RewardGateState.loading && !_inFlight && _preloadCounter == preloadToken) {
+      if (_state == RewardGateState.loading &&
+          !_inFlight &&
+          _preloadCounter == preloadToken) {
         _state = RewardGateState.idle;
       }
       return;
     }
-    if (_inFlight || _state != RewardGateState.loading || _preloadCounter != preloadToken) {
+    if (_inFlight ||
+        _state != RewardGateState.loading ||
+        _preloadCounter != preloadToken) {
       ad.dispose();
       return;
     }
@@ -192,10 +188,7 @@ class RewardedAdGate {
           eventCode: AdRewardEventCodes.failConfig,
           accessToken: accessToken,
           reqId: reqId,
-          metadata: {
-            'context': 'user_attempt',
-            'reason': 'missing_ad_unit_id',
-          },
+          metadata: {'context': 'user_attempt', 'reason': 'missing_ad_unit_id'},
         );
         return const RewardGateOutcome(
           result: RewardGateResult.failConfig,
@@ -299,7 +292,9 @@ class RewardedAdGate {
             accessToken: accessToken,
             reqId: reqId,
             metadata: {
-              'context': context == AdLoadContext.preload ? 'preload' : 'user_attempt',
+              'context': context == AdLoadContext.preload
+                  ? 'preload'
+                  : 'user_attempt',
               'code': error.code,
               'message': error.message,
             },
@@ -343,10 +338,7 @@ class RewardedAdGate {
       _state = nextState;
       if (!completer.isCompleted) {
         completer.complete(
-          _RewardGateSessionResult(
-            result: result,
-            unlockFailed: unlockFailed,
-          ),
+          _RewardGateSessionResult(result: result, unlockFailed: unlockFailed),
         );
       }
     }
@@ -388,7 +380,10 @@ class RewardedAdGate {
             accessToken: accessToken,
             reqId: reqId,
           );
-          completeOnce(RewardGateResult.dismissed, RewardGateState.completedDismissed);
+          completeOnce(
+            RewardGateResult.dismissed,
+            RewardGateState.completedDismissed,
+          );
           return;
         }
         if (kDebugMode) {
@@ -397,10 +392,16 @@ class RewardedAdGate {
         final unlockTask = unlockFuture ?? Future.value(false);
         final unlockSuccess = await unlockTask;
         if (unlockSuccess) {
-          completeOnce(RewardGateResult.earned, RewardGateState.completedEarned);
+          completeOnce(
+            RewardGateResult.earned,
+            RewardGateState.completedEarned,
+          );
         } else {
           unlockFailed = true;
-          completeOnce(RewardGateResult.earned, RewardGateState.completedFailed);
+          completeOnce(
+            RewardGateResult.earned,
+            RewardGateState.completedFailed,
+          );
         }
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
@@ -426,12 +427,12 @@ class RewardedAdGate {
           eventCode: AdRewardEventCodes.failShow,
           accessToken: accessToken,
           reqId: reqId,
-          metadata: {
-            'code': error.code,
-            'message': error.message,
-          },
+          metadata: {'code': error.code, 'message': error.message},
         );
-        completeOnce(RewardGateResult.failShow, RewardGateState.completedFailed);
+        completeOnce(
+          RewardGateResult.failShow,
+          RewardGateState.completedFailed,
+        );
       },
     );
 

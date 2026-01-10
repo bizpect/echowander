@@ -9,6 +9,11 @@ class AppRadius {
   static const double radiusXLarge = 24.0; // 매우 큰 요소 (풀스크린 모달)
   static const double radiusFull = 9999.0; // 완전한 원 (뱃지, 아바타)
 
+  // 토스 톤 기준 네이밍
+  static const double card = radiusLarge;
+  static const double sheet = radiusXLarge;
+  static const double pill = radiusFull;
+
   // BorderRadius 헬퍼
   static BorderRadius get small => BorderRadius.circular(radiusSmall);
   static BorderRadius get medium => BorderRadius.circular(radiusMedium);

@@ -33,7 +33,9 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(blockListControllerProvider.notifier).load());
+    Future.microtask(
+      () => ref.read(blockListControllerProvider.notifier).load(),
+    );
   }
 
   @override
@@ -66,25 +68,21 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
             icon: const Icon(Icons.arrow_back),
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           ),
-          actions: [
-            IconButton(
-              onPressed: () => controller.load(),
-              icon: const Icon(Icons.refresh),
-              tooltip: l10n.inboxRefresh,
-            ),
-          ],
+          actions: const [],
         ),
         body: LoadingOverlay(
           isLoading: state.isLoading,
-          child: SafeArea(
-            child: _buildBody(context, l10n, state),
-          ),
+          child: SafeArea(child: _buildBody(context, l10n, state)),
         ),
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context, AppLocalizations l10n, BlockListState state) {
+  Widget _buildBody(
+    BuildContext context,
+    AppLocalizations l10n,
+    BlockListState state,
+  ) {
     // 빈 상태
     if (state.items.isEmpty && !state.isLoading) {
       return EmptyStateWidget(
@@ -102,15 +100,14 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
       child: ListView.separated(
         padding: const EdgeInsets.all(AppSpacing.spacing16),
         itemCount: state.items.length,
-        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.spacing12),
+        separatorBuilder: (context, index) =>
+            const SizedBox(height: AppSpacing.spacing12),
         itemBuilder: (context, index) {
           final item = state.items[index];
           return Card(
             color: AppColors.surface,
             elevation: 1,
-            shape: RoundedRectangleBorder(
-              borderRadius: AppRadius.medium,
-            ),
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.medium),
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.spacing16),
               child: Row(
@@ -128,7 +125,8 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
                           item.nickname.isNotEmpty
                               ? item.nickname
                               : l10n.blockListUnknownUser,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
                                 color: AppColors.onSurface,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -144,9 +142,8 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
                             const SizedBox(width: AppSpacing.spacing4),
                             Text(
                               dateFormat.format(item.createdAt.toLocal()),
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppColors.onSurfaceVariant,
-                                  ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: AppColors.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -171,7 +168,10 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
     );
   }
 
-  Future<void> _confirmUnblock(AppLocalizations l10n, String targetUserId) async {
+  Future<void> _confirmUnblock(
+    AppLocalizations l10n,
+    String targetUserId,
+  ) async {
     final confirmed = await showAppConfirmDialog(
       context: context,
       title: l10n.blockListUnblockTitle,
@@ -185,7 +185,10 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
     await ref.read(blockListControllerProvider.notifier).unblock(targetUserId);
   }
 
-  Future<void> _handleMessage(AppLocalizations l10n, BlockListMessage message) async {
+  Future<void> _handleMessage(
+    AppLocalizations l10n,
+    BlockListMessage message,
+  ) async {
     switch (message) {
       case BlockListMessage.missingSession:
         await showAppAlertDialog(
@@ -239,10 +242,7 @@ class _Avatar extends StatelessWidget {
           color: AppColors.primary.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
-        child: const Icon(
-          Icons.person,
-          color: AppColors.primary,
-        ),
+        child: const Icon(Icons.person, color: AppColors.primary),
       );
     }
     return Container(
@@ -264,10 +264,7 @@ class _Avatar extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.person,
-                color: AppColors.primary,
-              ),
+              child: const Icon(Icons.person, color: AppColors.primary),
             );
           },
         ),

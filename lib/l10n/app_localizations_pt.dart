@@ -340,6 +340,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get composeOpenSettings => 'Abrir definições';
 
   @override
+  String get commonClose => 'Fechar';
+
+  @override
   String get journeyListTitle => 'Mensagens enviadas';
 
   @override
@@ -893,6 +896,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get profileMenuAppInfo => 'Informações do app';
 
   @override
+  String get profileMenuTitle => 'Menu';
+
+  @override
+  String get profileMenuSubtitle =>
+      'Acesso rápido às configurações mais usadas.';
+
+  @override
   String get profileWithdrawCta => 'Eliminar conta';
 
   @override
@@ -946,6 +956,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get supportFaqTitle => 'Perguntas frequentes';
 
   @override
+  String get supportFaqSubtitle => 'Confira as dúvidas mais comuns.';
+
+  @override
   String get supportFaqQ1 => 'Como posso criar uma equipe?';
 
   @override
@@ -988,6 +1001,18 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get appInfoTitle => 'Informações do app';
+
+  @override
+  String get appInfoSettingsTitle => 'Configurações do app';
+
+  @override
+  String get appInfoSettingsSubtitle => 'Veja licenças e políticas.';
+
+  @override
+  String get appInfoSectionTitle => 'Serviços conectados';
+
+  @override
+  String get appInfoSectionSubtitle => 'Confira os apps vinculados ao serviço.';
 
   @override
   String appInfoVersionLabel(Object version) {
@@ -1036,6 +1061,13 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get openLicenseHeaderBody =>
       'Este app usa as seguintes bibliotecas de código aberto.';
+
+  @override
+  String get openLicenseSectionTitle => 'Lista de licenças';
+
+  @override
+  String get openLicenseSectionSubtitle =>
+      'Confira os pacotes de código aberto em uso.';
 
   @override
   String openLicenseChipVersion(Object version) {
@@ -1452,6 +1484,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get composeOpenSettings => 'Abrir ajustes';
+
+  @override
+  String get commonClose => 'Fechar';
 
   @override
   String get journeyListTitle => 'Mensagens enviadas';
@@ -2006,6 +2041,13 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get profileMenuAppInfo => 'Informações do app';
 
   @override
+  String get profileMenuTitle => 'Menu';
+
+  @override
+  String get profileMenuSubtitle =>
+      'Acesso rápido às configurações mais usadas.';
+
+  @override
   String get profileWithdrawCta => 'Excluir conta';
 
   @override
@@ -2059,6 +2101,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get supportFaqTitle => 'Perguntas frequentes';
 
   @override
+  String get supportFaqSubtitle => 'Confira as dúvidas mais comuns.';
+
+  @override
   String get supportFaqQ1 => 'Como posso criar uma equipe?';
 
   @override
@@ -2101,6 +2146,18 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get appInfoTitle => 'Informações do app';
+
+  @override
+  String get appInfoSettingsTitle => 'Configurações do app';
+
+  @override
+  String get appInfoSettingsSubtitle => 'Veja licenças e políticas.';
+
+  @override
+  String get appInfoSectionTitle => 'Serviços conectados';
+
+  @override
+  String get appInfoSectionSubtitle => 'Confira os apps vinculados ao serviço.';
 
   @override
   String appInfoVersionLabel(Object version) {
@@ -2149,6 +2206,13 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get openLicenseHeaderBody =>
       'Este app usa as seguintes bibliotecas de código aberto.';
+
+  @override
+  String get openLicenseSectionTitle => 'Lista de licenças';
+
+  @override
+  String get openLicenseSectionSubtitle =>
+      'Confira os pacotes de código aberto em uso.';
 
   @override
   String openLicenseChipVersion(Object version) {

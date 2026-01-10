@@ -57,14 +57,16 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
     }
 
     final currentIndex = ref.read(mainTabControllerProvider);
-    
+
     // 다른 탭으로 전환 시에만 fade 애니메이션 실행
     if (currentIndex != index) {
       _fadeController.forward(from: 0.0);
     }
 
     // Provider를 통해 탭 인덱스 업데이트
-    ref.read(mainTabControllerProvider.notifier).switchToTab(AppTab.fromIndex(index));
+    ref
+        .read(mainTabControllerProvider.notifier)
+        .switchToTab(AppTab.fromIndex(index));
 
     // 탭 전환 시 해당 탭의 데이터 새로고침
     // limit을 명시적으로 20으로 설정하여 홈 화면의 limit:3 로드가 덮어쓰지 않도록 보장
@@ -79,7 +81,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
   Widget build(BuildContext context) {
     // Provider에서 현재 탭 인덱스 구독
     final currentIndex = ref.watch(mainTabControllerProvider);
-    
+
     return PopScope(
       // 루트 화면에서 뒤로가기 시 앱 종료 확인
       canPop: currentIndex != AppTab.home.tabIndex,

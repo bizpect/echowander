@@ -44,11 +44,12 @@ class SentJourneyDetailState {
 
 final sentJourneyDetailControllerProvider =
     NotifierProvider<SentJourneyDetailController, SentJourneyDetailState>(
-  SentJourneyDetailController.new,
-);
+      SentJourneyDetailController.new,
+    );
 
 class SentJourneyDetailController extends Notifier<SentJourneyDetailState> {
-  JourneyRepository get _journeyRepository => ref.read(journeyRepositoryProvider);
+  JourneyRepository get _journeyRepository =>
+      ref.read(journeyRepositoryProvider);
 
   @override
   SentJourneyDetailState build() {
@@ -86,7 +87,9 @@ class SentJourneyDetailController extends Notifier<SentJourneyDetailState> {
         accessToken: accessToken,
       );
       if (kDebugMode) {
-        debugPrint('[SentDetail] rpc=get_sent_journey_detail reqId=$reqId status=ok');
+        debugPrint(
+          '[SentDetail] rpc=get_sent_journey_detail reqId=$reqId status=ok',
+        );
       }
 
       var responses = <SentJourneyResponse>[];
@@ -131,22 +134,13 @@ class SentJourneyDetailController extends Notifier<SentJourneyDetailState> {
         responsesMissing: responsesMissing,
       );
     } on JourneyProgressException {
-      state = state.copyWith(
-        isLoading: false,
-        loadFailed: true,
-      );
+      state = state.copyWith(isLoading: false, loadFailed: true);
     } catch (_) {
-      state = state.copyWith(
-        isLoading: false,
-        loadFailed: true,
-      );
+      state = state.copyWith(isLoading: false, loadFailed: true);
     }
   }
 
-  void setUnlockState({
-    required String journeyId,
-    required String reqId,
-  }) {
+  void setUnlockState({required String journeyId, required String reqId}) {
     final detail = state.detail;
     if (detail == null || detail.journeyId != journeyId) {
       return;
@@ -163,7 +157,9 @@ class SentJourneyDetailController extends Notifier<SentJourneyDetailState> {
       ),
     );
     if (kDebugMode) {
-      debugPrint('[Provider] unlock_set reqId=$reqId journeyId=$journeyId unlocked=true');
+      debugPrint(
+        '[Provider] unlock_set reqId=$reqId journeyId=$journeyId unlocked=true',
+      );
     }
   }
 }

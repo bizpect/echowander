@@ -63,7 +63,8 @@ sealed class RefreshResult {
 
   /// 치명적 설정 오류: 요청 자체가 잘못됨 (URL/엔드포인트/헤더 오류)
   /// → 원인 노출 우선 (로그인 튕김보다 개발자 알림 우선)
-  const factory RefreshResult.fatalMisconfig(String reason) = RefreshFatalMisconfig;
+  const factory RefreshResult.fatalMisconfig(String reason) =
+      RefreshFatalMisconfig;
 }
 
 class RefreshSuccess extends RefreshResult {
@@ -304,7 +305,9 @@ class HttpAuthRpcClient implements AuthRpcClient {
       final result = await _networkGuard.execute<Map<String, dynamic>>(
         operation: () => _executePostJson(
           uri: uri,
-          body: {'refresh_token': tokens.refreshToken}, // ✅ SSOT: refresh_token으로 통일
+          body: {
+            'refresh_token': tokens.refreshToken,
+          }, // ✅ SSOT: refresh_token으로 통일
           token: _config.supabaseAnonKey, // ✅ Bearer anonKey로 게이트 401 차단 제거
           context: 'auth_refresh_session',
         ),
@@ -402,7 +405,7 @@ class HttpAuthRpcClient implements AuthRpcClient {
 
       switch (error.type) {
         case NetworkErrorType.unauthorized:
-          // 401: refresh 토큰 만료/무효 → 인증 실패 확정
+        // 401: refresh 토큰 만료/무효 → 인증 실패 확정
         case NetworkErrorType.forbidden:
           // 403: 권한 거부 (refresh로 해결 불가) → 인증 실패 확정
           if (kDebugMode) {
@@ -443,7 +446,8 @@ class HttpAuthRpcClient implements AuthRpcClient {
 
             // parsedErrorCode 기반 분기 (SSOT)
             final parsedErrorCode = error.parsedErrorCode;
-            if (parsedErrorCode == 'invalid_grant' || parsedErrorCode == 'invalid_request') {
+            if (parsedErrorCode == 'invalid_grant' ||
+                parsedErrorCode == 'invalid_request') {
               if (kDebugMode) {
                 debugPrint(
                   '$_logPrefix refreshSession 인증 실패 확정 '
@@ -598,13 +602,18 @@ class HttpAuthRpcClient implements AuthRpcClient {
       // ✅ SSOT: 서버 응답 키를 access_token/refresh_token으로 통일
       final accessToken = payload['access_token'] as String?;
       final refreshToken = payload['refresh_token'] as String?;
-      
-      if (accessToken == null || accessToken.isEmpty || refreshToken == null || refreshToken.isEmpty) {
+
+      if (accessToken == null ||
+          accessToken.isEmpty ||
+          refreshToken == null ||
+          refreshToken.isEmpty) {
         await _errorLogger.logException(
           context: 'auth_login_social',
           uri: uri,
           method: 'POST',
-          error: const FormatException('Missing access_token or refresh_token in response'),
+          error: const FormatException(
+            'Missing access_token or refresh_token in response',
+          ),
           errorMessage: payloadText,
           meta: {'provider': provider},
           accessToken: '',
@@ -613,7 +622,7 @@ class HttpAuthRpcClient implements AuthRpcClient {
           AuthRpcLoginError.missingPayload,
         );
       }
-      
+
       // ✅ SSOT 검증: 발급 직후 토큰 형태 검증
       // access_token은 JWT여야 함 (점 2개)
       final accessJwt = _isJwtFormat(accessToken);
@@ -656,12 +665,9 @@ class HttpAuthRpcClient implements AuthRpcClient {
           '$_logPrefix ✅ 토큰 형태 검증 통과: accessJwt=$accessJwt, refreshJwt=$refreshJwt',
         );
       }
-      
+
       return AuthRpcLoginResult.success(
-        SessionTokens(
-          accessToken: accessToken,
-          refreshToken: refreshToken,
-        ),
+        SessionTokens(accessToken: accessToken, refreshToken: refreshToken),
       );
     } on FormatException catch (error) {
       await _errorLogger.logException(

@@ -7,7 +7,5 @@ import '../../firebase_options.dart';
 /// AOT에서 호출되려면 @pragma('vm:entry-point') 어노테이션이 필요합니다.
 @pragma('vm:entry-point')
 Future<void> fcmBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 }

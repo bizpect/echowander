@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
-import '../../../app/theme/app_typography.dart';
+import '../../../app/theme/app_text_styles.dart';
 
 /// 전체 화면 로딩 오버레이
 ///
@@ -85,7 +85,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
             FadeTransition(
               opacity: _fadeAnimation,
               child: Container(
-                color: Colors.black.withValues(alpha: 0.6),
+                color: AppColors.overlayScrim,
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -100,8 +100,8 @@ class _LoadingOverlayState extends State<LoadingOverlay>
                         const SizedBox(height: AppSpacing.spacing16),
                         Text(
                           widget.message!,
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.onBackground,
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.textPrimary,
                           ),
                           textAlign: TextAlign.center,
                         ),

@@ -16,9 +16,9 @@ final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
 
 class SupabaseNotificationRepository implements NotificationRepository {
   SupabaseNotificationRepository({required AppConfig config})
-      : _config = config,
-        _errorLogger = ServerErrorLogger(config: config),
-        _client = HttpClient();
+    : _config = config,
+      _errorLogger = ServerErrorLogger(config: config),
+      _client = HttpClient();
 
   final AppConfig _config;
   final ServerErrorLogger _errorLogger;
@@ -32,28 +32,28 @@ class SupabaseNotificationRepository implements NotificationRepository {
     bool unreadOnly = false,
   }) async {
     _validateConfig(accessToken);
-    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/list_my_notifications');
+    final uri = Uri.parse(
+      '${_config.supabaseUrl}/rest/v1/rpc/list_my_notifications',
+    );
 
     try {
       // NetworkGuard를 통한 요청 실행 (조회용 짧은 재시도)
-      final result = await NetworkGuard(errorLogger: _errorLogger).execute<List<NotificationItem>>(
-        operation: () => _executeFetchNotifications(
-          uri: uri,
-          limit: limit,
-          offset: offset,
-          unreadOnly: unreadOnly,
-          accessToken: accessToken,
-        ),
-        retryPolicy: RetryPolicy.short,
-        context: 'list_my_notifications',
-        uri: uri,
-        method: 'POST',
-        meta: {
-          'limit': limit,
-          'offset': offset,
-        },
-        accessToken: accessToken,
-      );
+      final result = await NetworkGuard(errorLogger: _errorLogger)
+          .execute<List<NotificationItem>>(
+            operation: () => _executeFetchNotifications(
+              uri: uri,
+              limit: limit,
+              offset: offset,
+              unreadOnly: unreadOnly,
+              accessToken: accessToken,
+            ),
+            retryPolicy: RetryPolicy.short,
+            context: 'list_my_notifications',
+            uri: uri,
+            method: 'POST',
+            meta: {'limit': limit, 'offset': offset},
+            accessToken: accessToken,
+          );
       return result;
     } on NetworkRequestException catch (error) {
       switch (error.type) {
@@ -65,12 +65,16 @@ class SupabaseNotificationRepository implements NotificationRepository {
         case NetworkErrorType.forbidden:
           throw NotificationInboxException(NotificationInboxError.unauthorized);
         case NetworkErrorType.invalidPayload:
-          throw NotificationInboxException(NotificationInboxError.invalidPayload);
+          throw NotificationInboxException(
+            NotificationInboxError.invalidPayload,
+          );
         case NetworkErrorType.serverUnavailable:
         case NetworkErrorType.serverRejected:
         case NetworkErrorType.missingConfig:
         case NetworkErrorType.unknown:
-          throw NotificationInboxException(NotificationInboxError.serverRejected);
+          throw NotificationInboxException(
+            NotificationInboxError.serverRejected,
+          );
       }
     }
   }
@@ -84,7 +88,10 @@ class SupabaseNotificationRepository implements NotificationRepository {
     required String accessToken,
   }) async {
     final request = await _client.postUrl(uri);
-    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
     request.headers.set('apikey', _config.supabaseAnonKey);
     request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
     request.add(
@@ -106,10 +113,7 @@ class SupabaseNotificationRepository implements NotificationRepository {
         method: 'POST',
         statusCode: response.statusCode,
         errorMessage: body,
-        meta: {
-          'limit': limit,
-          'offset': offset,
-        },
+        meta: {'limit': limit, 'offset': offset},
         accessToken: accessToken,
       );
 
@@ -132,20 +136,17 @@ class SupabaseNotificationRepository implements NotificationRepository {
   }
 
   @override
-  Future<int> fetchUnreadCount({
-    required String accessToken,
-  }) async {
+  Future<int> fetchUnreadCount({required String accessToken}) async {
     _validateConfig(accessToken);
-    final uri =
-        Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/count_my_unread_notifications');
+    final uri = Uri.parse(
+      '${_config.supabaseUrl}/rest/v1/rpc/count_my_unread_notifications',
+    );
 
     try {
       // NetworkGuard를 통한 요청 실행 (조회용 짧은 재시도)
       final result = await NetworkGuard(errorLogger: _errorLogger).execute<int>(
-        operation: () => _executeFetchUnreadCount(
-          uri: uri,
-          accessToken: accessToken,
-        ),
+        operation: () =>
+            _executeFetchUnreadCount(uri: uri, accessToken: accessToken),
         retryPolicy: RetryPolicy.short,
         context: 'count_my_unread_notifications',
         uri: uri,
@@ -164,12 +165,16 @@ class SupabaseNotificationRepository implements NotificationRepository {
         case NetworkErrorType.forbidden:
           throw NotificationInboxException(NotificationInboxError.unauthorized);
         case NetworkErrorType.invalidPayload:
-          throw NotificationInboxException(NotificationInboxError.invalidPayload);
+          throw NotificationInboxException(
+            NotificationInboxError.invalidPayload,
+          );
         case NetworkErrorType.serverUnavailable:
         case NetworkErrorType.serverRejected:
         case NetworkErrorType.missingConfig:
         case NetworkErrorType.unknown:
-          throw NotificationInboxException(NotificationInboxError.serverRejected);
+          throw NotificationInboxException(
+            NotificationInboxError.serverRejected,
+          );
       }
     }
   }
@@ -180,7 +185,10 @@ class SupabaseNotificationRepository implements NotificationRepository {
     required String accessToken,
   }) async {
     final request = await _client.postUrl(uri);
-    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
     request.headers.set('apikey', _config.supabaseAnonKey);
     request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
     request.add(utf8.encode(jsonEncode({})));
@@ -223,7 +231,9 @@ class SupabaseNotificationRepository implements NotificationRepository {
     // 사전 검증
     _validateConfig(accessToken);
 
-    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/mark_notification_read');
+    final uri = Uri.parse(
+      '${_config.supabaseUrl}/rest/v1/rpc/mark_notification_read',
+    );
 
     try {
       // NetworkGuard를 통한 요청 실행 (재시도 없음: 커밋 액션)
@@ -252,12 +262,16 @@ class SupabaseNotificationRepository implements NotificationRepository {
         case NetworkErrorType.forbidden:
           throw NotificationInboxException(NotificationInboxError.unauthorized);
         case NetworkErrorType.invalidPayload:
-          throw NotificationInboxException(NotificationInboxError.invalidPayload);
+          throw NotificationInboxException(
+            NotificationInboxError.invalidPayload,
+          );
         case NetworkErrorType.serverUnavailable:
         case NetworkErrorType.serverRejected:
         case NetworkErrorType.missingConfig:
         case NetworkErrorType.unknown:
-          throw NotificationInboxException(NotificationInboxError.serverRejected);
+          throw NotificationInboxException(
+            NotificationInboxError.serverRejected,
+          );
       }
     }
   }
@@ -270,7 +284,9 @@ class SupabaseNotificationRepository implements NotificationRepository {
     // 사전 검증
     _validateConfig(accessToken);
 
-    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/delete_notification_log');
+    final uri = Uri.parse(
+      '${_config.supabaseUrl}/rest/v1/rpc/delete_notification_log',
+    );
 
     try {
       // NetworkGuard를 통한 요청 실행 (재시도 없음: 커밋 액션)
@@ -299,12 +315,16 @@ class SupabaseNotificationRepository implements NotificationRepository {
         case NetworkErrorType.forbidden:
           throw NotificationInboxException(NotificationInboxError.unauthorized);
         case NetworkErrorType.invalidPayload:
-          throw NotificationInboxException(NotificationInboxError.invalidPayload);
+          throw NotificationInboxException(
+            NotificationInboxError.invalidPayload,
+          );
         case NetworkErrorType.serverUnavailable:
         case NetworkErrorType.serverRejected:
         case NetworkErrorType.missingConfig:
         case NetworkErrorType.unknown:
-          throw NotificationInboxException(NotificationInboxError.serverRejected);
+          throw NotificationInboxException(
+            NotificationInboxError.serverRejected,
+          );
       }
     }
   }
@@ -326,7 +346,10 @@ class SupabaseNotificationRepository implements NotificationRepository {
     required String accessToken,
   }) async {
     final request = await _client.postUrl(uri);
-    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
     request.headers.set('apikey', _config.supabaseAnonKey);
     request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
     request.add(utf8.encode(jsonEncode(payload)));

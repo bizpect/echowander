@@ -323,6 +323,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get composeOpenSettings => '打开设置';
 
   @override
+  String get commonClose => '关闭';
+
+  @override
   String get journeyListTitle => '已发送消息';
 
   @override
@@ -845,6 +848,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get profileMenuAppInfo => '应用信息';
 
   @override
+  String get profileMenuTitle => '菜单';
+
+  @override
+  String get profileMenuSubtitle => '常用设置快速入口。';
+
+  @override
   String get profileWithdrawCta => '注销账号';
 
   @override
@@ -896,6 +905,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get supportFaqTitle => '常见问题';
 
   @override
+  String get supportFaqSubtitle => '查看常见问题解答。';
+
+  @override
   String get supportFaqQ1 => '如何创建团队？';
 
   @override
@@ -933,6 +945,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get appInfoTitle => '应用信息';
+
+  @override
+  String get appInfoSettingsTitle => '应用设置';
+
+  @override
+  String get appInfoSettingsSubtitle => '查看许可与政策。';
+
+  @override
+  String get appInfoSectionTitle => '关联服务';
+
+  @override
+  String get appInfoSectionSubtitle => '查看与服务关联的应用。';
 
   @override
   String appInfoVersionLabel(Object version) {
@@ -977,6 +1001,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get openLicenseHeaderBody => '本应用使用了以下开源库。';
+
+  @override
+  String get openLicenseSectionTitle => '许可证列表';
+
+  @override
+  String get openLicenseSectionSubtitle => '查看正在使用的开源包。';
 
   @override
   String openLicenseChipVersion(Object version) {

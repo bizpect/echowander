@@ -12,10 +12,12 @@ const _logPrefix = '[PushToken]';
 
 class PushTokenRepository {
   PushTokenRepository({required AppConfig config})
-      : _config = config,
-        _errorLogger = ServerErrorLogger(config: config),
-        _networkGuard = NetworkGuard(errorLogger: ServerErrorLogger(config: config)),
-        _client = HttpClient();
+    : _config = config,
+      _errorLogger = ServerErrorLogger(config: config),
+      _networkGuard = NetworkGuard(
+        errorLogger: ServerErrorLogger(config: config),
+      ),
+      _client = HttpClient();
 
   final AppConfig _config;
   final ServerErrorLogger _errorLogger;
@@ -31,11 +33,7 @@ class PushTokenRepository {
     await _postRpc(
       rpc: 'upsert_device_token',
       accessToken: accessToken,
-      payload: {
-        '_token': token,
-        '_platform': platform,
-        '_device_id': deviceId,
-      },
+      payload: {'_token': token, '_platform': platform, '_device_id': deviceId},
     );
   }
 
@@ -46,9 +44,7 @@ class PushTokenRepository {
     await _postRpc(
       rpc: 'deactivate_device_token',
       accessToken: accessToken,
-      payload: {
-        '_token': token,
-      },
+      payload: {'_token': token},
     );
   }
 
@@ -104,7 +100,10 @@ class PushTokenRepository {
     required String accessToken,
   }) async {
     final request = await _client.postUrl(uri);
-    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
     request.headers.set('apikey', _config.supabaseAnonKey);
     request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
     request.add(utf8.encode(jsonEncode(payload)));

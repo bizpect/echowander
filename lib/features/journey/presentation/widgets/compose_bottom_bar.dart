@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
-import '../../../../app/theme/app_typography.dart';
+import '../../../../app/theme/app_text_styles.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/presentation/widgets/app_button.dart';
 
@@ -42,15 +42,10 @@ class ComposeBottomBar extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        border: Border(
-          top: BorderSide(
-            color: AppColors.outline,
-            width: 1,
-          ),
-        ),
+        border: Border(top: BorderSide(color: AppColors.outline, width: 1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: AppColors.overlaySubtle,
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -69,7 +64,7 @@ class ComposeBottomBar extends StatelessWidget {
                     child: Text(
                       l10n.composeWizardBack,
                       textAlign: TextAlign.center,
-                      style: AppTypography.labelLarge,
+                      style: AppTextStyles.bodyStrong,
                     ),
                   ),
                 ),
@@ -79,8 +74,8 @@ class ComposeBottomBar extends StatelessWidget {
             Expanded(
               flex: stepIndex > 0 ? 2 : 1,
               child: AppFilledButton(
-                onPressed: (!isSubmitting &&
-                        (isLastStep ? canSubmit : canGoNext))
+                onPressed:
+                    (!isSubmitting && (isLastStep ? canSubmit : canGoNext))
                     ? (isLastStep ? onSubmit : onNext)
                     : null,
                 isLoading: isLastStep ? isSubmitting : false,
@@ -89,8 +84,9 @@ class ComposeBottomBar extends StatelessWidget {
                   child: Text(
                     isLastStep ? l10n.composeSubmit : l10n.composeWizardNext,
                     textAlign: TextAlign.center,
-                    style: AppTypography.labelLarge.copyWith(
-                      color: (!isSubmitting &&
+                    style: AppTextStyles.bodyStrong.copyWith(
+                      color:
+                          (!isSubmitting &&
                               (isLastStep ? canSubmit : canGoNext))
                           ? AppColors.onPrimary
                           : AppColors.onSurfaceDim,
@@ -105,4 +101,3 @@ class ComposeBottomBar extends StatelessWidget {
     );
   }
 }
-

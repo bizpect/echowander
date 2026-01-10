@@ -721,6 +721,12 @@ abstract class AppLocalizations {
   /// **'Open settings'**
   String get composeOpenSettings;
 
+  /// No description provided for @commonClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get commonClose;
+
   /// No description provided for @journeyListTitle.
   ///
   /// In en, this message translates to:
@@ -1753,6 +1759,18 @@ abstract class AppLocalizations {
   /// **'App info'**
   String get profileMenuAppInfo;
 
+  /// No description provided for @profileMenuTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu'**
+  String get profileMenuTitle;
+
+  /// No description provided for @profileMenuSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick access to common settings.'**
+  String get profileMenuSubtitle;
+
   /// No description provided for @profileWithdrawCta.
   ///
   /// In en, this message translates to:
@@ -1849,6 +1867,12 @@ abstract class AppLocalizations {
   /// **'FAQ'**
   String get supportFaqTitle;
 
+  /// No description provided for @supportFaqSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check common questions.'**
+  String get supportFaqSubtitle;
+
   /// No description provided for @supportFaqQ1.
   ///
   /// In en, this message translates to:
@@ -1926,6 +1950,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'App info'**
   String get appInfoTitle;
+
+  /// No description provided for @appInfoSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'App settings'**
+  String get appInfoSettingsTitle;
+
+  /// No description provided for @appInfoSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review licenses and policies.'**
+  String get appInfoSettingsSubtitle;
+
+  /// No description provided for @appInfoSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected services'**
+  String get appInfoSectionTitle;
+
+  /// No description provided for @appInfoSectionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'See apps linked to this service.'**
+  String get appInfoSectionSubtitle;
 
   /// No description provided for @appInfoVersionLabel.
   ///
@@ -2010,6 +2058,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This app uses the following open source libraries.'**
   String get openLicenseHeaderBody;
+
+  /// No description provided for @openLicenseSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'License list'**
+  String get openLicenseSectionTitle;
+
+  /// No description provided for @openLicenseSectionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the open source packages in use.'**
+  String get openLicenseSectionSubtitle;
 
   /// No description provided for @openLicenseChipVersion.
   ///

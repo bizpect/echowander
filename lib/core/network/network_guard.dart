@@ -9,13 +9,13 @@ import 'network_error.dart';
 
 /// 네트워크 요청 재시도 정책
 class RetryPolicy {
-  const RetryPolicy({
-    required this.maxAttempts,
-    required this.backoffDuration,
-  });
+  const RetryPolicy({required this.maxAttempts, required this.backoffDuration});
 
   /// 재시도 없음 (POST/커밋 액션용)
-  static const none = RetryPolicy(maxAttempts: 1, backoffDuration: Duration.zero);
+  static const none = RetryPolicy(
+    maxAttempts: 1,
+    backoffDuration: Duration.zero,
+  );
 
   /// 짧은 재시도 (GET/조회용)
   static const short = RetryPolicy(
@@ -29,9 +29,7 @@ class RetryPolicy {
 
 /// 네트워크 요청 가드 - 공통 네트워크 에러 처리 및 재시도 정책
 class NetworkGuard {
-  NetworkGuard({
-    ServerErrorLogger? errorLogger,
-  }) : _errorLogger = errorLogger;
+  NetworkGuard({ServerErrorLogger? errorLogger}) : _errorLogger = errorLogger;
 
   /// 에러 로거 (null이면 로깅 스킵 - 순환 의존성 방지용)
   final ServerErrorLogger? _errorLogger;
@@ -57,10 +55,12 @@ class NetworkGuard {
     // nullable 파라미터를 non-nullable로 변환 (로깅용 기본값)
     final logUri = uri ?? Uri.parse('unknown://unknown');
     final logMethod = method ?? 'UNKNOWN';
-    
+
     // journeyId 추출 (로깅용)
     final journeyId = meta?['journey_id'] as String?;
-    final traceLabel = journeyId != null ? '$context:journeyId=$journeyId' : context;
+    final traceLabel = journeyId != null
+        ? '$context:journeyId=$journeyId'
+        : context;
 
     int attempt = 0;
     Object? lastError;
@@ -72,7 +72,9 @@ class NetworkGuard {
 
       try {
         if (kDebugMode && attempt > 1) {
-          debugPrint('[NetworkGuard][$traceLabel] 재시도 시도 $attempt/${retryPolicy.maxAttempts}');
+          debugPrint(
+            '[NetworkGuard][$traceLabel] 재시도 시도 $attempt/${retryPolicy.maxAttempts}',
+          );
         }
 
         final result = await operation();
@@ -182,7 +184,9 @@ class NetworkGuard {
       } catch (error) {
         lastError = error;
         if (kDebugMode) {
-          debugPrint('[NetworkGuard][$traceLabel] Unknown error: $error, type=${error.runtimeType}');
+          debugPrint(
+            '[NetworkGuard][$traceLabel] Unknown error: $error, type=${error.runtimeType}',
+          );
         }
 
         // 에러 로거가 있으면 로깅 (null이면 스킵 - 순환 의존성 방지)
@@ -279,10 +283,10 @@ class NetworkGuard {
     final safeMessage = errorCode != null
         ? 'status=$statusCode error=$errorCode${errorDesc != null ? " desc=$errorDesc" : ""}'
         : (isHtml == true
-            ? 'status=$statusCode html_response'
-            : (isEmpty == true
-                ? 'status=$statusCode empty_response'
-                : 'status=$statusCode response_length=${responseBody.length}'));
+              ? 'status=$statusCode html_response'
+              : (isEmpty == true
+                    ? 'status=$statusCode empty_response'
+                    : 'status=$statusCode response_length=${responseBody.length}'));
 
     // ✅ 403(42501) = forbidden으로 분리 (권한/정책 문제, refresh로 해결 불가)
     if (statusCode == HttpStatus.forbidden) {

@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_radius.dart';
 import '../../../../app/theme/app_spacing.dart';
+import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/presentation/widgets/app_card.dart';
 import '../../../../core/presentation/widgets/app_dialog.dart';
+import '../../../../core/presentation/widgets/app_header.dart';
+import '../../../../core/presentation/widgets/app_icon_badge.dart';
+import '../../../../core/presentation/widgets/app_scaffold.dart';
+import '../../../../core/presentation/widgets/app_section.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class SupportScreen extends StatefulWidget {
@@ -47,64 +52,41 @@ class _SupportScreenState extends State<SupportScreen> {
     final l10n = AppLocalizations.of(context)!;
     final version = _version ?? l10n.supportVersionUnknown;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.supportTitle),
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(Icons.arrow_back),
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-        ),
+    return AppScaffold(
+      appBar: AppHeader(
+        title: l10n.supportTitle,
+        leadingIcon: Icons.arrow_back,
+        onLeadingTap: () => Navigator.of(context).maybePop(),
+        leadingSemanticLabel: MaterialLocalizations.of(
+          context,
+        ).backButtonTooltip,
       ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          children: [
-            const SizedBox(height: AppSpacing.spacing8),
-            const _SupportStatusCard(),
-            const SizedBox(height: AppSpacing.spacing16),
-            _SupportReleaseNotesTile(version: version),
-            const SizedBox(height: AppSpacing.spacing20),
-            _SupportCtaButtons(onAction: _showPreparingDialog),
-            const SizedBox(height: AppSpacing.spacing24),
-            Text(
-              l10n.supportFaqTitle,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.onBackground,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: AppSpacing.spacing12),
-            _SupportFaqSection(
-              items: [
-                _FaqItem(
-                  question: l10n.supportFaqQ1,
-                  answer: l10n.supportFaqA1,
-                ),
-                _FaqItem(
-                  question: l10n.supportFaqQ2,
-                  answer: l10n.supportFaqA2,
-                ),
-                _FaqItem(
-                  question: l10n.supportFaqQ3,
-                  answer: l10n.supportFaqA3,
-                ),
-                _FaqItem(
-                  question: l10n.supportFaqQ4,
-                  answer: l10n.supportFaqA4,
-                ),
-                _FaqItem(
-                  question: l10n.supportFaqQ5,
-                  answer: l10n.supportFaqA5,
-                ),
-              ],
-            ),
-          ],
-        ),
+      bodyPadding: EdgeInsets.zero,
+      body: ListView(
+        padding: AppSpacing.pagePadding.copyWith(bottom: AppSpacing.xxl),
+        children: [
+          const SizedBox(height: AppSpacing.sm),
+          const _SupportStatusCard(),
+          const SizedBox(height: AppSpacing.lg),
+          _SupportReleaseNotesTile(version: version),
+          const SizedBox(height: AppSpacing.xl),
+          _SupportCtaButtons(onAction: _showPreparingDialog),
+          const SizedBox(height: AppSpacing.xl),
+          AppSection(
+            title: l10n.supportFaqTitle,
+            subtitle: l10n.supportFaqSubtitle,
+          ),
+          const SizedBox(height: AppSpacing.spacing12),
+          _SupportFaqSection(
+            items: [
+              _FaqItem(question: l10n.supportFaqQ1, answer: l10n.supportFaqA1),
+              _FaqItem(question: l10n.supportFaqQ2, answer: l10n.supportFaqA2),
+              _FaqItem(question: l10n.supportFaqQ3, answer: l10n.supportFaqA3),
+              _FaqItem(question: l10n.supportFaqQ4, answer: l10n.supportFaqA4),
+              _FaqItem(question: l10n.supportFaqQ5, answer: l10n.supportFaqA5),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -129,46 +111,26 @@ class _SupportStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: AppRadius.large,
-        color: AppColors.surface,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.25),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Row(
+        children: [
+          const AppIconBadge(
+            icon: Icons.verified_outlined,
+            backgroundColor: AppColors.primaryContainer,
+            iconColor: AppColors.onPrimaryContainer,
+            size: 44,
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              l10n.supportStatusMessage,
+              style: AppTextStyles.bodyStrong.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
           ),
         ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.spacing20),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                Icons.verified_outlined,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.spacing16),
-            Expanded(
-              child: Text(
-                l10n.supportStatusMessage,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -182,45 +144,43 @@ class _SupportReleaseNotesTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Card(
-      color: AppColors.surface,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.large,
-        side: BorderSide(color: AppColors.outlineVariant),
-      ),
+    return AppCard(
+      padding: EdgeInsets.zero,
+      borderColor: AppColors.borderSubtle,
       child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent,
-        ),
+        data: Theme.of(context).copyWith(dividerColor: AppColors.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.spacing16,
-            vertical: AppSpacing.spacing8,
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.sm,
           ),
-          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          collapsedIconColor: AppColors.onSurfaceVariant,
-          iconColor: AppColors.onSurfaceVariant,
+          childrenPadding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            0,
+            AppSpacing.lg,
+            AppSpacing.lg,
+          ),
+          collapsedIconColor: AppColors.iconMuted,
+          iconColor: AppColors.iconMuted,
           title: Text(
             l10n.supportReleaseNotesTitle,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.onSurface,
-                  fontWeight: FontWeight.w600,
-                ),
+            style: AppTextStyles.bodyStrong.copyWith(
+              color: AppColors.textPrimary,
+            ),
           ),
           subtitle: Text(
             l10n.supportReleaseNotesHeader(version),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.onSurfaceVariant,
-                ),
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
           children: [
             Text(
               l10n.supportReleaseNotesBody,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.onSurface,
-                    height: 1.4,
-                  ),
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.textPrimary,
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -242,42 +202,40 @@ class _SupportCtaButtons extends StatelessWidget {
         Semantics(
           button: true,
           label: l10n.supportSuggestCta,
-          child: SizedBox(
-            height: 56,
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => onAction(context),
-              icon: const Icon(Icons.lightbulb_outline),
-              label: Text(l10n.supportSuggestCta),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.onPrimary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: AppRadius.medium,
-                ),
-              ),
+          child: AppCardRow(
+            title: l10n.supportSuggestCta,
+            leading: const AppIconBadge(
+              icon: Icons.lightbulb_outline,
+              backgroundColor: AppColors.primaryContainer,
+              iconColor: AppColors.onPrimaryContainer,
+              size: 40,
             ),
+            trailing: const Icon(
+              Icons.chevron_right,
+              color: AppColors.iconMuted,
+              size: 18,
+            ),
+            onTap: () => onAction(context),
           ),
         ),
-        const SizedBox(height: AppSpacing.spacing12),
+        const SizedBox(height: AppSpacing.sm),
         Semantics(
           button: true,
           label: l10n.supportReportCta,
-          child: SizedBox(
-            height: 56,
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => onAction(context),
-              icon: const Icon(Icons.bug_report_outlined),
-              label: Text(l10n.supportReportCta),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.error,
-                foregroundColor: AppColors.onError,
-                shape: RoundedRectangleBorder(
-                  borderRadius: AppRadius.medium,
-                ),
-              ),
+          child: AppCardRow(
+            title: l10n.supportReportCta,
+            leading: const AppIconBadge(
+              icon: Icons.bug_report_outlined,
+              backgroundColor: AppColors.errorContainer,
+              iconColor: AppColors.onErrorContainer,
+              size: 40,
             ),
+            trailing: const Icon(
+              Icons.chevron_right,
+              color: AppColors.iconMuted,
+              size: 18,
+            ),
+            onTap: () => onAction(context),
           ),
         ),
       ],
@@ -304,41 +262,41 @@ class _SupportFaqSection extends StatelessWidget {
         final item = items[index];
         return Padding(
           padding: EdgeInsets.only(
-            bottom: index == items.length - 1 ? 0 : AppSpacing.spacing12,
+            bottom: index == items.length - 1 ? 0 : AppSpacing.sm,
           ),
-          child: Card(
-            color: AppColors.surface,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: AppRadius.large,
-              side: BorderSide(color: AppColors.outlineVariant),
-            ),
+          child: AppCard(
+            padding: EdgeInsets.zero,
+            borderColor: AppColors.borderSubtle,
             child: Theme(
-              data: Theme.of(context).copyWith(
-                dividerColor: Colors.transparent,
-              ),
+              data: Theme.of(
+                context,
+              ).copyWith(dividerColor: AppColors.transparent),
               child: ExpansionTile(
                 tilePadding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.spacing16,
-                  vertical: AppSpacing.spacing8,
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.sm,
                 ),
-                childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                collapsedIconColor: AppColors.onSurfaceVariant,
-                iconColor: AppColors.onSurfaceVariant,
+                childrenPadding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  0,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                ),
+                collapsedIconColor: AppColors.iconMuted,
+                iconColor: AppColors.iconMuted,
                 title: Text(
                   item.question,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.onSurface,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: AppTextStyles.bodyStrong.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 children: [
                   Text(
                     item.answer,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                          height: 1.5,
-                        ),
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),

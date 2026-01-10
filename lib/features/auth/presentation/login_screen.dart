@@ -78,13 +78,17 @@ class LoginScreen extends ConsumerWidget {
                           if (result.status == SocialAuthStatus.cancelled) {
                             ref
                                 .read(sessionManagerProvider.notifier)
-                                .reportLoginMessage(SessionMessage.loginCancelled);
+                                .reportLoginMessage(
+                                  SessionMessage.loginCancelled,
+                                );
                             return;
                           }
                           if (result.status == SocialAuthStatus.networkError) {
                             ref
                                 .read(sessionManagerProvider.notifier)
-                                .reportLoginMessage(SessionMessage.loginNetworkError);
+                                .reportLoginMessage(
+                                  SessionMessage.loginNetworkError,
+                                );
                             return;
                           }
                           if (result.status != SocialAuthStatus.success ||
@@ -114,13 +118,17 @@ class LoginScreen extends ConsumerWidget {
                         if (result.status == SocialAuthStatus.cancelled) {
                           ref
                               .read(sessionManagerProvider.notifier)
-                              .reportLoginMessage(SessionMessage.loginCancelled);
+                              .reportLoginMessage(
+                                SessionMessage.loginCancelled,
+                              );
                           return;
                         }
                         if (result.status == SocialAuthStatus.networkError) {
                           ref
                               .read(sessionManagerProvider.notifier)
-                              .reportLoginMessage(SessionMessage.loginNetworkError);
+                              .reportLoginMessage(
+                                SessionMessage.loginNetworkError,
+                              );
                           return;
                         }
                         if (result.status != SocialAuthStatus.success ||
@@ -139,8 +147,8 @@ class LoginScreen extends ConsumerWidget {
                       },
                       style: FilledButton.styleFrom(
                         // Google Identity 가이드: 밝은 배경(흰색), 검은색 텍스트
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black87,
+                        backgroundColor: AppColors.surfaceInverted,
+                        foregroundColor: AppColors.onSurfaceInverted,
                         shape: RoundedRectangleBorder(
                           borderRadius: AppRadius.medium,
                         ),
@@ -153,13 +161,13 @@ class LoginScreen extends ConsumerWidget {
                             width: 20,
                             height: 20,
                             decoration: const BoxDecoration(
-                              color: Color(0xFF4285F4), // Google Blue
+                              color: AppColors.googleBlue,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
                               Icons.g_mobiledata,
                               size: 16,
-                              color: Colors.white,
+                              color: AppColors.surfaceInverted,
                             ),
                           ),
                           const SizedBox(width: AppSpacing.spacing12),
@@ -167,7 +175,7 @@ class LoginScreen extends ConsumerWidget {
                             child: Text(
                               l10n.loginGoogle,
                               style: AppTypography.labelLarge.copyWith(
-                                color: Colors.black87,
+                                color: AppColors.onSurfaceInverted,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -187,13 +195,17 @@ class LoginScreen extends ConsumerWidget {
                         if (result.status == SocialAuthStatus.cancelled) {
                           ref
                               .read(sessionManagerProvider.notifier)
-                              .reportLoginMessage(SessionMessage.loginCancelled);
+                              .reportLoginMessage(
+                                SessionMessage.loginCancelled,
+                              );
                           return;
                         }
                         if (result.status == SocialAuthStatus.networkError) {
                           ref
                               .read(sessionManagerProvider.notifier)
-                              .reportLoginMessage(SessionMessage.loginNetworkError);
+                              .reportLoginMessage(
+                                SessionMessage.loginNetworkError,
+                              );
                           return;
                         }
                         if (result.status != SocialAuthStatus.success ||
@@ -211,8 +223,8 @@ class LoginScreen extends ConsumerWidget {
                             );
                       },
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFFEE500), // Kakao 브랜드 컬러
-                        foregroundColor: const Color(0xFF000000), // Kakao 텍스트 컬러
+                        backgroundColor: AppColors.kakaoYellow,
+                        foregroundColor: AppColors.kakaoText,
                         shape: RoundedRectangleBorder(
                           borderRadius: AppRadius.medium,
                         ),
@@ -220,7 +232,7 @@ class LoginScreen extends ConsumerWidget {
                       child: Text(
                         l10n.loginKakao,
                         style: AppTypography.labelLarge.copyWith(
-                          color: const Color(0xFF000000),
+                          color: AppColors.kakaoText,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

@@ -23,9 +23,7 @@ abstract class NotificationRepository {
     bool unreadOnly = false,
   });
 
-  Future<int> fetchUnreadCount({
-    required String accessToken,
-  });
+  Future<int> fetchUnreadCount({required String accessToken});
 
   Future<void> markRead({
     required int notificationId,

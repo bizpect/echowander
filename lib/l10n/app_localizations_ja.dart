@@ -324,6 +324,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get composeOpenSettings => '設定を開く';
 
   @override
+  String get commonClose => '閉じる';
+
+  @override
   String get journeyListTitle => '送信したメッセージ';
 
   @override
@@ -850,6 +853,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get profileMenuAppInfo => 'アプリ情報';
 
   @override
+  String get profileMenuTitle => 'メニュー';
+
+  @override
+  String get profileMenuSubtitle => 'よく使う設定にすぐアクセスできます。';
+
+  @override
   String get profileWithdrawCta => '退会する';
 
   @override
@@ -901,6 +910,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get supportFaqTitle => 'よくある質問';
 
   @override
+  String get supportFaqSubtitle => 'よくある質問を確認してください。';
+
+  @override
   String get supportFaqQ1 => 'チームを作成するには？';
 
   @override
@@ -938,6 +950,18 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get appInfoTitle => 'アプリ情報';
+
+  @override
+  String get appInfoSettingsTitle => 'アプリ設定';
+
+  @override
+  String get appInfoSettingsSubtitle => 'ライセンスとポリシーを確認できます。';
+
+  @override
+  String get appInfoSectionTitle => '連携サービス';
+
+  @override
+  String get appInfoSectionSubtitle => '連携中のアプリを確認できます。';
 
   @override
   String appInfoVersionLabel(Object version) {
@@ -982,6 +1006,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get openLicenseHeaderBody => 'このアプリは以下のオープンソースライブラリを使用しています。';
+
+  @override
+  String get openLicenseSectionTitle => 'ライセンス一覧';
+
+  @override
+  String get openLicenseSectionSubtitle => '使用中のオープンソースを確認してください。';
 
   @override
   String openLicenseChipVersion(Object version) {

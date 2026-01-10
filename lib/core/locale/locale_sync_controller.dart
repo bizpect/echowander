@@ -6,18 +6,12 @@ import '../session/session_manager.dart';
 import 'locale_sync_repository.dart';
 
 class LocaleSyncState {
-  const LocaleSyncState({
-    required this.lastSyncedTag,
-    required this.isSyncing,
-  });
+  const LocaleSyncState({required this.lastSyncedTag, required this.isSyncing});
 
   final String? lastSyncedTag;
   final bool isSyncing;
 
-  LocaleSyncState copyWith({
-    String? lastSyncedTag,
-    bool? isSyncing,
-  }) {
+  LocaleSyncState copyWith({String? lastSyncedTag, bool? isSyncing}) {
     return LocaleSyncState(
       lastSyncedTag: lastSyncedTag ?? this.lastSyncedTag,
       isSyncing: isSyncing ?? this.isSyncing,
@@ -27,8 +21,8 @@ class LocaleSyncState {
 
 final localeSyncControllerProvider =
     NotifierProvider<LocaleSyncController, LocaleSyncState>(
-  LocaleSyncController.new,
-);
+      LocaleSyncController.new,
+    );
 
 class LocaleSyncController extends Notifier<LocaleSyncState> {
   /// build 재호출 시 LateInitializationError 방지를 위해 getter로 접근
@@ -50,15 +44,13 @@ class LocaleSyncController extends Notifier<LocaleSyncState> {
       return;
     }
     state = state.copyWith(isSyncing: true);
-    await _repository.updateLocale(
-      localeTag: tag,
-      accessToken: accessToken,
-    );
+    await _repository.updateLocale(localeTag: tag, accessToken: accessToken);
     state = state.copyWith(lastSyncedTag: tag, isSyncing: false);
   }
 
   String _resolveLocaleTag(Locale? locale) {
-    final resolved = locale ?? WidgetsBinding.instance.platformDispatcher.locale;
+    final resolved =
+        locale ?? WidgetsBinding.instance.platformDispatcher.locale;
     if (resolved.languageCode.isEmpty) {
       return '';
     }

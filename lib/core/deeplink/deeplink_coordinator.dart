@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final deepLinkCoordinatorProvider =
-    NotifierProvider<DeepLinkCoordinator, DeepLinkState>(DeepLinkCoordinator.new);
+    NotifierProvider<DeepLinkCoordinator, DeepLinkState>(
+      DeepLinkCoordinator.new,
+    );
 
 class DeepLinkState {
   const DeepLinkState({this.pendingPath});

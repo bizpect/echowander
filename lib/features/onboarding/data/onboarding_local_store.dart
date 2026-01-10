@@ -16,11 +16,11 @@ class OnboardingProgress {
   });
 
   Map<String, dynamic> toJson() => {
-        'stepIndex': stepIndex,
-        'guidelineAgreed': guidelineAgreed,
-        'contentAgreed': contentAgreed,
-        'safetyAgreed': safetyAgreed,
-      };
+    'stepIndex': stepIndex,
+    'guidelineAgreed': guidelineAgreed,
+    'contentAgreed': contentAgreed,
+    'safetyAgreed': safetyAgreed,
+  };
 
   factory OnboardingProgress.fromJson(Map<String, dynamic> json) =>
       OnboardingProgress(
@@ -38,7 +38,7 @@ class OnboardingLocalStore {
   final FlutterSecureStorage _storage;
 
   OnboardingLocalStore({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   Future<bool> readCompleted() async {
     final value = await _storage.read(key: _completedKey);

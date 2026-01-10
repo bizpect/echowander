@@ -5,11 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../../core/permissions/app_permission_service.dart';
 import '../data/onboarding_local_store.dart';
 
-enum OnboardingStatus {
-  unknown,
-  required,
-  completed,
-}
+enum OnboardingStatus { unknown, required, completed }
 
 class OnboardingState {
   final OnboardingStatus status;
@@ -31,14 +27,14 @@ class OnboardingState {
   });
 
   factory OnboardingState.initial() => const OnboardingState(
-        status: OnboardingStatus.unknown,
-        stepIndex: 0,
-        notificationStatus: null,
-        photoStatus: null,
-        guidelineAgreed: false,
-        contentAgreed: false,
-        safetyAgreed: false,
-      );
+    status: OnboardingStatus.unknown,
+    stepIndex: 0,
+    notificationStatus: null,
+    photoStatus: null,
+    guidelineAgreed: false,
+    contentAgreed: false,
+    safetyAgreed: false,
+  );
 
   OnboardingState copyWith({
     OnboardingStatus? status,
@@ -67,8 +63,8 @@ final onboardingLocalStoreProvider = Provider<OnboardingLocalStore>(
 
 final onboardingControllerProvider =
     NotifierProvider<OnboardingController, OnboardingState>(
-  OnboardingController.new,
-);
+      OnboardingController.new,
+    );
 
 class OnboardingController extends Notifier<OnboardingState> {
   static const String _logPrefix = '[OnboardingController]';

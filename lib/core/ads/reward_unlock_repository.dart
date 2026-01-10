@@ -10,10 +10,12 @@ import '../network/network_guard.dart';
 
 class RewardUnlockRepository {
   RewardUnlockRepository({required AppConfig config})
-      : _config = config,
-        _errorLogger = ServerErrorLogger(config: config),
-        _networkGuard = NetworkGuard(errorLogger: ServerErrorLogger(config: config)),
-        _client = HttpClient();
+    : _config = config,
+      _errorLogger = ServerErrorLogger(config: config),
+      _networkGuard = NetworkGuard(
+        errorLogger: ServerErrorLogger(config: config),
+      ),
+      _client = HttpClient();
 
   final AppConfig _config;
   final ServerErrorLogger _errorLogger;
@@ -32,7 +34,9 @@ class RewardUnlockRepository {
       return false;
     }
 
-    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/upsert_reward_unlock');
+    final uri = Uri.parse(
+      '${_config.supabaseUrl}/rest/v1/rpc/upsert_reward_unlock',
+    );
     if (kDebugMode) {
       debugPrint(
         '[Unlock] reqId=$reqId call upsert_reward_unlock params={journeyId=$journeyId, '
@@ -52,9 +56,7 @@ class RewardUnlockRepository {
         context: 'upsert_reward_unlock',
         uri: uri,
         method: 'POST',
-        meta: {
-          'journey_id': journeyId,
-        },
+        meta: {'journey_id': journeyId},
         accessToken: accessToken,
       );
       if (kDebugMode) {
@@ -99,14 +101,13 @@ class RewardUnlockRepository {
     required String reqId,
   }) async {
     final request = await _client.postUrl(uri);
-    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
     request.headers.set('apikey', _config.supabaseAnonKey);
     request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-    request.add(
-      utf8.encode(
-        jsonEncode({'p_journey_id': journeyId}),
-      ),
-    );
+    request.add(utf8.encode(jsonEncode({'p_journey_id': journeyId})));
 
     final response = await request.close();
     final body = await response.transform(utf8.decoder).join();
@@ -118,9 +119,7 @@ class RewardUnlockRepository {
         method: 'POST',
         statusCode: response.statusCode,
         errorMessage: body,
-        meta: {
-          'journey_id': journeyId,
-        },
+        meta: {'journey_id': journeyId},
         accessToken: accessToken,
       );
 
@@ -142,7 +141,9 @@ class RewardUnlockRepository {
     Map<String, dynamic>? row;
     if (payload is Map<String, dynamic>) {
       row = payload;
-    } else if (payload is List && payload.isNotEmpty && payload.first is Map<String, dynamic>) {
+    } else if (payload is List &&
+        payload.isNotEmpty &&
+        payload.first is Map<String, dynamic>) {
       row = payload.first as Map<String, dynamic>;
     }
     if (row == null) {

@@ -13,11 +13,7 @@ import '../../../core/session/session_manager.dart';
 
 const _logPrefix = '[Settings]';
 
-enum SettingsMessage {
-  missingSession,
-  loadFailed,
-  updateFailed,
-}
+enum SettingsMessage { missingSession, loadFailed, updateFailed }
 
 class SettingsState {
   const SettingsState({
@@ -45,9 +41,7 @@ class SettingsState {
 }
 
 final settingsControllerProvider =
-    NotifierProvider<SettingsController, SettingsState>(
-  SettingsController.new,
-);
+    NotifierProvider<SettingsController, SettingsState>(SettingsController.new);
 
 class SettingsController extends Notifier<SettingsState> {
   /// build 재호출 시 LateInitializationError 방지를 위해 getter로 접근
@@ -75,9 +69,8 @@ class SettingsController extends Notifier<SettingsState> {
     try {
       final executor = AuthExecutor(ref);
       final result = await executor.execute<bool>(
-        operation: (accessToken) => _preferenceRepository.fetchEnabled(
-          accessToken: accessToken,
-        ),
+        operation: (accessToken) =>
+            _preferenceRepository.fetchEnabled(accessToken: accessToken),
         isUnauthorized: (error) =>
             error is NotificationPreferenceException &&
             error.error == NotificationPreferenceError.unauthorized,
@@ -88,10 +81,7 @@ class SettingsController extends Notifier<SettingsState> {
           if (kDebugMode) {
             debugPrint('$_logPrefix load - completed, enabled: $data');
           }
-          state = state.copyWith(
-            notificationsEnabled: data,
-            isLoading: false,
-          );
+          state = state.copyWith(notificationsEnabled: data, isLoading: false);
         case AuthExecutorNoSession<bool>():
           if (kDebugMode) {
             debugPrint('$_logPrefix load - missing accessToken');
@@ -121,14 +111,22 @@ class SettingsController extends Notifier<SettingsState> {
     } on NotificationPreferenceException catch (error) {
       // 네트워크 오류 등 401이 아닌 예외
       if (kDebugMode) {
-        debugPrint('$_logPrefix load - NotificationPreferenceException: ${error.error}');
+        debugPrint(
+          '$_logPrefix load - NotificationPreferenceException: ${error.error}',
+        );
       }
-      state = state.copyWith(isLoading: false, message: SettingsMessage.loadFailed);
+      state = state.copyWith(
+        isLoading: false,
+        message: SettingsMessage.loadFailed,
+      );
     } catch (error) {
       if (kDebugMode) {
         debugPrint('$_logPrefix load - unknown error: $error');
       }
-      state = state.copyWith(isLoading: false, message: SettingsMessage.loadFailed);
+      state = state.copyWith(
+        isLoading: false,
+        message: SettingsMessage.loadFailed,
+      );
     }
   }
 
@@ -145,10 +143,7 @@ class SettingsController extends Notifier<SettingsState> {
         enabled: enabled,
       );
       await _syncPushToken(accessToken: accessToken, enabled: enabled);
-      state = state.copyWith(
-        notificationsEnabled: enabled,
-        isLoading: false,
-      );
+      state = state.copyWith(notificationsEnabled: enabled, isLoading: false);
     } on NotificationPreferenceException catch (error) {
       if (kDebugMode) {
         debugPrint('settings: 알림 설정 업데이트 실패 (${error.error})');
@@ -161,7 +156,10 @@ class SettingsController extends Notifier<SettingsState> {
       if (kDebugMode) {
         debugPrint('settings: 알림 설정 업데이트 알 수 없는 오류');
       }
-      state = state.copyWith(isLoading: false, message: SettingsMessage.updateFailed);
+      state = state.copyWith(
+        isLoading: false,
+        message: SettingsMessage.updateFailed,
+      );
     }
   }
 

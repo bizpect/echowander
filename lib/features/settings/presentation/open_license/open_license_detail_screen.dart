@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_radius.dart';
 import '../../../../app/theme/app_spacing.dart';
+import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/presentation/widgets/app_card.dart';
+import '../../../../core/presentation/widgets/app_header.dart';
+import '../../../../core/presentation/widgets/app_pill.dart';
+import '../../../../core/presentation/widgets/app_scaffold.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/open_license_item.dart';
 
@@ -18,40 +22,35 @@ class OpenLicenseDetailScreen extends StatelessWidget {
         ? l10n.openLicenseUnknown
         : item.version;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(l10n.openLicenseDetailTitle(item.packageName)),
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(Icons.arrow_back),
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-        ),
+    return AppScaffold(
+      appBar: AppHeader(
+        title: l10n.openLicenseDetailTitle(item.packageName),
+        leadingIcon: Icons.arrow_back,
+        onLeadingTap: () => Navigator.of(context).maybePop(),
+        leadingSemanticLabel: MaterialLocalizations.of(
+          context,
+        ).backButtonTooltip,
       ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          children: [
-            _DetailHeaderCard(
-              title: item.packageName,
-              versionLabel: l10n.openLicenseChipVersion(versionLabel),
-              licenseLabel: l10n.openLicenseChipLicense(
-                _resolveLicenseLabel(l10n, item.licenseType),
-              ),
+      bodyPadding: EdgeInsets.zero,
+      body: ListView(
+        padding: AppSpacing.pagePadding.copyWith(bottom: AppSpacing.xxl),
+        children: [
+          _DetailHeaderCard(
+            title: item.packageName,
+            versionLabel: l10n.openLicenseChipVersion(versionLabel),
+            licenseLabel: l10n.openLicenseChipLicense(
+              _resolveLicenseLabel(l10n, item.licenseType),
             ),
-            const SizedBox(height: AppSpacing.spacing16),
-            Text(
-              item.licenseText,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.onSurface,
-                    height: 1.4,
-                  ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            item.licenseText,
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.textPrimary,
+              height: 1.5,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -93,68 +92,25 @@ class _DetailHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: AppRadius.large,
-        color: AppColors.surface,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.25),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: AppTextStyles.titleSm.copyWith(color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              AppPill(label: versionLabel, tone: AppPillTone.neutral),
+              AppPill(label: licenseLabel, tone: AppPillTone.neutral),
+            ],
           ),
         ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.spacing16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.onSurface,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: AppSpacing.spacing12),
-            Wrap(
-              spacing: AppSpacing.spacing8,
-              runSpacing: AppSpacing.spacing8,
-              children: [
-                _DetailChip(label: versionLabel),
-                _DetailChip(label: licenseLabel),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DetailChip extends StatelessWidget {
-  const _DetailChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.spacing12,
-        vertical: AppSpacing.spacing8,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.outlineVariant),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.onSurfaceVariant,
-            ),
       ),
     );
   }

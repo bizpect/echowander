@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/app_colors.dart';
+
 class FullScreenLoadingOverlay extends StatelessWidget {
   const FullScreenLoadingOverlay({
     super.key,
@@ -19,7 +21,7 @@ class FullScreenLoadingOverlay extends StatelessWidget {
     return Stack(
       children: [
         child,
-        const ModalBarrier(dismissible: false, color: Colors.black54),
+        const ModalBarrier(dismissible: false, color: AppColors.overlayScrim),
         const Center(child: CircularProgressIndicator()),
       ],
     );

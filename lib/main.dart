@@ -45,12 +45,12 @@ Future<void> main() async {
       .read(sessionManagerProvider.notifier)
       .restoreSession()
       .catchError((error, stackTrace) {
-    // RestoreSessionTransientException은 try-catch에서 처리되지만,
-    // catchError로 Future 체인 밖 예외도 흡수
-    if (kDebugMode) {
-      debugPrint('$_logPrefix restoreSession Future 체인 예외 흡수: $error');
-    }
-  });
+        // RestoreSessionTransientException은 try-catch에서 처리되지만,
+        // catchError로 Future 체인 밖 예외도 흡수
+        if (kDebugMode) {
+          debugPrint('$_logPrefix restoreSession Future 체인 예외 흡수: $error');
+        }
+      });
 
   try {
     await restoreFuture;
@@ -81,8 +81,5 @@ Future<void> main() async {
     debugPrint('$_logPrefix 세션 복원 완료: status=$status');
   }
 
-  runApp(UncontrolledProviderScope(
-    container: container,
-    child: const App(),
-  ));
+  runApp(UncontrolledProviderScope(container: container, child: const App()));
 }

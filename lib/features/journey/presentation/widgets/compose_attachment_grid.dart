@@ -4,7 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_radius.dart';
 import '../../../../app/theme/app_spacing.dart';
-import '../../../../app/theme/app_typography.dart';
+import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/presentation/widgets/app_card.dart';
 import '../../../../l10n/app_localizations.dart';
 
 const int journeyMaxImages = 3;
@@ -34,16 +35,9 @@ class ComposeAttachmentGrid extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppRadius.medium,
-        border: Border.all(
-          color: AppColors.outline,
-          width: 1,
-        ),
-      ),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      borderColor: AppColors.borderSubtle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -53,16 +47,15 @@ class ComposeAttachmentGrid extends StatelessWidget {
             children: [
               Text(
                 l10n.composeImagesTitle,
-                style: AppTypography.titleMedium.copyWith(
-                  color: AppColors.onSurface,
-                  fontWeight: FontWeight.w600,
+                style: AppTextStyles.bodyStrong.copyWith(
+                  color: AppColors.textPrimary,
                 ),
               ),
               if (images.isNotEmpty)
                 Text(
                   '${images.length}/$journeyMaxImages',
-                  style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                  style: AppTextStyles.meta.copyWith(
+                    color: AppColors.textSecondary,
                   ),
                 ),
             ],
@@ -75,10 +68,7 @@ class ComposeAttachmentGrid extends StatelessWidget {
             children: [
               // 기존 이미지들
               for (var i = 0; i < images.length; i += 1)
-                _ImageTile(
-                  file: images[i],
-                  onRemove: () => onRemoveImage(i),
-                ),
+                _ImageTile(file: images[i], onRemove: () => onRemoveImage(i)),
               // 추가 버튼
               if (canAddMore)
                 _AddImageTile(
@@ -95,10 +85,7 @@ class ComposeAttachmentGrid extends StatelessWidget {
 
 /// 이미지 타일 (미리보기 + 제거 버튼)
 class _ImageTile extends StatelessWidget {
-  const _ImageTile({
-    required this.file,
-    required this.onRemove,
-  });
+  const _ImageTile({required this.file, required this.onRemove});
 
   final XFile file;
   final VoidCallback onRemove;
@@ -123,7 +110,7 @@ class _ImageTile extends StatelessWidget {
             label: MaterialLocalizations.of(context).deleteButtonTooltip,
             button: true,
             child: Material(
-              color: Colors.transparent,
+              color: AppColors.transparent,
               child: InkWell(
                 onTap: onRemove,
                 customBorder: const CircleBorder(),
@@ -152,10 +139,7 @@ class _ImageTile extends StatelessWidget {
 
 /// 이미지 추가 타일
 class _AddImageTile extends StatelessWidget {
-  const _AddImageTile({
-    required this.label,
-    required this.onPressed,
-  });
+  const _AddImageTile({required this.label, required this.onPressed});
 
   final String label;
   final VoidCallback onPressed;
@@ -191,8 +175,8 @@ class _AddImageTile extends StatelessWidget {
               const SizedBox(height: AppSpacing.spacing4),
               Text(
                 label,
-                style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.textSecondary,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
@@ -205,4 +189,3 @@ class _AddImageTile extends StatelessWidget {
     );
   }
 }
-

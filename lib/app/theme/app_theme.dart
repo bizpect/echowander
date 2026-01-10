@@ -32,9 +32,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 1,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.medium,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.medium),
       ),
 
       // FilledButton 테마
@@ -43,9 +41,7 @@ class AppTheme {
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.onPrimary,
           minimumSize: const Size(0, 48), // width는 컨텐츠 기준, height만 고정
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.medium,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.medium),
           textStyle: AppTypography.labelLarge,
         ),
       ),
@@ -56,9 +52,7 @@ class AppTheme {
           foregroundColor: AppColors.primary,
           minimumSize: const Size(0, 48), // width는 컨텐츠 기준, height만 고정
           side: const BorderSide(color: AppColors.primary, width: 1.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.medium,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.medium),
           textStyle: AppTypography.labelLarge,
         ),
       ),
@@ -95,7 +89,10 @@ class AppTheme {
           borderRadius: AppRadius.medium,
           borderSide: const BorderSide(color: AppColors.error, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         hintStyle: AppTypography.bodyMedium.copyWith(
           color: AppColors.onSurfaceVariant,
         ),
@@ -104,9 +101,7 @@ class AppTheme {
       // Dialog 테마
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.large,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.large),
         titleTextStyle: AppTypography.titleLarge.copyWith(
           color: AppColors.onSurface,
         ),
@@ -136,11 +131,8 @@ class AppTheme {
         backgroundColor: AppColors.surfaceVariant,
         labelStyle: AppTypography.labelSmall,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.small,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.small),
       ),
     );
   }
 }
-

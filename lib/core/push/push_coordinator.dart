@@ -156,7 +156,9 @@ class PushCoordinator extends Notifier<PushState> {
     await _upsertToken(fcmToken, deviceId, accessToken: accessToken);
     _apnsRetryTimer?.cancel();
     _apnsRetryCount = 0;
-    _tokenSub ??= FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+    _tokenSub ??= FirebaseMessaging.instance.onTokenRefresh.listen((
+      newToken,
+    ) async {
       final accessToken = await _readAccessToken();
       if (accessToken == null || accessToken.isEmpty) {
         return;
@@ -196,8 +198,9 @@ class PushCoordinator extends Notifier<PushState> {
     if (accessToken == null || accessToken.isEmpty) {
       return;
     }
-    await PushTokenRepository(config: AppConfigStore.current)
-        .deactivateToken(accessToken: accessToken, token: fcmToken);
+    await PushTokenRepository(
+      config: AppConfigStore.current,
+    ).deactivateToken(accessToken: accessToken, token: fcmToken);
   }
 
   Future<void> _upsertToken(
@@ -236,7 +239,9 @@ class PushCoordinator extends Notifier<PushState> {
     final sessionAccessToken = ref.read(sessionManagerProvider).accessToken;
     if (sessionAccessToken != null && sessionAccessToken.isNotEmpty) {
       if (kDebugMode) {
-        debugPrint('$_logPrefix 세션 상태 accessToken 확인: 길이 ${sessionAccessToken.length}');
+        debugPrint(
+          '$_logPrefix 세션 상태 accessToken 확인: 길이 ${sessionAccessToken.length}',
+        );
       }
       _cachedAccessToken = sessionAccessToken;
       return sessionAccessToken;
@@ -258,9 +263,9 @@ class PushCoordinator extends Notifier<PushState> {
 
   Future<bool> _isNotificationsEnabled(String accessToken) async {
     try {
-      return await ref.read(notificationPreferenceRepositoryProvider).fetchEnabled(
-            accessToken: accessToken,
-          );
+      return await ref
+          .read(notificationPreferenceRepositoryProvider)
+          .fetchEnabled(accessToken: accessToken);
     } catch (_) {
       return true;
     }
@@ -275,11 +280,7 @@ class PushCoordinator extends Notifier<PushState> {
     if (title.isEmpty && body.isEmpty && route == null) {
       return null;
     }
-    return PushPayload(
-      title: title,
-      body: body,
-      route: route,
-    );
+    return PushPayload(title: title, body: body, route: route);
   }
 
   String? _resolveRoute(RemoteMessage? message) {

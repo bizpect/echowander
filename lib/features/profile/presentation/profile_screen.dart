@@ -4,11 +4,16 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
+import '../../../app/theme/app_text_styles.dart';
+import '../../../core/presentation/widgets/app_card.dart';
 import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/app_button.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
+import '../../../core/presentation/widgets/app_icon_badge.dart';
+import '../../../core/presentation/widgets/app_scaffold.dart';
+import '../../../core/presentation/widgets/app_section.dart';
+import '../../../core/presentation/widgets/app_skeleton.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../core/session/session_state.dart';
 import '../../../l10n/app_localizations.dart';
@@ -23,90 +28,91 @@ class ProfileScreen extends ConsumerWidget {
     final sessionState = ref.watch(sessionManagerProvider);
     final displayName = l10n.profileDefaultNickname;
     final providerLabel = _resolveProviderLabel(l10n, null);
-    final isLoading = sessionState.status == SessionStatus.unknown ||
+    final isLoading =
+        sessionState.status == SessionStatus.unknown ||
         sessionState.status == SessionStatus.refreshing;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return AppScaffold(
       appBar: AppHeader(
         title: l10n.tabProfileLabel,
-        alignLeft: true,
-        extraTopPadding: AppSpacing.spacing8,
+        alignTitleLeft: true,
       ),
-      body: SafeArea(
-        top: false,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          children: [
-            _ProfileHeaderCard(
-              l10n: l10n,
-              displayName: displayName,
-              providerLabel: providerLabel,
-              isLoading: isLoading,
-              photoUrl: null,
-            ),
-            const SizedBox(height: AppSpacing.spacing16),
-            Semantics(
-              button: true,
-              label: l10n.profileEditCta,
-              child: SizedBox(
-                height: 54,
-                width: double.infinity,
-                child: AppFilledButton(
-                  onPressed: () => _showFeaturePreparingDialog(context, l10n),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.edit, size: 18),
-                      const SizedBox(width: AppSpacing.spacing8),
-                      Text(l10n.profileEditCta),
-                    ],
-                  ),
+      bodyPadding: EdgeInsets.zero,
+      body: ListView(
+        padding: AppSpacing.pagePadding.copyWith(bottom: AppSpacing.xxl),
+        children: [
+          _ProfileHeaderCard(
+            l10n: l10n,
+            displayName: displayName,
+            providerLabel: providerLabel,
+            isLoading: isLoading,
+            photoUrl: null,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Semantics(
+            button: true,
+            label: l10n.profileEditCta,
+            child: SizedBox(
+              height: AppSpacing.minTouchTarget,
+              width: double.infinity,
+              child: AppFilledButton(
+                onPressed: () => _showFeaturePreparingDialog(context, l10n),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.edit, size: 18),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(l10n.profileEditCta),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.spacing20),
-            _SettingsMenuCard(
-              l10n: l10n,
-              items: [
-                _SettingsMenuItem(
-                  icon: Icons.notifications_outlined,
-                  iconBackground: AppColors.primary.withValues(alpha: 0.12),
-                  iconColor: AppColors.primary,
-                  title: l10n.profileMenuNotifications,
-                  onTap: () => context.push(AppRoutes.settings),
-                ),
-                _SettingsMenuItem(
-                  icon: Icons.campaign_outlined,
-                  iconBackground: AppColors.secondary.withValues(alpha: 0.12),
-                  iconColor: AppColors.secondary,
-                  title: l10n.profileMenuNotices,
-                  onTap: () => context.push(AppRoutes.notifications),
-                ),
-                _SettingsMenuItem(
-                  icon: Icons.volunteer_activism_outlined,
-                  iconBackground: AppColors.warning.withValues(alpha: 0.12),
-                  iconColor: AppColors.warning,
-                  title: l10n.profileMenuSupport,
-                  onTap: () => context.push(AppRoutes.support),
-                ),
-                _SettingsMenuItem(
-                  icon: Icons.info_outline,
-                  iconBackground: AppColors.surfaceVariant,
-                  iconColor: AppColors.onSurfaceVariant,
-                  title: l10n.profileMenuAppInfo,
-                  onTap: () => context.push(AppRoutes.appInfo),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.spacing24),
-            _DangerActionSection(
-              l10n: l10n,
-              onSignOut: () => _confirmSignOut(context, ref, l10n),
-              onWithdraw: () => _confirmWithdraw(context, l10n),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          AppSection(
+            title: l10n.profileMenuTitle,
+            subtitle: l10n.profileMenuSubtitle,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _SettingsMenuCard(
+            items: [
+              _SettingsMenuItem(
+                icon: Icons.notifications_outlined,
+                iconBackground: AppColors.primaryContainer,
+                iconColor: AppColors.onPrimaryContainer,
+                title: l10n.profileMenuNotifications,
+                onTap: () => context.push(AppRoutes.settings),
+              ),
+              _SettingsMenuItem(
+                icon: Icons.campaign_outlined,
+                iconBackground: AppColors.secondaryContainer,
+                iconColor: AppColors.onSecondaryContainer,
+                title: l10n.profileMenuNotices,
+                onTap: () => context.push(AppRoutes.notifications),
+              ),
+              _SettingsMenuItem(
+                icon: Icons.volunteer_activism_outlined,
+                iconBackground: AppColors.warningContainer,
+                iconColor: AppColors.onWarningContainer,
+                title: l10n.profileMenuSupport,
+                onTap: () => context.push(AppRoutes.support),
+              ),
+              _SettingsMenuItem(
+                icon: Icons.info_outline,
+                iconBackground: AppColors.surfaceVariant,
+                iconColor: AppColors.onSurfaceVariant,
+                title: l10n.profileMenuAppInfo,
+                onTap: () => context.push(AppRoutes.appInfo),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          _DangerActionSection(
+            l10n: l10n,
+            onSignOut: () => _confirmSignOut(context, ref, l10n),
+            onWithdraw: () => _confirmWithdraw(context, l10n),
+          ),
+        ],
       ),
     );
   }
@@ -142,7 +148,10 @@ class ProfileScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _confirmWithdraw(BuildContext context, AppLocalizations l10n) async {
+  Future<void> _confirmWithdraw(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
     final confirmed = await showAppConfirmDialog(
       context: context,
       title: l10n.profileWithdrawTitle,
@@ -189,66 +198,45 @@ class _ProfileHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: AppRadius.large,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.surface,
-            AppColors.surfaceVariant,
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.25),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Row(
+        children: [
+          Semantics(
+            image: true,
+            label: l10n.profileAvatarSemantics,
+            child: _ProfileAvatar(
+              displayName: displayName,
+              photoUrl: photoUrl,
+              isLoading: isLoading,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: isLoading
+                ? const _ProfileHeaderSkeleton()
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.titleMd.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        providerLabel,
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.spacing20),
-        child: Row(
-          children: [
-            Semantics(
-              image: true,
-              label: l10n.profileAvatarSemantics,
-              child: _ProfileAvatar(
-                displayName: displayName,
-                photoUrl: photoUrl,
-                isLoading: isLoading,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.spacing16),
-            Expanded(
-              child: isLoading
-                  ? _ProfileHeaderSkeleton()
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          displayName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                color: AppColors.onSurface,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        const SizedBox(height: AppSpacing.spacing8),
-                        Text(
-                          providerLabel,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppColors.onSurfaceVariant,
-                              ),
-                        ),
-                      ],
-                    ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -293,38 +281,25 @@ class _ProfileAvatar extends StatelessWidget {
       backgroundColor: AppColors.primaryContainer,
       child: Text(
         initial,
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: AppColors.onPrimaryContainer,
-              fontWeight: FontWeight.bold,
-            ),
+        style: AppTextStyles.titleMd.copyWith(
+          color: AppColors.onPrimaryContainer,
+        ),
       ),
     );
   }
 }
 
 class _ProfileHeaderSkeleton extends StatelessWidget {
+  const _ProfileHeaderSkeleton();
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 140,
-          height: 18,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceDim,
-            borderRadius: BorderRadius.circular(6),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.spacing12),
-        Container(
-          width: 110,
-          height: 14,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceDim,
-            borderRadius: BorderRadius.circular(6),
-          ),
-        ),
+        const AppSkeleton(width: 140, height: 18),
+        const SizedBox(height: AppSpacing.sm),
+        const AppSkeleton(width: 110, height: 14),
       ],
     );
   }
@@ -347,66 +322,34 @@ class _SettingsMenuItem {
 }
 
 class _SettingsMenuCard extends StatelessWidget {
-  const _SettingsMenuCard({
-    required this.l10n,
-    required this.items,
-  });
+  const _SettingsMenuCard({required this.items});
 
-  final AppLocalizations l10n;
   final List<_SettingsMenuItem> items;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: AppColors.surface,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.large,
-        side: BorderSide(
-          color: AppColors.outlineVariant,
-        ),
-      ),
-      child: Column(
-        children: List.generate(items.length, (index) {
-          final item = items[index];
-          return Column(
-            children: [
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.spacing16,
-                  vertical: AppSpacing.spacing4,
-                ),
-                minLeadingWidth: 0,
-                leading: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: item.iconBackground,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(item.icon, color: item.iconColor, size: 22),
-                ),
-                title: Text(
-                  item.title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.onSurface,
-                      ),
-                ),
-                trailing: Icon(
-                  Icons.chevron_right,
-                  color: AppColors.onSurfaceVariant,
-                ),
-                onTap: item.onTap,
-              ),
-              if (index != items.length - 1)
-                Divider(
-                  height: 1,
-                  color: AppColors.divider,
-                ),
-            ],
-          );
-        }),
-      ),
+    return Column(
+      children: List.generate(items.length, (index) {
+        final item = items[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          child: AppCardRow(
+            title: item.title,
+            leading: AppIconBadge(
+              icon: item.icon,
+              backgroundColor: item.iconBackground,
+              iconColor: item.iconColor,
+              size: 40,
+            ),
+            trailing: const Icon(
+              Icons.chevron_right,
+              color: AppColors.iconMuted,
+              size: 18,
+            ),
+            onTap: item.onTap,
+          ),
+        );
+      }),
     );
   }
 }
@@ -427,39 +370,36 @@ class _DangerActionSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(
-          height: 52,
-          child: OutlinedButton.icon(
-            onPressed: onSignOut,
-            icon: Icon(Icons.logout, color: AppColors.error),
-            label: Text(
-              l10n.profileSignOutCta,
-              style: TextStyle(color: AppColors.error),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: AppColors.error),
-              shape: RoundedRectangleBorder(
-                borderRadius: AppRadius.medium,
-              ),
-            ),
+        AppCardRow(
+          title: l10n.profileSignOutCta,
+          leading: const AppIconBadge(
+            icon: Icons.logout,
+            backgroundColor: AppColors.errorContainer,
+            iconColor: AppColors.onErrorContainer,
+            size: 40,
           ),
+          trailing: const Icon(
+            Icons.chevron_right,
+            color: AppColors.iconMuted,
+            size: 18,
+          ),
+          onTap: onSignOut,
         ),
-        const SizedBox(height: AppSpacing.spacing12),
-        SizedBox(
-          height: 52,
-          child: OutlinedButton(
-            onPressed: onWithdraw,
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: AppColors.outline),
-              shape: RoundedRectangleBorder(
-                borderRadius: AppRadius.medium,
-              ),
-            ),
-            child: Text(
-              l10n.profileWithdrawCta,
-              style: TextStyle(color: AppColors.onSurfaceVariant),
-            ),
+        const SizedBox(height: AppSpacing.sm),
+        AppCardRow(
+          title: l10n.profileWithdrawCta,
+          leading: const AppIconBadge(
+            icon: Icons.person_off_outlined,
+            backgroundColor: AppColors.surfaceVariant,
+            iconColor: AppColors.onSurfaceVariant,
+            size: 40,
           ),
+          trailing: const Icon(
+            Icons.chevron_right,
+            color: AppColors.iconMuted,
+            size: 18,
+          ),
+          onTap: onWithdraw,
         ),
       ],
     );

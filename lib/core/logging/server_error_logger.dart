@@ -13,13 +13,14 @@ import '../push/device_id_store.dart';
 /// - 로깅 실패 시 조용히 swallow 처리 (앱 UX/플로우 영향 0)
 class ServerErrorLogger {
   ServerErrorLogger({required AppConfig config})
-      : _config = config,
-        // 순환 의존성 방지: errorLogger를 null로 전달
-        // 로깅 실패를 다시 로깅하지 않아 재귀/무한루프 원천 차단
-        _networkGuard = NetworkGuard(),
-        _client = HttpClient();
+    : _config = config,
+      // 순환 의존성 방지: errorLogger를 null로 전달
+      // 로깅 실패를 다시 로깅하지 않아 재귀/무한루프 원천 차단
+      _networkGuard = NetworkGuard(),
+      _client = HttpClient();
 
   final AppConfig _config;
+
   /// NetworkGuard (errorLogger: null) - 로깅 실패 시 재귀 방지
   final NetworkGuard _networkGuard;
   final HttpClient _client;
@@ -37,11 +38,7 @@ class ServerErrorLogger {
       context: context,
       statusCode: statusCode,
       errorMessage: errorMessage,
-      meta: _mergeMeta(
-        meta: meta,
-        uri: uri,
-        method: method,
-      ),
+      meta: _mergeMeta(meta: meta, uri: uri, method: method),
       accessToken: accessToken,
     );
   }
@@ -63,9 +60,7 @@ class ServerErrorLogger {
         meta: meta,
         uri: uri,
         method: method,
-        extra: {
-          'exception': error.runtimeType.toString(),
-        },
+        extra: {'exception': error.runtimeType.toString()},
       ),
       accessToken: accessToken,
     );
@@ -92,7 +87,9 @@ class ServerErrorLogger {
 
     try {
       final deviceId = await DeviceIdStore().getOrCreate();
-      final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/log_client_error');
+      final uri = Uri.parse(
+        '${_config.supabaseUrl}/rest/v1/rpc/log_client_error',
+      );
       final payload = {
         'error_context': context,
         'status_code': statusCode,
@@ -125,11 +122,8 @@ class ServerErrorLogger {
 
       // 익명 시도
       await _networkGuard.execute<void>(
-        operation: () => _executePost(
-          uri: uri,
-          payload: payload,
-          accessToken: null,
-        ),
+        operation: () =>
+            _executePost(uri: uri, payload: payload, accessToken: null),
         retryPolicy: RetryPolicy.none,
         context: 'server_error_log',
         uri: uri,
@@ -152,10 +146,16 @@ class ServerErrorLogger {
     required String? accessToken,
   }) async {
     final request = await _client.postUrl(uri);
-    request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
     request.headers.set('apikey', _config.supabaseAnonKey);
     if (accessToken != null && accessToken.isNotEmpty) {
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+      request.headers.set(
+        HttpHeaders.authorizationHeader,
+        'Bearer $accessToken',
+      );
     }
     request.add(utf8.encode(jsonEncode(payload)));
 

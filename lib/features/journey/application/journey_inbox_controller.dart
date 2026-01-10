@@ -42,25 +42,22 @@ class JourneyInboxState {
 
 final journeyInboxControllerProvider =
     NotifierProvider<JourneyInboxController, JourneyInboxState>(
-  JourneyInboxController.new,
-);
+      JourneyInboxController.new,
+    );
 
 class JourneyInboxController extends Notifier<JourneyInboxState> {
   static const int _defaultLimit = 20;
 
   /// build 재호출 시 LateInitializationError 방지를 위해 getter로 접근
-  JourneyRepository get _journeyRepository => ref.read(journeyRepositoryProvider);
+  JourneyRepository get _journeyRepository =>
+      ref.read(journeyRepositoryProvider);
 
   @override
   JourneyInboxState build() {
     if (kDebugMode) {
       debugPrint('[InboxTrace][Provider] build - initializing controller');
     }
-    return const JourneyInboxState(
-      items: [],
-      isLoading: false,
-      message: null,
-    );
+    return const JourneyInboxState(items: [], isLoading: false, message: null);
   }
 
   /// 특정 journeyId의 아이템을 리스트에서 제거 (optimistic update)
@@ -68,10 +65,14 @@ class JourneyInboxController extends Notifier<JourneyInboxState> {
     if (kDebugMode) {
       debugPrint('[InboxTrace][Provider] removeItem - journeyId: $journeyId');
     }
-    final updatedItems = state.items.where((item) => item.journeyId != journeyId).toList();
+    final updatedItems = state.items
+        .where((item) => item.journeyId != journeyId)
+        .toList();
     state = state.copyWith(items: updatedItems);
     if (kDebugMode) {
-      debugPrint('[InboxTrace][Provider] removeItem - updated items: ${updatedItems.length}');
+      debugPrint(
+        '[InboxTrace][Provider] removeItem - updated items: ${updatedItems.length}',
+      );
     }
   }
 
@@ -101,7 +102,9 @@ class JourneyInboxController extends Notifier<JourneyInboxState> {
     }
 
     if (kDebugMode) {
-      debugPrint('[InboxTrace][Provider] load - start, limit: $limit, offset: $offset');
+      debugPrint(
+        '[InboxTrace][Provider] load - start, limit: $limit, offset: $offset',
+      );
     }
     state = state.copyWith(isLoading: true, clearMessage: true);
 
@@ -111,21 +114,32 @@ class JourneyInboxController extends Notifier<JourneyInboxState> {
         operation: (accessToken) async {
           if (kDebugMode) {
             debugPrint(
-                '[InboxTrace][Provider] load - accessToken exists (length: ${accessToken.length})');
+              '[InboxTrace][Provider] load - accessToken exists (length: ${accessToken.length})',
+            );
             // accessToken 시작 부분 확인 (JWT는 eyJ로 시작해야 함)
-            final tokenStart =
-                accessToken.length > 20 ? accessToken.substring(0, 20) : accessToken;
-            debugPrint('[InboxTrace][Provider] load - accessToken starts with: $tokenStart...');
+            final tokenStart = accessToken.length > 20
+                ? accessToken.substring(0, 20)
+                : accessToken;
+            debugPrint(
+              '[InboxTrace][Provider] load - accessToken starts with: $tokenStart...',
+            );
             // JWT 전체 payload 출력
             try {
               final parts = accessToken.split('.');
-              debugPrint('[InboxTrace][Provider] load - JWT parts count: ${parts.length}');
+              debugPrint(
+                '[InboxTrace][Provider] load - JWT parts count: ${parts.length}',
+              );
               if (parts.length == 3) {
-                final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
-                debugPrint('[InboxTrace][Provider] load - JWT payload: $payload');
+                final payload = utf8.decode(
+                  base64Url.decode(base64Url.normalize(parts[1])),
+                );
+                debugPrint(
+                  '[InboxTrace][Provider] load - JWT payload: $payload',
+                );
               } else {
                 debugPrint(
-                    '[InboxTrace][Provider] load - INVALID JWT: expected 3 parts, got ${parts.length}');
+                  '[InboxTrace][Provider] load - INVALID JWT: expected 3 parts, got ${parts.length}',
+                );
               }
             } catch (e) {
               debugPrint('[InboxTrace][Provider] load - JWT decode error: $e');
@@ -134,12 +148,18 @@ class JourneyInboxController extends Notifier<JourneyInboxState> {
           // 디버그: auth.uid() 값 확인
           if (kDebugMode) {
             try {
-              final debugResult = await _journeyRepository.debugAuth(accessToken: accessToken);
-              debugPrint('[InboxTrace][Provider] load - debug_auth result: $debugResult');
+              final debugResult = await _journeyRepository.debugAuth(
+                accessToken: accessToken,
+              );
+              debugPrint(
+                '[InboxTrace][Provider] load - debug_auth result: $debugResult',
+              );
             } catch (e) {
               debugPrint('[InboxTrace][Provider] load - debug_auth error: $e');
             }
-            debugPrint('[InboxTrace][Provider] load - calling fetchInboxJourneys');
+            debugPrint(
+              '[InboxTrace][Provider] load - calling fetchInboxJourneys',
+            );
           }
           return _journeyRepository.fetchInboxJourneys(
             limit: limit,
@@ -148,22 +168,22 @@ class JourneyInboxController extends Notifier<JourneyInboxState> {
           );
         },
         isUnauthorized: (error) =>
-            error is JourneyInboxException && error.error == JourneyInboxError.unauthorized,
+            error is JourneyInboxException &&
+            error.error == JourneyInboxError.unauthorized,
       );
 
       switch (result) {
         case AuthExecutorSuccess<List<JourneyInboxItem>>(:final data):
           if (kDebugMode) {
             debugPrint(
-                '[InboxTrace][Provider] load - fetchInboxJourneys completed, items: ${data.length}');
+              '[InboxTrace][Provider] load - fetchInboxJourneys completed, items: ${data.length}',
+            );
           }
-          state = state.copyWith(
-            items: data,
-            isLoading: false,
-          );
+          state = state.copyWith(items: data, isLoading: false);
           if (kDebugMode) {
             debugPrint(
-                '[InboxTrace][Provider] load - state updated, items: ${state.items.length}, isLoading: ${state.isLoading}');
+              '[InboxTrace][Provider] load - state updated, items: ${state.items.length}, isLoading: ${state.isLoading}',
+            );
           }
         case AuthExecutorNoSession<List<JourneyInboxItem>>():
           if (kDebugMode) {
@@ -175,7 +195,9 @@ class JourneyInboxController extends Notifier<JourneyInboxState> {
           );
         case AuthExecutorUnauthorized<List<JourneyInboxItem>>():
           if (kDebugMode) {
-            debugPrint('[InboxTrace][Provider] load - unauthorized after retry');
+            debugPrint(
+              '[InboxTrace][Provider] load - unauthorized after retry',
+            );
           }
           state = state.copyWith(
             isLoading: false,
@@ -184,7 +206,9 @@ class JourneyInboxController extends Notifier<JourneyInboxState> {
         case AuthExecutorTransientError<List<JourneyInboxItem>>():
           // 일시 장애: 네트워크/서버 문제 (로그아웃 아님)
           if (kDebugMode) {
-            debugPrint('[InboxTrace][Provider] load - transient error (network/server)');
+            debugPrint(
+              '[InboxTrace][Provider] load - transient error (network/server)',
+            );
           }
           state = state.copyWith(
             isLoading: false,
@@ -205,7 +229,9 @@ class JourneyInboxController extends Notifier<JourneyInboxState> {
       }
       // 네트워크 오류 등 기타 예외
       if (kDebugMode) {
-        debugPrint('[InboxTrace][Provider] load - JourneyInboxException: ${error.error}');
+        debugPrint(
+          '[InboxTrace][Provider] load - JourneyInboxException: ${error.error}',
+        );
       }
       state = state.copyWith(
         isLoading: false,

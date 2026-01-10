@@ -5,9 +5,14 @@ class PushState {
 
   final PushPayload? foregroundMessage;
 
-  PushState copyWith({PushPayload? foregroundMessage, bool clearMessage = false}) {
+  PushState copyWith({
+    PushPayload? foregroundMessage,
+    bool clearMessage = false,
+  }) {
     return PushState(
-      foregroundMessage: clearMessage ? null : (foregroundMessage ?? this.foregroundMessage),
+      foregroundMessage: clearMessage
+          ? null
+          : (foregroundMessage ?? this.foregroundMessage),
     );
   }
 }
