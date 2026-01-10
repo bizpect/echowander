@@ -145,7 +145,13 @@
   "journeyFilterRemoved": "Removed",
   "journeyFilterUnknown": "Unknown",
   "inboxTitle": "Inbox",
+  "inboxTabPending": "Pending",
+  "inboxTabCompleted": "Completed",
   "inboxEmpty": "No messages received yet.",
+  "inboxEmptyPendingTitle": "No pending messages",
+  "inboxEmptyPendingDescription": "New messages will appear here.",
+  "inboxEmptyCompletedTitle": "No completed messages",
+  "inboxEmptyCompletedDescription": "Messages you've responded to will appear here.",
   "inboxCta": "View inbox",
   "inboxRefresh": "Refresh",
   "inboxLoadFailed": "We couldn't load your inbox.",
@@ -240,6 +246,11 @@
   "settingsSectionNotification": "Notifications",
   "settingsNotificationToggle": "Allow notifications",
   "settingsNotificationHint": "Receive relay updates and results.",
+  "settingsLanguage": "Language",
+  "settingsTheme": "Theme",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
   "settingsSectionSafety": "Safety",
   "settingsBlockedUsers": "Blocked users",
   "settingsLoadFailed": "We couldn't load settings.",
@@ -309,7 +320,7 @@
   "profileLoginProviderApple": "Apple login",
   "profileLoginProviderEmail": "Email login",
   "profileLoginProviderUnknown": "Signed in",
-  "profileMenuNotifications": "Notification settings",
+  "profileAppSettings": "App settings",
   "profileMenuNotices": "Notices",
   "profileMenuSupport": "Support",
   "profileMenuAppInfo": "App info",
@@ -332,18 +343,37 @@
   "supportReportCta": "Report an issue",
   "supportFaqTitle": "FAQ",
   "supportFaqSubtitle": "Check common questions.",
-  "supportFaqQ1": "How can I create a team?",
-  "supportFaqA1": "Team features are coming soon. We'll announce details in future updates.",
-  "supportFaqQ2": "How do I invite team members?",
-  "supportFaqA2": "Invites will be available once team features are released.",
-  "supportFaqQ3": "How do I register game schedules?",
-  "supportFaqA3": "Schedule management will be supported in a future update.",
-  "supportFaqQ4": "I am not receiving notifications.",
-  "supportFaqA4": "Check notification permissions in system settings and in-app settings.",
-  "supportFaqQ5": "How do I delete my account?",
-  "supportFaqA5": "Go to Profile > Delete account and follow the confirmation steps.",
+  "supportFaqQ1": "Messages don't seem to be delivered. Why?",
+  "supportFaqA1": "Delivery may be delayed or restricted due to network status, temporary server delays, or safety policies (reports/blocks, etc.). Please try again later.",
+  "supportFaqQ2": "I'm not receiving notifications. What should I do?",
+  "supportFaqA2": "Echowander notification permissions may be turned off in your phone settings. Go to App Settings → App Settings (Notification Settings) to turn on notification permissions, and also check battery saver/background restrictions.",
+  "supportFaqQ3": "I received an unpleasant message. How do I block/report?",
+  "supportFaqA3": "You can select Report or Block from the message screen. Blocking prevents you from receiving further messages from that user. Reported content may be reviewed for community safety.",
+  "supportFaqQ4": "Can I edit or cancel a message I sent?",
+  "supportFaqA4": "Once sent, messages cannot be easily edited or cancelled. Please review the content before sending.",
+  "supportFaqQ5": "What happens if I violate community guidelines?",
+  "supportFaqA5": "Repeated violations may result in message restrictions or account limitations. Please follow the guidelines for a safe community.",
   "supportActionPreparingTitle": "Coming soon",
   "supportActionPreparingBody": "This action will be available soon.",
+  "supportSuggestionSubject": "Feature Request",
+  "supportBugSubject": "Bug Report",
+  "supportEmailFooterUser": "User : {userId}",
+  "@supportEmailFooterUser": {
+    "placeholders": {
+      "userId": {
+        "type": "String"
+      }
+    }
+  },
+  "supportEmailFooterVersion": "App Version : {version}",
+  "@supportEmailFooterVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "supportEmailLaunchFailed": "Unable to open mail app. Please try again later.",
   "appInfoTitle": "App info",
   "appInfoSettingsTitle": "App settings",
   "appInfoSettingsSubtitle": "Review licenses and policies.",
@@ -387,5 +417,53 @@
   "errorUnauthorized": "Please sign in again.",
   "errorRetry": "Retry",
   "errorCancel": "Cancel",
-  "errorAuthRefreshFailed": "Network is unstable. Please try again in a moment."
+  "errorAuthRefreshFailed": "Network is unstable. Please try again in a moment.",
+  "homeInboxSummaryTitle": "Today's Inbox",
+  "homeInboxSummaryPending": "Pending",
+  "homeInboxSummaryCompleted": "Completed",
+  "homeInboxSummarySentResponses": "Responses",
+  "homeInboxSummaryUpdatedAt": "Updated {time}",
+  "homeInboxSummaryRefresh": "Refresh",
+  "homeInboxSummaryLoadFailed": "We couldn't load the summary.",
+  "homeInboxSummaryItemSemantics": "{label} {count}",
+  "homeTimelineTitle": "Recent Activity",
+  "homeTimelineEmptyTitle": "No recent activity yet",
+  "homeTimelineReceivedTitle": "New message received",
+  "homeTimelineRespondedTitle": "Reply sent",
+  "homeTimelineSentResponseTitle": "Response arrived",
+  "homeTimelineSubtitle": "{time}",
+  "homeDailyPromptTitle": "Today's Question",
+  "homeDailyPromptHint": "Tap to start a message",
+  "homeDailyPromptAction": "Write",
+  "homeAnnouncementTitle": "Update",
+  "homeAnnouncementSummary": "See what's new in Echowander.",
+  "homeAnnouncementAction": "Details",
+  "homeAnnouncementDetailTitle": "Update",
+  "homeAnnouncementDetailBody": "We added improvements for a smoother experience.",
+  "homePromptQ1": "What made you smile today?",
+  "homePromptQ2": "What are you looking forward to this week?",
+  "homePromptQ3": "What's a place you want to revisit?",
+  "homePromptQ4": "Share a small win from today.",
+  "homePromptQ5": "What's a habit you'd like to build?",
+  "homePromptQ6": "Who do you want to thank today?",
+  "homePromptQ7": "What's a song you keep replaying?",
+  "homePromptQ8": "Describe your day in three words.",
+  "homePromptQ9": "What's something you learned recently?",
+  "homePromptQ10": "If you could send one message to yourself, what would it be?",
+  "@homeInboxSummaryUpdatedAt": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "@homeInboxSummaryItemSemantics": {
+    "placeholders": {
+      "label": {},
+      "count": {}
+    }
+  },
+  "@homeTimelineSubtitle": {
+    "placeholders": {
+      "time": {}
+    }
+  }
 }

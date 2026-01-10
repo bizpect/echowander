@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
@@ -40,10 +39,9 @@ class _AppCardState extends State<AppCard> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final radius = AppRadius.large;
-    final color = _pressed
-        ? AppColors.surfaceCardPressed
-        : AppColors.surfaceCard;
+    final color = colorScheme.surfaceContainerHighest;
 
     final shape = RoundedRectangleBorder(
       borderRadius: radius,
@@ -85,6 +83,7 @@ class AppCardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -95,7 +94,7 @@ class AppCardHeader extends StatelessWidget {
               Text(
                 title,
                 style: AppTextStyles.titleSm.copyWith(
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
               if (subtitle != null) ...[
@@ -103,7 +102,7 @@ class AppCardHeader extends StatelessWidget {
                 Text(
                   subtitle!,
                   style: AppTextStyles.caption.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -135,6 +134,7 @@ class AppCardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return AppCard(
       onTap: onTap,
       padding: const EdgeInsets.symmetric(
@@ -155,7 +155,7 @@ class AppCardRow extends StatelessWidget {
                 Text(
                   title,
                   style: AppTextStyles.bodyStrong.copyWith(
-                    color: AppColors.textPrimary,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 if (subtitle != null) ...[
@@ -163,7 +163,7 @@ class AppCardRow extends StatelessWidget {
                   Text(
                     subtitle!,
                     style: AppTextStyles.caption.copyWith(
-                      color: AppColors.textSecondary,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],

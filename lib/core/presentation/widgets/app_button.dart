@@ -20,11 +20,13 @@ class AppFilledButton extends StatefulWidget {
     required this.onPressed,
     required this.child,
     this.isLoading = false,
+    this.style,
   });
 
   final VoidCallback? onPressed;
   final Widget child;
   final bool isLoading;
+  final ButtonStyle? style;
 
   @override
   State<AppFilledButton> createState() => _AppFilledButtonState();
@@ -78,6 +80,7 @@ class _AppFilledButtonState extends State<AppFilledButton>
         scale: _scaleAnimation,
         child: FilledButton(
           onPressed: widget.isLoading ? null : widget.onPressed,
+          style: widget.style,
           child: widget.isLoading
               ? const SizedBox(
                   height: 24,
@@ -113,10 +116,12 @@ class AppOutlinedButton extends StatefulWidget {
     super.key,
     required this.onPressed,
     required this.child,
+    this.style,
   });
 
   final VoidCallback? onPressed;
   final Widget child;
+  final ButtonStyle? style;
 
   @override
   State<AppOutlinedButton> createState() => _AppOutlinedButtonState();
@@ -168,7 +173,11 @@ class _AppOutlinedButtonState extends State<AppOutlinedButton>
       onTapCancel: _onTapCancel,
       child: ScaleTransition(
         scale: _scaleAnimation,
-        child: OutlinedButton(onPressed: widget.onPressed, child: widget.child),
+        child: OutlinedButton(
+          onPressed: widget.onPressed,
+          style: widget.style,
+          child: widget.child,
+        ),
       ),
     );
   }

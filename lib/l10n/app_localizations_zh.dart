@@ -402,7 +402,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get inboxTitle => '收件箱';
 
   @override
+  String get inboxTabPending => '待回复';
+
+  @override
+  String get inboxTabCompleted => '已回复';
+
+  @override
   String get inboxEmpty => '还没有收到消息。';
+
+  @override
+  String get inboxEmptyPendingTitle => '暂无待回复消息';
+
+  @override
+  String get inboxEmptyPendingDescription => '新的消息会显示在这里。';
+
+  @override
+  String get inboxEmptyCompletedTitle => '暂无已回复消息';
+
+  @override
+  String get inboxEmptyCompletedDescription => '你已回复的消息会显示在这里。';
 
   @override
   String get inboxCta => '查看收件箱';
@@ -674,6 +692,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsNotificationHint => '接收进度与结果提醒。';
 
   @override
+  String get settingsLanguage => '语言';
+
+  @override
+  String get settingsTheme => '主题';
+
+  @override
+  String get themeSystem => '系统';
+
+  @override
+  String get themeLight => '浅色';
+
+  @override
+  String get themeDark => '深色';
+
+  @override
   String get settingsSectionSafety => '安全';
 
   @override
@@ -865,7 +898,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get profileLoginProviderUnknown => '已登录';
 
   @override
-  String get profileMenuNotifications => '通知设置';
+  String get profileAppSettings => '应用设置';
 
   @override
   String get profileMenuNotices => '公告';
@@ -936,40 +969,59 @@ class AppLocalizationsZh extends AppLocalizations {
   String get supportFaqSubtitle => '查看常见问题解答。';
 
   @override
-  String get supportFaqQ1 => '如何创建团队？';
+  String get supportFaqQ1 => '消息似乎没有送达。为什么？';
 
   @override
-  String get supportFaqA1 => '团队功能即将推出。';
+  String get supportFaqA1 => '由于网络状态、临时服务器延迟或安全策略（举报/屏蔽等），消息可能会延迟或受限。请稍后再试。';
 
   @override
-  String get supportFaqQ2 => '如何邀请团队成员？';
+  String get supportFaqQ2 => '我没有收到通知。该怎么办？';
 
   @override
-  String get supportFaqA2 => '团队功能上线后可进行邀请。';
+  String get supportFaqA2 => '手机设置中可能关闭了Echowander的通知权限。请前往应用设置 → 应用设置（通知设置）开启通知权限，并检查省电/后台限制设置。';
 
   @override
-  String get supportFaqQ3 => '如何登记比赛日程？';
+  String get supportFaqQ3 => '我收到了不愉快的消息。如何屏蔽/举报？';
 
   @override
-  String get supportFaqA3 => '日程管理将在后续更新中支持。';
+  String get supportFaqA3 => '您可以在消息界面选择举报或屏蔽。屏蔽后，您将不再收到该用户的消息。举报内容可能会被审查以确保社区安全。';
 
   @override
-  String get supportFaqQ4 => '收不到通知怎么办？';
+  String get supportFaqQ4 => '我可以编辑或取消已发送的消息吗？';
 
   @override
-  String get supportFaqA4 => '请检查系统通知权限和应用内通知设置。';
+  String get supportFaqA4 => '消息一旦发送，很难编辑或取消。请在发送前仔细检查内容。';
 
   @override
-  String get supportFaqQ5 => '如何删除账号？';
+  String get supportFaqQ5 => '违反社区准则会怎样？';
 
   @override
-  String get supportFaqA5 => '前往个人资料 > 注销账号并按提示操作。';
+  String get supportFaqA5 => '重复违规可能导致消息功能受限或账户使用受限。为了社区安全，请遵守准则。';
 
   @override
   String get supportActionPreparingTitle => '即将推出';
 
   @override
   String get supportActionPreparingBody => '该操作即将开放。';
+
+  @override
+  String get supportSuggestionSubject => '建议请求';
+
+  @override
+  String get supportBugSubject => '错误报告';
+
+  @override
+  String supportEmailFooterUser(String userId) {
+    return '用户 : $userId';
+  }
+
+  @override
+  String supportEmailFooterVersion(String version) {
+    return '应用版本 : $version';
+  }
+
+  @override
+  String get supportEmailLaunchFailed => '无法打开邮件应用。请稍后再试。';
 
   @override
   String get appInfoTitle => '应用信息';
@@ -1110,4 +1162,106 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get errorAuthRefreshFailed => '网络不稳定。请稍后再试。';
+
+  @override
+  String get homeInboxSummaryTitle => '今日收件箱';
+
+  @override
+  String get homeInboxSummaryPending => '待回复';
+
+  @override
+  String get homeInboxSummaryCompleted => '已回复';
+
+  @override
+  String get homeInboxSummarySentResponses => '收到回复';
+
+  @override
+  String homeInboxSummaryUpdatedAt(Object time) {
+    return '更新 $time';
+  }
+
+  @override
+  String get homeInboxSummaryRefresh => '刷新';
+
+  @override
+  String get homeInboxSummaryLoadFailed => '无法加载摘要。';
+
+  @override
+  String homeInboxSummaryItemSemantics(Object label, Object count) {
+    return '$label $count条';
+  }
+
+  @override
+  String get homeTimelineTitle => '最近动态';
+
+  @override
+  String get homeTimelineEmptyTitle => '暂无最近动态';
+
+  @override
+  String get homeTimelineReceivedTitle => '收到新消息';
+
+  @override
+  String get homeTimelineRespondedTitle => '已发送回复';
+
+  @override
+  String get homeTimelineSentResponseTitle => '收到回复';
+
+  @override
+  String homeTimelineSubtitle(Object time) {
+    return '$time';
+  }
+
+  @override
+  String get homeDailyPromptTitle => '今日问题';
+
+  @override
+  String get homeDailyPromptHint => '点击开始写消息';
+
+  @override
+  String get homeDailyPromptAction => '去写';
+
+  @override
+  String get homeAnnouncementTitle => '更新';
+
+  @override
+  String get homeAnnouncementSummary => '查看 Echowander 的新内容。';
+
+  @override
+  String get homeAnnouncementAction => '详情';
+
+  @override
+  String get homeAnnouncementDetailTitle => '更新';
+
+  @override
+  String get homeAnnouncementDetailBody => '我们做了改进，让体验更顺畅。';
+
+  @override
+  String get homePromptQ1 => '今天有什么让你微笑？';
+
+  @override
+  String get homePromptQ2 => '这周你期待什么？';
+
+  @override
+  String get homePromptQ3 => '你想再去一次的地方是哪里？';
+
+  @override
+  String get homePromptQ4 => '分享一下今天的小成就。';
+
+  @override
+  String get homePromptQ5 => '你想养成什么习惯？';
+
+  @override
+  String get homePromptQ6 => '今天你想感谢谁？';
+
+  @override
+  String get homePromptQ7 => '最近你一直在循环的歌是什么？';
+
+  @override
+  String get homePromptQ8 => '用三个词形容你的今天。';
+
+  @override
+  String get homePromptQ9 => '你最近学到了什么？';
+
+  @override
+  String get homePromptQ10 => '如果可以给自己发一条消息，你会说什么？';
 }

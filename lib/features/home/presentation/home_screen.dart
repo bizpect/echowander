@@ -5,26 +5,23 @@ import 'package:intl/intl.dart';
 
 import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/presentation/scaffolds/main_tab_controller.dart';
 import '../../../core/presentation/widgets/app_card.dart';
-import '../../../core/presentation/widgets/app_empty_state.dart';
 import '../../../core/presentation/widgets/app_header.dart';
-import '../../../core/presentation/widgets/app_icon_badge.dart';
-import '../../../core/presentation/widgets/app_pill.dart';
 import '../../../core/presentation/widgets/app_scaffold.dart';
-import '../../../core/presentation/widgets/loading_overlay.dart';
+import '../../../core/presentation/widgets/app_skeleton.dart';
+import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../journey/application/journey_list_controller.dart';
 import '../../journey/application/journey_inbox_controller.dart';
+import '../../journey/application/journey_list_controller.dart';
+import '../../journey/presentation/journey_inbox_screen.dart';
+import '../../journey/presentation/journey_list_screen.dart';
+import '../application/home_dashboard_controller.dart';
 
-/// Home 화면
-///
-/// 앱의 진입점으로 다음을 제공:
-/// - 최근 보낸 Journey 요약 카드
-/// - Inbox/Create 주요 액션 카드
-/// - 빈 상태 안내
+/// Home 화면 (대시보드)
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -32,85 +29,23 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen>
-    with TickerProviderStateMixin {
-  late List<AnimationController> _controllers;
-  late List<Animation<double>> _fadeAnimations;
-  late List<Animation<Offset>> _slideAnimations;
-
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
-
-    // 2개 카드를 위한 애니메이션 컨트롤러 생성 (최근 Journey, Inbox)
-    _controllers = List.generate(
-      2,
-      (index) => AnimationController(
-        duration: const Duration(milliseconds: 300),
-        vsync: this,
-      ),
-    );
-
-    // Fade 애니메이션
-    _fadeAnimations = _controllers
-        .map(
-          (controller) =>
-              CurvedAnimation(parent: controller, curve: Curves.easeOut),
-        )
-        .toList();
-
-    // Slide Up 애니메이션
-    _slideAnimations = _controllers
-        .map(
-          (controller) => Tween<Offset>(
-            begin: const Offset(0, 0.1), // 약간 아래에서 시작
-            end: Offset.zero,
-          ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOut)),
-        )
-        .toList();
-
-    // Staggered 애니메이션 시작 (50ms 간격)
+    // 홈 진입 시 요약용 데이터 확보 (중복 호출은 controller에서 가드)
     Future.microtask(() {
-      for (var i = 0; i < _controllers.length; i++) {
-        Future.delayed(Duration(milliseconds: i * 50), () {
-          if (mounted) {
-            _controllers[i].forward();
-          }
-        });
-      }
+      ref.read(journeyListControllerProvider.notifier).load();
+      ref.read(journeyInboxControllerProvider.notifier).load();
     });
-
-    // 데이터 초기 로드
-    // 홈 화면에서는 보낸 메시지 리스트를 limit: 3으로 프리뷰만 로드
-    // 단, 이미 20개 이상 로드되어 있으면 로드하지 않음 (탭 리스트에서 로드한 경우)
-    Future.microtask(() {
-      final journeyListState = ref.read(journeyListControllerProvider);
-      // 리스트가 비어있거나 3개 이하일 때만 limit: 3으로 로드
-      // 이미 20개 이상 로드되어 있으면 탭 리스트에서 로드한 것이므로 건드리지 않음
-      if (journeyListState.items.isEmpty ||
-          journeyListState.items.length <= 3) {
-        ref.read(journeyListControllerProvider.notifier).load(limit: 3);
-      }
-      // 받은 메시지는 항상 limit: 20으로 로드 (홈 화면에서도 전체 목록 필요)
-      ref.read(journeyInboxControllerProvider.notifier).load(limit: 20);
-    });
-  }
-
-  @override
-  void dispose() {
-    for (final controller in _controllers) {
-      controller.dispose();
-    }
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final journeyListState = ref.watch(journeyListControllerProvider);
-    final inboxState = ref.watch(journeyInboxControllerProvider);
+    final dashboard = ref.watch(homeDashboardProvider);
 
-    final isLoading = journeyListState.isLoading || inboxState.isLoading;
+    final promptText = _resolveDailyPrompt(l10n, dashboard.dailyPrompt);
 
     return AppScaffold(
       appBar: AppHeader(
@@ -118,243 +53,690 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         alignTitleLeft: true,
       ),
       bodyPadding: EdgeInsets.zero,
-      body: LoadingOverlay(
-        isLoading: isLoading,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            // 컨텐츠 영역 (정보 밀도 높게)
-            Padding(
-              padding: AppSpacing.pagePadding,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 최근 보낸 Journey 섹션 (애니메이션 index 0)
-                  _buildAnimatedCard(
-                    index: 0,
-                    child: _RecentJourneysSection(
-                      items: journeyListState.items,
-                      hasError: journeyListState.message != null,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  // Inbox 액션 카드 (애니메이션 index 1)
-                  _buildAnimatedCard(
-                    index: 1,
-                    child: _ActionCard(
-                      icon: Icons.inbox,
-                      title: l10n.homeInboxCardTitle,
-                      description: l10n.homeInboxCardDescription,
-                      badgeCount: inboxState.items.length,
-                      onTap: () {
-                        // 받은 메시지 탭으로 이동
-                        ref
-                            .read(mainTabControllerProvider.notifier)
-                            .switchToInboxTab();
-                        context.go(AppRoutes.home);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                ],
-              ),
+      body: ListView(
+        padding: AppSpacing.pagePadding.copyWith(
+          top: AppSpacing.sm,
+          bottom: AppSpacing.xl,
+        ),
+        children: [
+          // 오늘의 인박스 섹션
+          _SectionHeader(
+            title: l10n.homeInboxSummaryTitle,
+            subtitle: _formatUpdatedAt(l10n, dashboard.summary.lastUpdatedAt),
+          ),
+          const SizedBox(height: AppSpacing.spacing12),
+          _InboxSummaryCard(
+            summary: dashboard.summary,
+            isLoading: dashboard.isSummaryLoading,
+            hasError: dashboard.hasSummaryError,
+            onRefresh: _handleRefresh,
+            onTapPending: () => _goToInboxTab(ReceivedTab.pending),
+            onTapCompleted: () => _goToInboxTab(ReceivedTab.completed),
+            onTapSentResponses: () => _goToSentTab(SentTab.completed),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          // 최근 활동 섹션
+          _SectionHeader(title: l10n.homeTimelineTitle),
+          const SizedBox(height: AppSpacing.spacing12),
+          _TimelineCard(
+            items: dashboard.timelineItems,
+            isLoading: dashboard.isTimelineLoading,
+            onTapItem: _handleTimelineTap,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          // 오늘의 질문 섹션
+          _SectionHeader(title: l10n.homeDailyPromptTitle),
+          const SizedBox(height: AppSpacing.spacing12),
+          _DailyPromptCard(
+            question: promptText,
+            hint: l10n.homeDailyPromptHint,
+            actionLabel: l10n.homeDailyPromptAction,
+            onTap: () => _openComposeWithPrefill(promptText),
+          ),
+          if (dashboard.announcement != null) ...[
+            const SizedBox(height: AppSpacing.lg),
+            // 업데이트 섹션
+            _SectionHeader(title: l10n.homeAnnouncementTitle),
+            const SizedBox(height: AppSpacing.spacing12),
+            _AnnouncementCard(
+              summary: l10n.homeAnnouncementSummary,
+              actionLabel: l10n.homeAnnouncementAction,
+              onTap: () => _openAnnouncement(l10n),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  String _resolveDailyPrompt(AppLocalizations l10n, HomeDailyPrompt prompt) {
+    final questions = [
+      l10n.homePromptQ1,
+      l10n.homePromptQ2,
+      l10n.homePromptQ3,
+      l10n.homePromptQ4,
+      l10n.homePromptQ5,
+      l10n.homePromptQ6,
+      l10n.homePromptQ7,
+      l10n.homePromptQ8,
+      l10n.homePromptQ9,
+      l10n.homePromptQ10,
+    ];
+    if (questions.isEmpty) {
+      return '';
+    }
+    final index = prompt.index % questions.length;
+    return questions[index];
+  }
+
+  void _handleRefresh() {
+    ref.read(journeyListControllerProvider.notifier).load();
+    ref.read(journeyInboxControllerProvider.notifier).load();
+  }
+
+  void _goToInboxTab(ReceivedTab tab) {
+    ref.read(receivedTabProvider.notifier).setTab(tab);
+    ref.read(mainTabControllerProvider.notifier).switchToInboxTab();
+    context.go(AppRoutes.home);
+  }
+
+  void _goToSentTab(SentTab tab) {
+    ref.read(sentTabProvider.notifier).setTab(tab);
+    ref.read(mainTabControllerProvider.notifier).switchToSentTab();
+    context.go(AppRoutes.home);
+  }
+
+  void _handleTimelineTap(HomeTimelineItem item) {
+    if (item.inboxItem != null) {
+      context.go(
+        '${AppRoutes.inbox}/${item.inboxItem!.journeyId}',
+        extra: item.inboxItem,
+      );
+      return;
+    }
+    if (item.sentItem != null) {
+      context.go('${AppRoutes.journeyList}/${item.sentItem!.journeyId}');
+    }
+  }
+
+  void _openComposeWithPrefill(String question) {
+    if (question.trim().isEmpty) {
+      return;
+    }
+    final encoded = Uri.encodeComponent(question);
+    context.go('${AppRoutes.compose}?prefill=$encoded');
+  }
+
+  Future<void> _openAnnouncement(AppLocalizations l10n) async {
+    await showAppAlertDialog(
+      context: context,
+      title: l10n.homeAnnouncementDetailTitle,
+      message: l10n.homeAnnouncementDetailBody,
+      confirmLabel: l10n.commonOk,
+    );
+  }
+
+  String? _formatUpdatedAt(AppLocalizations l10n, DateTime? updatedAt) {
+    if (updatedAt == null) {
+      return null;
+    }
+    final dateFormat = DateFormat.MMMd(l10n.localeName).add_Hm();
+    final localTime = updatedAt.toLocal();
+    return l10n.homeInboxSummaryUpdatedAt(dateFormat.format(localTime));
+  }
+}
+
+/// 섹션 헤더 (타이틀 + 서브타이틀)
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.title,
+    this.subtitle,
+  });
+
+  final String title;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    if (subtitle != null) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: AppTextStyles.titleSm.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            subtitle!,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      );
+    }
+    return Text(
+      title,
+      style: AppTextStyles.titleSm.copyWith(
+        color: AppColors.textPrimary,
+      ),
+    );
+  }
+}
+
+class _InboxSummaryCard extends StatelessWidget {
+  const _InboxSummaryCard({
+    required this.summary,
+    required this.isLoading,
+    required this.hasError,
+    required this.onRefresh,
+    required this.onTapPending,
+    required this.onTapCompleted,
+    required this.onTapSentResponses,
+  });
+
+  final HomeInboxSummary summary;
+  final bool isLoading;
+  final bool hasError;
+  final VoidCallback onRefresh;
+  final VoidCallback onTapPending;
+  final VoidCallback onTapCompleted;
+  final VoidCallback onTapSentResponses;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final numberFormat = NumberFormat.decimalPattern(l10n.localeName);
+    final showError = hasError &&
+        summary.pendingCount == 0 &&
+        summary.completedCount == 0 &&
+        summary.sentResponseCount == 0;
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isLoading)
+            const _InboxSummarySkeleton()
+          else if (showError)
+            _InboxSummaryError(
+              message: l10n.homeInboxSummaryLoadFailed,
+              actionLabel: l10n.homeInboxSummaryRefresh,
+              onRefresh: onRefresh,
+            )
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // 작은 화면에서는 Wrap으로 줄바꿈, 큰 화면에서는 Row로 가로 배치
+                if (constraints.maxWidth < 300) {
+                  return Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      SizedBox(
+                        width: (constraints.maxWidth - AppSpacing.sm * 2) / 3,
+                        child: _SummaryTile(
+                          label: l10n.homeInboxSummaryPending,
+                          count: summary.pendingCount,
+                          formattedCount:
+                              numberFormat.format(summary.pendingCount),
+                          onTap: onTapPending,
+                        ),
+                      ),
+                      SizedBox(
+                        width: (constraints.maxWidth - AppSpacing.sm * 2) / 3,
+                        child: _SummaryTile(
+                          label: l10n.homeInboxSummaryCompleted,
+                          count: summary.completedCount,
+                          formattedCount:
+                              numberFormat.format(summary.completedCount),
+                          onTap: onTapCompleted,
+                        ),
+                      ),
+                      SizedBox(
+                        width: (constraints.maxWidth - AppSpacing.sm * 2) / 3,
+                        child: _SummaryTile(
+                          label: l10n.homeInboxSummarySentResponses,
+                          count: summary.sentResponseCount,
+                          formattedCount:
+                              numberFormat.format(summary.sentResponseCount),
+                          onTap: onTapSentResponses,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(
+                      child: _SummaryTile(
+                        label: l10n.homeInboxSummaryPending,
+                        count: summary.pendingCount,
+                        formattedCount:
+                            numberFormat.format(summary.pendingCount),
+                        onTap: onTapPending,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: _SummaryTile(
+                        label: l10n.homeInboxSummaryCompleted,
+                        count: summary.completedCount,
+                        formattedCount:
+                            numberFormat.format(summary.completedCount),
+                        onTap: onTapCompleted,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: _SummaryTile(
+                        label: l10n.homeInboxSummarySentResponses,
+                        count: summary.sentResponseCount,
+                        formattedCount:
+                            numberFormat.format(summary.sentResponseCount),
+                        onTap: onTapSentResponses,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryTile extends StatelessWidget {
+  const _SummaryTile({
+    required this.label,
+    required this.count,
+    required this.formattedCount,
+    required this.onTap,
+  });
+
+  final String label;
+  final int count;
+  final String formattedCount;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Semantics(
+      button: true,
+      label: l10n.homeInboxSummaryItemSemantics(label, count),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppRadius.small,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: AppSpacing.sm,
+              horizontal: AppSpacing.xs,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      formattedCount,
+                      style: AppTextStyles.titleMd.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InboxSummarySkeleton extends StatelessWidget {
+  const _InboxSummarySkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: const [
+        Expanded(child: _SummarySkeletonItem()),
+        SizedBox(width: AppSpacing.sm),
+        Expanded(child: _SummarySkeletonItem()),
+        SizedBox(width: AppSpacing.sm),
+        Expanded(child: _SummarySkeletonItem()),
+      ],
+    );
+  }
+}
+
+class _SummarySkeletonItem extends StatelessWidget {
+  const _SummarySkeletonItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: AppSpacing.minTouchTarget,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          AppSkeleton(width: 36, height: 18),
+          SizedBox(height: AppSpacing.xs),
+          AppSkeleton(width: 56, height: 12),
+        ],
+      ),
+    );
+  }
+}
+
+class _InboxSummaryError extends StatelessWidget {
+  const _InboxSummaryError({
+    required this.message,
+    required this.actionLabel,
+    required this.onRefresh,
+  });
+
+  final String message;
+  final String actionLabel;
+  final VoidCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          message,
+          style: AppTextStyles.body.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        TextButton(
+          onPressed: onRefresh,
+          child: Text(actionLabel),
+        ),
+      ],
+    );
+  }
+}
+
+class _TimelineCard extends StatelessWidget {
+  const _TimelineCard({
+    required this.items,
+    required this.isLoading,
+    required this.onTapItem,
+  });
+
+  final List<HomeTimelineItem> items;
+  final bool isLoading;
+  final ValueChanged<HomeTimelineItem> onTapItem;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isLoading)
+            const _TimelineSkeleton()
+          else if (items.isEmpty)
+            Text(
+              l10n.homeTimelineEmptyTitle,
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            )
+          else
+            Column(
+              children: items
+                  .map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: _TimelineRow(
+                        item: item,
+                        onTap: () => onTapItem(item),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimelineSkeleton extends StatelessWidget {
+  const _TimelineSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(
+        3,
+        (index) => const Padding(
+          padding: EdgeInsets.only(bottom: AppSpacing.md),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 12,
+                height: 12,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.skeletonBase,
+                  ),
+                ),
+              ),
+              SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppSkeleton(width: 160, height: 14),
+                    SizedBox(height: AppSpacing.xs),
+                    AppSkeleton(width: 120, height: 12),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TimelineRow extends StatelessWidget {
+  const _TimelineRow({required this.item, required this.onTap});
+
+  final HomeTimelineItem item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final title = _resolveTitle(l10n, item.type);
+    final timeLabel = _formatTime(l10n, item.createdAt);
+
+    return Semantics(
+      button: true,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppRadius.small,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.only(top: AppSpacing.xs),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTextStyles.bodyStrong.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        l10n.homeTimelineSubtitle(timeLabel),
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  /// Staggered 애니메이션이 적용된 카드 래퍼
-  Widget _buildAnimatedCard({required int index, required Widget child}) {
-    if (index >= _controllers.length) {
-      return child; // 범위 초과 시 애니메이션 없이 반환
+  String _resolveTitle(AppLocalizations l10n, HomeTimelineType type) {
+    switch (type) {
+      case HomeTimelineType.inboxReceived:
+        return l10n.homeTimelineReceivedTitle;
+      case HomeTimelineType.inboxResponded:
+        return l10n.homeTimelineRespondedTitle;
+      case HomeTimelineType.sentResponseArrived:
+        return l10n.homeTimelineSentResponseTitle;
     }
+  }
 
-    return FadeTransition(
-      opacity: _fadeAnimations[index],
-      child: SlideTransition(position: _slideAnimations[index], child: child),
-    );
+  String _formatTime(AppLocalizations l10n, DateTime time) {
+    final formatter = DateFormat.Md(l10n.localeName).add_Hm();
+    return formatter.format(time.toLocal());
   }
 }
 
-/// 최근 보낸 Journey 섹션
-class _RecentJourneysSection extends StatelessWidget {
-  const _RecentJourneysSection({required this.items, required this.hasError});
+class _DailyPromptCard extends StatelessWidget {
+  const _DailyPromptCard({
+    required this.question,
+    required this.hint,
+    required this.actionLabel,
+    required this.onTap,
+  });
 
-  final List<dynamic> items;
-  final bool hasError;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    // 에러 상태 (새로고침 버튼 제거)
-    if (hasError) {
-      return AppEmptyState(
-        icon: Icons.error_outline,
-        title: l10n.homeLoadFailed,
-      );
-    }
-
-    // 빈 상태
-    if (items.isEmpty) {
-      return AppEmptyState(
-        icon: Icons.explore_outlined,
-        title: l10n.homeEmptyTitle,
-        description: l10n.homeEmptyDescription,
-      );
-    }
-
-    // 최근 Journey 카드 표시
-    final recentJourney = items.first;
-
-    return _JourneyCard(journey: recentJourney);
-  }
-}
-
-/// Journey 요약 카드
-class _JourneyCard extends StatelessWidget {
-  const _JourneyCard({required this.journey});
-
-  final dynamic journey;
+  final String question;
+  final String hint;
+  final String actionLabel;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final dateFormat = DateFormat.yMMMd(l10n.localeName).add_Hm();
-
-    // statusCode에 따른 라벨 매핑
-    final statusLabel = _getStatusLabel(l10n, journey.statusCode);
-
     return AppCard(
-      onTap: () => context.go('${AppRoutes.journeyList}/${journey.journeyId}'),
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            journey.content,
+            question,
             style: AppTextStyles.bodyStrong.copyWith(
               color: AppColors.textPrimary,
             ),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.sm),
           Row(
             children: [
-              AppPill(
-                label: statusLabel,
-                tone: journey.statusCode == 'COMPLETED'
-                    ? AppPillTone.success
-                    : AppPillTone.warning,
-              ),
-              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  dateFormat.format(journey.createdAt.toLocal()),
-                  style: AppTextStyles.meta.copyWith(
-                    color: AppColors.textMuted,
+                  hint,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ),
-              const Icon(
-                Icons.chevron_right,
-                size: 18,
-                color: AppColors.iconMuted,
-              ),
+              TextButton(onPressed: onTap, child: Text(actionLabel)),
             ],
           ),
         ],
       ),
     );
   }
-
-  String _getStatusLabel(AppLocalizations l10n, String statusCode) {
-    switch (statusCode) {
-      case 'CREATED':
-        return l10n.journeyStatusCreated;
-      case 'WAITING':
-        return l10n.journeyStatusWaiting;
-      case 'COMPLETED':
-        return l10n.journeyStatusCompleted;
-      default:
-        return l10n.journeyStatusUnknown;
-    }
-  }
 }
 
-/// 액션 카드 (Inbox)
-class _ActionCard extends StatelessWidget {
-  const _ActionCard({
-    required this.icon,
-    required this.title,
-    required this.description,
+class _AnnouncementCard extends StatelessWidget {
+  const _AnnouncementCard({
+    required this.summary,
+    required this.actionLabel,
     required this.onTap,
-    this.badgeCount = 0,
   });
 
-  final IconData icon;
-  final String title;
-  final String description;
+  final String summary;
+  final String actionLabel;
   final VoidCallback onTap;
-  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
     return AppCard(
-      onTap: onTap,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppIconBadge(
-            icon: icon,
-            backgroundColor: AppColors.primaryContainer,
-            iconColor: AppColors.onPrimaryContainer,
-            size: 44,
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        title,
-                        style: AppTextStyles.bodyStrong.copyWith(
-                          color: AppColors.textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (badgeCount > 0) ...[
-                      const SizedBox(width: AppSpacing.sm),
-                      AppPill(
-                        label: l10n.homeInboxCount(badgeCount),
-                        tone: AppPillTone.danger,
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  description,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+          Text(
+            summary,
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.textSecondary,
             ),
           ),
-          const Icon(Icons.chevron_right, size: 18, color: AppColors.iconMuted),
+          const SizedBox(height: AppSpacing.sm),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: onTap,
+              child: Text(actionLabel),
+            ),
+          ),
         ],
       ),
     );

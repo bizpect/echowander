@@ -35,6 +35,25 @@ class JwtUtils {
     }
   }
 
+  /// JWT에서 user_id(sub 클레임) 추출
+  static String? getUserId(String jwt) {
+    try {
+      final parts = jwt.split('.');
+      if (parts.length != 3) return null;
+
+      final payload = parts[1];
+      final normalized = base64Url.normalize(payload);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final map = jsonDecode(decoded) as Map<String, dynamic>;
+      return map['sub'] as String?;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix JWT user_id 추출 실패: $e');
+      }
+      return null;
+    }
+  }
+
   /// JWT가 만료되었는지 확인 (skew: 만료 N초 전부터 만료로 간주)
   static bool isExpired(String jwt, {int skewSeconds = 30}) {
     final secondsLeft = getSecondsUntilExpiry(jwt);

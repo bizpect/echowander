@@ -12,7 +12,6 @@ import '../../../../core/presentation/widgets/app_dialog.dart';
 import '../../../../core/presentation/widgets/app_header.dart';
 import '../../../../core/presentation/widgets/app_icon_badge.dart';
 import '../../../../core/presentation/widgets/app_scaffold.dart';
-import '../../../../core/presentation/widgets/app_section.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class AppInfoScreen extends StatefulWidget {
@@ -70,18 +69,8 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
         children: [
           AppInfoVersionCard(versionLabel: l10n.appInfoVersionLabel(version)),
           const SizedBox(height: AppSpacing.lg),
-          AppSection(
-            title: l10n.appInfoSettingsTitle,
-            subtitle: l10n.appInfoSettingsSubtitle,
-          ),
-          const SizedBox(height: AppSpacing.sm),
           AppInfoOpenLicenseTile(version: version),
           const SizedBox(height: AppSpacing.lg),
-          AppSection(
-            title: l10n.appInfoSectionTitle,
-            subtitle: l10n.appInfoSectionSubtitle,
-          ),
-          const SizedBox(height: AppSpacing.sm),
           _AppInfoRelatedAppsExpansion(
             items: [
               _RelatedAppItem(

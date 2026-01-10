@@ -91,6 +91,40 @@ class AppColors {
   static const kakaoYellow = Color(0xFFFEE500);
   static const kakaoText = Color(0xFF000000);
 
+  // ========================================
+  // 라이트 테마 전용 토큰
+  // ========================================
+
+  // 라이트 뉴트럴/배경
+  static const backgroundLight = Color(0xFFF8FAFC); // 전체 배경
+  static const surfaceLight = Color(0xFFFFFFFF); // 카드/컨테이너
+  static const surfaceVariantLight = Color(0xFFF1F5F9); // 보조 서피스
+  static const surfaceDimLight = Color(0xFFE2E8F0); // pressed/disabled
+  static const onBackgroundLight = Color(0xFF0F172A); // 기본 본문 텍스트
+  static const onSurfaceLight = Color(0xFF0F172A);
+  static const onSurfaceVariantLight = Color(0xFF334155); // 보조 텍스트
+  static const outlineLight = Color(0xFFCBD5E1); // 테두리
+  static const outlineVariantLight = Color(0xFFE2E8F0);
+  static const dividerLight = Color(0xFFE2E8F0);
+
+  // 라이트 컨테이너 (대비 확보)
+  static const primaryContainerLight = Color(0xFFCCFBF1);
+  static const onPrimaryContainerLight = Color(0xFF134E4A);
+  static const secondaryContainerLight = Color(0xFFEDE9FE);
+  static const onSecondaryContainerLight = Color(0xFF4C1D95);
+  static const successContainerLight = Color(0xFFD1FAE5);
+  static const onSuccessContainerLight = Color(0xFF064E3B);
+  static const warningContainerLight = Color(0xFFFFEDD5);
+  static const onWarningContainerLight = Color(0xFF78350F);
+  static const errorContainerLight = Color(0xFFFEE2E2);
+  static const onErrorContainerLight = Color(0xFF7F1D1D);
+
+  // 라이트 오버레이/스켈레톤
+  static const overlayScrimLight = Color(0x66000000); // 다이얼로그 스크림
+  static const overlaySubtleLight = Color(0x33000000);
+  static const skeletonBaseLight = surfaceVariantLight;
+  static const skeletonHighlightLight = surfaceLight;
+
   // Material 3 ColorScheme 생성 헬퍼
   static ColorScheme darkColorScheme() {
     return const ColorScheme(
@@ -111,13 +145,54 @@ class AppColors {
       errorContainer: errorContainer,
       onErrorContainer: onErrorContainer,
       // Surface
-      surface: surface,
+      // surface는 scaffoldBackgroundColor용 배경색 (background)
+      surface: background,
       onSurface: onSurface,
-      surfaceContainerHighest: surfaceVariant,
+      surfaceContainerHighest: surface, // 카드/컨테이너용
       onSurfaceVariant: onSurfaceVariant,
       // Outline
       outline: outline,
       outlineVariant: outlineVariant,
+    );
+  }
+
+  /// 라이트 테마용 ColorScheme 생성
+  ///
+  /// 라이트 전용 토큰 기반으로 구성 (다크 복사 금지)
+  static ColorScheme lightColorScheme() {
+    return ColorScheme.fromSeed(
+      seedColor: primary,
+      brightness: Brightness.light,
+    ).copyWith(
+      // Primary (브랜드 일관성 유지)
+      primary: primary,
+      onPrimary: onPrimary,
+      primaryContainer: primaryContainerLight,
+      onPrimaryContainer: onPrimaryContainerLight,
+      // Secondary (브랜드 일관성 유지)
+      secondary: secondary,
+      onSecondary: onSecondary,
+      secondaryContainer: secondaryContainerLight,
+      onSecondaryContainer: onSecondaryContainerLight,
+      // Error (브랜드 일관성 유지)
+      error: error,
+      onError: onError,
+      errorContainer: errorContainerLight,
+      onErrorContainer: onErrorContainerLight,
+      // Surface (라이트 전용 토큰)
+      // surface는 scaffoldBackgroundColor용 배경색 (backgroundLight)
+      // 카드/컨테이너는 surfaceContainerHighest 사용
+      surface: backgroundLight,
+      onSurface: onSurfaceLight,
+      surfaceContainerHighest: surfaceLight, // 카드/컨테이너용 완전 흰색
+      onSurfaceVariant: onSurfaceVariantLight,
+      // Background (라이트 전용 토큰, deprecated지만 scaffoldBackgroundColor용)
+      // Note: Flutter Material 3에서 background는 deprecated되었지만,
+      // scaffoldBackgroundColor는 별도로 설정해야 하므로 surface와 구분하여 설정
+      // 실제로는 surface를 사용하지만, 명확성을 위해 별도로 설정
+      // Outline (라이트 전용 토큰)
+      outline: outlineLight,
+      outlineVariant: outlineVariantLight,
     );
   }
 }

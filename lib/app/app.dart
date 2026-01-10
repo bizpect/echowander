@@ -15,9 +15,15 @@ import '../core/session/session_state.dart';
 import '../core/deeplink/deeplink_coordinator.dart';
 import '../core/locale/locale_controller.dart';
 import '../core/locale/locale_sync_controller.dart';
+import '../core/theme/theme_controller.dart';
+import '../features/settings/data/local_settings_data_source.dart';
 import '../l10n/app_localizations.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// 세션 준비 모드
+enum EnsureSessionMode { blocking, silent }
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -33,12 +39,24 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
   // 팝업 루프 차단: 마지막 팝업 표시 시각
   DateTime? _lastPopupAt;
   static const _popupCooldown = Duration(seconds: 30);
+  static const _ignoreResumeThreshold = Duration(seconds: 2);
+  DateTime? _pausedAt;
+  DateTime? _inactiveAt;
+  AppLifecycleState? _lastLifecycleState;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     ref.read(pushCoordinatorProvider.notifier).initialize();
+    Future.microtask(() => _initializeLocalSettings());
+  }
+
+  Future<void> _initializeLocalSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final dataSource = LocalSettingsDataSource(prefs);
+    await ref.read(localeControllerProvider.notifier).initDataSource(dataSource);
+    await ref.read(themeControllerProvider.notifier).initDataSource(dataSource);
   }
 
   @override
@@ -49,22 +67,55 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    final previous = _lastLifecycleState;
+    _lastLifecycleState = state;
+    final now = DateTime.now();
+    if (state == AppLifecycleState.paused) {
+      _pausedAt = now;
+      return;
+    }
+    if (state == AppLifecycleState.inactive) {
+      _inactiveAt = now;
+      return;
+    }
     if (state == AppLifecycleState.resumed) {
+      final lastBackgroundAt = _pausedAt ?? _inactiveAt;
+      if (lastBackgroundAt != null) {
+        final elapsed = now.difference(lastBackgroundAt);
+        if (elapsed < _ignoreResumeThreshold) {
+          if (kDebugMode) {
+            debugPrint(
+              '[AppLifecycleGate] ignore resume '
+              '(elapsed=${elapsed.inMilliseconds}ms, reason=transient_system_ui)',
+            );
+          }
+          _pausedAt = null;
+          _inactiveAt = null;
+          return;
+        }
+      }
+      if (kDebugMode && previous != null) {
+        debugPrint('[AppLifecycleGate] resume from $previous');
+      }
+      _pausedAt = null;
+      _inactiveAt = null;
       // 복귀 시: 복구 먼저, 조회 나중
-      _handleAppResumed();
+      _handleAppResumed(mode: EnsureSessionMode.silent);
     }
   }
 
-  void _handleAppResumed() {
+  void _handleAppResumed({required EnsureSessionMode mode}) {
     // 복귀 시: 복구 먼저, 조회 나중
-    _ensureSessionReady();
+    _ensureSessionReady(mode: mode);
   }
 
   /// 세션 준비 보장 (복귀 시 Query 폭주 방지)
   /// 반드시 await 형태로 호출하여 복구가 끝나기 전에는 Query 실행을 미룬다.
-  Future<void> _ensureSessionReady() async {
+  Future<void> _ensureSessionReady({
+    required EnsureSessionMode mode,
+  }) async {
     if (kDebugMode) {
-      debugPrint('[App] resumed → ensureSessionReady');
+      debugPrint('[App] resumed → ensureSessionReady (mode=$mode)');
     }
 
     final sessionManager = ref.read(sessionManagerProvider.notifier);
@@ -91,10 +142,10 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
     }
 
     final accessToken = sessionState.accessToken;
-    final needsRestore =
-        accessToken == null ||
-        accessToken.isEmpty ||
+    final hasToken = accessToken != null && accessToken.isNotEmpty;
+    final isExpiring = hasToken &&
         JwtUtils.isExpiringSoon(accessToken, thresholdSeconds: 60);
+    final needsRestore = !hasToken || isExpiring;
 
     if (!needsRestore) {
       if (kDebugMode) {
@@ -103,10 +154,18 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
       return;
     }
 
+    if (mode == EnsureSessionMode.silent && hasToken) {
+      if (kDebugMode) {
+        debugPrint('[App] 복귀 시 세션 갱신 필요 → silentRefreshIfNeeded');
+      }
+      await _silentRefreshSafely(sessionManager);
+      return;
+    }
+
     // accessToken이 없거나 만료/임박이면 restoreSession 선제 호출
     // (이 호출이 single-flight를 걸어줌)
     if (kDebugMode) {
-      if (accessToken == null || accessToken.isEmpty) {
+      if (!hasToken) {
         debugPrint('[App] 복귀 시 accessToken 없음 → restoreSession 선제 호출');
       } else {
         debugPrint('[App] 복귀 시 세션 갱신 필요 → restoreSession 선제 호출');
@@ -166,6 +225,25 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
       // 예상치 못한 오류 - 로그만 남기고 앱 계속 진행
       if (kDebugMode) {
         debugPrint('[App] 복귀 시 restoreSession 예외: $error');
+      }
+    }
+  }
+
+  /// silentRefresh 안전 호출 (Unhandled Exception 방지)
+  Future<void> _silentRefreshSafely(SessionManager sessionManager) async {
+    try {
+      await sessionManager.silentRefreshIfNeeded(reason: 'resume');
+    } on RestoreSessionFailedException {
+      if (kDebugMode) {
+        debugPrint('[App] 복귀 시 silentRefresh 인증 실패 → 로그인 유도');
+      }
+    } on RestoreSessionTransientException {
+      if (kDebugMode) {
+        debugPrint('[App] 복귀 시 silentRefresh 일시 장애 → 앱 계속 진행');
+      }
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('[App] 복귀 시 silentRefresh 예외: $error');
       }
     }
   }
@@ -339,9 +417,11 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
     // final isLoading = ref.watch(sessionManagerProvider).isBusy;
     final isMobile = Platform.isAndroid || Platform.isIOS;
 
+    final themeMode = ref.watch(themeControllerProvider);
     return MaterialApp.router(
       routerConfig: ref.watch(appRouterProvider),
-      theme: AppTheme.dark().copyWith(
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark().copyWith(
         // 모바일에서 Tooltip 비활성화 (fail-safe)
         tooltipTheme: isMobile
             ? const TooltipThemeData(
@@ -350,6 +430,7 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
               )
             : null,
       ),
+      themeMode: themeMode,
       scaffoldMessengerKey: _messengerKey,
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       locale: ref.watch(localeControllerProvider),

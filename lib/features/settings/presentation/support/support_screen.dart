@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../core/presentation/widgets/app_card.dart';
-import '../../../../core/presentation/widgets/app_dialog.dart';
 import '../../../../core/presentation/widgets/app_header.dart';
 import '../../../../core/presentation/widgets/app_icon_badge.dart';
 import '../../../../core/presentation/widgets/app_scaffold.dart';
-import '../../../../core/presentation/widgets/app_section.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../application/support_email_service.dart';
 
-class SupportScreen extends StatefulWidget {
+class SupportScreen extends ConsumerStatefulWidget {
   const SupportScreen({super.key});
 
   @override
-  State<SupportScreen> createState() => _SupportScreenState();
+  ConsumerState<SupportScreen> createState() => _SupportScreenState();
 }
 
-class _SupportScreenState extends State<SupportScreen> {
+class _SupportScreenState extends ConsumerState<SupportScreen> {
   String? _version;
 
   @override
@@ -70,13 +70,26 @@ class _SupportScreenState extends State<SupportScreen> {
           const SizedBox(height: AppSpacing.lg),
           _SupportReleaseNotesTile(version: version),
           const SizedBox(height: AppSpacing.xl),
-          _SupportCtaButtons(onAction: _showPreparingDialog),
-          const SizedBox(height: AppSpacing.xl),
-          AppSection(
-            title: l10n.supportFaqTitle,
-            subtitle: l10n.supportFaqSubtitle,
+          _SupportCtaButtons(
+            onSuggestion: () => SupportEmailService.composeSuggestion(context, ref),
+            onBug: () => SupportEmailService.composeBug(context, ref),
           ),
-          const SizedBox(height: AppSpacing.spacing12),
+          const SizedBox(height: AppSpacing.xl),
+          Padding(
+            padding: EdgeInsets.only(
+              left: 0,
+              top: AppSpacing.sm,
+              right: AppSpacing.screenPaddingHorizontal,
+              bottom: AppSpacing.sm,
+            ),
+            child: Text(
+              l10n.supportFaqTitle,
+              style: AppTextStyles.titleMd.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
           _SupportFaqSection(
             items: [
               _FaqItem(question: l10n.supportFaqQ1, answer: l10n.supportFaqA1),
@@ -91,18 +104,6 @@ class _SupportScreenState extends State<SupportScreen> {
     );
   }
 
-  Future<void> _showPreparingDialog(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
-    if (!context.mounted) {
-      return;
-    }
-    await showAppAlertDialog(
-      context: context,
-      title: l10n.supportActionPreparingTitle,
-      message: l10n.supportActionPreparingBody,
-      confirmLabel: l10n.commonOk,
-    );
-  }
 }
 
 class _SupportStatusCard extends StatelessWidget {
@@ -190,9 +191,13 @@ class _SupportReleaseNotesTile extends StatelessWidget {
 }
 
 class _SupportCtaButtons extends StatelessWidget {
-  const _SupportCtaButtons({required this.onAction});
+  const _SupportCtaButtons({
+    required this.onSuggestion,
+    required this.onBug,
+  });
 
-  final Future<void> Function(BuildContext context) onAction;
+  final Future<void> Function() onSuggestion;
+  final Future<void> Function() onBug;
 
   @override
   Widget build(BuildContext context) {
@@ -215,7 +220,7 @@ class _SupportCtaButtons extends StatelessWidget {
               color: AppColors.iconMuted,
               size: 18,
             ),
-            onTap: () => onAction(context),
+            onTap: onSuggestion,
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -235,7 +240,7 @@ class _SupportCtaButtons extends StatelessWidget {
               color: AppColors.iconMuted,
               size: 18,
             ),
-            onTap: () => onAction(context),
+            onTap: onBug,
           ),
         ),
       ],

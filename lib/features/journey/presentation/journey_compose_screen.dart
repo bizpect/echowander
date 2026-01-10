@@ -47,6 +47,8 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
   ProviderSubscription<String>? _contentSubscription;
   bool _isUpdatingController = false;
   bool _isHandlingBack = false;
+  bool _prefillApplied = false;
+  bool _prefillScheduled = false;
 
   // 3-step wizard 상태 (UI 전용)
   int _stepIndex = 0;
@@ -131,10 +133,37 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
     );
   }
 
+  void _applyPrefillIfNeeded() {
+    if (_prefillApplied) {
+      return;
+    }
+    final state = GoRouterState.of(context);
+    final prefill = state.uri.queryParameters['prefill'];
+    if (prefill == null || prefill.trim().isEmpty) {
+      _prefillApplied = true;
+      return;
+    }
+    final current = ref.read(journeyComposeControllerProvider).content;
+    if (current.trim().isEmpty) {
+      ref.read(journeyComposeControllerProvider.notifier).updateContent(prefill);
+    }
+    _prefillApplied = true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(journeyComposeControllerProvider);
+
+    if (!_prefillApplied && !_prefillScheduled) {
+      _prefillScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        _applyPrefillIfNeeded();
+      });
+    }
 
     // 리스너 설정 (1회만 등록되도록 보장)
     if (_messageSubscription == null) {

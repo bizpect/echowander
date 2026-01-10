@@ -402,7 +402,25 @@ class AppLocalizationsJa extends AppLocalizations {
   String get inboxTitle => '受信箱';
 
   @override
+  String get inboxTabPending => '未返信';
+
+  @override
+  String get inboxTabCompleted => '返信済み';
+
+  @override
   String get inboxEmpty => '受け取ったメッセージはありません。';
+
+  @override
+  String get inboxEmptyPendingTitle => '未返信のメッセージはありません';
+
+  @override
+  String get inboxEmptyPendingDescription => '新しいメッセージがここに表示されます。';
+
+  @override
+  String get inboxEmptyCompletedTitle => '返信済みのメッセージはありません';
+
+  @override
+  String get inboxEmptyCompletedDescription => '返信済みのメッセージがここに表示されます。';
 
   @override
   String get inboxCta => '受信箱を見る';
@@ -674,6 +692,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsNotificationHint => 'リレー進行と結果をお知らせします。';
 
   @override
+  String get settingsLanguage => '言語';
+
+  @override
+  String get settingsTheme => 'テーマ';
+
+  @override
+  String get themeSystem => 'システム';
+
+  @override
+  String get themeLight => 'ライト';
+
+  @override
+  String get themeDark => 'ダーク';
+
+  @override
   String get settingsSectionSafety => '安全';
 
   @override
@@ -865,7 +898,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get profileLoginProviderUnknown => 'ログイン済み';
 
   @override
-  String get profileMenuNotifications => '通知設定';
+  String get profileAppSettings => 'アプリ設定';
 
   @override
   String get profileMenuNotices => 'お知らせ';
@@ -936,40 +969,59 @@ class AppLocalizationsJa extends AppLocalizations {
   String get supportFaqSubtitle => 'よくある質問を確認してください。';
 
   @override
-  String get supportFaqQ1 => 'チームを作成するには？';
+  String get supportFaqQ1 => 'メッセージが配信されないようです。なぜですか？';
 
   @override
-  String get supportFaqA1 => 'チーム機能は近日公開予定です。';
+  String get supportFaqA1 => 'ネットワーク状態、一時的なサーバー遅延、または安全ポリシー（報告/ブロックなど）により、配信が遅延または制限される場合があります。しばらくしてから再度お試しください。';
 
   @override
-  String get supportFaqQ2 => 'チームメンバーの招待方法は？';
+  String get supportFaqQ2 => '通知が来ません。どうすればいいですか？';
 
   @override
-  String get supportFaqA2 => 'チーム機能の公開後に招待できます。';
+  String get supportFaqA2 => 'スマートフォンの設定でEchowanderの通知権限がオフになっている可能性があります。アプリ設定 → アプリ設定（通知設定）に移動して通知権限をオンにし、バッテリー節約/バックグラウンド制限も確認してください。';
 
   @override
-  String get supportFaqQ3 => '試合予定はどう登録する？';
+  String get supportFaqQ3 => '不快なメッセージを受け取りました。ブロック/報告はどうすればいいですか？';
 
   @override
-  String get supportFaqA3 => 'スケジュール管理は今後の更新で対応します。';
+  String get supportFaqA3 => 'メッセージ画面から報告またはブロックを選択できます。ブロックすると、そのユーザーからのメッセージは今後受信されません。報告された内容はコミュニティの安全のために審査される場合があります。';
 
   @override
-  String get supportFaqQ4 => '通知が届きません。';
+  String get supportFaqQ4 => '送信したメッセージを編集またはキャンセルできますか？';
 
   @override
-  String get supportFaqA4 => '端末の通知許可とアプリ内設定をご確認ください。';
+  String get supportFaqA4 => '一度送信されたメッセージは編集/キャンセルが困難です。送信前に内容を再度確認してください。';
 
   @override
-  String get supportFaqQ5 => 'アカウント削除はどうすればいい？';
+  String get supportFaqQ5 => 'コミュニティガイドラインに違反するとどうなりますか？';
 
   @override
-  String get supportFaqA5 => 'プロフィール > 退会する から手続きしてください。';
+  String get supportFaqA5 => '繰り返し違反すると、メッセージ機能が制限されたり、アカウントの利用が制限される場合があります。安全なコミュニティのため、ガイドラインを守ってください。';
 
   @override
   String get supportActionPreparingTitle => '準備中';
 
   @override
   String get supportActionPreparingBody => 'この操作はまもなく利用できます。';
+
+  @override
+  String get supportSuggestionSubject => 'ご意見・ご要望';
+
+  @override
+  String get supportBugSubject => '不具合の報告';
+
+  @override
+  String supportEmailFooterUser(String userId) {
+    return 'ユーザー : $userId';
+  }
+
+  @override
+  String supportEmailFooterVersion(String version) {
+    return 'アプリバージョン : $version';
+  }
+
+  @override
+  String get supportEmailLaunchFailed => 'メールアプリを開けませんでした。しばらくしてからもう一度お試しください。';
 
   @override
   String get appInfoTitle => 'アプリ情報';
@@ -1110,4 +1162,106 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get errorAuthRefreshFailed => 'ネットワークが不安定です。しばらくしてからもう一度お試しください。';
+
+  @override
+  String get homeInboxSummaryTitle => '今日のインボックス';
+
+  @override
+  String get homeInboxSummaryPending => '未返信';
+
+  @override
+  String get homeInboxSummaryCompleted => '返信済み';
+
+  @override
+  String get homeInboxSummarySentResponses => '返信到着';
+
+  @override
+  String homeInboxSummaryUpdatedAt(Object time) {
+    return '更新 $time';
+  }
+
+  @override
+  String get homeInboxSummaryRefresh => '更新';
+
+  @override
+  String get homeInboxSummaryLoadFailed => '要約を読み込めませんでした。';
+
+  @override
+  String homeInboxSummaryItemSemantics(Object label, Object count) {
+    return '$label $count件';
+  }
+
+  @override
+  String get homeTimelineTitle => '最近のアクティビティ';
+
+  @override
+  String get homeTimelineEmptyTitle => '最近のアクティビティはありません';
+
+  @override
+  String get homeTimelineReceivedTitle => '新しいメッセージ';
+
+  @override
+  String get homeTimelineRespondedTitle => '返信を送信';
+
+  @override
+  String get homeTimelineSentResponseTitle => '返信が届きました';
+
+  @override
+  String homeTimelineSubtitle(Object time) {
+    return '$time';
+  }
+
+  @override
+  String get homeDailyPromptTitle => '今日の質問';
+
+  @override
+  String get homeDailyPromptHint => 'タップしてメッセージ作成';
+
+  @override
+  String get homeDailyPromptAction => '作成する';
+
+  @override
+  String get homeAnnouncementTitle => 'アップデート';
+
+  @override
+  String get homeAnnouncementSummary => '新機能を確認しましょう。';
+
+  @override
+  String get homeAnnouncementAction => '詳細';
+
+  @override
+  String get homeAnnouncementDetailTitle => 'アップデート';
+
+  @override
+  String get homeAnnouncementDetailBody => 'よりスムーズに使えるよう改善しました。';
+
+  @override
+  String get homePromptQ1 => '今日笑顔になったことは何ですか？';
+
+  @override
+  String get homePromptQ2 => '今週楽しみにしていることは？';
+
+  @override
+  String get homePromptQ3 => 'もう一度行きたい場所はどこですか？';
+
+  @override
+  String get homePromptQ4 => '今日の小さな成功を教えてください。';
+
+  @override
+  String get homePromptQ5 => '身につけたい習慣は何ですか？';
+
+  @override
+  String get homePromptQ6 => '今日感謝を伝えたい人は誰ですか？';
+
+  @override
+  String get homePromptQ7 => '最近ずっと聴いている曲は？';
+
+  @override
+  String get homePromptQ8 => '今日を3つの言葉で表すと？';
+
+  @override
+  String get homePromptQ9 => '最近学んだことは？';
+
+  @override
+  String get homePromptQ10 => '自分に一言送るなら何と言いますか？';
 }

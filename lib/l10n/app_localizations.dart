@@ -880,11 +880,47 @@ abstract class AppLocalizations {
   /// **'Inbox'**
   String get inboxTitle;
 
+  /// No description provided for @inboxTabPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get inboxTabPending;
+
+  /// No description provided for @inboxTabCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get inboxTabCompleted;
+
   /// No description provided for @inboxEmpty.
   ///
   /// In en, this message translates to:
   /// **'No messages received yet.'**
   String get inboxEmpty;
+
+  /// No description provided for @inboxEmptyPendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending messages'**
+  String get inboxEmptyPendingTitle;
+
+  /// No description provided for @inboxEmptyPendingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'New messages will appear here.'**
+  String get inboxEmptyPendingDescription;
+
+  /// No description provided for @inboxEmptyCompletedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No completed messages'**
+  String get inboxEmptyCompletedTitle;
+
+  /// No description provided for @inboxEmptyCompletedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages you\'ve responded to will appear here.'**
+  String get inboxEmptyCompletedDescription;
 
   /// No description provided for @inboxCta.
   ///
@@ -1420,6 +1456,36 @@ abstract class AppLocalizations {
   /// **'Receive relay updates and results.'**
   String get settingsNotificationHint;
 
+  /// No description provided for @settingsLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settingsLanguage;
+
+  /// No description provided for @settingsTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get settingsTheme;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
   /// No description provided for @settingsSectionSafety.
   ///
   /// In en, this message translates to:
@@ -1798,11 +1864,11 @@ abstract class AppLocalizations {
   /// **'Signed in'**
   String get profileLoginProviderUnknown;
 
-  /// No description provided for @profileMenuNotifications.
+  /// No description provided for @profileAppSettings.
   ///
   /// In en, this message translates to:
-  /// **'Notification settings'**
-  String get profileMenuNotifications;
+  /// **'App settings'**
+  String get profileAppSettings;
 
   /// No description provided for @profileMenuNotices.
   ///
@@ -1939,61 +2005,61 @@ abstract class AppLocalizations {
   /// No description provided for @supportFaqQ1.
   ///
   /// In en, this message translates to:
-  /// **'How can I create a team?'**
+  /// **'Messages don\'t seem to be delivered. Why?'**
   String get supportFaqQ1;
 
   /// No description provided for @supportFaqA1.
   ///
   /// In en, this message translates to:
-  /// **'Team features are coming soon. We\'ll announce details in future updates.'**
+  /// **'Delivery may be delayed or restricted due to network status, temporary server delays, or safety policies (reports/blocks, etc.). Please try again later.'**
   String get supportFaqA1;
 
   /// No description provided for @supportFaqQ2.
   ///
   /// In en, this message translates to:
-  /// **'How do I invite team members?'**
+  /// **'I\'m not receiving notifications. What should I do?'**
   String get supportFaqQ2;
 
   /// No description provided for @supportFaqA2.
   ///
   /// In en, this message translates to:
-  /// **'Invites will be available once team features are released.'**
+  /// **'Echowander notification permissions may be turned off in your phone settings. Go to App Settings → App Settings (Notification Settings) to turn on notification permissions, and also check battery saver/background restrictions.'**
   String get supportFaqA2;
 
   /// No description provided for @supportFaqQ3.
   ///
   /// In en, this message translates to:
-  /// **'How do I register game schedules?'**
+  /// **'I received an unpleasant message. How do I block/report?'**
   String get supportFaqQ3;
 
   /// No description provided for @supportFaqA3.
   ///
   /// In en, this message translates to:
-  /// **'Schedule management will be supported in a future update.'**
+  /// **'You can select Report or Block from the message screen. Blocking prevents you from receiving further messages from that user. Reported content may be reviewed for community safety.'**
   String get supportFaqA3;
 
   /// No description provided for @supportFaqQ4.
   ///
   /// In en, this message translates to:
-  /// **'I am not receiving notifications.'**
+  /// **'Can I edit or cancel a message I sent?'**
   String get supportFaqQ4;
 
   /// No description provided for @supportFaqA4.
   ///
   /// In en, this message translates to:
-  /// **'Check notification permissions in system settings and in-app settings.'**
+  /// **'Once sent, messages cannot be easily edited or cancelled. Please review the content before sending.'**
   String get supportFaqA4;
 
   /// No description provided for @supportFaqQ5.
   ///
   /// In en, this message translates to:
-  /// **'How do I delete my account?'**
+  /// **'What happens if I violate community guidelines?'**
   String get supportFaqQ5;
 
   /// No description provided for @supportFaqA5.
   ///
   /// In en, this message translates to:
-  /// **'Go to Profile > Delete account and follow the confirmation steps.'**
+  /// **'Repeated violations may result in message restrictions or account limitations. Please follow the guidelines for a safe community.'**
   String get supportFaqA5;
 
   /// No description provided for @supportActionPreparingTitle.
@@ -2007,6 +2073,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This action will be available soon.'**
   String get supportActionPreparingBody;
+
+  /// No description provided for @supportSuggestionSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature Request'**
+  String get supportSuggestionSubject;
+
+  /// No description provided for @supportBugSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Bug Report'**
+  String get supportBugSubject;
+
+  /// No description provided for @supportEmailFooterUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User : {userId}'**
+  String supportEmailFooterUser(String userId);
+
+  /// No description provided for @supportEmailFooterVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'App Version : {version}'**
+  String supportEmailFooterVersion(String version);
+
+  /// No description provided for @supportEmailLaunchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to open mail app. Please try again later.'**
+  String get supportEmailLaunchFailed;
 
   /// No description provided for @appInfoTitle.
   ///
@@ -2271,6 +2367,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Network is unstable. Please try again in a moment.'**
   String get errorAuthRefreshFailed;
+
+  /// No description provided for @homeInboxSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Inbox'**
+  String get homeInboxSummaryTitle;
+
+  /// No description provided for @homeInboxSummaryPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get homeInboxSummaryPending;
+
+  /// No description provided for @homeInboxSummaryCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get homeInboxSummaryCompleted;
+
+  /// No description provided for @homeInboxSummarySentResponses.
+  ///
+  /// In en, this message translates to:
+  /// **'Responses'**
+  String get homeInboxSummarySentResponses;
+
+  /// No description provided for @homeInboxSummaryUpdatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {time}'**
+  String homeInboxSummaryUpdatedAt(Object time);
+
+  /// No description provided for @homeInboxSummaryRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get homeInboxSummaryRefresh;
+
+  /// No description provided for @homeInboxSummaryLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the summary.'**
+  String get homeInboxSummaryLoadFailed;
+
+  /// No description provided for @homeInboxSummaryItemSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} {count}'**
+  String homeInboxSummaryItemSemantics(Object label, Object count);
+
+  /// No description provided for @homeTimelineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Activity'**
+  String get homeTimelineTitle;
+
+  /// No description provided for @homeTimelineEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No recent activity yet'**
+  String get homeTimelineEmptyTitle;
+
+  /// No description provided for @homeTimelineReceivedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New message received'**
+  String get homeTimelineReceivedTitle;
+
+  /// No description provided for @homeTimelineRespondedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply sent'**
+  String get homeTimelineRespondedTitle;
+
+  /// No description provided for @homeTimelineSentResponseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Response arrived'**
+  String get homeTimelineSentResponseTitle;
+
+  /// No description provided for @homeTimelineSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{time}'**
+  String homeTimelineSubtitle(Object time);
+
+  /// No description provided for @homeDailyPromptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Question'**
+  String get homeDailyPromptTitle;
+
+  /// No description provided for @homeDailyPromptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to start a message'**
+  String get homeDailyPromptHint;
+
+  /// No description provided for @homeDailyPromptAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Write'**
+  String get homeDailyPromptAction;
+
+  /// No description provided for @homeAnnouncementTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get homeAnnouncementTitle;
+
+  /// No description provided for @homeAnnouncementSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'See what\'s new in Echowander.'**
+  String get homeAnnouncementSummary;
+
+  /// No description provided for @homeAnnouncementAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get homeAnnouncementAction;
+
+  /// No description provided for @homeAnnouncementDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get homeAnnouncementDetailTitle;
+
+  /// No description provided for @homeAnnouncementDetailBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We added improvements for a smoother experience.'**
+  String get homeAnnouncementDetailBody;
+
+  /// No description provided for @homePromptQ1.
+  ///
+  /// In en, this message translates to:
+  /// **'What made you smile today?'**
+  String get homePromptQ1;
+
+  /// No description provided for @homePromptQ2.
+  ///
+  /// In en, this message translates to:
+  /// **'What are you looking forward to this week?'**
+  String get homePromptQ2;
+
+  /// No description provided for @homePromptQ3.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s a place you want to revisit?'**
+  String get homePromptQ3;
+
+  /// No description provided for @homePromptQ4.
+  ///
+  /// In en, this message translates to:
+  /// **'Share a small win from today.'**
+  String get homePromptQ4;
+
+  /// No description provided for @homePromptQ5.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s a habit you\'d like to build?'**
+  String get homePromptQ5;
+
+  /// No description provided for @homePromptQ6.
+  ///
+  /// In en, this message translates to:
+  /// **'Who do you want to thank today?'**
+  String get homePromptQ6;
+
+  /// No description provided for @homePromptQ7.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s a song you keep replaying?'**
+  String get homePromptQ7;
+
+  /// No description provided for @homePromptQ8.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe your day in three words.'**
+  String get homePromptQ8;
+
+  /// No description provided for @homePromptQ9.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s something you learned recently?'**
+  String get homePromptQ9;
+
+  /// No description provided for @homePromptQ10.
+  ///
+  /// In en, this message translates to:
+  /// **'If you could send one message to yourself, what would it be?'**
+  String get homePromptQ10;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

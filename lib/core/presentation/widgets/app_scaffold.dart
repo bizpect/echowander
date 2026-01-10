@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 
 /// 앱 전용 스캐폴드
@@ -15,7 +14,7 @@ class AppScaffold extends StatelessWidget {
     this.headerBodySpacing = AppSpacing.lg,
     this.safeAreaTop = false,
     this.safeAreaBottom = true,
-    this.backgroundColor = AppColors.background,
+    this.backgroundColor,
     this.resizeToAvoidBottomInset = true,
   }) : assert(body != null || slivers != null);
 
@@ -26,11 +25,13 @@ class AppScaffold extends StatelessWidget {
   final double headerBodySpacing;
   final bool safeAreaTop;
   final bool safeAreaBottom;
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final bool resizeToAvoidBottomInset;
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final bgColor = backgroundColor ?? colorScheme.surface;
     final content = slivers != null
         ? CustomScrollView(
             slivers: [
@@ -49,7 +50,7 @@ class AppScaffold extends StatelessWidget {
 
     return Scaffold(
       appBar: appBar,
-      backgroundColor: backgroundColor,
+      backgroundColor: bgColor,
       resizeToAvoidBottomInset: resizeToAvoidBottomInset,
       body: SafeArea(top: safeAreaTop, bottom: safeAreaBottom, child: content),
     );

@@ -402,7 +402,25 @@ class AppLocalizationsFr extends AppLocalizations {
   String get inboxTitle => 'Boîte de réception';
 
   @override
+  String get inboxTabPending => 'En attente';
+
+  @override
+  String get inboxTabCompleted => 'Répondu';
+
+  @override
   String get inboxEmpty => 'Aucun message reçu pour le moment.';
+
+  @override
+  String get inboxEmptyPendingTitle => 'Aucun message en attente';
+
+  @override
+  String get inboxEmptyPendingDescription => 'Les nouveaux messages apparaîtront ici.';
+
+  @override
+  String get inboxEmptyCompletedTitle => 'Aucun message répondu';
+
+  @override
+  String get inboxEmptyCompletedDescription => 'Les messages auxquels vous avez répondu apparaîtront ici.';
 
   @override
   String get inboxCta => 'Voir la boîte de réception';
@@ -674,6 +692,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsNotificationHint => 'Recevez les mises à jour et résultats.';
 
   @override
+  String get settingsLanguage => 'Langue';
+
+  @override
+  String get settingsTheme => 'Thème';
+
+  @override
+  String get themeSystem => 'Système';
+
+  @override
+  String get themeLight => 'Clair';
+
+  @override
+  String get themeDark => 'Sombre';
+
+  @override
   String get settingsSectionSafety => 'Sécurité';
 
   @override
@@ -865,7 +898,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileLoginProviderUnknown => 'Connecté';
 
   @override
-  String get profileMenuNotifications => 'Paramètres de notifications';
+  String get profileAppSettings => 'Paramètres de l\'app';
 
   @override
   String get profileMenuNotices => 'Annonces';
@@ -936,40 +969,59 @@ class AppLocalizationsFr extends AppLocalizations {
   String get supportFaqSubtitle => 'Consultez les questions fréquentes.';
 
   @override
-  String get supportFaqQ1 => 'Comment créer une équipe ?';
+  String get supportFaqQ1 => 'Les messages ne semblent pas être livrés. Pourquoi ?';
 
   @override
-  String get supportFaqA1 => 'Les fonctionnalités d’équipe arrivent bientôt.';
+  String get supportFaqA1 => 'La livraison peut être retardée ou restreinte en raison de l\'état du réseau, de retards temporaires du serveur ou de politiques de sécurité (signalements/blocages, etc.). Veuillez réessayer plus tard.';
 
   @override
-  String get supportFaqQ2 => 'Comment inviter des membres ?';
+  String get supportFaqQ2 => 'Je ne reçois pas de notifications. Que dois-je faire ?';
 
   @override
-  String get supportFaqA2 => 'Les invitations seront disponibles lors du lancement des équipes.';
+  String get supportFaqA2 => 'Les permissions de notification d\'Echowander peuvent être désactivées dans les paramètres de votre téléphone. Allez dans Paramètres de l\'app → Paramètres de l\'app (Paramètres de notification) pour activer les permissions de notification et vérifiez également les restrictions d\'économie de batterie/arrière-plan.';
 
   @override
-  String get supportFaqQ3 => 'Comment ajouter un calendrier de matchs ?';
+  String get supportFaqQ3 => 'J\'ai reçu un message désagréable. Comment bloquer/signaler ?';
 
   @override
-  String get supportFaqA3 => 'La gestion du calendrier sera ajoutée prochainement.';
+  String get supportFaqA3 => 'Vous pouvez sélectionner Signaler ou Bloquer depuis l\'écran du message. Le blocage empêche de recevoir d\'autres messages de cet utilisateur. Le contenu signalé peut être examiné pour la sécurité de la communauté.';
 
   @override
-  String get supportFaqQ4 => 'Je ne reçois pas de notifications.';
+  String get supportFaqQ4 => 'Puis-je modifier ou annuler un message que j\'ai envoyé ?';
 
   @override
-  String get supportFaqA4 => 'Vérifiez les permissions système et les réglages des notifications.';
+  String get supportFaqA4 => 'Une fois envoyé, les messages ne peuvent pas être facilement modifiés ou annulés. Veuillez vérifier le contenu avant d\'envoyer.';
 
   @override
-  String get supportFaqQ5 => 'Comment supprimer mon compte ?';
+  String get supportFaqQ5 => 'Que se passe-t-il si je viole les directives de la communauté ?';
 
   @override
-  String get supportFaqA5 => 'Allez dans Profil > Supprimer le compte et suivez les étapes.';
+  String get supportFaqA5 => 'Les violations répétées peuvent entraîner des restrictions de messages ou des limitations de compte. Veuillez suivre les directives pour une communauté sûre.';
 
   @override
   String get supportActionPreparingTitle => 'Bientôt disponible';
 
   @override
   String get supportActionPreparingBody => 'Cette action sera disponible prochainement.';
+
+  @override
+  String get supportSuggestionSubject => 'Demande de suggestion';
+
+  @override
+  String get supportBugSubject => 'Signalement d\'erreur';
+
+  @override
+  String supportEmailFooterUser(String userId) {
+    return 'Utilisateur : $userId';
+  }
+
+  @override
+  String supportEmailFooterVersion(String version) {
+    return 'Version de l\'app : $version';
+  }
+
+  @override
+  String get supportEmailLaunchFailed => 'Impossible d\'ouvrir l\'application de messagerie. Veuillez réessayer plus tard.';
 
   @override
   String get appInfoTitle => 'Infos sur l’app';
@@ -1110,4 +1162,106 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get errorAuthRefreshFailed => 'Le réseau est instable. Veuillez réessayer dans un moment.';
+
+  @override
+  String get homeInboxSummaryTitle => 'Résumé du jour';
+
+  @override
+  String get homeInboxSummaryPending => 'En attente';
+
+  @override
+  String get homeInboxSummaryCompleted => 'Répondu';
+
+  @override
+  String get homeInboxSummarySentResponses => 'Réponses reçues';
+
+  @override
+  String homeInboxSummaryUpdatedAt(Object time) {
+    return 'Mis à jour $time';
+  }
+
+  @override
+  String get homeInboxSummaryRefresh => 'Actualiser';
+
+  @override
+  String get homeInboxSummaryLoadFailed => 'Impossible de charger le résumé.';
+
+  @override
+  String homeInboxSummaryItemSemantics(Object label, Object count) {
+    return '$label $count';
+  }
+
+  @override
+  String get homeTimelineTitle => 'Activité récente';
+
+  @override
+  String get homeTimelineEmptyTitle => 'Aucune activité récente';
+
+  @override
+  String get homeTimelineReceivedTitle => 'Nouveau message reçu';
+
+  @override
+  String get homeTimelineRespondedTitle => 'Réponse envoyée';
+
+  @override
+  String get homeTimelineSentResponseTitle => 'Réponse reçue';
+
+  @override
+  String homeTimelineSubtitle(Object time) {
+    return '$time';
+  }
+
+  @override
+  String get homeDailyPromptTitle => 'Question du jour';
+
+  @override
+  String get homeDailyPromptHint => 'Touchez pour écrire un message';
+
+  @override
+  String get homeDailyPromptAction => 'Écrire';
+
+  @override
+  String get homeAnnouncementTitle => 'Mise à jour';
+
+  @override
+  String get homeAnnouncementSummary => 'Découvrez les nouveautés d\'Echowander.';
+
+  @override
+  String get homeAnnouncementAction => 'Détails';
+
+  @override
+  String get homeAnnouncementDetailTitle => 'Mise à jour';
+
+  @override
+  String get homeAnnouncementDetailBody => 'Nous avons apporté des améliorations pour une expérience plus fluide.';
+
+  @override
+  String get homePromptQ1 => 'Qu\'est-ce qui t\'a fait sourire aujourd\'hui ?';
+
+  @override
+  String get homePromptQ2 => 'Qu\'attends-tu avec impatience cette semaine ?';
+
+  @override
+  String get homePromptQ3 => 'Quel endroit veux-tu revisiter ?';
+
+  @override
+  String get homePromptQ4 => 'Partage une petite victoire d\'aujourd\'hui.';
+
+  @override
+  String get homePromptQ5 => 'Quelle habitude aimerais-tu prendre ?';
+
+  @override
+  String get homePromptQ6 => 'À qui veux-tu dire merci aujourd\'hui ?';
+
+  @override
+  String get homePromptQ7 => 'Quelle chanson écoutes-tu en boucle ?';
+
+  @override
+  String get homePromptQ8 => 'Décris ta journée en trois mots.';
+
+  @override
+  String get homePromptQ9 => 'Qu\'as-tu appris récemment ?';
+
+  @override
+  String get homePromptQ10 => 'Si tu pouvais t\'envoyer un message, que dirais-tu ?';
 }

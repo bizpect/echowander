@@ -18,11 +18,29 @@ import '../../../core/presentation/widgets/app_list_item.dart';
 import '../../../core/presentation/widgets/app_pill.dart';
 import '../../../core/presentation/widgets/app_scaffold.dart';
 import '../../../core/presentation/widgets/app_skeleton.dart';
+import '../../../core/presentation/widgets/app_segmented_tabs.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/journey_inbox_controller.dart';
 import '../domain/journey_repository.dart';
+
+enum ReceivedTab { pending, completed }
+
+class ReceivedTabController extends Notifier<ReceivedTab> {
+  @override
+  ReceivedTab build() => ReceivedTab.pending;
+
+  void setTab(ReceivedTab tab) {
+    if (state == tab) {
+      return;
+    }
+    state = tab;
+  }
+}
+
+final receivedTabProvider =
+    NotifierProvider<ReceivedTabController, ReceivedTab>(ReceivedTabController.new);
 
 /// Inbox 화면 - 받은 Journey 목록
 ///
@@ -65,10 +83,11 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
     final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(journeyInboxControllerProvider);
     final controller = ref.read(journeyInboxControllerProvider.notifier);
+    final selectedTab = ref.watch(receivedTabProvider);
 
     if (kDebugMode) {
       debugPrint(
-        '[InboxTrace][UI] build - isLoading: ${state.isLoading}, items: ${state.items.length}, message: ${state.message}',
+        '[InboxTrace][UI] build - isLoading: ${state.isLoading}, items: ${state.items.length}, message: ${state.message}, selectedTab: $selectedTab',
       );
     }
 
@@ -99,15 +118,51 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
         bodyPadding: EdgeInsets.zero,
         body: LoadingOverlay(
           isLoading: state.isLoading,
-          child: RefreshIndicator(
-            onRefresh: () =>
-                ref.read(journeyInboxControllerProvider.notifier).load(),
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeOut,
-              child: _buildBody(context, l10n, state),
-            ),
+          child: Column(
+            children: [
+              Padding(
+                padding: AppSpacing.pagePadding.copyWith(
+                  top: AppSpacing.sm,
+                  bottom: AppSpacing.lg,
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return AppSegmentedTabs(
+                      tabs: [
+                        AppSegmentedTab(label: l10n.inboxTabPending),
+                        AppSegmentedTab(label: l10n.inboxTabCompleted),
+                      ],
+                      selectedIndex:
+                          selectedTab == ReceivedTab.pending ? 0 : 1,
+                      onChanged: (index) {
+                        ref
+                            .read(receivedTabProvider.notifier)
+                            .setTab(
+                              index == 0
+                                  ? ReceivedTab.pending
+                                  : ReceivedTab.completed,
+                            );
+                      },
+                    );
+                  },
+                ),
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () =>
+                      ref.read(journeyInboxControllerProvider.notifier).load(),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeOut,
+                      child: KeyedSubtree(
+                        key: ValueKey(selectedTab),
+                        child: _buildBody(context, l10n, state, selectedTab),
+                      ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -118,6 +173,7 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
     BuildContext context,
     AppLocalizations l10n,
     JourneyInboxState state,
+    ReceivedTab selectedTab,
   ) {
     if (kDebugMode) {
       final hasMessage = state.message != null;
@@ -129,13 +185,22 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
       );
     }
 
+    final filteredItems = _filterItems(state.items, selectedTab);
+    if (kDebugMode) {
+      debugPrint(
+        '[InboxTrace][UI] _buildBody - tab=$selectedTab total=${state.items.length} filtered=${filteredItems.length}',
+      );
+    }
+
     if (state.isLoading && state.items.isEmpty) {
-      return ListView(
+      return CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          const Padding(
-            padding: AppSpacing.pagePadding,
-            child: AppListSkeleton(),
+        slivers: const [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: AppSpacing.pagePadding,
+              child: AppListSkeleton(),
+            ),
           ),
         ],
       );
@@ -146,22 +211,24 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
       if (kDebugMode) {
         debugPrint('[InboxTrace][UI] _buildBody - showing error state');
       }
-      return ListView(
+      return CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          AppEmptyState(
-            icon: Icons.error_outline,
-            title: l10n.inboxLoadFailed,
-            actionLabel: l10n.inboxRefresh,
-            onAction: () =>
-                ref.read(journeyInboxControllerProvider.notifier).load(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: AppEmptyState(
+              icon: Icons.error_outline,
+              title: l10n.inboxLoadFailed,
+              actionLabel: l10n.inboxRefresh,
+              onAction: () =>
+                  ref.read(journeyInboxControllerProvider.notifier).load(),
+            ),
           ),
         ],
       );
     }
 
     // 빈 상태
-    if (state.items.isEmpty && !state.isLoading) {
+    if (filteredItems.isEmpty && !state.isLoading) {
       if (kDebugMode) {
         debugPrint('[InboxTrace][UI] _buildBody - showing empty state');
       }
@@ -172,7 +239,12 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
             hasScrollBody: false,
             child: AppEmptyState(
               icon: Icons.inbox_outlined,
-              title: l10n.inboxEmpty,
+              title: selectedTab == ReceivedTab.pending
+                  ? l10n.inboxEmptyPendingTitle
+                  : l10n.inboxEmptyCompletedTitle,
+              description: selectedTab == ReceivedTab.pending
+                  ? l10n.inboxEmptyPendingDescription
+                  : l10n.inboxEmptyCompletedDescription,
             ),
           ),
         ],
@@ -182,25 +254,45 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
     // 정상 상태 - 리스트 표시
     if (kDebugMode) {
       debugPrint(
-        '[InboxTrace][UI] _buildBody - showing list, itemCount: ${state.items.length}',
+        '[InboxTrace][UI] _buildBody - showing list, itemCount: ${filteredItems.length}',
       );
     }
-    return ListView.separated(
-      padding: AppSpacing.pagePadding.copyWith(top: 0, bottom: AppSpacing.xl),
-      itemCount: state.items.length,
-      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
-      itemBuilder: (context, index) {
-        final item = state.items[index];
-        final isHighlighted = item.journeyId == widget.highlightJourneyId;
-        return _InboxCard(
-          item: item,
-          isHighlighted: isHighlighted,
-          onTap: () {
-            context.go('${AppRoutes.inbox}/${item.journeyId}', extra: item);
-          },
-        );
-      },
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: AppSpacing.pagePadding.copyWith(
+            top: 0,
+            bottom: AppSpacing.xl,
+          ),
+          sliver: SliverList.separated(
+            itemCount: filteredItems.length,
+            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
+            itemBuilder: (context, index) {
+              final item = filteredItems[index];
+              final isHighlighted = item.journeyId == widget.highlightJourneyId;
+              return _InboxCard(
+                item: item,
+                isHighlighted: isHighlighted,
+                onTap: () {
+                  context.go('${AppRoutes.inbox}/${item.journeyId}', extra: item);
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
+  }
+
+  List<JourneyInboxItem> _filterItems(
+    List<JourneyInboxItem> items,
+    ReceivedTab selectedTab,
+  ) {
+    if (selectedTab == ReceivedTab.completed) {
+      return items.where((item) => item.recipientStatus == 'RESPONDED').toList();
+    }
+    return items.where((item) => item.recipientStatus != 'RESPONDED').toList();
   }
 
   Future<void> _handleMessage(

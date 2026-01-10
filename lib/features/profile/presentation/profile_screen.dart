@@ -12,7 +12,6 @@ import '../../../core/presentation/widgets/app_button.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/app_icon_badge.dart';
 import '../../../core/presentation/widgets/app_scaffold.dart';
-import '../../../core/presentation/widgets/app_section.dart';
 import '../../../core/presentation/widgets/app_skeleton.dart';
 import '../../../core/presentation/navigation/tab_navigation_helper.dart';
 import '../../../core/session/session_manager.dart';
@@ -76,18 +75,13 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
-            AppSection(
-              title: l10n.profileMenuTitle,
-              subtitle: l10n.profileMenuSubtitle,
-            ),
-            const SizedBox(height: AppSpacing.sm),
             _SettingsMenuCard(
               items: [
                 _SettingsMenuItem(
                   icon: Icons.notifications_outlined,
                   iconBackground: AppColors.primaryContainer,
                   iconColor: AppColors.onPrimaryContainer,
-                  title: l10n.profileMenuNotifications,
+                  title: l10n.profileAppSettings,
                   onTap: () => context.push(AppRoutes.settings),
                 ),
                 _SettingsMenuItem(
@@ -375,39 +369,46 @@ class _DangerActionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppCardRow(
-          title: l10n.profileSignOutCta,
-          leading: const AppIconBadge(
-            icon: Icons.logout,
-            backgroundColor: AppColors.errorContainer,
-            iconColor: AppColors.onErrorContainer,
-            size: 40,
+        SizedBox(
+          height: AppSpacing.minTouchTarget,
+          width: double.infinity,
+          child: AppOutlinedButton(
+            onPressed: onSignOut,
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: colorScheme.error),
+            ),
+            child: Center(
+              child: Text(
+                l10n.profileSignOutCta,
+                style: TextStyle(
+                  color: colorScheme.error,
+                ),
+              ),
+            ),
           ),
-          trailing: const Icon(
-            Icons.chevron_right,
-            color: AppColors.iconMuted,
-            size: 18,
-          ),
-          onTap: onSignOut,
         ),
         const SizedBox(height: AppSpacing.sm),
-        AppCardRow(
-          title: l10n.profileWithdrawCta,
-          leading: const AppIconBadge(
-            icon: Icons.person_off_outlined,
-            backgroundColor: AppColors.surfaceVariant,
-            iconColor: AppColors.onSurfaceVariant,
-            size: 40,
+        SizedBox(
+          height: AppSpacing.minTouchTarget,
+          width: double.infinity,
+          child: AppFilledButton(
+            onPressed: onWithdraw,
+            style: FilledButton.styleFrom(
+              backgroundColor: colorScheme.error,
+            ),
+            child: Center(
+              child: Text(
+                l10n.profileWithdrawCta,
+                style: TextStyle(
+                  color: colorScheme.onError,
+                ),
+              ),
+            ),
           ),
-          trailing: const Icon(
-            Icons.chevron_right,
-            color: AppColors.iconMuted,
-            size: 18,
-          ),
-          onTap: onWithdraw,
         ),
       ],
     );

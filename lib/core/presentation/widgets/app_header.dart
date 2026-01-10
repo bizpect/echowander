@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 
@@ -45,8 +44,9 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Material(
-      color: AppColors.background,
+      color: colorScheme.surface,
       child: SafeArea(
         bottom: false,
         child: Container(
@@ -59,7 +59,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           ),
           decoration: BoxDecoration(
             border: showDivider
-                ? Border(bottom: BorderSide(color: AppColors.divider, width: 1))
+                ? Border(bottom: BorderSide(color: colorScheme.outlineVariant, width: 1))
                 : null,
           ),
           child: Row(
@@ -88,7 +88,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.left,
                       style: kHeaderTitleTextStyle.copyWith(
-                        color: AppColors.onBackground,
+                        color: colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -169,6 +169,7 @@ class _HeaderIconButtonState extends State<_HeaderIconButton> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Semantics(
       label: widget.semanticLabel,
       button: true,
@@ -186,7 +187,7 @@ class _HeaderIconButtonState extends State<_HeaderIconButton> {
             child: Icon(
               widget.icon,
               size: AppHeader.kHeaderIconSize,
-              color: AppColors.onBackground,
+              color: colorScheme.onSurface,
             ),
           ),
         ),

@@ -402,7 +402,25 @@ class AppLocalizationsKo extends AppLocalizations {
   String get inboxTitle => '받은 메시지';
 
   @override
+  String get inboxTabPending => '응답 전';
+
+  @override
+  String get inboxTabCompleted => '응답 완료';
+
+  @override
   String get inboxEmpty => '받은 메시지가 없어요.';
+
+  @override
+  String get inboxEmptyPendingTitle => '응답 전 메시지가 없어요';
+
+  @override
+  String get inboxEmptyPendingDescription => '새로운 메시지가 도착하면 여기에 표시됩니다.';
+
+  @override
+  String get inboxEmptyCompletedTitle => '응답 완료 메시지가 없어요';
+
+  @override
+  String get inboxEmptyCompletedDescription => '응답을 완료한 메시지가 여기에 표시됩니다.';
 
   @override
   String get inboxCta => '받은 메시지 보기';
@@ -674,6 +692,21 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsNotificationHint => '릴레이 진행과 결과를 알려드려요.';
 
   @override
+  String get settingsLanguage => '언어';
+
+  @override
+  String get settingsTheme => '테마';
+
+  @override
+  String get themeSystem => '시스템';
+
+  @override
+  String get themeLight => '라이트';
+
+  @override
+  String get themeDark => '다크';
+
+  @override
   String get settingsSectionSafety => '안전';
 
   @override
@@ -865,7 +898,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get profileLoginProviderUnknown => '로그인됨';
 
   @override
-  String get profileMenuNotifications => '알림 설정';
+  String get profileAppSettings => '앱 설정';
 
   @override
   String get profileMenuNotices => '공지사항';
@@ -930,46 +963,65 @@ class AppLocalizationsKo extends AppLocalizations {
   String get supportReportCta => '오류사항 제보';
 
   @override
-  String get supportFaqTitle => '자주묻는질문';
+  String get supportFaqTitle => '자주 묻는 질문';
 
   @override
   String get supportFaqSubtitle => '많이 묻는 질문을 확인하세요.';
 
   @override
-  String get supportFaqQ1 => '팀을 어떻게 만들 수 있나요?';
+  String get supportFaqQ1 => '메시지가 전달되지 않는 것 같아요. 왜 그런가요?';
 
   @override
-  String get supportFaqA1 => '팀 기능은 준비 중입니다. 업데이트로 안내드릴게요.';
+  String get supportFaqA1 => '네트워크 상태, 일시적인 서버 지연, 또는 안전 정책(신고/차단 등) 때문에 전달이 지연되거나 제한될 수 있어요. 잠시 후 다시 시도해 주세요.';
 
   @override
-  String get supportFaqQ2 => '팀원을 초대하려면 어떻게 해야 하나요?';
+  String get supportFaqQ2 => '알림이 안 와요. 어떻게 해야 하나요?';
 
   @override
-  String get supportFaqA2 => '팀 기능이 출시되면 초대 기능을 제공할 예정입니다.';
+  String get supportFaqA2 => '휴대폰 설정에서 Echowander 알림 권한이 꺼져 있을 수 있어요. 앱 설정 → 앱 설정(알림 설정) 으로 들어가서 알림 권한을 켜고, 배터리 절전/백그라운드 제한도 함께 확인해 주세요.';
 
   @override
-  String get supportFaqQ3 => '게임 일정은 어떻게 등록하나요?';
+  String get supportFaqQ3 => '불쾌한 메시지를 받았어요. 차단/신고는 어떻게 하나요?';
 
   @override
-  String get supportFaqA3 => '일정 등록 기능은 추후 업데이트로 제공될 예정입니다.';
+  String get supportFaqA3 => '메시지 화면에서 신고 또는 차단을 선택할 수 있어요. 차단하면 해당 사용자로부터 더 이상 메시지를 받지 않아요. 신고된 내용은 커뮤니티 안전을 위해 검토될 수 있어요.';
 
   @override
-  String get supportFaqQ4 => '앱에서 알림을 받지 못하는 경우는?';
+  String get supportFaqQ4 => '내가 보낸 메시지를 수정하거나 취소할 수 있나요?';
 
   @override
-  String get supportFaqA4 => '시스템 알림 권한과 앱 내 알림 설정을 확인해 주세요.';
+  String get supportFaqA4 => '한 번 전송된 메시지는 수정/취소가 어려워요. 전송 전에 내용을 다시 확인해 주세요.';
 
   @override
-  String get supportFaqQ5 => '계정을 삭제하려면 어떻게 해야 하나요?';
+  String get supportFaqQ5 => '커뮤니티 가이드라인을 위반하면 어떻게 되나요?';
 
   @override
-  String get supportFaqA5 => '프로필 > 탈퇴하기에서 안내에 따라 진행해 주세요.';
+  String get supportFaqA5 => '반복 위반 시 메시지 기능이 제한되거나 계정 이용이 제한될 수 있어요. 안전한 커뮤니티를 위해 가이드라인을 지켜 주세요.';
 
   @override
   String get supportActionPreparingTitle => '준비 중';
 
   @override
   String get supportActionPreparingBody => '곧 이용할 수 있습니다.';
+
+  @override
+  String get supportSuggestionSubject => '건의사항 요청드립니다.';
+
+  @override
+  String get supportBugSubject => '오류사항 제보합니다.';
+
+  @override
+  String supportEmailFooterUser(String userId) {
+    return '사용자 : $userId';
+  }
+
+  @override
+  String supportEmailFooterVersion(String version) {
+    return '앱 버전 : $version';
+  }
+
+  @override
+  String get supportEmailLaunchFailed => '메일 앱을 열 수 없어요. 잠시 후 다시 시도해주세요.';
 
   @override
   String get appInfoTitle => '앱 정보';
@@ -1110,4 +1162,106 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get errorAuthRefreshFailed => '네트워크가 불안정합니다. 잠시 후 다시 시도해 주세요.';
+
+  @override
+  String get homeInboxSummaryTitle => '오늘의 인박스';
+
+  @override
+  String get homeInboxSummaryPending => '응답 전';
+
+  @override
+  String get homeInboxSummaryCompleted => '응답 완료';
+
+  @override
+  String get homeInboxSummarySentResponses => '보낸 응답';
+
+  @override
+  String homeInboxSummaryUpdatedAt(Object time) {
+    return '업데이트 $time';
+  }
+
+  @override
+  String get homeInboxSummaryRefresh => '새로고침';
+
+  @override
+  String get homeInboxSummaryLoadFailed => '요약을 불러올 수 없어요.';
+
+  @override
+  String homeInboxSummaryItemSemantics(Object label, Object count) {
+    return '$label $count개';
+  }
+
+  @override
+  String get homeTimelineTitle => '최근 활동';
+
+  @override
+  String get homeTimelineEmptyTitle => '최근 활동이 아직 없어요';
+
+  @override
+  String get homeTimelineReceivedTitle => '새 메시지 도착';
+
+  @override
+  String get homeTimelineRespondedTitle => '답장 보냄';
+
+  @override
+  String get homeTimelineSentResponseTitle => '응답 도착';
+
+  @override
+  String homeTimelineSubtitle(Object time) {
+    return '$time';
+  }
+
+  @override
+  String get homeDailyPromptTitle => '오늘의 질문';
+
+  @override
+  String get homeDailyPromptHint => '탭해서 메시지 작성';
+
+  @override
+  String get homeDailyPromptAction => '작성하기';
+
+  @override
+  String get homeAnnouncementTitle => '업데이트';
+
+  @override
+  String get homeAnnouncementSummary => '새로운 소식을 확인해 보세요.';
+
+  @override
+  String get homeAnnouncementAction => '자세히';
+
+  @override
+  String get homeAnnouncementDetailTitle => '업데이트';
+
+  @override
+  String get homeAnnouncementDetailBody => '더 부드러운 사용 경험을 위해 개선했어요.';
+
+  @override
+  String get homePromptQ1 => '오늘 웃게 만든 순간은 무엇이었나요?';
+
+  @override
+  String get homePromptQ2 => '이번 주에 기대하는 일은 무엇인가요?';
+
+  @override
+  String get homePromptQ3 => '다시 가보고 싶은 장소는 어디인가요?';
+
+  @override
+  String get homePromptQ4 => '오늘의 작은 성취를 알려주세요.';
+
+  @override
+  String get homePromptQ5 => '만들고 싶은 습관이 있나요?';
+
+  @override
+  String get homePromptQ6 => '오늘 고마움을 전하고 싶은 사람은 누구인가요?';
+
+  @override
+  String get homePromptQ7 => '요즘 반복해서 듣는 노래는 무엇인가요?';
+
+  @override
+  String get homePromptQ8 => '오늘을 세 단어로 표현해 주세요.';
+
+  @override
+  String get homePromptQ9 => '최근에 배운 것이 있나요?';
+
+  @override
+  String get homePromptQ10 => '나에게 한 줄 메시지를 보낸다면 무엇인가요?';
 }
