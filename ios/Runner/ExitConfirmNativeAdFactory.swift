@@ -48,9 +48,10 @@ class ExitConfirmNativeAdFactory: NSObject, FLTNativeAdFactory {
 
     let mediaView = GADMediaView()
     mediaView.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      mediaView.heightAnchor.constraint(equalToConstant: 96),
-    ])
+    mediaView.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+    let mediaHeight = mediaView.heightAnchor.constraint(equalToConstant: 150)
+    mediaHeight.priority = .defaultLow
+    mediaHeight.isActive = true
 
     let ctaButton = UIButton(type: .system)
     ctaButton.translatesAutoresizingMaskIntoConstraints = false

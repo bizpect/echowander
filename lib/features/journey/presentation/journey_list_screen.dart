@@ -19,12 +19,30 @@ import '../../../core/presentation/widgets/app_list_item.dart';
 import '../../../core/presentation/widgets/app_pill.dart';
 import '../../../core/presentation/widgets/app_scaffold.dart';
 import '../../../core/presentation/widgets/app_skeleton.dart';
+import '../../../core/presentation/widgets/app_segmented_tabs.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/journey_list_controller.dart';
 import '../domain/journey_repository.dart';
+
+enum SentTab { inProgress, completed }
+
+class SentTabController extends Notifier<SentTab> {
+  @override
+  SentTab build() => SentTab.inProgress;
+
+  void setTab(SentTab tab) {
+    if (state == tab) {
+      return;
+    }
+    state = tab;
+  }
+}
+
+final sentTabProvider =
+    NotifierProvider<SentTabController, SentTab>(SentTabController.new);
 
 class JourneyListScreen extends ConsumerStatefulWidget {
   const JourneyListScreen({super.key});
@@ -49,6 +67,7 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
     final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(journeyListControllerProvider);
     final controller = ref.read(journeyListControllerProvider.notifier);
+    final selectedTab = ref.watch(sentTabProvider);
     final dateFormat = DateFormat.yMMMd(l10n.localeName).add_Hm();
 
     ref.listen<JourneyListState>(journeyListControllerProvider, (
@@ -78,22 +97,66 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
         bodyPadding: EdgeInsets.zero,
         body: LoadingOverlay(
           isLoading: state.isLoading || _isAdLoading,
-          child: RefreshIndicator(
-            onRefresh: () async {
-              // Pull-to-Refresh: 보낸메세지 리스트 갱신
-              await controller.load();
-            },
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeOut,
-              child: _buildBody(
-                context: context,
-                l10n: l10n,
-                state: state,
-                dateFormat: dateFormat,
+          child: Column(
+            children: [
+              Padding(
+                padding: AppSpacing.pagePadding.copyWith(
+                  top: AppSpacing.sm,
+                  bottom: AppSpacing.lg,
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    assert(() {
+                      debugPrint(
+                        '[SentTabsParent] maxWidth=${constraints.maxWidth} '
+                        'padding=${AppSpacing.pagePadding.horizontal}',
+                      );
+                      return true;
+                    }());
+                    return AppSegmentedTabs(
+                      tabs: [
+                        AppSegmentedTab(label: l10n.sentTabInProgress),
+                        AppSegmentedTab(label: l10n.sentTabCompleted),
+                      ],
+                      selectedIndex:
+                          selectedTab == SentTab.inProgress ? 0 : 1,
+                      onChanged: (index) {
+                        ref
+                            .read(sentTabProvider.notifier)
+                            .setTab(
+                              index == 0
+                                  ? SentTab.inProgress
+                                  : SentTab.completed,
+                            );
+                      },
+                    );
+                  },
+                ),
               ),
-            ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    // Pull-to-Refresh: 보낸메세지 리스트 갱신
+                    await controller.load();
+                  },
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeOut,
+                    child: KeyedSubtree(
+                      key: ValueKey(selectedTab),
+                      child: _buildBody(
+                        context: context,
+                        l10n: l10n,
+                        state: state,
+                        dateFormat: dateFormat,
+                        selectedTab: selectedTab,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -109,67 +172,109 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
     required AppLocalizations l10n,
     required JourneyListState state,
     required DateFormat dateFormat,
+    required SentTab selectedTab,
   }) {
+    final filteredItems = _filterItems(state.items, selectedTab);
+    if (kDebugMode) {
+      debugPrint(
+        '[SentTrace][UI] tab=$selectedTab total=${state.items.length} filtered=${filteredItems.length}',
+      );
+    }
+
     if (state.isLoading && state.items.isEmpty) {
-      return ListView(
+      return CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          const Padding(
-            padding: AppSpacing.pagePadding,
-            child: AppListSkeleton(),
+        slivers: const [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: AppSpacing.pagePadding,
+              child: AppListSkeleton(),
+            ),
           ),
         ],
       );
     }
 
-    if (state.items.isEmpty) {
-      return ListView(
+    if (filteredItems.isEmpty) {
+      return CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          AppEmptyState(
-            icon: Icons.send_outlined,
-            title: l10n.journeyListEmpty,
-            description: l10n.journeyInProgressHint,
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: AppEmptyState(
+              icon: Icons.send_outlined,
+              title: selectedTab == SentTab.inProgress
+                  ? l10n.sentEmptyInProgressTitle
+                  : l10n.sentEmptyCompletedTitle,
+              description: selectedTab == SentTab.inProgress
+                  ? l10n.sentEmptyInProgressDescription
+                  : l10n.sentEmptyCompletedDescription,
+            ),
           ),
         ],
       );
     }
 
-    return ListView.separated(
-      padding: AppSpacing.pagePadding.copyWith(top: 0, bottom: AppSpacing.xl),
+    return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      itemCount: state.items.length,
-      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
-      itemBuilder: (context, index) {
-        final item = state.items[index];
-        final meta = dateFormat.format(item.createdAt.toLocal());
-        final status = _buildStatusPills(
-          l10n: l10n,
-          statusCode: item.statusCode,
-          filterCode: item.filterCode,
-        );
-
-        return AppListItem(
-          title: _statusLabel(l10n, item.statusCode),
-          subtitle: item.content,
-          meta: meta,
-          status: status,
-          leading: _ListLeadingIcon(
-            icon: item.statusCode == 'COMPLETED'
-                ? Icons.check_circle
-                : Icons.schedule,
+      slivers: [
+        SliverPadding(
+          padding: AppSpacing.pagePadding.copyWith(
+            top: 0,
+            bottom: AppSpacing.xl,
           ),
-          trailing: const Icon(
-            Icons.chevron_right,
-            color: AppColors.iconMuted,
-            size: 20,
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final itemIndex = index ~/ 2;
+                if (index.isOdd) {
+                  return const SizedBox(height: AppSpacing.md);
+                }
+                final item = filteredItems[itemIndex];
+                final meta = dateFormat.format(item.createdAt.toLocal());
+                final status = _buildStatusPills(
+                  l10n: l10n,
+                  statusCode: item.statusCode,
+                  filterCode: item.filterCode,
+                );
+                return AppListItem(
+                  title: _statusLabel(l10n, item.statusCode),
+                  subtitle: item.content,
+                  meta: meta,
+                  status: status,
+                  leading: _ListLeadingIcon(
+                    icon: item.statusCode == 'COMPLETED'
+                        ? Icons.check_circle
+                        : Icons.schedule,
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.iconMuted,
+                    size: 20,
+                  ),
+                  onTap: item.statusCode == 'COMPLETED'
+                      ? () => _handleCompletedTap(item)
+                      : null,
+                );
+              },
+              childCount: filteredItems.isEmpty
+                  ? 0
+                  : (filteredItems.length * 2) - 1,
+            ),
           ),
-          onTap: item.statusCode == 'COMPLETED'
-              ? () => _handleCompletedTap(item)
-              : null,
-        );
-      },
+        ),
+      ],
     );
+  }
+
+  List<JourneySummary> _filterItems(
+    List<JourneySummary> items,
+    SentTab selectedTab,
+  ) {
+    if (selectedTab == SentTab.completed) {
+      return items.where((item) => item.statusCode == 'COMPLETED').toList();
+    }
+    return items.where((item) => item.statusCode != 'COMPLETED').toList();
   }
 
   Future<void> _handleMessage(

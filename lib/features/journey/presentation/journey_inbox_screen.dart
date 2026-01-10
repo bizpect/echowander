@@ -165,10 +165,16 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
       if (kDebugMode) {
         debugPrint('[InboxTrace][UI] _buildBody - showing empty state');
       }
-      return ListView(
+      return CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          AppEmptyState(icon: Icons.inbox_outlined, title: l10n.inboxEmpty),
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: AppEmptyState(
+              icon: Icons.inbox_outlined,
+              title: l10n.inboxEmpty,
+            ),
+          ),
         ],
       );
     }

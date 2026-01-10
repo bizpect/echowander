@@ -342,6 +342,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get journeyListTitle => '已发送消息';
 
   @override
+  String get sentTabInProgress => '进行中';
+
+  @override
+  String get sentTabCompleted => '已完成';
+
+  @override
+  String get sentEmptyInProgressTitle => '暂无进行中的消息';
+
+  @override
+  String get sentEmptyInProgressDescription => '开始新的接力消息后会显示在这里。';
+
+  @override
+  String get sentEmptyCompletedTitle => '暂无已完成的消息';
+
+  @override
+  String get sentEmptyCompletedDescription => '已完成的接力会显示在这里。';
+
+  @override
   String get journeyListEmpty => '还没有发送过消息。';
 
   @override

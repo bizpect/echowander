@@ -342,6 +342,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get journeyListTitle => 'Sent Messages';
 
   @override
+  String get sentTabInProgress => 'In progress';
+
+  @override
+  String get sentTabCompleted => 'Completed';
+
+  @override
+  String get sentEmptyInProgressTitle => 'No messages in progress';
+
+  @override
+  String get sentEmptyInProgressDescription => 'Start a new relay message to see it here.';
+
+  @override
+  String get sentEmptyCompletedTitle => 'No completed messages';
+
+  @override
+  String get sentEmptyCompletedDescription => 'Completed relays will appear here.';
+
+  @override
   String get journeyListEmpty => 'No messages yet.';
 
   @override

@@ -342,6 +342,24 @@ class AppLocalizationsEs extends AppLocalizations {
   String get journeyListTitle => 'Mensajes enviados';
 
   @override
+  String get sentTabInProgress => 'En curso';
+
+  @override
+  String get sentTabCompleted => 'Completado';
+
+  @override
+  String get sentEmptyInProgressTitle => 'No hay mensajes en curso';
+
+  @override
+  String get sentEmptyInProgressDescription => 'Inicia un nuevo mensaje para verlo aquí.';
+
+  @override
+  String get sentEmptyCompletedTitle => 'No hay mensajes completados';
+
+  @override
+  String get sentEmptyCompletedDescription => 'Los mensajes completados aparecerán aquí.';
+
+  @override
   String get journeyListEmpty => 'Aún no hay mensajes enviados.';
 
   @override

@@ -342,6 +342,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get journeyListTitle => '보낸 메시지';
 
   @override
+  String get sentTabInProgress => '진행중';
+
+  @override
+  String get sentTabCompleted => '완료';
+
+  @override
+  String get sentEmptyInProgressTitle => '진행중인 메시지가 없어요';
+
+  @override
+  String get sentEmptyInProgressDescription => '새로운 릴레이 메시지를 시작해 보세요.';
+
+  @override
+  String get sentEmptyCompletedTitle => '완료된 메시지가 없어요';
+
+  @override
+  String get sentEmptyCompletedDescription => '완료된 릴레이가 여기에 표시됩니다.';
+
+  @override
   String get journeyListEmpty => '아직 보낸 메시지가 없어요.';
 
   @override

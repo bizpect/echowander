@@ -342,6 +342,24 @@ class AppLocalizationsPt extends AppLocalizations {
   String get journeyListTitle => 'Mensagens enviadas';
 
   @override
+  String get sentTabInProgress => 'Em andamento';
+
+  @override
+  String get sentTabCompleted => 'Concluído';
+
+  @override
+  String get sentEmptyInProgressTitle => 'Nenhuma mensagem em andamento';
+
+  @override
+  String get sentEmptyInProgressDescription => 'Inicie uma nova mensagem para vê-la aqui.';
+
+  @override
+  String get sentEmptyCompletedTitle => 'Nenhuma mensagem concluída';
+
+  @override
+  String get sentEmptyCompletedDescription => 'As mensagens concluídas aparecerão aqui.';
+
+  @override
   String get journeyListEmpty => 'Ainda não há mensagens enviadas.';
 
   @override
@@ -1430,6 +1448,24 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get journeyListTitle => 'Mensagens enviadas';
+
+  @override
+  String get sentTabInProgress => 'Em andamento';
+
+  @override
+  String get sentTabCompleted => 'Concluído';
+
+  @override
+  String get sentEmptyInProgressTitle => 'Nenhuma mensagem em andamento';
+
+  @override
+  String get sentEmptyInProgressDescription => 'Inicie uma nova mensagem para vê-la aqui.';
+
+  @override
+  String get sentEmptyCompletedTitle => 'Nenhuma mensagem concluída';
+
+  @override
+  String get sentEmptyCompletedDescription => 'As mensagens concluídas aparecerão aqui.';
 
   @override
   String get journeyListEmpty => 'Ainda não há mensagens enviadas.';

@@ -342,6 +342,24 @@ class AppLocalizationsJa extends AppLocalizations {
   String get journeyListTitle => '送信したメッセージ';
 
   @override
+  String get sentTabInProgress => '進行中';
+
+  @override
+  String get sentTabCompleted => '完了';
+
+  @override
+  String get sentEmptyInProgressTitle => '進行中のメッセージはありません';
+
+  @override
+  String get sentEmptyInProgressDescription => '新しいリレーメッセージを開始してください。';
+
+  @override
+  String get sentEmptyCompletedTitle => '完了したメッセージはありません';
+
+  @override
+  String get sentEmptyCompletedDescription => '完了したリレーがここに表示されます。';
+
+  @override
   String get journeyListEmpty => 'まだ送信したメッセージがありません。';
 
   @override

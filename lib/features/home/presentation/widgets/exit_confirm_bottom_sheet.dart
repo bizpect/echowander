@@ -110,11 +110,16 @@ class _ExitConfirmBottomSheetState extends State<ExitConfirmBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final sheetHeight = MediaQuery.of(context).size.height * 0.45;
-    const adHeight = 500.0;
+    final sheetHeight = MediaQuery.of(context).size.height * 0.50;
+    const adAspectRatio = 5 / 6;
+    final maxWidth = MediaQuery.of(context).size.width - (AppSpacing.lg * 2);
+    final maxHeight = sheetHeight * 0.5;
+    final widthByHeight = maxHeight / adAspectRatio;
+    final adWidth = widthByHeight < maxWidth ? widthByHeight : maxWidth;
+    final adHeight = adWidth * adAspectRatio * 1.2;
     if (kDebugMode) {
       debugPrint(
-        '[ExitAd] build reqId=$_requestId ready=$_adLoaded height=$adHeight',
+        '[ExitAd] build reqId=$_requestId ready=$_adLoaded width=$adWidth height=$adHeight',
       );
     }
 
@@ -137,22 +142,8 @@ class _ExitConfirmBottomSheetState extends State<ExitConfirmBottomSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        l10n.homeExitTitle,
-                        style: AppTextStyles.titleMd.copyWith(
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        l10n.homeExitMessage,
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                      _buildAdArea(l10n, adHeight),
-                      const SizedBox(height: AppSpacing.lg),
+                      const SizedBox(height: AppSpacing.md),
+                      _buildAdArea(l10n, adWidth, adHeight),
                     ],
                   ),
                 ),
@@ -181,15 +172,17 @@ class _ExitConfirmBottomSheetState extends State<ExitConfirmBottomSheet> {
     );
   }
 
-  Widget _buildAdArea(AppLocalizations l10n, double adHeight) {
+  Widget _buildAdArea(AppLocalizations l10n, double adWidth, double adHeight) {
     final radius = BorderRadius.circular(AppRadius.radiusLarge);
     if (_adLoaded && _nativeAd != null) {
-      return ClipRRect(
-        borderRadius: radius,
-        child: SizedBox(
-          height: adHeight,
-          width: double.infinity,
-          child: AdWidget(ad: _nativeAd!),
+      return Center(
+        child: ClipRRect(
+          borderRadius: radius,
+          child: SizedBox(
+            height: adHeight,
+            width: adWidth,
+            child: AdWidget(ad: _nativeAd!),
+          ),
         ),
       );
     }
@@ -197,7 +190,7 @@ class _ExitConfirmBottomSheetState extends State<ExitConfirmBottomSheet> {
     if (_adFailed) {
       return SizedBox(
         height: adHeight,
-        width: double.infinity,
+        width: adWidth,
         child: Center(
           child: Text(
             l10n.homeExitAdLoading,
@@ -209,23 +202,25 @@ class _ExitConfirmBottomSheetState extends State<ExitConfirmBottomSheet> {
       );
     }
 
-    return ClipRRect(
-      borderRadius: radius,
-      child: SizedBox(
-        height: adHeight,
-        width: double.infinity,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const AppSkeleton(height: 120),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              l10n.homeExitAdLoading,
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.textMuted,
+    return Center(
+      child: ClipRRect(
+        borderRadius: radius,
+        child: SizedBox(
+          height: adHeight,
+          width: adWidth,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const AppSkeleton(height: 120),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                l10n.homeExitAdLoading,
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.textMuted,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

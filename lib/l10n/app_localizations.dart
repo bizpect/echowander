@@ -760,6 +760,42 @@ abstract class AppLocalizations {
   /// **'Sent Messages'**
   String get journeyListTitle;
 
+  /// No description provided for @sentTabInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get sentTabInProgress;
+
+  /// No description provided for @sentTabCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get sentTabCompleted;
+
+  /// No description provided for @sentEmptyInProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages in progress'**
+  String get sentEmptyInProgressTitle;
+
+  /// No description provided for @sentEmptyInProgressDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a new relay message to see it here.'**
+  String get sentEmptyInProgressDescription;
+
+  /// No description provided for @sentEmptyCompletedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No completed messages'**
+  String get sentEmptyCompletedTitle;
+
+  /// No description provided for @sentEmptyCompletedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed relays will appear here.'**
+  String get sentEmptyCompletedDescription;
+
   /// No description provided for @journeyListEmpty.
   ///
   /// In en, this message translates to:
