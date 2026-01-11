@@ -77,6 +77,149 @@ $$;
 
 drop function if exists public.upsert_my_profile(text, text, text);
 
+-- 닉네임 가용 여부 체크 RPC
+-- 파라미터명 변경을 위해 기존 함수 삭제 후 재생성
+drop function if exists public.check_nickname_available(text);
+
+create or replace function public.check_nickname_available(
+  nickname text
+)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_normalized text;
+  v_compact text;
+  v_exists boolean;
+  v_forbidden_word text;
+begin
+  -- 입력 검증
+  -- 함수명을 명시적으로 사용하여 파라미터 참조
+  if check_nickname_available.nickname is null or length(trim(check_nickname_available.nickname)) = 0 then
+    return false;
+  end if;
+
+  -- 정규화 (lower(trim))
+  v_normalized := lower(trim(check_nickname_available.nickname));
+  -- compact (띄어쓰기/언더스코어 제거)
+  v_compact := regexp_replace(v_normalized, '[_\s]+', '', 'g');
+
+  -- 금칙어 체크 (정규화 + compact 기준)
+  select word into v_forbidden_word
+  from public.forbidden_words
+  where is_enabled = true
+    and (
+      v_normalized like '%' || word || '%'
+      or v_compact like '%' || regexp_replace(word, '[_\s]+', '', 'g') || '%'
+    )
+  limit 1;
+
+  if v_forbidden_word is not null then
+    return false; -- 금칙어 포함
+  end if;
+
+  -- 현재 사용자의 닉네임과 동일하면 사용 가능
+  select exists(
+    select 1
+    from public.user_profiles
+    where user_id = auth.uid()
+      and nickname_norm = v_normalized
+  ) into v_exists;
+
+  if v_exists then
+    return true; -- 자신의 닉네임이면 사용 가능
+  end if;
+
+  -- 다른 사용자가 사용 중인지 확인
+  select exists(
+    select 1
+    from public.user_profiles
+    where nickname_norm = v_normalized
+  ) into v_exists;
+
+  return not v_exists; -- 사용 중이면 false, 없으면 true
+end;
+$$;
+
+-- 프로필 업데이트 RPC (유니크 보장 포함)
+-- 파라미터명 변경을 위해 기존 함수 삭제 후 재생성
+drop function if exists public.update_my_profile(text, text, text);
+
+create or replace function public.update_my_profile(
+  nickname text default null,
+  avatar_url text default null,
+  bio text default null
+)
+returns setof public.user_profiles
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_normalized text;
+  v_compact text;
+  v_nickname text;
+  v_avatar_url text;
+  v_bio text;
+  v_forbidden_word text;
+begin
+  -- 파라미터를 로컬 변수로 복사 (컬럼명과 충돌 방지)
+  -- 함수명을 명시적으로 사용하여 파라미터 참조
+  v_nickname := update_my_profile.nickname;
+  v_avatar_url := update_my_profile.avatar_url;
+  v_bio := update_my_profile.bio;
+
+  -- 닉네임이 변경되는 경우 검증
+  if v_nickname is not null then
+    v_normalized := lower(trim(v_nickname));
+    v_compact := regexp_replace(v_normalized, '[_\s]+', '', 'g');
+    
+    -- 금칙어 체크 (정규화 + compact 기준)
+    select word into v_forbidden_word
+    from public.forbidden_words
+    where is_enabled = true
+      and (
+        v_normalized like '%' || word || '%'
+        or v_compact like '%' || regexp_replace(word, '[_\s]+', '', 'g') || '%'
+      )
+    limit 1;
+
+    if v_forbidden_word is not null then
+      raise exception 'nickname_forbidden' using message = 'Nickname contains forbidden word';
+    end if;
+    
+    -- 다른 사용자가 이미 사용 중인지 확인 (자신의 닉네임 제외)
+    if exists(
+      select 1
+      from public.user_profiles
+      where nickname_norm = v_normalized
+        and user_id != auth.uid()
+    ) then
+      raise exception 'nickname_taken' using message = 'Nickname is already taken';
+    end if;
+  end if;
+
+  -- 프로필 업데이트 (부분 업데이트: null이 아닌 값만 업데이트)
+  insert into public.user_profiles (user_id, nickname, avatar_url, bio, locale_tag)
+  values (auth.uid(), v_nickname, v_avatar_url, v_bio, null)
+  on conflict on constraint user_profiles_pkey
+  do update set
+    nickname = case when excluded.nickname is not null then excluded.nickname else user_profiles.nickname end,
+    avatar_url = case when excluded.avatar_url is not null then excluded.avatar_url else user_profiles.avatar_url end,
+    bio = case when excluded.bio is not null then excluded.bio else user_profiles.bio end,
+    updated_at = now();
+
+  return query
+  select p.*
+  from public.user_profiles p
+  where p.user_id = auth.uid();
+end;
+$$;
+
+-- 기존 upsert_my_profile은 하위 호환성을 위해 유지 (내부적으로 update_my_profile 호출)
 create or replace function public.upsert_my_profile(
   _nickname text,
   _avatar_url text,
@@ -93,28 +236,12 @@ returns table (
   updated_at timestamptz
 )
 language plpgsql
+security definer
+set search_path = public
 as $$
 begin
-  insert into public.user_profiles (user_id, nickname, avatar_url, bio, locale_tag)
-  values (auth.uid(), _nickname, _avatar_url, _bio, null)
-  on conflict on constraint user_profiles_pkey
-  do update set
-    nickname = excluded.nickname,
-    avatar_url = excluded.avatar_url,
-    bio = excluded.bio,
-    updated_at = now();
-
   return query
-  select p.user_id,
-         p.nickname,
-         p.avatar_url,
-         p.bio,
-         p.locale_tag,
-         p.notifications_enabled,
-         p.created_at,
-         p.updated_at
-  from public.user_profiles p
-  where p.user_id = auth.uid();
+  select * from public.update_my_profile(_nickname, _avatar_url, _bio);
 end;
 $$;
 
@@ -710,10 +837,6 @@ begin
   -- 보장: 반환된 모든 row의 recipient_id는 반드시 current_user_id가 recipient_user_id인 journey_recipients.id입니다
 end;
 $$;
-
--- ✅ 권한 최소화: PUBLIC에서 모든 권한 제거, authenticated에게만 EXECUTE 허용
-revoke all on function public.list_inbox_journeys(integer, integer) from public;
-grant execute on function public.list_inbox_journeys(integer, integer) to authenticated;
 
 create or replace function public.list_inbox_journey_images(
   target_journey_id uuid
@@ -2181,3 +2304,138 @@ begin
   where token = p_token;
 end;
 $$;
+
+drop function if exists public.list_common_codes(text);
+
+create or replace function public.list_common_codes(
+  p_code_type text
+)
+returns table (
+  code_type text,
+  code_value text,
+  name text,
+  labels jsonb,
+  sort_order integer
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if p_code_type is null or length(trim(p_code_type)) = 0 then
+    raise exception 'missing_code_type';
+  end if;
+
+  return query
+  select cc.code_type,
+         cc.code_value,
+         cc.name,
+         cc.labels,
+         cc.sort_order
+  from public.common_codes cc
+  where cc.code_type = p_code_type
+    and cc.is_active = true
+  order by cc.sort_order asc, cc.code_value asc;
+end;
+$$;
+
+drop function if exists public.list_board_posts(text, text, integer, integer);
+
+create or replace function public.list_board_posts(
+  p_board_key text,
+  p_type_code text default null,
+  p_limit integer default 20,
+  p_offset integer default 0
+)
+returns table (
+  id uuid,
+  board_key text,
+  type_code text,
+  title text,
+  content_preview text,
+  is_pinned boolean,
+  published_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_board_id uuid;
+begin
+  if p_board_key is null or length(trim(p_board_key)) = 0 then
+    raise exception 'missing_board_key';
+  end if;
+
+  select b.id
+  into v_board_id
+  from public.boards b
+  where b.board_key = p_board_key
+    and b.is_active = true;
+
+  if v_board_id is null then
+    return;
+  end if;
+
+  return query
+  select bp.id,
+         p_board_key as board_key,
+         bp.type_code,
+         bp.title,
+         left(bp.content, 120) as content_preview,
+         bp.is_pinned,
+         bp.published_at
+  from public.board_posts bp
+  where bp.board_id = v_board_id
+    and bp.status = 'PUBLISHED'
+    and bp.published_at <= now()
+    and (p_type_code is null or bp.type_code = p_type_code)
+  order by bp.is_pinned desc, bp.published_at desc
+  limit p_limit offset p_offset;
+end;
+$$;
+
+drop function if exists public.get_board_post(uuid);
+
+create or replace function public.get_board_post(
+  p_post_id uuid
+)
+returns table (
+  id uuid,
+  board_key text,
+  type_code text,
+  title text,
+  content text,
+  is_pinned boolean,
+  published_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if p_post_id is null then
+    raise exception 'missing_post_id';
+  end if;
+
+  return query
+  select bp.id,
+         b.board_key,
+         bp.type_code,
+         bp.title,
+         bp.content,
+         bp.is_pinned,
+         bp.published_at
+  from public.board_posts bp
+  join public.boards b
+    on b.id = bp.board_id
+  where bp.id = p_post_id
+    and b.is_active = true
+    and bp.status = 'PUBLISHED'
+    and bp.published_at <= now()
+  limit 1;
+end;
+$$;
+
+-- PostgREST schema cache 리로드 (함수 시그니처 변경 후 필수)
+notify pgrst, 'reload schema';

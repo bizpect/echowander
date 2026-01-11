@@ -865,6 +865,39 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tabProfileLabel => 'プロフィール';
 
   @override
+  String get noticeTitle => 'お知らせ';
+
+  @override
+  String get noticeDetailTitle => 'お知らせ';
+
+  @override
+  String get noticeFilterLabel => 'お知らせの種類';
+
+  @override
+  String get noticeFilterAll => 'すべて';
+
+  @override
+  String get noticeFilterSheetTitle => 'お知らせの種類を選択';
+
+  @override
+  String get noticeTypeUnknown => '不明';
+
+  @override
+  String get noticePinnedBadge => '固定';
+
+  @override
+  String get noticeEmptyTitle => 'お知らせはありません';
+
+  @override
+  String get noticeEmptyDescription => 'この種類のお知らせはありません。';
+
+  @override
+  String get noticeErrorTitle => 'お知らせを読み込めませんでした';
+
+  @override
+  String get noticeErrorDescription => 'しばらくしてからもう一度お試しください。';
+
+  @override
   String get profileSignOutCta => 'ログアウト';
 
   @override
@@ -884,6 +917,21 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get profileEditCta => 'プロフィール編集';
+
+  @override
+  String get authProviderKakaoLogin => 'Kakaoログイン';
+
+  @override
+  String get authProviderGoogleLogin => 'Googleログイン';
+
+  @override
+  String get authProviderAppleLogin => 'Appleログイン';
+
+  @override
+  String get authProviderUnknownLogin => 'ログイン済み';
+
+  @override
+  String get profileLoginProviderKakao => 'Kakaoログイン';
 
   @override
   String get profileLoginProviderGoogle => 'Googleログイン';
@@ -1264,4 +1312,98 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get homePromptQ10 => '自分に一言送るなら何と言いますか？';
+
+  @override
+  String get profileEditTitle => 'プロフィール編集';
+
+  @override
+  String get profileEditNicknameLabel => 'ニックネーム';
+
+  @override
+  String get profileEditNicknameHint => 'ニックネームを入力';
+
+  @override
+  String get profileEditNicknameEmpty => 'ニックネームを入力してください';
+
+  @override
+  String profileEditNicknameTooShort(Object min) {
+    return 'ニックネームは最低$min文字以上である必要があります';
+  }
+
+  @override
+  String profileEditNicknameTooLong(Object max) {
+    return 'ニックネームは最大$max文字まで入力できます';
+  }
+
+  @override
+  String get profileEditNicknameConsecutiveSpaces => '連続したスペースは使用できません';
+
+  @override
+  String get profileEditNicknameInvalidCharacters => '韓国語、英語、数字、アンダースコア(_)のみ使用できます';
+
+  @override
+  String get profileEditNicknameUnderscoreAtEnds => 'Underscore (_) cannot be used at the beginning or end';
+
+  @override
+  String get profileEditNicknameConsecutiveUnderscores => 'Consecutive underscores (__) are not allowed';
+
+  @override
+  String get profileEditNicknameForbidden => 'This nickname is not allowed';
+
+  @override
+  String get profileEditNicknameChecking => '確認中...';
+
+  @override
+  String get profileEditNicknameAvailable => 'このニックネームは使用可能です';
+
+  @override
+  String get profileEditNicknameTaken => 'このニックネームは既に使用されています';
+
+  @override
+  String get profileEditNicknameError => '確認中にエラーが発生しました';
+
+  @override
+  String get profileEditAvatarLabel => 'プロフィール写真';
+
+  @override
+  String get profileEditAvatarChange => '写真を変更';
+
+  @override
+  String get profileEditSave => '保存';
+
+  @override
+  String get profileEditCancel => 'キャンセル';
+
+  @override
+  String get profileEditSaveSuccess => 'プロフィールが保存されました';
+
+  @override
+  String get profileEditSaveFailed => '保存に失敗しました。もう一度お試しください';
+
+  @override
+  String get profileEditImageTooLarge => 'Image file is too large. Please select another image';
+
+  @override
+  String get profileEditImageOptimizationFailed => 'An error occurred while processing the image. Please try again';
+
+  @override
+  String get profileEditCropTitle => '写真編集';
+
+  @override
+  String get profileEditCropDescription => '希望の位置に調整してください';
+
+  @override
+  String get profileEditCropCancel => 'キャンセル';
+
+  @override
+  String get profileEditCropComplete => '完了';
+
+  @override
+  String get profileEditCropFailedTitle => '写真編集に失敗しました';
+
+  @override
+  String get profileEditCropFailedMessage => '写真の編集中にエラーが発生しました。もう一度お試しください。';
+
+  @override
+  String get profileEditCropFailedAction => 'OK';
 }

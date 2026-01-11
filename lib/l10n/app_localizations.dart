@@ -1798,6 +1798,72 @@ abstract class AppLocalizations {
   /// **'Profile'**
   String get tabProfileLabel;
 
+  /// No description provided for @noticeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notices'**
+  String get noticeTitle;
+
+  /// No description provided for @noticeDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notices'**
+  String get noticeDetailTitle;
+
+  /// No description provided for @noticeFilterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notice type'**
+  String get noticeFilterLabel;
+
+  /// No description provided for @noticeFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get noticeFilterAll;
+
+  /// No description provided for @noticeFilterSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select notice type'**
+  String get noticeFilterSheetTitle;
+
+  /// No description provided for @noticeTypeUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get noticeTypeUnknown;
+
+  /// No description provided for @noticePinnedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned'**
+  String get noticePinnedBadge;
+
+  /// No description provided for @noticeEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No notices yet'**
+  String get noticeEmptyTitle;
+
+  /// No description provided for @noticeEmptyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no notices for this type.'**
+  String get noticeEmptyDescription;
+
+  /// No description provided for @noticeErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load notices'**
+  String get noticeErrorTitle;
+
+  /// No description provided for @noticeErrorDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Please try again later.'**
+  String get noticeErrorDescription;
+
   /// No description provided for @profileSignOutCta.
   ///
   /// In en, this message translates to:
@@ -1839,6 +1905,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit profile'**
   String get profileEditCta;
+
+  /// No description provided for @authProviderKakaoLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Kakao login'**
+  String get authProviderKakaoLogin;
+
+  /// No description provided for @authProviderGoogleLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Google login'**
+  String get authProviderGoogleLogin;
+
+  /// No description provided for @authProviderAppleLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple login'**
+  String get authProviderAppleLogin;
+
+  /// No description provided for @authProviderUnknownLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in'**
+  String get authProviderUnknownLogin;
+
+  /// No description provided for @profileLoginProviderKakao.
+  ///
+  /// In en, this message translates to:
+  /// **'Kakao login'**
+  String get profileLoginProviderKakao;
 
   /// No description provided for @profileLoginProviderGoogle.
   ///
@@ -2559,6 +2655,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'If you could send one message to yourself, what would it be?'**
   String get homePromptQ10;
+
+  /// No description provided for @profileEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get profileEditTitle;
+
+  /// No description provided for @profileEditNicknameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname'**
+  String get profileEditNicknameLabel;
+
+  /// No description provided for @profileEditNicknameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter nickname'**
+  String get profileEditNicknameHint;
+
+  /// No description provided for @profileEditNicknameEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a nickname'**
+  String get profileEditNicknameEmpty;
+
+  /// No description provided for @profileEditNicknameTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname must be at least {min} characters'**
+  String profileEditNicknameTooShort(Object min);
+
+  /// No description provided for @profileEditNicknameTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname can be up to {max} characters'**
+  String profileEditNicknameTooLong(Object max);
+
+  /// No description provided for @profileEditNicknameConsecutiveSpaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Consecutive spaces are not allowed'**
+  String get profileEditNicknameConsecutiveSpaces;
+
+  /// No description provided for @profileEditNicknameInvalidCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'Only Korean, English, numbers, and underscore (_) are allowed'**
+  String get profileEditNicknameInvalidCharacters;
+
+  /// No description provided for @profileEditNicknameUnderscoreAtEnds.
+  ///
+  /// In en, this message translates to:
+  /// **'Underscore (_) cannot be used at the beginning or end'**
+  String get profileEditNicknameUnderscoreAtEnds;
+
+  /// No description provided for @profileEditNicknameConsecutiveUnderscores.
+  ///
+  /// In en, this message translates to:
+  /// **'Consecutive underscores (__) are not allowed'**
+  String get profileEditNicknameConsecutiveUnderscores;
+
+  /// No description provided for @profileEditNicknameForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'This nickname is not allowed'**
+  String get profileEditNicknameForbidden;
+
+  /// No description provided for @profileEditNicknameChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking...'**
+  String get profileEditNicknameChecking;
+
+  /// No description provided for @profileEditNicknameAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This nickname is available'**
+  String get profileEditNicknameAvailable;
+
+  /// No description provided for @profileEditNicknameTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'This nickname is already in use'**
+  String get profileEditNicknameTaken;
+
+  /// No description provided for @profileEditNicknameError.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred while checking'**
+  String get profileEditNicknameError;
+
+  /// No description provided for @profileEditAvatarLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile Photo'**
+  String get profileEditAvatarLabel;
+
+  /// No description provided for @profileEditAvatarChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Photo'**
+  String get profileEditAvatarChange;
+
+  /// No description provided for @profileEditSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get profileEditSave;
+
+  /// No description provided for @profileEditCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get profileEditCancel;
+
+  /// No description provided for @profileEditSaveSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile saved successfully'**
+  String get profileEditSaveSuccess;
+
+  /// No description provided for @profileEditSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save. Please try again'**
+  String get profileEditSaveFailed;
+
+  /// No description provided for @profileEditImageTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Image file is too large. Please select another image'**
+  String get profileEditImageTooLarge;
+
+  /// No description provided for @profileEditImageOptimizationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred while processing the image. Please try again'**
+  String get profileEditImageOptimizationFailed;
+
+  /// No description provided for @profileEditCropTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Photo'**
+  String get profileEditCropTitle;
+
+  /// No description provided for @profileEditCropDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust the position as desired'**
+  String get profileEditCropDescription;
+
+  /// No description provided for @profileEditCropCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get profileEditCropCancel;
+
+  /// No description provided for @profileEditCropComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get profileEditCropComplete;
+
+  /// No description provided for @profileEditCropFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo edit failed'**
+  String get profileEditCropFailedTitle;
+
+  /// No description provided for @profileEditCropFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred while editing the photo. Please try again.'**
+  String get profileEditCropFailedMessage;
+
+  /// No description provided for @profileEditCropFailedAction.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get profileEditCropFailedAction;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

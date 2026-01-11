@@ -865,6 +865,39 @@ class AppLocalizationsKo extends AppLocalizations {
   String get tabProfileLabel => '프로필';
 
   @override
+  String get noticeTitle => '공지사항';
+
+  @override
+  String get noticeDetailTitle => '공지사항';
+
+  @override
+  String get noticeFilterLabel => '공지 유형';
+
+  @override
+  String get noticeFilterAll => '전체';
+
+  @override
+  String get noticeFilterSheetTitle => '공지 유형 선택';
+
+  @override
+  String get noticeTypeUnknown => '알 수 없음';
+
+  @override
+  String get noticePinnedBadge => '고정';
+
+  @override
+  String get noticeEmptyTitle => '공지사항이 없어요';
+
+  @override
+  String get noticeEmptyDescription => '해당 유형의 공지사항이 없어요.';
+
+  @override
+  String get noticeErrorTitle => '공지사항을 불러오지 못했어요';
+
+  @override
+  String get noticeErrorDescription => '잠시 후 다시 시도해주세요.';
+
+  @override
   String get profileSignOutCta => '로그아웃';
 
   @override
@@ -884,6 +917,21 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get profileEditCta => '프로필 편집';
+
+  @override
+  String get authProviderKakaoLogin => '카카오 로그인';
+
+  @override
+  String get authProviderGoogleLogin => '구글 로그인';
+
+  @override
+  String get authProviderAppleLogin => '애플 로그인';
+
+  @override
+  String get authProviderUnknownLogin => '로그인됨';
+
+  @override
+  String get profileLoginProviderKakao => '카카오 로그인';
 
   @override
   String get profileLoginProviderGoogle => '구글 로그인';
@@ -1264,4 +1312,98 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get homePromptQ10 => '나에게 한 줄 메시지를 보낸다면 무엇인가요?';
+
+  @override
+  String get profileEditTitle => '프로필 편집';
+
+  @override
+  String get profileEditNicknameLabel => '닉네임';
+
+  @override
+  String get profileEditNicknameHint => '닉네임을 입력하세요';
+
+  @override
+  String get profileEditNicknameEmpty => '닉네임을 입력해 주세요';
+
+  @override
+  String profileEditNicknameTooShort(Object min) {
+    return '닉네임은 최소 $min자 이상이어야 해요';
+  }
+
+  @override
+  String profileEditNicknameTooLong(Object max) {
+    return '닉네임은 최대 $max자까지 입력할 수 있어요';
+  }
+
+  @override
+  String get profileEditNicknameConsecutiveSpaces => '연속된 공백은 사용할 수 없어요';
+
+  @override
+  String get profileEditNicknameInvalidCharacters => '한글, 영문, 숫자, 언더스코어(_)만 사용할 수 있어요';
+
+  @override
+  String get profileEditNicknameUnderscoreAtEnds => '언더스코어(_)는 앞뒤에 사용할 수 없어요';
+
+  @override
+  String get profileEditNicknameConsecutiveUnderscores => '연속된 언더스코어(__)는 사용할 수 없어요';
+
+  @override
+  String get profileEditNicknameForbidden => '사용할 수 없는 닉네임이에요';
+
+  @override
+  String get profileEditNicknameChecking => '확인 중...';
+
+  @override
+  String get profileEditNicknameAvailable => '사용 가능한 닉네임이에요';
+
+  @override
+  String get profileEditNicknameTaken => '이미 사용 중인 닉네임이에요';
+
+  @override
+  String get profileEditNicknameError => '확인 중 오류가 발생했어요';
+
+  @override
+  String get profileEditAvatarLabel => '프로필 사진';
+
+  @override
+  String get profileEditAvatarChange => '사진 변경';
+
+  @override
+  String get profileEditSave => '저장';
+
+  @override
+  String get profileEditCancel => '취소';
+
+  @override
+  String get profileEditSaveSuccess => '프로필이 저장되었어요';
+
+  @override
+  String get profileEditSaveFailed => '저장에 실패했어요. 다시 시도해 주세요';
+
+  @override
+  String get profileEditImageTooLarge => '이미지 용량이 너무 커요. 다른 사진을 선택해 주세요';
+
+  @override
+  String get profileEditImageOptimizationFailed => '이미지 처리 중 오류가 발생했어요. 다시 시도해 주세요';
+
+  @override
+  String get profileEditCropTitle => '사진 편집';
+
+  @override
+  String get profileEditCropDescription => '원하는 위치로 맞춰주세요';
+
+  @override
+  String get profileEditCropCancel => '취소';
+
+  @override
+  String get profileEditCropComplete => '완료';
+
+  @override
+  String get profileEditCropFailedTitle => '사진 편집 실패';
+
+  @override
+  String get profileEditCropFailedMessage => '사진을 편집하는 중 오류가 발생했습니다. 다시 시도해 주세요.';
+
+  @override
+  String get profileEditCropFailedAction => '확인';
 }

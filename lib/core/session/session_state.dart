@@ -32,6 +32,7 @@ class SessionState {
     this.isBusy = false,
     this.message,
     this.accessToken,
+    this.loginProvider,
   });
 
   const SessionState.unknown()
@@ -39,13 +40,15 @@ class SessionState {
       bootState = SessionBootState.booting,
       isBusy = false,
       message = null,
-      accessToken = null;
+      accessToken = null,
+      loginProvider = null;
 
   final SessionStatus status;
   final SessionBootState bootState;
   final bool isBusy;
   final SessionMessage? message;
   final String? accessToken;
+  final String? loginProvider;
 
   SessionState copyWith({
     SessionStatus? status,
@@ -53,7 +56,9 @@ class SessionState {
     bool? isBusy,
     SessionMessage? message,
     String? accessToken,
+    String? loginProvider,
     bool resetMessage = false,
+    bool resetLoginProvider = false,
   }) {
     return SessionState(
       status: status ?? this.status,
@@ -61,6 +66,9 @@ class SessionState {
       isBusy: isBusy ?? this.isBusy,
       message: resetMessage ? null : (message ?? this.message),
       accessToken: accessToken ?? this.accessToken,
+      loginProvider: resetLoginProvider
+          ? null
+          : (loginProvider ?? this.loginProvider),
     );
   }
 }

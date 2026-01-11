@@ -1,3 +1,24 @@
+-- users 테이블 인덱스
+create unique index if not exists users_provider_subject_uk
+  on public.users (provider, provider_subject);
+
+-- user_profiles 테이블 인덱스
+-- 기존 nickname 유니크 인덱스 제거 (nickname_norm 기반으로 대체)
+drop index if exists user_profiles_nickname_uk;
+
+-- nickname_norm 기반 유니크 인덱스 (대소문자/공백 차이 무시)
+create unique index if not exists user_profiles_nickname_norm_uk
+  on public.user_profiles (nickname_norm)
+  where nickname_norm is not null;
+
+-- notification_logs 테이블 인덱스
+create index if not exists notification_logs_user_created_idx
+  on public.notification_logs (user_id, created_at desc);
+
+create index if not exists notification_logs_user_delete_idx
+  on public.notification_logs (user_id, delete_yn, created_at desc);
+
+-- login_logs 테이블 인덱스
 create index if not exists login_logs_user_id_idx
   on public.login_logs (user_id);
 
@@ -78,3 +99,12 @@ create index if not exists journey_actions_recipient_id_idx
 
 create index if not exists journey_actions_actor_id_idx
   on public.journey_actions (actor_user_id, created_at desc);
+
+create index if not exists board_posts_board_status_published_idx
+  on public.board_posts (board_id, status, published_at desc);
+
+create index if not exists board_posts_board_type_status_published_idx
+  on public.board_posts (board_id, type_code, status, published_at desc);
+
+create index if not exists board_posts_board_pinned_published_idx
+  on public.board_posts (board_id, is_pinned desc, published_at desc);

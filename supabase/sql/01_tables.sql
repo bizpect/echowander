@@ -4,11 +4,35 @@ create table if not exists public.common_codes (
   code_type text not null,
   code_value text not null,
   name text not null,
+  labels jsonb,
   is_active boolean not null default true,
   sort_order integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   primary key (code_type, code_value)
+);
+
+create table if not exists public.boards (
+  id uuid primary key default gen_random_uuid(),
+  board_key text not null unique,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.board_posts (
+  id uuid primary key default gen_random_uuid(),
+  board_id uuid not null
+    references public.boards (id)
+    on delete cascade,
+  type_code text,
+  title text not null,
+  content text not null,
+  status text not null default 'PUBLISHED',
+  is_pinned boolean not null default false,
+  published_at timestamptz not null default now(),
+  created_by uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create table if not exists public.users (
@@ -27,12 +51,10 @@ create table if not exists public.users (
     references public.common_codes (code_type, code_value)
 );
 
-create unique index if not exists users_provider_subject_uk
-  on public.users (provider, provider_subject);
-
 create table if not exists public.user_profiles (
   user_id uuid primary key,
   nickname text,
+  nickname_norm text generated always as (lower(trim(nickname))) stored,
   avatar_url text,
   bio text,
   locale_tag text,
@@ -43,6 +65,14 @@ create table if not exists public.user_profiles (
     foreign key (user_id)
     references public.users (user_id)
     on delete cascade
+);
+
+-- 금칙어 테이블
+create table if not exists public.forbidden_words (
+  word text primary key,
+  is_enabled boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create table if not exists public.user_blocks (
@@ -95,17 +125,7 @@ create table if not exists public.notification_logs (
     foreign key (user_id)
     references public.users (user_id)
     on delete cascade
-);
-
-create index if not exists notification_logs_user_created_idx
-  on public.notification_logs (user_id, created_at desc);
-
-create index if not exists notification_logs_user_delete_idx
-  on public.notification_logs (user_id, delete_yn, created_at desc);
-
-create unique index if not exists user_profiles_nickname_uk
-  on public.user_profiles (nickname)
-  where nickname is not null;
+  );
 
 create table if not exists public.login_logs (
   id bigserial primary key,
@@ -133,6 +153,38 @@ create table if not exists public.client_error_logs (
     references public.users (user_id)
     on delete set null
 );
+
+create table if not exists public.journeys (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  status_group text not null default 'journey_status',
+  status_code text not null default 'CREATED',
+  filter_group text not null default 'journey_filter_status',
+  filter_code text not null default 'OK',
+  language_tag text not null,
+  content text not null,
+  requested_recipient_count integer not null default 1,
+  response_target integer not null default 1,
+  relay_deadline_at timestamptz not null default (now() + interval '72 hours'),
+  result_notified_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint journeys_user_fk
+    foreign key (user_id)
+    references public.users (user_id)
+    on delete cascade,
+  constraint journeys_status_fk
+    foreign key (status_group, status_code)
+    references public.common_codes (code_type, code_value),
+  constraint journeys_filter_fk
+    foreign key (filter_group, filter_code)
+    references public.common_codes (code_type, code_value),
+  constraint journeys_content_length
+    check (char_length(content) <= 500),
+  constraint journeys_recipient_count_range
+    check (requested_recipient_count between 1 and 5)
+);
+
 
 create table if not exists public.ad_reward_logs (
   id uuid primary key default gen_random_uuid(),
@@ -194,37 +246,6 @@ create table if not exists public.reward_unlocks (
   constraint reward_unlocks_type_fk
     foreign key (unlocked_by_group, unlocked_by_code)
     references public.common_codes (code_type, code_value)
-);
-
-create table if not exists public.journeys (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null,
-  status_group text not null default 'journey_status',
-  status_code text not null default 'CREATED',
-  filter_group text not null default 'journey_filter_status',
-  filter_code text not null default 'OK',
-  language_tag text not null,
-  content text not null,
-  requested_recipient_count integer not null default 1,
-  response_target integer not null default 1,
-  relay_deadline_at timestamptz not null default (now() + interval '72 hours'),
-  result_notified_at timestamptz,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint journeys_user_fk
-    foreign key (user_id)
-    references public.users (user_id)
-    on delete cascade,
-  constraint journeys_status_fk
-    foreign key (status_group, status_code)
-    references public.common_codes (code_type, code_value),
-  constraint journeys_filter_fk
-    foreign key (filter_group, filter_code)
-    references public.common_codes (code_type, code_value),
-  constraint journeys_content_length
-    check (char_length(content) <= 500),
-  constraint journeys_recipient_count_range
-    check (requested_recipient_count between 1 and 5)
 );
 
 create table if not exists public.journey_images (

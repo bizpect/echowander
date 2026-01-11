@@ -137,6 +137,7 @@ class SessionManager extends Notifier<SessionState> {
       isBusy: false,
       accessToken: null,
       message: SessionMessage.sessionExpired,
+      resetLoginProvider: true,
     );
     _lastRestoreFailedAt = DateTime.now();
     _lastSilentRefreshAt = DateTime.now(); // 쿨다운 갱신
@@ -534,10 +535,12 @@ class SessionManager extends Notifier<SessionState> {
         case RestoreSuccess(:final tokens):
           // 성공: 토큰 저장 및 authenticated 상태
           await _tokenStore.save(tokens);
+          final loginProvider = await _tokenStore.readLoginProvider();
           state = state.copyWith(
             status: SessionStatus.authenticated,
             isBusy: false,
             accessToken: tokens.accessToken,
+            loginProvider: loginProvider,
           );
           _completeBootIfNeeded('restoreSession success');
           _lastRestoreFailedAt = null; // 쿨다운 해제
@@ -553,6 +556,7 @@ class SessionManager extends Notifier<SessionState> {
             isBusy: false,
             accessToken: null,
             message: SessionMessage.sessionExpired,
+            resetLoginProvider: true,
           );
           _completeBootIfNeeded('restoreSession authFailed');
           _lastRestoreFailedAt = DateTime.now(); // 쿨다운 기록
@@ -564,11 +568,13 @@ class SessionManager extends Notifier<SessionState> {
           // 일시 장애: 토큰 유지 및 authenticated 유지
           // (내부 함수에서 이미 토큰을 읽었으므로, 기존 토큰 유지)
           final currentTokens = await _tokenStore.read();
+          final loginProvider = await _tokenStore.readLoginProvider();
           state = state.copyWith(
             status: SessionStatus.authenticated,
             isBusy: false,
             accessToken: currentTokens?.accessToken,
             message: SessionMessage.authRefreshFailed,
+            loginProvider: loginProvider,
           );
           _completeBootIfNeeded('restoreSession transient');
           _lastRestoreFailedAt = DateTime.now(); // 쿨다운 기록
@@ -600,11 +606,13 @@ class SessionManager extends Notifier<SessionState> {
 
         // 상태는 transient와 동일하게 처리
         final currentTokens = await _tokenStore.read();
+        final loginProvider = await _tokenStore.readLoginProvider();
         state = state.copyWith(
           status: SessionStatus.authenticated,
           isBusy: false,
           accessToken: currentTokens?.accessToken,
           message: SessionMessage.authRefreshFailed,
+          loginProvider: loginProvider,
         );
         _completeBootIfNeeded('restoreSession error');
       }
@@ -771,7 +779,10 @@ class SessionManager extends Notifier<SessionState> {
     }
   }
 
-  Future<void> signInWithTokens(SessionTokens tokens) async {
+  Future<void> signInWithTokens(
+    SessionTokens tokens, {
+    String? loginProvider,
+  }) async {
     if (tokens.accessToken.isEmpty || tokens.refreshToken.isEmpty) {
       if (kDebugMode) {
         debugPrint('$_logPrefix 로그인 실패: 빈 토큰');
@@ -781,6 +792,7 @@ class SessionManager extends Notifier<SessionState> {
         isBusy: false,
         accessToken: null,
         message: SessionMessage.loginFailed,
+        resetLoginProvider: true,
       );
       return;
     }
@@ -802,6 +814,7 @@ class SessionManager extends Notifier<SessionState> {
     }
 
     await _tokenStore.save(tokens);
+    await _tokenStore.saveLoginProvider(loginProvider);
     if (kDebugMode) {
       debugPrint('$_logPrefix 로그인 성공: 토큰 저장 완료');
     }
@@ -809,6 +822,7 @@ class SessionManager extends Notifier<SessionState> {
       status: SessionStatus.authenticated,
       isBusy: false,
       accessToken: tokens.accessToken,
+      loginProvider: loginProvider,
     );
   }
 
@@ -834,6 +848,7 @@ class SessionManager extends Notifier<SessionState> {
         isBusy: false,
         accessToken: null,
         message: _mapLoginError(result.error),
+        resetLoginProvider: true,
       );
       return;
     }
@@ -851,7 +866,7 @@ class SessionManager extends Notifier<SessionState> {
         'refreshLen=$refreshLen, refreshJwt=$refreshJwt, refreshFp=$refreshFp',
       );
     }
-    await signInWithTokens(tokens);
+    await signInWithTokens(tokens, loginProvider: provider);
   }
 
   Future<void> signOut() async {
@@ -861,6 +876,7 @@ class SessionManager extends Notifier<SessionState> {
       status: SessionStatus.unauthenticated,
       isBusy: false,
       accessToken: null,
+      resetLoginProvider: true,
     );
   }
 
@@ -870,6 +886,7 @@ class SessionManager extends Notifier<SessionState> {
       isBusy: false,
       accessToken: null,
       message: message,
+      resetLoginProvider: true,
     );
   }
 

@@ -17,10 +17,13 @@ import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/journey/domain/journey_repository.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/block/presentation/block_list_screen.dart';
-import '../../features/notifications/presentation/notification_inbox_screen.dart';
+import '../../features/board/presentation/notice_list_screen.dart';
+import '../../features/board/presentation/notice_detail_screen.dart';
 import '../../features/settings/presentation/support/support_screen.dart';
 import '../../features/settings/presentation/app_info/app_info_screen.dart';
 import '../../features/settings/presentation/open_license/open_license_screen.dart';
+import '../../features/profile/presentation/profile_edit_screen.dart';
+import '../../features/profile/presentation/profile_edit_crop_screen.dart';
 
 class AppRoutes {
   static const splash = '/splash';
@@ -36,10 +39,17 @@ class AppRoutes {
   static const settings = '/settings';
   static const blockList = '/settings/blocks';
   static const notifications = '/notifications';
+  static const noticeDetail = '/notifications/:postId';
   static const support = '/support';
   static const appInfo = '/app-info';
   static const openLicense = '/app-info/open-license';
   static const pushPreview = '/push-preview';
+  static const profileEdit = '/profile/edit';
+  static const profileEditCrop = '/profile/edit/crop';
+
+  static String noticeDetailPath(String postId) {
+    return '/notifications/$postId';
+  }
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -113,7 +123,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.notifications,
-        builder: (context, state) => const NotificationInboxScreen(),
+        builder: (context, state) => const NoticeListScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.noticeDetail,
+        builder: (context, state) => NoticeDetailScreen(
+          postId: state.pathParameters['postId'] ?? '',
+        ),
       ),
       GoRoute(
         path: AppRoutes.support,
@@ -126,6 +142,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.openLicense,
         builder: (context, state) => const OpenLicenseScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.profileEdit,
+        builder: (context, state) => const ProfileEditScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.profileEditCrop,
+        builder: (context, state) => ProfileEditCropScreen(
+          imageBytes: state.extra as Uint8List?,
+        ),
       ),
     ],
     redirect: (context, state) {
@@ -176,9 +202,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             location == AppRoutes.settings ||
             location == AppRoutes.blockList ||
             location == AppRoutes.notifications ||
+            location.startsWith('/notifications/') ||
             location == AppRoutes.support ||
             location == AppRoutes.appInfo ||
-            location == AppRoutes.openLicense) {
+            location == AppRoutes.openLicense ||
+            location == AppRoutes.profileEdit ||
+            location == AppRoutes.profileEditCrop) {
           return null;
         }
         return location == AppRoutes.home ? null : AppRoutes.home;

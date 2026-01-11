@@ -865,6 +865,39 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tabProfileLabel => 'Profil';
 
   @override
+  String get noticeTitle => 'Actualités';
+
+  @override
+  String get noticeDetailTitle => 'Actualités';
+
+  @override
+  String get noticeFilterLabel => 'Type d’actualité';
+
+  @override
+  String get noticeFilterAll => 'Tout';
+
+  @override
+  String get noticeFilterSheetTitle => 'Sélectionner un type';
+
+  @override
+  String get noticeTypeUnknown => 'Inconnu';
+
+  @override
+  String get noticePinnedBadge => 'Épinglé';
+
+  @override
+  String get noticeEmptyTitle => 'Aucune actualité';
+
+  @override
+  String get noticeEmptyDescription => 'Il n’y a pas d’actualité pour ce type.';
+
+  @override
+  String get noticeErrorTitle => 'Impossible de charger les actualités';
+
+  @override
+  String get noticeErrorDescription => 'Veuillez réessayer plus tard.';
+
+  @override
   String get profileSignOutCta => 'Se déconnecter';
 
   @override
@@ -884,6 +917,21 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileEditCta => 'Modifier le profil';
+
+  @override
+  String get authProviderKakaoLogin => 'Connexion Kakao';
+
+  @override
+  String get authProviderGoogleLogin => 'Connexion Google';
+
+  @override
+  String get authProviderAppleLogin => 'Connexion Apple';
+
+  @override
+  String get authProviderUnknownLogin => 'Connecté';
+
+  @override
+  String get profileLoginProviderKakao => 'Connexion Kakao';
 
   @override
   String get profileLoginProviderGoogle => 'Connexion Google';
@@ -1264,4 +1312,98 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get homePromptQ10 => 'Si tu pouvais t\'envoyer un message, que dirais-tu ?';
+
+  @override
+  String get profileEditTitle => 'Modifier le profil';
+
+  @override
+  String get profileEditNicknameLabel => 'Pseudonyme';
+
+  @override
+  String get profileEditNicknameHint => 'Entrez un pseudonyme';
+
+  @override
+  String get profileEditNicknameEmpty => 'Veuillez entrer un pseudonyme';
+
+  @override
+  String profileEditNicknameTooShort(Object min) {
+    return 'Le pseudonyme doit contenir au moins $min caractères';
+  }
+
+  @override
+  String profileEditNicknameTooLong(Object max) {
+    return 'Le pseudonyme peut contenir jusqu\'à $max caractères';
+  }
+
+  @override
+  String get profileEditNicknameConsecutiveSpaces => 'Les espaces consécutifs ne sont pas autorisés';
+
+  @override
+  String get profileEditNicknameInvalidCharacters => 'Seuls le coréen, l\'anglais, les chiffres et le tiret bas (_) sont autorisés';
+
+  @override
+  String get profileEditNicknameUnderscoreAtEnds => 'Underscore (_) cannot be used at the beginning or end';
+
+  @override
+  String get profileEditNicknameConsecutiveUnderscores => 'Consecutive underscores (__) are not allowed';
+
+  @override
+  String get profileEditNicknameForbidden => 'This nickname is not allowed';
+
+  @override
+  String get profileEditNicknameChecking => 'Vérification...';
+
+  @override
+  String get profileEditNicknameAvailable => 'Ce pseudonyme est disponible';
+
+  @override
+  String get profileEditNicknameTaken => 'Ce pseudonyme est déjà utilisé';
+
+  @override
+  String get profileEditNicknameError => 'Une erreur s\'est produite lors de la vérification';
+
+  @override
+  String get profileEditAvatarLabel => 'Photo de profil';
+
+  @override
+  String get profileEditAvatarChange => 'Changer la photo';
+
+  @override
+  String get profileEditSave => 'Enregistrer';
+
+  @override
+  String get profileEditCancel => 'Annuler';
+
+  @override
+  String get profileEditSaveSuccess => 'Profil enregistré avec succès';
+
+  @override
+  String get profileEditSaveFailed => 'Échec de l\'enregistrement. Veuillez réessayer';
+
+  @override
+  String get profileEditImageTooLarge => 'Image file is too large. Please select another image';
+
+  @override
+  String get profileEditImageOptimizationFailed => 'An error occurred while processing the image. Please try again';
+
+  @override
+  String get profileEditCropTitle => 'Modifier la photo';
+
+  @override
+  String get profileEditCropDescription => 'Ajustez la position comme vous le souhaitez';
+
+  @override
+  String get profileEditCropCancel => 'Annuler';
+
+  @override
+  String get profileEditCropComplete => 'Terminer';
+
+  @override
+  String get profileEditCropFailedTitle => 'Échec de l\'édition de la photo';
+
+  @override
+  String get profileEditCropFailedMessage => 'Une erreur s\'est produite lors de l\'édition de la photo. Veuillez réessayer.';
+
+  @override
+  String get profileEditCropFailedAction => 'OK';
 }

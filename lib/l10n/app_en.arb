@@ -309,6 +309,17 @@
   "tabCreateLabel": "Create message",
   "tabAlertsLabel": "Notifications",
   "tabProfileLabel": "Profile",
+  "noticeTitle": "Notices",
+  "noticeDetailTitle": "Notices",
+  "noticeFilterLabel": "Notice type",
+  "noticeFilterAll": "All",
+  "noticeFilterSheetTitle": "Select notice type",
+  "noticeTypeUnknown": "Unknown",
+  "noticePinnedBadge": "Pinned",
+  "noticeEmptyTitle": "No notices yet",
+  "noticeEmptyDescription": "There are no notices for this type.",
+  "noticeErrorTitle": "Unable to load notices",
+  "noticeErrorDescription": "Please try again later.",
   "profileSignOutCta": "Sign out",
   "profileSignOutTitle": "Sign out",
   "profileSignOutMessage": "Are you sure you want to sign out?",
@@ -316,6 +327,11 @@
   "profileUserIdLabel": "User ID",
   "profileDefaultNickname": "User",
   "profileEditCta": "Edit profile",
+  "authProviderKakaoLogin": "Kakao login",
+  "authProviderGoogleLogin": "Google login",
+  "authProviderAppleLogin": "Apple login",
+  "authProviderUnknownLogin": "Signed in",
+  "profileLoginProviderKakao": "Kakao login",
   "profileLoginProviderGoogle": "Google login",
   "profileLoginProviderApple": "Apple login",
   "profileLoginProviderEmail": "Email login",
@@ -465,5 +481,45 @@
     "placeholders": {
       "time": {}
     }
-  }
+  },
+  "profileEditTitle": "Edit Profile",
+  "profileEditNicknameLabel": "Nickname",
+  "profileEditNicknameHint": "Enter nickname",
+  "profileEditNicknameEmpty": "Please enter a nickname",
+  "profileEditNicknameTooShort": "Nickname must be at least {min} characters",
+  "@profileEditNicknameTooShort": {
+    "placeholders": {
+      "min": {}
+    }
+  },
+  "profileEditNicknameTooLong": "Nickname can be up to {max} characters",
+  "@profileEditNicknameTooLong": {
+    "placeholders": {
+      "max": {}
+    }
+  },
+  "profileEditNicknameConsecutiveSpaces": "Consecutive spaces are not allowed",
+  "profileEditNicknameInvalidCharacters": "Only Korean, English, numbers, and underscore (_) are allowed",
+  "profileEditNicknameUnderscoreAtEnds": "Underscore (_) cannot be used at the beginning or end",
+  "profileEditNicknameConsecutiveUnderscores": "Consecutive underscores (__) are not allowed",
+  "profileEditNicknameForbidden": "This nickname is not allowed",
+  "profileEditNicknameChecking": "Checking...",
+  "profileEditNicknameAvailable": "This nickname is available",
+  "profileEditNicknameTaken": "This nickname is already in use",
+  "profileEditNicknameError": "An error occurred while checking",
+  "profileEditAvatarLabel": "Profile Photo",
+  "profileEditAvatarChange": "Change Photo",
+  "profileEditSave": "Save",
+  "profileEditCancel": "Cancel",
+  "profileEditSaveSuccess": "Profile saved successfully",
+  "profileEditSaveFailed": "Failed to save. Please try again",
+  "profileEditImageTooLarge": "Image file is too large. Please select another image",
+  "profileEditImageOptimizationFailed": "An error occurred while processing the image. Please try again",
+  "profileEditCropTitle": "Edit Photo",
+  "profileEditCropDescription": "Adjust the position as desired",
+  "profileEditCropCancel": "Cancel",
+  "profileEditCropComplete": "Complete",
+  "profileEditCropFailedTitle": "Photo edit failed",
+  "profileEditCropFailedMessage": "An error occurred while editing the photo. Please try again.",
+  "profileEditCropFailedAction": "OK"
 }

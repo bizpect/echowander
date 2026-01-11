@@ -1,6 +1,12 @@
+-- Schema usage 권한 (RPC 함수 호출을 위해 필수)
+grant usage on schema public to authenticated;
+-- (참고) 로그인 전 닉네임 체크가 필요하면 anon에도 부여:
+-- grant usage on schema public to anon;
+
 alter table public.common_codes enable row level security;
 alter table public.users enable row level security;
 alter table public.user_profiles enable row level security;
+alter table public.forbidden_words enable row level security;
 alter table public.device_tokens enable row level security;
 alter table public.login_logs enable row level security;
 alter table public.journeys enable row level security;
@@ -14,8 +20,11 @@ alter table public.journey_responses enable row level security;
 alter table public.journey_reports enable row level security;
 alter table public.journey_response_reports enable row level security;
 alter table public.journey_actions enable row level security;
+alter table public.boards enable row level security;
+alter table public.board_posts enable row level security;
 
 drop policy if exists "common_codes_select_all" on public.common_codes;
+drop policy if exists "forbidden_words_select_all" on public.forbidden_words;
 drop policy if exists "users_select_own" on public.users;
 drop policy if exists "users_insert_own" on public.users;
 drop policy if exists "users_update_own" on public.users;
@@ -37,6 +46,10 @@ drop policy if exists "journey_images_update_own" on public.journey_images;
 drop policy if exists "journey_images_storage_insert" on storage.objects;
 drop policy if exists "journey_images_storage_select" on storage.objects;
 drop policy if exists "journey_images_storage_delete" on storage.objects;
+drop policy if exists "profile avatars select own" on storage.objects;
+drop policy if exists "profile avatars insert own" on storage.objects;
+drop policy if exists "profile avatars update own" on storage.objects;
+drop policy if exists "profile avatars delete own" on storage.objects;
 drop policy if exists "client_error_logs_insert_auth" on public.client_error_logs;
 drop policy if exists "client_error_logs_insert_anon" on public.client_error_logs;
 drop policy if exists "ad_reward_logs_insert_own" on public.ad_reward_logs;
@@ -54,11 +67,20 @@ drop policy if exists "journey_reports_insert_recipient" on public.journey_repor
 drop policy if exists "journey_response_reports_insert_owner" on public.journey_response_reports;
 drop policy if exists "journey_actions_select_own" on public.journey_actions;
 drop policy if exists "journey_actions_insert_own" on public.journey_actions;
+drop policy if exists "boards_select_active" on public.boards;
+drop policy if exists "boards_admin_write" on public.boards;
+drop policy if exists "board_posts_select_published" on public.board_posts;
+drop policy if exists "board_posts_admin_write" on public.board_posts;
 
 create policy "common_codes_select_all"
   on public.common_codes
   for select
   using (true);
+
+create policy "forbidden_words_select_all"
+  on public.forbidden_words
+  for select
+  using (is_enabled = true);
 
 create policy "users_select_own"
   on public.users
@@ -283,6 +305,41 @@ create policy "journey_actions_insert_own"
     )
   );
 
+create policy "boards_select_active"
+  on public.boards
+  for select
+  to authenticated
+  using (is_active = true);
+
+create policy "boards_admin_write"
+  on public.boards
+  for all
+  to authenticated
+  using (auth.role() = 'service_role')
+  with check (auth.role() = 'service_role');
+
+create policy "board_posts_select_published"
+  on public.board_posts
+  for select
+  to authenticated
+  using (
+    status = 'PUBLISHED'
+    and published_at <= now()
+    and exists (
+      select 1
+      from public.boards b
+      where b.id = board_posts.board_id
+        and b.is_active = true
+    )
+  );
+
+create policy "board_posts_admin_write"
+  on public.board_posts
+  for all
+  to authenticated
+  using (auth.role() = 'service_role')
+  with check (auth.role() = 'service_role');
+
 create policy "ad_reward_logs_insert_own"
   on public.ad_reward_logs
   for insert
@@ -318,9 +375,55 @@ create policy "journey_images_storage_delete"
   to authenticated
   using (bucket_id = 'journey-images' and auth.uid() = owner);
 
+-- profile-avatars 버킷 RLS 정책
+-- SELECT: 본인 폴더만 조회 가능
+create policy "profile avatars select own"
+  on storage.objects
+  for select
+  to authenticated
+  using (
+    bucket_id = 'profile-avatars'
+    and split_part(name, '/', 1) = auth.uid()::text
+  );
+
+-- INSERT: 본인 폴더만 업로드 가능
+create policy "profile avatars insert own"
+  on storage.objects
+  for insert
+  to authenticated
+  with check (
+    bucket_id = 'profile-avatars'
+    and split_part(name, '/', 1) = auth.uid()::text
+  );
+
+-- UPDATE: 본인 폴더만 수정 가능
+create policy "profile avatars update own"
+  on storage.objects
+  for update
+  to authenticated
+  using (
+    bucket_id = 'profile-avatars'
+    and split_part(name, '/', 1) = auth.uid()::text
+  )
+  with check (
+    bucket_id = 'profile-avatars'
+    and split_part(name, '/', 1) = auth.uid()::text
+  );
+
+-- DELETE: 본인 폴더만 삭제 가능
+create policy "profile avatars delete own"
+  on storage.objects
+  for delete
+  to authenticated
+  using (
+    bucket_id = 'profile-avatars'
+    and split_part(name, '/', 1) = auth.uid()::text
+  );
+
 grant select on public.common_codes to anon, authenticated;
 grant select, insert, update on public.users to authenticated;
 grant select, insert, update on public.user_profiles to authenticated;
+grant select on public.forbidden_words to authenticated;
 grant select, insert, update on public.device_tokens to authenticated;
 grant select, insert on public.login_logs to authenticated;
 grant insert on public.login_logs to anon;
@@ -332,6 +435,8 @@ grant select, insert on public.journey_responses to authenticated;
 grant insert on public.journey_reports to authenticated;
 grant insert on public.journey_response_reports to authenticated;
 grant select, insert on public.journey_actions to authenticated;
+grant select on public.boards to authenticated;
+grant select on public.board_posts to authenticated;
 grant insert on public.client_error_logs to anon, authenticated;
 grant insert on public.ad_reward_logs to authenticated;
 grant select, insert on public.reward_unlocks to authenticated;
@@ -346,6 +451,8 @@ grant execute on function public.upsert_device_token(text, text, text) to authen
 grant execute on function public.deactivate_device_token(text) to authenticated;
 grant execute on function public.create_journey(text, text, text[], integer) to authenticated;
 grant execute on function public.list_journeys(integer, integer) to authenticated;
+-- ✅ 권한 최소화: PUBLIC에서 모든 권한 제거, authenticated에게만 EXECUTE 허용
+revoke all on function public.list_inbox_journeys(integer, integer) from public;
 grant execute on function public.list_inbox_journeys(integer, integer) to authenticated;
 grant execute on function public.list_inbox_journey_images(uuid) to authenticated;
 grant execute on function public.match_journey(uuid) to authenticated;
@@ -373,6 +480,11 @@ grant execute on function public.count_my_unread_notifications() to authenticate
 grant execute on function public.mark_notification_read(bigint) to authenticated;
 grant execute on function public.delete_notification_log(bigint) to authenticated;
 grant execute on function public.log_client_error(text, integer, text, jsonb, text) to anon, authenticated;
+grant execute on function public.check_nickname_available(text) to authenticated;
+grant execute on function public.update_my_profile(text, text, text) to authenticated;
+grant execute on function public.list_common_codes(text) to authenticated;
+grant execute on function public.list_board_posts(text, text, integer, integer) to authenticated;
+grant execute on function public.get_board_post(uuid) to authenticated;
 
 grant usage, select on sequence public.login_logs_id_seq to anon, authenticated;
 grant usage, select on sequence public.device_tokens_id_seq to authenticated;

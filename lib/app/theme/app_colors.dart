@@ -150,6 +150,12 @@ class AppColors {
       onSurface: onSurface,
       surfaceContainerHighest: surface, // 카드/컨테이너용
       onSurfaceVariant: onSurfaceVariant,
+      // Inverse Surface (프로젝트 기준: 오버레이/scrim 위 콘텐츠 대비용)
+      inverseSurface: onSurface, // 오버레이 대비를 위한 보조 토큰
+      onInverseSurface: background, // 오버레이 위 아이콘/텍스트 전경색 (scrim 대비)
+      // NOTE: Material 기본 의미(onInverseSurface)와 다를 수 있으며, 프로젝트에서는 scrim overlay 전경색으로 사용
+      // Scrim (오버레이 배경, 딤 처리 베이스)
+      scrim: overlayScrim,
       // Outline
       outline: outline,
       outlineVariant: outlineVariant,
@@ -186,6 +192,12 @@ class AppColors {
       onSurface: onSurfaceLight,
       surfaceContainerHighest: surfaceLight, // 카드/컨테이너용 완전 흰색
       onSurfaceVariant: onSurfaceVariantLight,
+      // Inverse Surface (프로젝트 기준: 오버레이/scrim 위 콘텐츠 대비용)
+      inverseSurface: onSurfaceLight, // 오버레이 대비를 위한 보조 토큰
+      onInverseSurface: backgroundLight, // 오버레이 위 아이콘/텍스트 전경색 (scrim 대비)
+      // NOTE: Material 기본 의미(onInverseSurface)와 다를 수 있으며, 프로젝트에서는 scrim overlay 전경색으로 사용
+      // Scrim (오버레이 배경, 딤 처리 베이스)
+      scrim: overlayScrimLight,
       // Background (라이트 전용 토큰, deprecated지만 scaffoldBackgroundColor용)
       // Note: Flutter Material 3에서 background는 deprecated되었지만,
       // scaffoldBackgroundColor는 별도로 설정해야 하므로 surface와 구분하여 설정

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -17,6 +18,9 @@ import '../../../core/presentation/navigation/tab_navigation_helper.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../core/session/session_state.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../auth/domain/auth_provider.dart';
+import '../application/avatar_signed_url_provider.dart';
+import '../application/profile_provider.dart';
 
 /// 프로필 탭 화면
 class ProfileScreen extends ConsumerWidget {
@@ -26,9 +30,28 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final sessionState = ref.watch(sessionManagerProvider);
-    final displayName = l10n.profileDefaultNickname;
-    final providerLabel = _resolveProviderLabel(l10n, null);
-    final isLoading = sessionState.bootState == SessionBootState.booting;
+    final profileAsync = ref.watch(profileProvider);
+    final profile = profileAsync.value;
+    final displayName = (profile?.nickname?.trim().isNotEmpty ?? false)
+        ? profile!.nickname!.trim()
+        : l10n.profileDefaultNickname;
+    final providerLabel = _resolveProviderLabel(
+      l10n,
+      authProviderFromString(sessionState.loginProvider),
+    );
+    if (kDebugMode) {
+      debugPrint(
+        '[ProfileScreen] loginProvider=${sessionState.loginProvider}',
+      );
+      debugPrint('[ProfileScreen] loginLabel=$providerLabel');
+    }
+    final isLoading =
+        sessionState.bootState == SessionBootState.booting ||
+        profileAsync.isLoading;
+    final avatarSignedUrlAsync = ref.watch(
+      avatarSignedUrlProvider(profile?.avatarPath),
+    );
+    final photoUrl = avatarSignedUrlAsync.value;
 
     return PopScope(
       canPop: false,
@@ -52,7 +75,7 @@ class ProfileScreen extends ConsumerWidget {
               displayName: displayName,
               providerLabel: providerLabel,
               isLoading: isLoading,
-              photoUrl: null,
+              photoUrl: photoUrl,
             ),
             const SizedBox(height: AppSpacing.lg),
             Semantics(
@@ -62,7 +85,7 @@ class ProfileScreen extends ConsumerWidget {
                 height: AppSpacing.minTouchTarget,
                 width: double.infinity,
                 child: AppFilledButton(
-                  onPressed: () => _showFeaturePreparingDialog(context, l10n),
+                  onPressed: () => context.push(AppRoutes.profileEdit),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -119,17 +142,11 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  String _resolveProviderLabel(AppLocalizations l10n, String? provider) {
-    switch (provider) {
-      case 'google':
-        return l10n.profileLoginProviderGoogle;
-      case 'apple':
-        return l10n.profileLoginProviderApple;
-      case 'email':
-        return l10n.profileLoginProviderEmail;
-      default:
-        return l10n.profileLoginProviderUnknown;
-    }
+  String _resolveProviderLabel(
+    AppLocalizations l10n,
+    AuthProviderType provider,
+  ) {
+    return authProviderLoginLabel(l10n, provider);
   }
 
   Future<void> _confirmSignOut(
@@ -272,15 +289,42 @@ class _ProfileAvatar extends StatelessWidget {
         ? displayName.trim().characters.first.toUpperCase()
         : '?';
     if (photoUrl != null && photoUrl!.isNotEmpty) {
-      return CircleAvatar(
-        radius: 32,
-        backgroundImage: NetworkImage(photoUrl!),
-        backgroundColor: AppColors.surfaceVariant,
+      return Container(
+        width: 64,
+        height: 64,
+        decoration: const BoxDecoration(
+          color: AppColors.surfaceVariant,
+          shape: BoxShape.circle,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Image.network(
+          photoUrl!,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _FallbackAvatarContent(initial: initial);
+          },
+        ),
       );
     }
-    return CircleAvatar(
-      radius: 32,
-      backgroundColor: AppColors.primaryContainer,
+    return _FallbackAvatarContent(initial: initial);
+  }
+}
+
+class _FallbackAvatarContent extends StatelessWidget {
+  const _FallbackAvatarContent({required this.initial});
+
+  final String initial;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: const BoxDecoration(
+        color: AppColors.primaryContainer,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
       child: Text(
         initial,
         style: AppTextStyles.titleMd.copyWith(
@@ -380,14 +424,14 @@ class _DangerActionSection extends StatelessWidget {
             onPressed: onSignOut,
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: colorScheme.error),
-            ),
+          ),
             child: Center(
               child: Text(
                 l10n.profileSignOutCta,
                 style: TextStyle(
                   color: colorScheme.error,
                 ),
-              ),
+          ),
             ),
           ),
         ),
@@ -406,7 +450,7 @@ class _DangerActionSection extends StatelessWidget {
                 style: TextStyle(
                   color: colorScheme.onError,
                 ),
-              ),
+          ),
             ),
           ),
         ),

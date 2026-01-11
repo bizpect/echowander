@@ -19,6 +19,8 @@ abstract class TokenStore {
   Future<SessionTokens?> read();
   Future<void> save(SessionTokens tokens);
   Future<void> clear();
+  Future<String?> readLoginProvider();
+  Future<void> saveLoginProvider(String? provider);
 }
 
 class SecureTokenStore implements TokenStore {
@@ -29,6 +31,7 @@ class SecureTokenStore implements TokenStore {
 
   static const _accessKey = 'session_access_token';
   static const _refreshKey = 'session_refresh_token';
+  static const _providerKey = 'session_login_provider';
 
   @override
   Future<SessionTokens?> read() async {
@@ -100,9 +103,41 @@ class SecureTokenStore implements TokenStore {
     try {
       await _storage.delete(key: _accessKey);
       await _storage.delete(key: _refreshKey);
+      await _storage.delete(key: _providerKey);
     } catch (error) {
       if (kDebugMode) {
         debugPrint('$_logPrefix 삭제 예외: $error');
+      }
+    }
+  }
+
+  @override
+  Future<String?> readLoginProvider() async {
+    try {
+      final provider = await _storage.read(key: _providerKey);
+      if (provider == null || provider.isEmpty) {
+        return null;
+      }
+      return provider;
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 로그인 제공자 읽기 예외: $error');
+      }
+      return null;
+    }
+  }
+
+  @override
+  Future<void> saveLoginProvider(String? provider) async {
+    try {
+      if (provider == null || provider.isEmpty) {
+        await _storage.delete(key: _providerKey);
+        return;
+      }
+      await _storage.write(key: _providerKey, value: provider);
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 로그인 제공자 저장 예외: $error');
       }
     }
   }

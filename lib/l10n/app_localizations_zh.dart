@@ -865,6 +865,39 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tabProfileLabel => '个人资料';
 
   @override
+  String get noticeTitle => '公告';
+
+  @override
+  String get noticeDetailTitle => '公告';
+
+  @override
+  String get noticeFilterLabel => '公告类型';
+
+  @override
+  String get noticeFilterAll => '全部';
+
+  @override
+  String get noticeFilterSheetTitle => '选择公告类型';
+
+  @override
+  String get noticeTypeUnknown => '未知';
+
+  @override
+  String get noticePinnedBadge => '置顶';
+
+  @override
+  String get noticeEmptyTitle => '暂无公告';
+
+  @override
+  String get noticeEmptyDescription => '该类型暂无公告。';
+
+  @override
+  String get noticeErrorTitle => '无法加载公告';
+
+  @override
+  String get noticeErrorDescription => '请稍后再试。';
+
+  @override
   String get profileSignOutCta => '退出登录';
 
   @override
@@ -884,6 +917,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get profileEditCta => '编辑资料';
+
+  @override
+  String get authProviderKakaoLogin => 'Kakao 登录';
+
+  @override
+  String get authProviderGoogleLogin => 'Google 登录';
+
+  @override
+  String get authProviderAppleLogin => 'Apple 登录';
+
+  @override
+  String get authProviderUnknownLogin => '已登录';
+
+  @override
+  String get profileLoginProviderKakao => 'Kakao 登录';
 
   @override
   String get profileLoginProviderGoogle => 'Google 登录';
@@ -1264,4 +1312,98 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get homePromptQ10 => '如果可以给自己发一条消息，你会说什么？';
+
+  @override
+  String get profileEditTitle => '编辑个人资料';
+
+  @override
+  String get profileEditNicknameLabel => '昵称';
+
+  @override
+  String get profileEditNicknameHint => '输入昵称';
+
+  @override
+  String get profileEditNicknameEmpty => '请输入昵称';
+
+  @override
+  String profileEditNicknameTooShort(Object min) {
+    return '昵称至少需要$min个字符';
+  }
+
+  @override
+  String profileEditNicknameTooLong(Object max) {
+    return '昵称最多可输入$max个字符';
+  }
+
+  @override
+  String get profileEditNicknameConsecutiveSpaces => '不允许连续空格';
+
+  @override
+  String get profileEditNicknameInvalidCharacters => '仅允许韩语、英语、数字和下划线(_)';
+
+  @override
+  String get profileEditNicknameUnderscoreAtEnds => 'Underscore (_) cannot be used at the beginning or end';
+
+  @override
+  String get profileEditNicknameConsecutiveUnderscores => 'Consecutive underscores (__) are not allowed';
+
+  @override
+  String get profileEditNicknameForbidden => 'This nickname is not allowed';
+
+  @override
+  String get profileEditNicknameChecking => '检查中...';
+
+  @override
+  String get profileEditNicknameAvailable => '此昵称可用';
+
+  @override
+  String get profileEditNicknameTaken => '此昵称已被使用';
+
+  @override
+  String get profileEditNicknameError => '检查时发生错误';
+
+  @override
+  String get profileEditAvatarLabel => '个人资料照片';
+
+  @override
+  String get profileEditAvatarChange => '更改照片';
+
+  @override
+  String get profileEditSave => '保存';
+
+  @override
+  String get profileEditCancel => '取消';
+
+  @override
+  String get profileEditSaveSuccess => '个人资料已保存';
+
+  @override
+  String get profileEditSaveFailed => '保存失败。请重试';
+
+  @override
+  String get profileEditImageTooLarge => 'Image file is too large. Please select another image';
+
+  @override
+  String get profileEditImageOptimizationFailed => 'An error occurred while processing the image. Please try again';
+
+  @override
+  String get profileEditCropTitle => '编辑照片';
+
+  @override
+  String get profileEditCropDescription => '根据需要调整位置';
+
+  @override
+  String get profileEditCropCancel => '取消';
+
+  @override
+  String get profileEditCropComplete => '完成';
+
+  @override
+  String get profileEditCropFailedTitle => '照片编辑失败';
+
+  @override
+  String get profileEditCropFailedMessage => '编辑照片时发生错误。请重试。';
+
+  @override
+  String get profileEditCropFailedAction => '确定';
 }
