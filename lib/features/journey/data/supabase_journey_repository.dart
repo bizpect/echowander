@@ -1931,7 +1931,30 @@ class SupabaseJourneyStorageRepository implements JourneyStorageRepository {
         if (kDebugMode) {
           debugPrint('compose: 이미지 업로드 시작 ($path)');
         }
-        final bytes = await File(path).readAsBytes();
+
+        // 업로드 직전 파일 검증
+        final file = File(path);
+        if (!await file.exists()) {
+          if (kDebugMode) {
+            debugPrint(
+              'compose: 이미지 업로드 실패 (파일 없음: $path)',
+            );
+          }
+          await deleteImages(paths: uploaded, accessToken: accessToken);
+          throw JourneyStorageException(JourneyStorageError.uploadFailed);
+        }
+        final fileSize = await file.length();
+        if (fileSize == 0) {
+          if (kDebugMode) {
+            debugPrint(
+              'compose: 이미지 업로드 실패 (파일 크기 0: $path)',
+            );
+          }
+          await deleteImages(paths: uploaded, accessToken: accessToken);
+          throw JourneyStorageException(JourneyStorageError.uploadFailed);
+        }
+
+        final bytes = await file.readAsBytes();
         final storagePath = _buildStoragePath(path, i);
         final uploadUri = _storageUri(storagePath);
         try {
@@ -1985,9 +2008,14 @@ class SupabaseJourneyStorageRepository implements JourneyStorageRepository {
       }
       await deleteImages(paths: uploaded, accessToken: accessToken);
       rethrow;
-    } on FileSystemException {
+    } on FileSystemException catch (e) {
       if (kDebugMode) {
-        debugPrint('compose: 이미지 업로드 실패 (FileSystemException)');
+        debugPrint(
+          'compose: 이미지 업로드 실패 (FileSystemException: '
+          'osError=${e.osError?.errorCode}, '
+          'message=${e.osError?.message}, '
+          'path=${e.path})',
+        );
       }
       await deleteImages(paths: uploaded, accessToken: accessToken);
       throw JourneyStorageException(JourneyStorageError.uploadFailed);

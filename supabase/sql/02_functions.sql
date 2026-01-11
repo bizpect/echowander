@@ -447,8 +447,16 @@ as $$
   from public.notification_logs logs
   where logs.user_id = auth.uid()
     and logs.delete_yn = false
-    and logs.read_at is null
-    and logs.created_at >= now() - interval '7 days';
+    and logs.read_at is null;
+$$;
+
+create or replace function public.get_unread_notification_count()
+returns integer
+language sql
+security definer
+set search_path = public
+as $$
+  select public.count_my_unread_notifications();
 $$;
 
 create or replace function public.mark_notification_read(

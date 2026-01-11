@@ -17,6 +17,7 @@ import '../core/locale/locale_controller.dart';
 import '../core/locale/locale_sync_controller.dart';
 import '../core/theme/theme_controller.dart';
 import '../features/settings/data/local_settings_data_source.dart';
+import '../features/notifications/application/unread_notification_count_provider.dart';
 import '../l10n/app_localizations.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
@@ -40,9 +41,11 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
   DateTime? _lastPopupAt;
   static const _popupCooldown = Duration(seconds: 30);
   static const _ignoreResumeThreshold = Duration(seconds: 2);
+  static const _unreadRefreshCooldown = Duration(seconds: 45);
   DateTime? _pausedAt;
   DateTime? _inactiveAt;
   AppLifecycleState? _lastLifecycleState;
+  DateTime? _lastUnreadRefreshAt;
 
   @override
   void initState() {
@@ -101,12 +104,30 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
       _inactiveAt = null;
       // 복귀 시: 복구 먼저, 조회 나중
       _handleAppResumed(mode: EnsureSessionMode.silent);
+      _refreshUnreadCountIfNeeded();
     }
   }
 
   void _handleAppResumed({required EnsureSessionMode mode}) {
     // 복귀 시: 복구 먼저, 조회 나중
     _ensureSessionReady(mode: mode);
+  }
+
+  void _refreshUnreadCountIfNeeded() {
+    final now = DateTime.now();
+    if (_lastUnreadRefreshAt != null &&
+        now.difference(_lastUnreadRefreshAt!) < _unreadRefreshCooldown) {
+      if (kDebugMode) {
+        debugPrint('[AppLifecycleGate] unread refresh skipped (cooldown)');
+      }
+      return;
+    }
+    final sessionState = ref.read(sessionManagerProvider);
+    if (sessionState.status != SessionStatus.authenticated) {
+      return;
+    }
+    _lastUnreadRefreshAt = now;
+    ref.invalidate(unreadNotificationCountProvider);
   }
 
   /// 세션 준비 보장 (복귀 시 Query 폭주 방지)

@@ -316,6 +316,18 @@ abstract class AppLocalizations {
   /// **'Notifications'**
   String get notificationsTitle;
 
+  /// No description provided for @notificationsUnreadCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread notifications {count}'**
+  String notificationsUnreadCountLabel(Object count);
+
+  /// No description provided for @notificationsUnreadCountOverflow.
+  ///
+  /// In en, this message translates to:
+  /// **'9+'**
+  String get notificationsUnreadCountOverflow;
+
   /// No description provided for @notificationsEmpty.
   ///
   /// In en, this message translates to:
@@ -547,7 +559,7 @@ abstract class AppLocalizations {
   /// No description provided for @composeWizardStep2Subtitle.
   ///
   /// In en, this message translates to:
-  /// **'Pick 1 to 5 recipients.'**
+  /// **'Pick 10 to 50 recipients.'**
   String get composeWizardStep2Subtitle;
 
   /// No description provided for @composeWizardStep3Title.
@@ -598,6 +610,30 @@ abstract class AppLocalizations {
   /// **'Images'**
   String get composeImagesTitle;
 
+  /// No description provided for @composeImageHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'You can attach up to 3 photos.'**
+  String get composeImageHelper;
+
+  /// No description provided for @composeImageUploadHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload an image.'**
+  String get composeImageUploadHint;
+
+  /// No description provided for @composeImageDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete image'**
+  String get composeImageDelete;
+
+  /// No description provided for @composeSelectedImagesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected images'**
+  String get composeSelectedImagesTitle;
+
   /// No description provided for @composeAddImage.
   ///
   /// In en, this message translates to:
@@ -645,6 +681,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You can attach up to 3 images.'**
   String get composeImageLimit;
+
+  /// No description provided for @composeImageReadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the image. Please try again.'**
+  String get composeImageReadFailed;
+
+  /// No description provided for @composeImageOptimizationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Image processing failed. Please try again.'**
+  String get composeImageOptimizationFailed;
 
   /// No description provided for @composePermissionDenied.
   ///

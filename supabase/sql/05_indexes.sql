@@ -18,6 +18,12 @@ create index if not exists notification_logs_user_created_idx
 create index if not exists notification_logs_user_delete_idx
   on public.notification_logs (user_id, delete_yn, created_at desc);
 
+drop index if exists notification_logs_unread_idx;
+create index if not exists notification_logs_unread_idx
+  on public.notification_logs (user_id, created_at desc)
+  where delete_yn = false
+    and read_at is null;
+
 -- login_logs 테이블 인덱스
 create index if not exists login_logs_user_id_idx
   on public.login_logs (user_id);

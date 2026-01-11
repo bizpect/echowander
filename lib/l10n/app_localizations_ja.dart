@@ -116,6 +116,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get notificationsTitle => '通知';
 
   @override
+  String notificationsUnreadCountLabel(Object count) {
+    return '未読の通知 $count件';
+  }
+
+  @override
+  String get notificationsUnreadCountOverflow => '9+';
+
+  @override
   String get notificationsEmpty => '通知はまだありません。';
 
   @override
@@ -230,7 +238,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get composeWizardStep2Title => '何人に届けますか？';
 
   @override
-  String get composeWizardStep2Subtitle => '1〜5人から選べます。';
+  String get composeWizardStep2Subtitle => '10〜50人から選べます。';
 
   @override
   String get composeWizardStep3Title => '写真も一緒に送りますか？';
@@ -259,6 +267,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get composeImagesTitle => '写真';
 
   @override
+  String get composeImageHelper => '写真は最大3枚まで添付できます。';
+
+  @override
+  String get composeImageUploadHint => '画像を登録してください。';
+
+  @override
+  String get composeImageDelete => '画像を削除';
+
+  @override
+  String get composeSelectedImagesTitle => '選択した画像';
+
+  @override
   String get composeAddImage => '写真を追加';
 
   @override
@@ -281,6 +301,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get composeImageLimit => '写真は最大3枚まで添付できます。';
+
+  @override
+  String get composeImageReadFailed => '画像を読み込めませんでした。もう一度お試しください。';
+
+  @override
+  String get composeImageOptimizationFailed => '画像処理に失敗しました。もう一度お試しください。';
 
   @override
   String get composePermissionDenied => '写真へのアクセスが必要です。';

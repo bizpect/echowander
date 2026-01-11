@@ -14,6 +14,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.trailingIcon,
     this.onTrailingTap,
     this.trailingSemanticLabel,
+    this.trailingWidget,
     this.topPadding = AppSpacing.spacing8,
     this.showDivider = false,
     this.alignTitleLeft = false,
@@ -35,6 +36,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final IconData? trailingIcon;
   final VoidCallback? onTrailingTap;
   final String? trailingSemanticLabel;
+  final Widget? trailingWidget;
   final double topPadding;
   final bool showDivider;
   final bool alignTitleLeft;
@@ -96,12 +98,13 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                 ),
               ),
               const SizedBox(width: kHeaderTitleGap),
-              _HeaderIconSlot(
-                icon: trailingIcon,
-                onTap: onTrailingTap,
-                semanticLabel: trailingSemanticLabel,
-                reserveSpace: true,
-              ),
+              trailingWidget ??
+                  _HeaderIconSlot(
+                    icon: trailingIcon,
+                    onTap: onTrailingTap,
+                    semanticLabel: trailingSemanticLabel,
+                    reserveSpace: true,
+                  ),
             ],
           ),
         ),

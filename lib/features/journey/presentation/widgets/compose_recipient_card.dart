@@ -57,11 +57,11 @@ class ComposeRecipientCard extends StatelessWidget {
             spacing: AppSpacing.spacing8,
             runSpacing: AppSpacing.spacing8,
             children: [
-              for (var i = 1; i <= 5; i += 1)
+              for (var count in [1, 2, 3, 4, 5])
                 _RecipientChip(
-                  label: l10n.composeRecipientCountOption(i),
-                  isSelected: current == i,
-                  onTap: () => onChanged(i),
+                  label: l10n.composeRecipientCountOption(count),
+                  isSelected: current == count,
+                  onTap: () => onChanged(count),
                 ),
             ],
           ),
@@ -81,7 +81,13 @@ class ComposeRecipientCard extends StatelessWidget {
                     max: 5,
                     divisions: 4,
                     value: (current ?? 3).toDouble(),
-                    onChanged: (value) => onChanged(value.round()),
+                    onChanged: (value) {
+                      // 슬라이더 값을 가장 가까운 옵션으로 스냅
+                      final options = [1, 2, 3, 4, 5];
+                      final closest = options.reduce((a, b) =>
+                          (value - a).abs() < (value - b).abs() ? a : b);
+                      onChanged(closest);
+                    },
                   ),
                 ),
               ),

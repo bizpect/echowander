@@ -13,6 +13,7 @@ import '../../../core/presentation/widgets/app_scaffold.dart';
 import '../../../core/presentation/widgets/empty_state.dart';
 import '../../../core/presentation/widgets/error_state.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
+import '../../../core/presentation/slivers/fixed_extent_header_delegate.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/board_filter_provider.dart';
@@ -22,6 +23,9 @@ import '../domain/board_post.dart';
 import 'widgets/notice_filter_bar.dart';
 import 'widgets/notice_list_item.dart';
 import 'widgets/notice_type_bottom_sheet.dart';
+
+/// 공지사항 필터 바의 고정 높이 (터치 영역 고려)
+const double kNoticeFilterHeaderExtent = 64.0;
 
 class NoticeListScreen extends ConsumerWidget {
   const NoticeListScreen({super.key, this.boardKey = BoardKeys.notice});
@@ -54,7 +58,7 @@ class NoticeListScreen extends ConsumerWidget {
 
     if (kDebugMode) {
       debugPrint(
-        '[NoticeList] boardKey=$boardKey type=$selectedType posts=${posts.length}',
+        '[NoticeList] boardKey=$boardKey type=$selectedType posts=${posts.length} headerExtent=$kNoticeFilterHeaderExtent',
       );
     }
 
@@ -84,31 +88,35 @@ class NoticeListScreen extends ConsumerWidget {
               slivers: [
                 SliverPersistentHeader(
                   pinned: true,
-                  delegate: _NoticeFilterHeaderDelegate(
-                    child: NoticeFilterBar(
-                      label: l10n.noticeFilterLabel,
-                      selectedLabel: selectedLabel,
-                      onTap: () async {
-                        final selected = await NoticeTypeBottomSheet.show(
-                          context: context,
-                          title: l10n.noticeFilterSheetTitle,
-                          allLabel: l10n.noticeFilterAll,
-                          selectedCode: selectedType ??
-                              NoticeTypeBottomSheet.allCode,
-                          types: typeCodes,
-                          locale: locale,
-                        );
-                        if (selected == null) {
-                          return;
-                        }
-                        final resolved = selected ==
-                                NoticeTypeBottomSheet.allCode
-                            ? null
-                            : selected;
-                        ref
-                            .read(selectedNoticeTypeProvider.notifier)
-                            .select(resolved);
-                      },
+                  delegate: FixedExtentPersistentHeaderDelegate(
+                    extent: kNoticeFilterHeaderExtent,
+                    child: SizedBox(
+                      height: kNoticeFilterHeaderExtent,
+                      child: NoticeFilterBar(
+                        label: l10n.noticeFilterLabel,
+                        selectedLabel: selectedLabel,
+                        onTap: () async {
+                          final selected = await NoticeTypeBottomSheet.show(
+                            context: context,
+                            title: l10n.noticeFilterSheetTitle,
+                            allLabel: l10n.noticeFilterAll,
+                            selectedCode: selectedType ??
+                                NoticeTypeBottomSheet.allCode,
+                            types: typeCodes,
+                            locale: locale,
+                          );
+                          if (selected == null) {
+                            return;
+                          }
+                          final resolved = selected ==
+                                  NoticeTypeBottomSheet.allCode
+                              ? null
+                              : selected;
+                          ref
+                              .read(selectedNoticeTypeProvider.notifier)
+                              .select(resolved);
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -157,7 +165,8 @@ class NoticeListScreen extends ConsumerWidget {
                           final typeLabel = post.typeCode == null
                               ? l10n.noticeTypeUnknown
                               : (typeLabelMap[post.typeCode] ??
-                                  post.typeCode!);
+                                  post.typeCode ??
+                                  l10n.noticeTypeUnknown);
                           final publishedLabel =
                               AnnouncementDateFormatter.formatLocalDateTime(
                             post.publishedAt,
@@ -198,32 +207,6 @@ class NoticeListScreen extends ConsumerWidget {
       context.pop();
       return;
     }
-    context.go(AppRoutes.home);
-  }
-}
-
-class _NoticeFilterHeaderDelegate extends SliverPersistentHeaderDelegate {
-  _NoticeFilterHeaderDelegate({required this.child});
-
-  final Widget child;
-
-  @override
-  double get minExtent => 64;
-
-  @override
-  double get maxExtent => 64;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return child;
-  }
-
-  @override
-  bool shouldRebuild(covariant _NoticeFilterHeaderDelegate oldDelegate) {
-    return oldDelegate.child != child;
+      context.go(AppRoutes.home);
   }
 }

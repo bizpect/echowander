@@ -177,7 +177,7 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
     final validationError = _validationError(l10n, state.content);
     final canGoNextFromMessage =
         validationError == null && state.content.trim().isNotEmpty;
-    final canGoNextFromRecipient = state.recipientCount != null;
+    final canGoNextFromRecipient = state.recipientCount != null && state.recipientCount! >= 1 && state.recipientCount! <= 5;
     final canSubmit = canGoNextFromMessage && canGoNextFromRecipient;
 
     return PopScope(
@@ -434,6 +434,18 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
       case JourneyComposeMessage.invalidRecipientCount:
         setState(() {
           _inlineMessage = l10n.composeRecipientInvalid;
+          _inlineMessageIsError = true;
+        });
+        return;
+      case JourneyComposeMessage.imageReadFailed:
+        setState(() {
+          _inlineMessage = l10n.composeImageReadFailed;
+          _inlineMessageIsError = true;
+        });
+        return;
+      case JourneyComposeMessage.imageOptimizationFailed:
+        setState(() {
+          _inlineMessage = l10n.composeImageOptimizationFailed;
           _inlineMessageIsError = true;
         });
         return;

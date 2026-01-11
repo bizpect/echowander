@@ -59,7 +59,9 @@ class NoticeDetailScreen extends ConsumerWidget {
         data: (post) {
           final typeLabel = post.typeCode == null
               ? l10n.noticeTypeUnknown
-              : (typeLabelMap[post.typeCode] ?? post.typeCode!);
+              : (typeLabelMap[post.typeCode] ??
+                  post.typeCode ??
+                  l10n.noticeTypeUnknown);
           final publishedLabel =
               AnnouncementDateFormatter.formatLocalDateTime(
             post.publishedAt,

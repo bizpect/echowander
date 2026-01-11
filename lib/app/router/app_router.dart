@@ -19,6 +19,7 @@ import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/block/presentation/block_list_screen.dart';
 import '../../features/board/presentation/notice_list_screen.dart';
 import '../../features/board/presentation/notice_detail_screen.dart';
+import '../../features/notifications/presentation/notification_inbox_screen.dart';
 import '../../features/settings/presentation/support/support_screen.dart';
 import '../../features/settings/presentation/app_info/app_info_screen.dart';
 import '../../features/settings/presentation/open_license/open_license_screen.dart';
@@ -39,7 +40,8 @@ class AppRoutes {
   static const settings = '/settings';
   static const blockList = '/settings/blocks';
   static const notifications = '/notifications';
-  static const noticeDetail = '/notifications/:postId';
+  static const notice = '/notice';
+  static const noticeDetail = '/notice/:postId';
   static const support = '/support';
   static const appInfo = '/app-info';
   static const openLicense = '/app-info/open-license';
@@ -48,7 +50,7 @@ class AppRoutes {
   static const profileEditCrop = '/profile/edit/crop';
 
   static String noticeDetailPath(String postId) {
-    return '/notifications/$postId';
+    return '/notice/$postId';
   }
 }
 
@@ -123,6 +125,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.notifications,
+        builder: (context, state) => const NotificationInboxScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.notice,
         builder: (context, state) => const NoticeListScreen(),
       ),
       GoRoute(
@@ -202,7 +208,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             location == AppRoutes.settings ||
             location == AppRoutes.blockList ||
             location == AppRoutes.notifications ||
-            location.startsWith('/notifications/') ||
+            location == AppRoutes.notice ||
+            location.startsWith('/notice/') ||
             location == AppRoutes.support ||
             location == AppRoutes.appInfo ||
             location == AppRoutes.openLicense ||

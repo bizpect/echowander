@@ -116,6 +116,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get notificationsTitle => 'Notificações';
 
   @override
+  String notificationsUnreadCountLabel(Object count) {
+    return 'Notificações não lidas $count';
+  }
+
+  @override
+  String get notificationsUnreadCountOverflow => '9+';
+
+  @override
   String get notificationsEmpty => 'Ainda não há notificações.';
 
   @override
@@ -230,7 +238,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get composeWizardStep2Title => 'Para quantas pessoas enviar?';
 
   @override
-  String get composeWizardStep2Subtitle => 'Escolha entre 1 e 5.';
+  String get composeWizardStep2Subtitle => 'Escolha entre 10 e 50.';
 
   @override
   String get composeWizardStep3Title => 'Quer enviar uma foto junto?';
@@ -259,6 +267,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String get composeImagesTitle => 'Imagens';
 
   @override
+  String get composeImageHelper => 'Você pode anexar até 3 fotos.';
+
+  @override
+  String get composeImageUploadHint => 'Carregue uma imagem.';
+
+  @override
+  String get composeImageDelete => 'Eliminar imagem';
+
+  @override
+  String get composeSelectedImagesTitle => 'Imagens selecionadas';
+
+  @override
   String get composeAddImage => 'Adicionar foto';
 
   @override
@@ -281,6 +301,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get composeImageLimit => 'Pode anexar até 3 imagens.';
+
+  @override
+  String get composeImageReadFailed => 'Não foi possível ler a imagem. Tente novamente.';
+
+  @override
+  String get composeImageOptimizationFailed => 'Falha no processamento da imagem. Tente novamente.';
 
   @override
   String get composePermissionDenied => 'É necessário acesso às fotos.';
@@ -1520,6 +1546,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get notificationsTitle => 'Notificações';
 
   @override
+  String notificationsUnreadCountLabel(Object count) {
+    return 'Notificações não lidas $count';
+  }
+
+  @override
+  String get notificationsUnreadCountOverflow => '9+';
+
+  @override
   String get notificationsEmpty => 'Ainda não há notificações.';
 
   @override
@@ -1634,7 +1668,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get composeWizardStep2Title => 'Para quantas pessoas enviar?';
 
   @override
-  String get composeWizardStep2Subtitle => 'Escolha entre 1 e 5.';
+  String get composeWizardStep2Subtitle => 'Escolha entre 10 e 50.';
 
   @override
   String get composeWizardStep3Title => 'Quer enviar uma foto junto?';
@@ -1663,6 +1697,18 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get composeImagesTitle => 'Imagens';
 
   @override
+  String get composeImageHelper => 'Você pode anexar até 3 fotos.';
+
+  @override
+  String get composeImageUploadHint => 'Carregue uma imagem.';
+
+  @override
+  String get composeImageDelete => 'Excluir imagem';
+
+  @override
+  String get composeSelectedImagesTitle => 'Imagens selecionadas';
+
+  @override
   String get composeAddImage => 'Adicionar foto';
 
   @override
@@ -1685,6 +1731,12 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get composeImageLimit => 'Você pode anexar até 3 imagens.';
+
+  @override
+  String get composeImageReadFailed => 'Não foi possível ler a imagem. Tente novamente.';
+
+  @override
+  String get composeImageOptimizationFailed => 'Falha no processamento da imagem. Tente novamente.';
 
   @override
   String get composePermissionDenied => 'É preciso acesso às fotos para anexar imagens.';

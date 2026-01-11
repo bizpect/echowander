@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
@@ -139,7 +140,7 @@ class SupabaseNotificationRepository implements NotificationRepository {
   Future<int> fetchUnreadCount({required String accessToken}) async {
     _validateConfig(accessToken);
     final uri = Uri.parse(
-      '${_config.supabaseUrl}/rest/v1/rpc/count_my_unread_notifications',
+      '${_config.supabaseUrl}/rest/v1/rpc/get_unread_notification_count',
     );
 
     try {
@@ -148,12 +149,17 @@ class SupabaseNotificationRepository implements NotificationRepository {
         operation: () =>
             _executeFetchUnreadCount(uri: uri, accessToken: accessToken),
         retryPolicy: RetryPolicy.short,
-        context: 'count_my_unread_notifications',
+        context: 'get_unread_notification_count',
         uri: uri,
         method: 'POST',
         meta: const {},
         accessToken: accessToken,
       );
+      if (kDebugMode) {
+        debugPrint(
+          '[Notifications] unread_count fetched: $result',
+        );
+      }
       return result;
     } on NetworkRequestException catch (error) {
       switch (error.type) {
@@ -197,7 +203,7 @@ class SupabaseNotificationRepository implements NotificationRepository {
 
     if (response.statusCode != HttpStatus.ok) {
       await _errorLogger.logHttpFailure(
-        context: 'count_my_unread_notifications',
+        context: 'get_unread_notification_count',
         uri: uri,
         method: 'POST',
         statusCode: response.statusCode,
@@ -209,7 +215,7 @@ class SupabaseNotificationRepository implements NotificationRepository {
       throw NetworkGuard(errorLogger: _errorLogger).statusCodeToException(
         statusCode: response.statusCode,
         responseBody: body,
-        context: 'count_my_unread_notifications',
+        context: 'get_unread_notification_count',
       );
     }
 

@@ -1,20 +1,21 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_radius.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../../../app/theme/app_text_styles.dart';
-import '../../../../core/presentation/widgets/app_card.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../domain/compose_picked_image.dart';
 
 const int journeyMaxImages = 3;
+const double _imageCardHeight = 200.0; // 이미지 카드 높이
+const double _pageViewPadding = 16.0; // PageView 좌우 패딩
 
-/// 첨부 이미지 그리드
+/// 첨부 이미지 그리드 (PageView 기반)
 ///
-/// 최대 3장의 이미지를 그리드 형태로 표시하고,
-/// 추가/삭제 기능을 제공합니다.
-class ComposeAttachmentGrid extends StatelessWidget {
+/// 상단: 점선 테두리 등록 카드 (빈 상태)
+/// 하단: PageView로 이미지 카드 슬라이드 (한 화면에 하나씩)
+class ComposeAttachmentGrid extends StatefulWidget {
   const ComposeAttachmentGrid({
     super.key,
     required this.images,
@@ -22,170 +23,364 @@ class ComposeAttachmentGrid extends StatelessWidget {
     required this.onRemoveImage,
   });
 
-  final List<XFile> images;
+  final List<ComposePickedImage> images;
   final VoidCallback onAddImage;
   final void Function(int index) onRemoveImage;
 
   @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final canAddMore = images.length < journeyMaxImages;
-
-    if (images.isEmpty && !canAddMore) {
-      return const SizedBox.shrink();
-    }
-
-    return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      borderColor: AppColors.borderSubtle,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 헤더: 제목 + 개수
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                l10n.composeImagesTitle,
-                style: AppTextStyles.bodyStrong.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              if (images.isNotEmpty)
-                Text(
-                  '${images.length}/$journeyMaxImages',
-                  style: AppTextStyles.meta.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.spacing12),
-          // 이미지 그리드
-          Wrap(
-            spacing: AppSpacing.spacing12,
-            runSpacing: AppSpacing.spacing12,
-            children: [
-              // 기존 이미지들
-              for (var i = 0; i < images.length; i += 1)
-                _ImageTile(file: images[i], onRemove: () => onRemoveImage(i)),
-              // 추가 버튼
-              if (canAddMore)
-                _AddImageTile(
-                  label: l10n.composeAddImage,
-                  onPressed: onAddImage,
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  State<ComposeAttachmentGrid> createState() => _ComposeAttachmentGridState();
 }
 
-/// 이미지 타일 (미리보기 + 제거 버튼)
-class _ImageTile extends StatelessWidget {
-  const _ImageTile({required this.file, required this.onRemove});
+class _ComposeAttachmentGridState extends State<ComposeAttachmentGrid> {
+  late PageController _pageController;
+  int _currentPage = 0;
 
-  final XFile file;
-  final VoidCallback onRemove;
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _currentPage = 0;
+  }
+
+  @override
+  void didUpdateWidget(ComposeAttachmentGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 이미지 개수가 변경되었을 때 인덱스 보정
+    if (widget.images.length != oldWidget.images.length) {
+      final newLength = widget.images.length;
+      if (newLength == 0) {
+        _currentPage = 0;
+      } else if (_currentPage >= newLength) {
+        _currentPage = newLength - 1;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_pageController.hasClients && mounted) {
+            _pageController.jumpToPage(_currentPage);
+          }
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _handleRemoveImage(int index) {
+    widget.onRemoveImage(index);
+    // 삭제 후 인덱스 보정
+    final newLength = widget.images.length - 1;
+    if (newLength > 0) {
+      if (_currentPage >= newLength) {
+        _currentPage = newLength - 1;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_pageController.hasClients && mounted) {
+            _pageController.jumpToPage(_currentPage);
+          }
+        });
+      }
+    } else {
+      _currentPage = 0;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    final l10n = AppLocalizations.of(context)!;
+    final canAddMore = widget.images.length < journeyMaxImages;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ClipRRect(
-          borderRadius: AppRadius.medium,
-          child: Image.file(
-            File(file.path),
-            width: 100,
-            height: 100,
-            fit: BoxFit.cover,
+        // 상단: 점선 테두리 등록 카드 (빈 상태 또는 추가 진입)
+        if (widget.images.isEmpty || canAddMore)
+          _ImageUploadCard(
+            onTap: canAddMore ? widget.onAddImage : null,
+            label: l10n.composeImageUploadHint,
           ),
-        ),
-        Positioned(
-          top: AppSpacing.spacing4,
-          right: AppSpacing.spacing4,
-          child: Semantics(
-            label: MaterialLocalizations.of(context).deleteButtonTooltip,
-            button: true,
-            child: Material(
-              color: AppColors.transparent,
-              child: InkWell(
-                onTap: onRemove,
-                customBorder: const CircleBorder(),
-                borderRadius: AppRadius.full,
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: AppColors.errorContainer,
-                    shape: BoxShape.circle,
+        // 하단: PageView로 이미지 카드 슬라이드
+        if (widget.images.isNotEmpty) ...[
+          // 섹션 구분: 충분한 간격 (텍스트/Divider 없이 spacing만)
+          const SizedBox(height: AppSpacing.sectionGap),
+          // 이미지 카드 슬라이드
+          SizedBox(
+            height: _imageCardHeight,
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: widget.images.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: _pageViewPadding,
                   ),
-                  child: Icon(
-                    Icons.close,
-                    size: 18,
-                    color: AppColors.onErrorContainer,
+                  child: _ImageCard(
+                    image: widget.images[index],
+                    onRemove: () => _handleRemoveImage(index),
+                    deleteLabel: l10n.composeImageDelete,
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ),
-        ),
+          // 페이지 인디케이터
+          if (widget.images.length > 1) ...[
+            const SizedBox(height: AppSpacing.spacing12),
+            _PageIndicator(
+              currentIndex: _currentPage,
+              itemCount: widget.images.length,
+            ),
+          ],
+        ],
       ],
     );
   }
 }
 
-/// 이미지 추가 타일
-class _AddImageTile extends StatelessWidget {
-  const _AddImageTile({required this.label, required this.onPressed});
+/// 점선 테두리 이미지 업로드 카드
+class _ImageUploadCard extends StatelessWidget {
+  const _ImageUploadCard({
+    required this.onTap,
+    required this.label,
+  });
 
+  final VoidCallback? onTap;
   final String label;
-  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isEnabled = onTap != null;
+
     return Semantics(
       label: label,
-      button: true,
+      button: isEnabled,
+      enabled: isEnabled,
       child: InkWell(
-        onTap: onPressed,
-        borderRadius: AppRadius.medium,
+        onTap: onTap,
+        borderRadius: AppRadius.large,
         child: Container(
-          width: 100,
-          height: 100,
+          width: double.infinity,
+          constraints: const BoxConstraints(minHeight: 120),
           decoration: BoxDecoration(
-            color: AppColors.surfaceVariant,
-            borderRadius: AppRadius.medium,
-            border: Border.all(
-              color: AppColors.outline,
-              width: 1.5,
-              style: BorderStyle.solid,
-            ),
+            color: colorScheme.surfaceContainerHighest,
+            borderRadius: AppRadius.large,
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.add_photo_alternate_outlined,
-                size: 32,
-                color: AppColors.onSurfaceVariant,
+          child: CustomPaint(
+            painter: _DashedBorderPainter(
+              color: isEnabled
+                  ? AppColors.outline
+                  : AppColors.outlineVariant,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.add_photo_alternate_outlined,
+                    size: 48,
+                    color: isEnabled
+                        ? AppColors.iconPrimary
+                        : AppColors.iconMuted,
+                  ),
+                  const SizedBox(height: AppSpacing.spacing12),
+                  Text(
+                    label,
+                    style: AppTextStyles.body.copyWith(
+                      color: isEnabled
+                          ? AppColors.textPrimary
+                          : AppColors.textMuted,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
-              const SizedBox(height: AppSpacing.spacing4),
-              Text(
-                label,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 점선 테두리 CustomPainter
+class _DashedBorderPainter extends CustomPainter {
+  const _DashedBorderPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          AppRadius.largeRadius,
+        ),
+      );
+
+    // 점선 패턴: dashLength = 8, gapLength = 4
+    final dashLength = 8.0;
+    final gapLength = 4.0;
+    final pathMetrics = path.computeMetrics();
+
+    for (final pathMetric in pathMetrics) {
+      var distance = 0.0;
+      while (distance < pathMetric.length) {
+        final extractLength = (distance + dashLength < pathMetric.length)
+            ? dashLength
+            : pathMetric.length - distance;
+        final extractPath = pathMetric.extractPath(
+          distance,
+          distance + extractLength,
+        );
+        canvas.drawPath(extractPath, paint);
+        distance += dashLength + gapLength;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter oldDelegate) {
+    return oldDelegate.color != color;
+  }
+}
+
+/// 이미지 카드 (PageView용)
+class _ImageCard extends StatelessWidget {
+  const _ImageCard({
+    required this.image,
+    required this.onRemove,
+    required this.deleteLabel,
+  });
+
+  final ComposePickedImage image;
+  final VoidCallback onRemove;
+  final String deleteLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: AppRadius.large,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.overlaySubtle,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: AppRadius.large,
+        child: Stack(
+          children: [
+            // 이미지
+            Positioned.fill(
+              child: Image.file(
+                File(image.localPath),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: AppColors.surfaceVariant,
+                    child: Center(
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        size: 48,
+                        color: AppColors.iconMuted,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            // 삭제 버튼 (우상단 오버레이)
+            Positioned(
+              top: AppSpacing.spacing8,
+              right: AppSpacing.spacing8,
+              child: Semantics(
+                label: deleteLabel,
+                button: true,
+                child: Material(
+                  color: AppColors.transparent,
+                  child: InkWell(
+                    onTap: onRemove,
+                    customBorder: const CircleBorder(),
+                    borderRadius: AppRadius.full,
+                    child: Container(
+                      width: AppSpacing.minTouchTarget,
+                      height: AppSpacing.minTouchTarget,
+                      decoration: BoxDecoration(
+                        color: AppColors.errorContainer,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.overlaySubtle,
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.close,
+                        size: 20,
+                        color: AppColors.onErrorContainer,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 페이지 인디케이터
+class _PageIndicator extends StatelessWidget {
+  const _PageIndicator({
+    required this.currentIndex,
+    required this.itemCount,
+  });
+
+  final int currentIndex;
+  final int itemCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (var i = 0; i < itemCount; i += 1) ...[
+          Container(
+            width: i == currentIndex ? 24 : 8,
+            height: 8,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            decoration: BoxDecoration(
+              color: i == currentIndex
+                  ? AppColors.primary
+                  : AppColors.outlineVariant,
+              borderRadius: AppRadius.full,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

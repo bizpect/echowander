@@ -20,6 +20,7 @@ import '../../journey/application/journey_inbox_controller.dart';
 import '../../journey/application/journey_list_controller.dart';
 import '../../journey/presentation/journey_inbox_screen.dart';
 import '../../journey/presentation/journey_list_screen.dart';
+import '../../notifications/application/unread_notification_count_provider.dart';
 import '../application/home_dashboard_controller.dart';
 
 /// Home 화면 (대시보드)
@@ -48,10 +49,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final promptText = _resolveDailyPrompt(l10n, dashboard.dailyPrompt);
 
+    final unreadCountAsync = ref.watch(unreadNotificationCountProvider);
+    final unreadCount = unreadCountAsync.value ?? 0;
+
     return AppScaffold(
       appBar: AppHeader(
         title: l10n.homeTitle,
         alignTitleLeft: true,
+        trailingWidget: _NotificationBellButton(
+          label: l10n.notificationsTitle,
+          unreadCountLabel: l10n.notificationsUnreadCountLabel(unreadCount),
+          unreadCountOverflowLabel: l10n.notificationsUnreadCountOverflow,
+          unreadCount: unreadCount,
+          onTap: () => context.push(AppRoutes.notifications),
+        ),
       ),
       bodyPadding: EdgeInsets.zero,
       body: ListView(
@@ -772,5 +783,87 @@ class _AnnouncementCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _NotificationBellButton extends StatelessWidget {
+  const _NotificationBellButton({
+    required this.label,
+    required this.unreadCountLabel,
+    required this.unreadCountOverflowLabel,
+    required this.unreadCount,
+    required this.onTap,
+  });
+
+  final String label;
+  final String unreadCountLabel;
+  final String unreadCountOverflowLabel;
+  final int unreadCount;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final hasUnread = unreadCount > 0;
+    final badgeText = _resolveBadgeText(unreadCount, unreadCountOverflowLabel);
+    final semanticLabel = hasUnread ? '$label, $unreadCountLabel' : label;
+
+    return Semantics(
+      label: semanticLabel,
+      button: true,
+      child: InkResponse(
+        onTap: onTap,
+        radius: AppHeader.kHeaderIconHitBox / 2,
+        child: SizedBox(
+          width: AppHeader.kHeaderIconHitBox,
+          height: AppHeader.kHeaderIconHitBox,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Center(
+                child: Icon(
+                  Icons.notifications_none,
+                  size: AppHeader.kHeaderIconSize,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              if (hasUnread)
+                Positioned(
+                  right: AppSpacing.xs,
+                  top: AppSpacing.xs,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xs,
+                      vertical: AppSpacing.compactGap,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorScheme.error,
+                      borderRadius: AppRadius.small,
+                    ),
+                    constraints: const BoxConstraints(minWidth: 16),
+                    child: Text(
+                      badgeText,
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.meta.copyWith(
+                        color: colorScheme.onError,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _resolveBadgeText(int count, String overflowLabel) {
+    if (count <= 0) {
+      return '';
+    }
+    if (count > 9) {
+      return overflowLabel;
+    }
+    return count.toString();
   }
 }

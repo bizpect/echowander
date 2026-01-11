@@ -1,7 +1,10 @@
+import 'package:flutter_riverpod/misc.dart';
+
 import '../../features/journey/application/journey_compose_controller.dart';
 import '../../features/journey/application/journey_inbox_controller.dart';
 import '../../features/journey/application/journey_list_controller.dart';
 import '../../features/notifications/application/notification_inbox_controller.dart';
+import '../../features/notifications/application/unread_notification_count_provider.dart';
 import '../../features/block/application/block_list_controller.dart';
 import '../../features/settings/application/settings_controller.dart';
 
@@ -17,7 +20,7 @@ import '../../features/settings/application/settings_controller.dart';
 /// 제외 기준:
 /// - 사용자와 무관한 앱 설정 (locale, theme 등)
 /// - 온보딩 상태 (디바이스 단위)
-final sessionInvalidationTargets = [
+final List<ProviderOrFamily> sessionInvalidationTargets = [
   // 작성 중인 여정 초안 - 이전 사용자의 작성 내용 제거
   journeyComposeControllerProvider,
 
@@ -29,6 +32,7 @@ final sessionInvalidationTargets = [
 
   // 알림 목록 - 이전 사용자의 알림 캐시 제거
   notificationInboxControllerProvider,
+  unreadNotificationCountProvider,
 
   // 차단 목록 - 이전 사용자의 차단 목록 캐시 제거
   blockListControllerProvider,

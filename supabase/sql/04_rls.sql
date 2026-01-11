@@ -477,6 +477,7 @@ grant execute on function public.unblock_user(uuid) to authenticated;
 grant execute on function public.insert_notification_log(uuid, text, text, text, jsonb) to service_role;
 grant execute on function public.list_my_notifications(integer, integer, boolean) to authenticated;
 grant execute on function public.count_my_unread_notifications() to authenticated;
+grant execute on function public.get_unread_notification_count() to authenticated;
 grant execute on function public.mark_notification_read(bigint) to authenticated;
 grant execute on function public.delete_notification_log(bigint) to authenticated;
 grant execute on function public.log_client_error(text, integer, text, jsonb, text) to anon, authenticated;

@@ -15,6 +15,7 @@ import '../../../core/presentation/widgets/app_scaffold.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../core/presentation/widgets/empty_state.dart';
 import '../../../l10n/app_localizations.dart';
+import '../application/unread_notification_count_provider.dart';
 import '../application/notification_inbox_controller.dart';
 import '../domain/notification_item.dart';
 
@@ -40,6 +41,9 @@ class _NotificationInboxScreenState
     super.initState();
     Future.microtask(
       () => ref.read(notificationInboxControllerProvider.notifier).load(),
+    );
+    Future.microtask(
+      () => ref.invalidate(unreadNotificationCountProvider),
     );
   }
 
@@ -146,6 +150,7 @@ class _NotificationInboxScreenState
     await ref
         .read(notificationInboxControllerProvider.notifier)
         .markRead(item.id);
+    ref.invalidate(unreadNotificationCountProvider);
     if (!mounted) {
       return;
     }
@@ -172,6 +177,7 @@ class _NotificationInboxScreenState
     await ref
         .read(notificationInboxControllerProvider.notifier)
         .deleteNotification(item.id);
+    ref.invalidate(unreadNotificationCountProvider);
   }
 
   Future<void> _handleMessage(

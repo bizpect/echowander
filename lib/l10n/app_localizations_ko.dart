@@ -116,6 +116,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get notificationsTitle => '알림함';
 
   @override
+  String notificationsUnreadCountLabel(Object count) {
+    return '미읽음 알림 $count개';
+  }
+
+  @override
+  String get notificationsUnreadCountOverflow => '9+';
+
+  @override
   String get notificationsEmpty => '아직 알림이 없어요.';
 
   @override
@@ -230,7 +238,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get composeWizardStep2Title => '몇 명에게 떨어뜨릴까요?';
 
   @override
-  String get composeWizardStep2Subtitle => '1~5명 중에서 선택할 수 있어요.';
+  String get composeWizardStep2Subtitle => '10~50명 중에서 선택할 수 있어요.';
 
   @override
   String get composeWizardStep3Title => '같이 보낼 사진이 있으신가요?';
@@ -259,6 +267,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get composeImagesTitle => '사진';
 
   @override
+  String get composeImageHelper => '사진은 최대 3장까지 첨부할 수 있어요.';
+
+  @override
+  String get composeImageUploadHint => '이미지를 등록하세요.';
+
+  @override
+  String get composeImageDelete => '이미지 삭제';
+
+  @override
+  String get composeSelectedImagesTitle => '선택한 이미지';
+
+  @override
   String get composeAddImage => '사진 추가';
 
   @override
@@ -281,6 +301,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get composeImageLimit => '사진은 최대 3장까지 첨부할 수 있어요.';
+
+  @override
+  String get composeImageReadFailed => '이미지를 읽을 수 없어요. 다시 선택해 주세요.';
+
+  @override
+  String get composeImageOptimizationFailed => '이미지 처리에 실패했어요. 다시 선택해 주세요.';
 
   @override
   String get composePermissionDenied => '사진 접근 권한이 필요해요.';

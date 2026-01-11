@@ -116,6 +116,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationsTitle => 'Notifications';
 
   @override
+  String notificationsUnreadCountLabel(Object count) {
+    return 'Unread notifications $count';
+  }
+
+  @override
+  String get notificationsUnreadCountOverflow => '9+';
+
+  @override
   String get notificationsEmpty => 'No notifications yet.';
 
   @override
@@ -230,7 +238,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get composeWizardStep2Title => 'How many people should it reach?';
 
   @override
-  String get composeWizardStep2Subtitle => 'Pick 1 to 5 recipients.';
+  String get composeWizardStep2Subtitle => 'Pick 10 to 50 recipients.';
 
   @override
   String get composeWizardStep3Title => 'Add a photo? (optional)';
@@ -259,6 +267,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get composeImagesTitle => 'Images';
 
   @override
+  String get composeImageHelper => 'You can attach up to 3 photos.';
+
+  @override
+  String get composeImageUploadHint => 'Upload an image.';
+
+  @override
+  String get composeImageDelete => 'Delete image';
+
+  @override
+  String get composeSelectedImagesTitle => 'Selected images';
+
+  @override
   String get composeAddImage => 'Add photo';
 
   @override
@@ -281,6 +301,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get composeImageLimit => 'You can attach up to 3 images.';
+
+  @override
+  String get composeImageReadFailed => 'Could not read the image. Please try again.';
+
+  @override
+  String get composeImageOptimizationFailed => 'Image processing failed. Please try again.';
 
   @override
   String get composePermissionDenied => 'Photo access is needed to attach images.';

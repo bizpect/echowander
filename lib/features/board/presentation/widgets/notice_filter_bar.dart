@@ -19,40 +19,52 @@ class NoticeFilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      padding: AppSpacing.pagePadding,
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: colorScheme.outlineVariant),
+    // SizedBox.expand로 감싸서 외부에서 지정한 높이를 정확히 유지
+    // 내부 padding으로 인해 높이가 줄어드는 것을 방지
+    return SizedBox.expand(
+      child: Container(
+        padding: AppSpacing.pagePadding,
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          border: Border(
+            bottom: BorderSide(color: colorScheme.outlineVariant),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: AppTextStyles.body.copyWith(
-                color: colorScheme.onSurface,
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: AppTextStyles.body.copyWith(
+                  color: colorScheme.onSurface,
+                ),
+                // 텍스트가 2줄로 wrap되지 않도록 처리
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
-          ),
-          TextButton.icon(
-            onPressed: onTap,
-            style: TextButton.styleFrom(
-              backgroundColor: colorScheme.surfaceContainerHighest,
-              foregroundColor: colorScheme.onSurface,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.sm,
+            TextButton.icon(
+              onPressed: onTap,
+              style: TextButton.styleFrom(
+                backgroundColor: colorScheme.surfaceContainerHighest,
+                foregroundColor: colorScheme.onSurface,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                shape: const StadiumBorder(),
+                textStyle: AppTextStyles.pill,
               ),
-              shape: const StadiumBorder(),
-              textStyle: AppTextStyles.pill,
+              icon: const Icon(Icons.expand_more, size: 18),
+              label: Text(
+                selectedLabel,
+                // 선택된 라벨도 2줄로 wrap되지 않도록 처리
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
             ),
-            icon: const Icon(Icons.expand_more, size: 18),
-            label: Text(selectedLabel),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

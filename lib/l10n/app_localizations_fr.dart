@@ -116,6 +116,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notificationsTitle => 'Notifications';
 
   @override
+  String notificationsUnreadCountLabel(Object count) {
+    return 'Notifications non lues $count';
+  }
+
+  @override
+  String get notificationsUnreadCountOverflow => '9+';
+
+  @override
   String get notificationsEmpty => 'Aucune notification pour le moment.';
 
   @override
@@ -227,10 +235,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get composeWizardStep1Subtitle => 'Écrivez une phrase pour lancer le relais.';
 
   @override
-  String get composeWizardStep2Title => 'À combien de personnes l’envoyer ?';
+  String get composeWizardStep2Title => 'À combien de personnes l\'envoyer ?';
 
   @override
-  String get composeWizardStep2Subtitle => 'Choisissez entre 1 et 5.';
+  String get composeWizardStep2Subtitle => 'Choisissez entre 10 et 50.';
 
   @override
   String get composeWizardStep3Title => 'Une photo à ajouter ?';
@@ -259,6 +267,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get composeImagesTitle => 'Images';
 
   @override
+  String get composeImageHelper => 'Vous pouvez joindre jusqu\'à 3 photos.';
+
+  @override
+  String get composeImageUploadHint => 'Téléchargez une image.';
+
+  @override
+  String get composeImageDelete => 'Supprimer l\'image';
+
+  @override
+  String get composeSelectedImagesTitle => 'Images sélectionnées';
+
+  @override
   String get composeAddImage => 'Ajouter une photo';
 
   @override
@@ -281,6 +301,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get composeImageLimit => 'Vous pouvez joindre jusqu\'à 3 images.';
+
+  @override
+  String get composeImageReadFailed => 'Impossible de lire l\'image. Veuillez réessayer.';
+
+  @override
+  String get composeImageOptimizationFailed => 'Le traitement de l\'image a échoué. Veuillez réessayer.';
 
   @override
   String get composePermissionDenied => 'L\'accès aux photos est nécessaire.';
@@ -312,7 +338,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get composeRecipientRequired => 'Sélectionnez le nombre de personnes à relayer.';
 
   @override
-  String get composeRecipientInvalid => 'Vous pouvez sélectionner entre 1 et 5 personnes.';
+  String get composeRecipientInvalid => 'Vous ne pouvez sélectionner qu\'entre 1 et 5 personnes.';
 
   @override
   String get composeErrorTitle => 'Info';

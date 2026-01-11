@@ -116,6 +116,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notificationsTitle => '通知';
 
   @override
+  String notificationsUnreadCountLabel(Object count) {
+    return '未读通知 $count 条';
+  }
+
+  @override
+  String get notificationsUnreadCountOverflow => '9+';
+
+  @override
   String get notificationsEmpty => '暂无通知。';
 
   @override
@@ -230,7 +238,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get composeWizardStep2Title => '要落到多少人手里？';
 
   @override
-  String get composeWizardStep2Subtitle => '可选择 1～5 人。';
+  String get composeWizardStep2Subtitle => '可选择 10～50 人。';
 
   @override
   String get composeWizardStep3Title => '要一起发送照片吗？';
@@ -259,6 +267,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get composeImagesTitle => '图片';
 
   @override
+  String get composeImageHelper => '最多可附加3张照片。';
+
+  @override
+  String get composeImageUploadHint => '请上传图片。';
+
+  @override
+  String get composeImageDelete => '删除图片';
+
+  @override
+  String get composeSelectedImagesTitle => '已选择的图片';
+
+  @override
   String get composeAddImage => '添加照片';
 
   @override
@@ -281,6 +301,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get composeImageLimit => '最多可添加 3 张图片。';
+
+  @override
+  String get composeImageReadFailed => '无法读取图片。请重试。';
+
+  @override
+  String get composeImageOptimizationFailed => '图片处理失败。请重试。';
 
   @override
   String get composePermissionDenied => '需要照片权限才能添加图片。';

@@ -112,7 +112,7 @@ class ProfileScreen extends ConsumerWidget {
                   iconBackground: AppColors.secondaryContainer,
                   iconColor: AppColors.onSecondaryContainer,
                   title: l10n.profileMenuNotices,
-                  onTap: () => context.push(AppRoutes.notifications),
+                  onTap: () => context.push(AppRoutes.notice),
                 ),
                 _SettingsMenuItem(
                   icon: Icons.volunteer_activism_outlined,
