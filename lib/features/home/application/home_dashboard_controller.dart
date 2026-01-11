@@ -50,9 +50,18 @@ class HomeDailyPrompt {
 
 /// 공지 카드 데이터
 class HomeAnnouncement {
-  const HomeAnnouncement({required this.isVisible});
+  const HomeAnnouncement({
+    required this.isVisible,
+    this.updatedAt,
+    this.publishedAt,
+  });
 
   final bool isVisible;
+  final DateTime? updatedAt;
+  final DateTime? publishedAt;
+
+  /// 표시용 날짜 (updatedAt 우선, 없으면 publishedAt)
+  DateTime? get displayDate => updatedAt ?? publishedAt;
 }
 
 /// 홈 대시보드 합산 상태
@@ -121,8 +130,10 @@ final homeDashboardProvider = Provider<HomeDashboardState>((ref) {
     index: _resolvePromptIndex(DateTime.now()),
   );
 
-  // 공지 데이터가 없으면 null로 유지 (MVP는 로컬 토글)
-  const announcement = HomeAnnouncement(isVisible: true);
+  // 공지 데이터 생성/매핑
+  // 우선순위: updatedAt > publishedAt > null (둘 다 없으면 subtitle 숨김)
+  // 모델에는 UTC 그대로 저장, 표시 직전에만 local 변환 (AnnouncementDateFormatter 사용)
+  final announcement = _buildAnnouncement();
 
   return HomeDashboardState(
     summary: summary,
@@ -131,9 +142,47 @@ final homeDashboardProvider = Provider<HomeDashboardState>((ref) {
     timelineItems: timelineItems,
     isTimelineLoading: isTimelineLoading,
     dailyPrompt: dailyPrompt,
-    announcement: announcement.isVisible ? announcement : null,
+    announcement: announcement?.isVisible == true ? announcement : null,
   );
 });
+
+/// 공지 데이터 생성/매핑
+/// 
+/// 현재: 더미 공지 (로컬 생성)
+/// 향후: 서버 연동 시 서버 응답의 updated_at/published_at을 매핑
+/// 
+/// 규칙:
+/// - updatedAt 우선, 없으면 publishedAt 사용
+/// - 둘 다 없으면 null (subtitle 숨김)
+/// - 모델에는 UTC 그대로 저장 (toLocal() 선변환 금지)
+/// - 표시는 AnnouncementDateFormatter.formatLocalDateTime() 사용
+HomeAnnouncement? _buildAnnouncement() {
+  // 현재는 더미 공지 (서버 연동 전)
+  // 더미 공지에 고정 날짜를 설정하여 subtitle이 표시되도록 함
+  // (매번 변하지 않도록 고정 UTC 날짜 사용)
+  
+  // 향후 서버 연동 시 아래 주석의 로직으로 교체:
+  // 
+  // final serverData = ...; // 서버 응답
+  // final updatedAt = serverData['updated_at'] != null
+  //     ? DateTime.parse(serverData['updated_at'] as String)
+  //     : null;
+  // final publishedAt = serverData['published_at'] != null
+  //     ? DateTime.parse(serverData['published_at'] as String)
+  //     : null;
+  // return HomeAnnouncement(
+  //   isVisible: true,
+  //   updatedAt: updatedAt,
+  //   publishedAt: publishedAt,
+  // );
+  
+  return HomeAnnouncement(
+    isVisible: true,
+    // 더미 공지: 고정 UTC 날짜 사용 (매번 변하지 않도록)
+    // 향후 서버 연동 시 서버에서 받은 날짜로 교체
+    publishedAt: DateTime.utc(2024, 1, 15, 0, 0, 0),
+  );
+}
 
 int _resolvePromptIndex(DateTime now) {
   final startOfYear = DateTime(now.year, 1, 1);

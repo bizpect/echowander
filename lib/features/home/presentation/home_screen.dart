@@ -14,6 +14,7 @@ import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/app_scaffold.dart';
 import '../../../core/presentation/widgets/app_skeleton.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../journey/application/journey_inbox_controller.dart';
 import '../../journey/application/journey_list_controller.dart';
@@ -96,7 +97,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           if (dashboard.announcement != null) ...[
             const SizedBox(height: AppSpacing.lg),
             // 업데이트 섹션
-            _SectionHeader(title: l10n.homeAnnouncementTitle),
+            _SectionHeader(
+              title: l10n.homeAnnouncementTitle,
+              subtitle: dashboard.announcement!.displayDate != null
+                  ? _formatAnnouncementDate(
+                      l10n,
+                      dashboard.announcement!.displayDate!,
+                    )
+                  : null,
+            ),
             const SizedBox(height: AppSpacing.spacing12),
             _AnnouncementCard(
               summary: l10n.homeAnnouncementSummary,
@@ -180,9 +189,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (updatedAt == null) {
       return null;
     }
-    final dateFormat = DateFormat.MMMd(l10n.localeName).add_Hm();
-    final localTime = updatedAt.toLocal();
-    return l10n.homeInboxSummaryUpdatedAt(dateFormat.format(localTime));
+    // 공통 포맷터 사용 (UTC/local 변환 중앙화, 재발 방지)
+    // DateTime 객체이므로 formatLocalDateTime 사용
+    final formatted = AnnouncementDateFormatter.formatLocalDateTime(
+      updatedAt,
+      l10n.localeName,
+    );
+    return l10n.homeInboxSummaryUpdatedAt(formatted);
+  }
+
+  String? _formatAnnouncementDate(
+    AppLocalizations l10n,
+    DateTime dateTime,
+  ) {
+    // 공통 포맷터 사용 (UTC/local 변환 중앙화, 재발 방지)
+    // DateTime 객체이므로 formatLocalDateTime 사용
+    return AnnouncementDateFormatter.formatLocalDateTime(
+      dateTime,
+      l10n.localeName,
+    );
   }
 }
 
@@ -655,8 +680,15 @@ class _TimelineRow extends StatelessWidget {
   }
 
   String _formatTime(AppLocalizations l10n, DateTime time) {
-    final formatter = DateFormat.Md(l10n.localeName).add_Hm();
-    return formatter.format(time.toLocal());
+    // 공통 포맷터 사용 (UTC/local 변환 중앙화, 재발 방지)
+    // 타임라인은 날짜+시간 형식 (Md + Hm)
+    // DateTime 객체이므로 formatLocalDateTime 사용
+    final pattern = DateFormat.Md(l10n.localeName).add_Hm();
+    return AnnouncementDateFormatter.formatLocalDateTime(
+      time,
+      l10n.localeName,
+      pattern: pattern,
+    );
   }
 }
 
