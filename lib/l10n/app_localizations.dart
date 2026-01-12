@@ -778,6 +778,66 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get composeCancel;
 
+  /// No description provided for @composeContentBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This content cannot be sent.'**
+  String get composeContentBlocked;
+
+  /// No description provided for @composeContentBlockedProfanity.
+  ///
+  /// In en, this message translates to:
+  /// **'Inappropriate language is not allowed.'**
+  String get composeContentBlockedProfanity;
+
+  /// No description provided for @composeContentBlockedSexual.
+  ///
+  /// In en, this message translates to:
+  /// **'Sexual content is prohibited.'**
+  String get composeContentBlockedSexual;
+
+  /// No description provided for @composeContentBlockedHate.
+  ///
+  /// In en, this message translates to:
+  /// **'Hate speech is prohibited.'**
+  String get composeContentBlockedHate;
+
+  /// No description provided for @composeContentBlockedThreat.
+  ///
+  /// In en, this message translates to:
+  /// **'Threatening content is prohibited.'**
+  String get composeContentBlockedThreat;
+
+  /// No description provided for @replyContentBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This content cannot be sent.'**
+  String get replyContentBlocked;
+
+  /// No description provided for @replyContentBlockedProfanity.
+  ///
+  /// In en, this message translates to:
+  /// **'Inappropriate language is not allowed.'**
+  String get replyContentBlockedProfanity;
+
+  /// No description provided for @replyContentBlockedSexual.
+  ///
+  /// In en, this message translates to:
+  /// **'Sexual content is prohibited.'**
+  String get replyContentBlockedSexual;
+
+  /// No description provided for @replyContentBlockedHate.
+  ///
+  /// In en, this message translates to:
+  /// **'Hate speech is prohibited.'**
+  String get replyContentBlockedHate;
+
+  /// No description provided for @replyContentBlockedThreat.
+  ///
+  /// In en, this message translates to:
+  /// **'Threatening content is prohibited.'**
+  String get replyContentBlockedThreat;
+
   /// No description provided for @composePermissionTitle.
   ///
   /// In en, this message translates to:
@@ -1209,6 +1269,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your report was submitted.'**
   String get inboxReportSuccessBody;
+
+  /// No description provided for @inboxReportAlreadyReportedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Already reported'**
+  String get inboxReportAlreadyReportedTitle;
+
+  /// No description provided for @inboxReportAlreadyReportedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You have already reported this message.'**
+  String get inboxReportAlreadyReportedBody;
 
   /// No description provided for @inboxActionFailed.
   ///

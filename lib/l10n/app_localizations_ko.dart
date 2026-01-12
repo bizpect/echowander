@@ -353,6 +353,36 @@ class AppLocalizationsKo extends AppLocalizations {
   String get composeCancel => '취소';
 
   @override
+  String get composeContentBlocked => '전송할 수 없는 표현이 포함되어 있어요.';
+
+  @override
+  String get composeContentBlockedProfanity => '부적절한 표현이 포함되어 있어요.';
+
+  @override
+  String get composeContentBlockedSexual => '성적 표현은 금지되어 있어요.';
+
+  @override
+  String get composeContentBlockedHate => '혐오 표현은 금지되어 있어요.';
+
+  @override
+  String get composeContentBlockedThreat => '협박 표현은 금지되어 있어요.';
+
+  @override
+  String get replyContentBlocked => '전송할 수 없는 표현이 포함되어 있어요.';
+
+  @override
+  String get replyContentBlockedProfanity => '부적절한 표현이 포함되어 있어요.';
+
+  @override
+  String get replyContentBlockedSexual => '성적 표현은 금지되어 있어요.';
+
+  @override
+  String get replyContentBlockedHate => '혐오 표현은 금지되어 있어요.';
+
+  @override
+  String get replyContentBlockedThreat => '협박 표현은 금지되어 있어요.';
+
+  @override
   String get composePermissionTitle => '사진 권한 필요';
 
   @override
@@ -569,6 +599,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get inboxReportSuccessBody => '신고가 접수됐어요.';
+
+  @override
+  String get inboxReportAlreadyReportedTitle => '이미 신고함';
+
+  @override
+  String get inboxReportAlreadyReportedBody => '이 메시지는 이미 신고하셨어요.';
 
   @override
   String get inboxActionFailed => '처리를 완료하지 못했어요.';

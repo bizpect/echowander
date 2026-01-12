@@ -646,7 +646,9 @@ create or replace function public.create_journey(
 )
 returns table (
   journey_id uuid,
-  created_at timestamptz
+  created_at timestamptz,
+  moderation_status text,
+  content_clean text
 )
 language plpgsql
 as $$
@@ -736,8 +738,15 @@ begin
     end loop;
   end if;
 
+  -- 트리거가 moderation을 적용한 후 조회
   return query
-  select _journey_id as journey_id, _created_at as created_at;
+  select 
+    j.id as journey_id,
+    j.created_at as created_at,
+    j.moderation_status,
+    j.content_clean
+  from public.journeys j
+  where j.id = _journey_id;
 end;
 $$;
 
@@ -786,6 +795,8 @@ begin
     ) as is_reward_unlocked
   from public.journeys
   where journeys.user_id = auth.uid()
+    -- 소프트삭제된 여정 제외
+    and journeys.filter_code <> 'REMOVED'
   order by journeys.created_at desc
   limit least(coalesce(page_size, 20), 50)
   offset greatest(coalesce(page_offset, 0), 0);
@@ -891,7 +902,9 @@ create or replace function public.respond_journey(
 )
 returns table (
   journey_id uuid,
-  completed boolean
+  completed boolean,
+  moderation_status text,
+  content_clean text
 )
 language plpgsql
 security definer
@@ -982,18 +995,32 @@ begin
   from public.journey_responses
   where journey_responses.journey_id = target_journey_id;
 
-  if _response_count >= _target then
-    update public.journeys
-    set status_code = 'COMPLETED',
-        updated_at = now()
-    where journeys.id = target_journey_id
-      and journeys.status_code <> 'COMPLETED';
-    return query
-    select target_journey_id, true;
-  end if;
+  -- 트리거가 moderation을 적용한 후 조회
+  declare
+    _moderation_status text;
+    _content_clean text;
+  begin
+    select moderation_status, content_clean
+    into _moderation_status, _content_clean
+    from public.journey_responses
+    where journey_id = target_journey_id
+      and responder_user_id = auth.uid()
+    order by created_at desc
+    limit 1;
 
-  return query
-  select target_journey_id, false;
+    if _response_count >= _target then
+      update public.journeys
+      set status_code = 'COMPLETED',
+          updated_at = now()
+      where journeys.id = target_journey_id
+        and journeys.status_code <> 'COMPLETED';
+      return query
+      select target_journey_id, true, _moderation_status, _content_clean;
+    else
+      return query
+      select target_journey_id, false, _moderation_status, _content_clean;
+    end if;
+  end;
 end;
 $$;
 
@@ -1491,8 +1518,11 @@ set search_path = public
 as $$
 declare
   v_report_count integer;
+  v_recipient_count integer;
+  v_threshold integer;
   v_report_id bigint;
   v_report_created_at timestamptz;
+  v_already_reported boolean;
 begin
   if auth.uid() is null then
     raise exception 'unauthorized';
@@ -1520,8 +1550,30 @@ begin
     raise exception 'unauthorized';
   end if;
 
+  -- 중복 신고 체크: UNIQUE 제약으로 방지되지만, 명시적 에러 메시지를 위해 사전 체크
+  select exists (
+    select 1
+    from public.journey_reports jr
+    where jr.journey_id = target_journey_id
+      and jr.reporter_user_id = auth.uid()
+  ) into v_already_reported;
+
+  if v_already_reported then
+    raise exception 'already_reported' using errcode = '23505';
+  end if;
+
+  -- 실제 수신자 수 계산
+  select count(*)
+  into v_recipient_count
+  from public.journey_recipients jr
+  where jr.journey_id = target_journey_id;
+
+  -- 임계치 계산: floor(N/2)+1
+  -- N=1→1, N=2→2, N=3→2, N=4→3, N=5→3
+  v_threshold := floor(v_recipient_count::numeric / 2)::integer + 1;
+
   -- INSERT with RETURNING: 테이블 스키마를 명시적으로 지정하여 ambiguous 제거
-  -- returns table의 created_at과 충돌 방지를 위해 public.journey_reports.created_at 명시
+  -- UNIQUE 제약으로 중복 신고 방지 (1인 1신고 강제)
   insert into public.journey_reports (
     journey_id,
     reporter_user_id,
@@ -1534,7 +1586,7 @@ begin
   )
   returning id, public.journey_reports.created_at into v_report_id, v_report_created_at;
 
-  -- journey_recipients 업데이트: 신고 상태 + 숨김 처리
+  -- journey_recipients 업데이트: 신고자에게만 즉시 숨김 처리 (개별 hide)
   update public.journey_recipients jr
   set status_code = 'REPORTED',
       is_hidden = true,
@@ -1544,18 +1596,29 @@ begin
   where jr.journey_id = target_journey_id
     and jr.recipient_user_id = auth.uid();
 
-  -- SELECT COUNT: 테이블 alias 사용
-  select count(*)
+  -- 유니크 신고자 수 계산 (DISTINCT reporter_user_id)
+  select count(distinct reporter_user_id)
   into v_report_count
   from public.journey_reports jr
   where jr.journey_id = target_journey_id;
 
-  if v_report_count >= 3 then
+  -- 임계치 도달 시 전체 소프트삭제 (모든 수신자에게 숨김 처리)
+  if v_report_count >= v_threshold then
+    -- journeys 테이블: filter_code를 'REMOVED'로 설정
     update public.journeys j
-    set filter_code = 'HELD',
+    set filter_code = 'REMOVED',
         updated_at = now()
     where j.id = target_journey_id
       and j.filter_code <> 'REMOVED';
+
+    -- 모든 수신자에게 숨김 처리 (전체 소프트삭제 전파)
+    update public.journey_recipients jr
+    set is_hidden = true,
+        hidden_reason_code = 'HIDE_REPORTED',
+        hidden_at = now(),
+        updated_at = now()
+    where jr.journey_id = target_journey_id
+      and jr.is_hidden = false;
   end if;
 
   -- RETURN QUERY: 변수명을 v_report_created_at으로 사용
@@ -1699,6 +1762,8 @@ begin
     from public.journeys j
     where j.id = p_journey_id
       and j.user_id = v_user_id
+      -- 소프트삭제된 여정 제외
+      and j.filter_code <> 'REMOVED'
   ) then
     raise exception 'unauthorized:not_sender';
   end if;
@@ -2442,6 +2507,263 @@ begin
     and bp.status = 'PUBLISHED'
     and bp.published_at <= now()
   limit 1;
+end;
+$$;
+
+-- ============================================================================
+-- UGC Moderation Functions
+-- ============================================================================
+
+-- 텍스트 정규화 함수
+create or replace function public.normalize_text(input text)
+returns text
+language plpgsql
+immutable
+as $$
+declare
+  normalized text;
+begin
+  if input is null then
+    return '';
+  end if;
+  
+  -- 소문자화
+  normalized := lower(input);
+  
+  -- 특수문자 제거/치환 (일부 특수문자는 공백으로)
+  normalized := regexp_replace(normalized, '[^\w\s가-힣]', ' ', 'g');
+  
+  -- 연속 공백을 단일 공백으로 축소
+  normalized := regexp_replace(normalized, '\s+', ' ', 'g');
+  
+  -- 앞뒤 공백 제거
+  normalized := trim(normalized);
+  
+  -- 반복문자 축소 (같은 문자가 3회 이상이면 2회로)
+  normalized := regexp_replace(normalized, '(.)\1{2,}', '\1\1', 'g');
+  
+  return normalized;
+end;
+$$;
+
+-- 텍스트 판정 함수 (ALLOW/MASK/BLOCK/REVIEW)
+create or replace function public.classify_text(input text)
+returns table(status text, reason text)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  normalized text;
+  compact text; -- 공백 제거 버전
+  matched_term record;
+  has_block boolean := false;
+  has_mask boolean := false;
+  matched_category text;
+begin
+  if input is null or length(trim(input)) = 0 then
+    return query select 'ALLOW'::text, null::text;
+    return;
+  end if;
+  
+  -- 정규화
+  normalized := public.normalize_text(input);
+  compact := regexp_replace(normalized, '\s', '', 'g');
+  
+  -- BLOCK severity 용어 검사 (우선순위 높음)
+  for matched_term in
+    select term, category, is_regex
+    from public.banned_terms
+    where enabled = true
+      and severity = 'BLOCK'
+  loop
+    if matched_term.is_regex then
+      if normalized ~* matched_term.term or compact ~* matched_term.term then
+        has_block := true;
+        matched_category := matched_term.category;
+        exit;
+      end if;
+    else
+      if normalized like '%' || matched_term.term || '%' 
+         or compact like '%' || matched_term.term || '%' then
+        has_block := true;
+        matched_category := matched_term.category;
+        exit;
+      end if;
+    end if;
+  end loop;
+  
+  if has_block then
+    return query select 'BLOCK'::text, matched_category;
+    return;
+  end if;
+  
+  -- MASK severity 용어 검사
+  for matched_term in
+    select term, category, is_regex
+    from public.banned_terms
+    where enabled = true
+      and severity = 'MASK'
+  loop
+    if matched_term.is_regex then
+      if normalized ~* matched_term.term or compact ~* matched_term.term then
+        has_mask := true;
+        matched_category := matched_term.category;
+        exit;
+      end if;
+    else
+      if normalized like '%' || matched_term.term || '%' 
+         or compact like '%' || matched_term.term || '%' then
+        has_mask := true;
+        matched_category := matched_term.category;
+        exit;
+      end if;
+    end if;
+  end loop;
+  
+  if has_mask then
+    return query select 'MASK'::text, matched_category;
+    return;
+  end if;
+  
+  -- 매칭 없음
+  return query select 'ALLOW'::text, null::text;
+end;
+$$;
+
+-- 텍스트 마스킹 함수
+create or replace function public.mask_text(original text)
+returns text
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  normalized text;
+  compact text;
+  masked text;
+  matched_term record;
+begin
+  if original is null then
+    return '';
+  end if;
+  
+  masked := original;
+  normalized := public.normalize_text(original);
+  compact := regexp_replace(normalized, '\s', '', 'g');
+  
+  -- MASK severity 용어만 마스킹 (BLOCK은 저장 자체를 막으므로 여기서는 처리 안 함)
+  for matched_term in
+    select term, is_regex
+    from public.banned_terms
+    where enabled = true
+      and severity = 'MASK'
+    order by length(term) desc -- 긴 용어부터 처리 (부분 매칭 방지)
+  loop
+    if matched_term.is_regex then
+      -- 정규식 매칭: 원문에서 매칭된 부분을 ***로 치환
+      if normalized ~* matched_term.term then
+        masked := regexp_replace(masked, matched_term.term, '***', 'gi');
+      end if;
+      if compact ~* matched_term.term then
+        -- 공백 제거 버전도 체크하여 원문에서 마스킹
+        masked := regexp_replace(masked, matched_term.term, '***', 'gi');
+      end if;
+    else
+      -- 일반 문자열 매칭: 원문에서 매칭된 부분을 ***로 치환
+      if position(lower(matched_term.term) in lower(masked)) > 0 then
+        masked := regexp_replace(masked, matched_term.term, '***', 'gi');
+      end if;
+      -- 공백 제거 버전도 체크
+      if position(lower(matched_term.term) in lower(regexp_replace(masked, '\s', '', 'g'))) > 0 then
+        masked := regexp_replace(masked, matched_term.term, '***', 'gi');
+      end if;
+    end if;
+  end loop;
+  
+  return masked;
+end;
+$$;
+
+-- journeys 테이블 moderation 적용 함수 (트리거용)
+create or replace function public.apply_journey_moderation()
+returns trigger
+language plpgsql
+as $$
+declare
+  classification record;
+begin
+  -- content가 변경되지 않았으면 스킵
+  if tg_op = 'UPDATE' and old.content is not distinct from new.content then
+    return new;
+  end if;
+  
+  -- 판정 수행
+  select * into classification
+  from public.classify_text(new.content);
+  
+  new.moderation_status := classification.status;
+  new.moderation_reason := classification.reason;
+  new.moderated_at := now();
+  
+  -- BLOCK이면 저장 거부
+  if classification.status = 'BLOCK' then
+    raise exception 'content_blocked' using
+      message = 'This content cannot be posted due to moderation policy',
+      detail = format('reason: %s', classification.reason);
+  end if;
+  
+  -- MASK면 content_clean에 마스킹된 텍스트 저장
+  if classification.status = 'MASK' then
+    new.content_clean := public.mask_text(new.content);
+  else
+    -- ALLOW나 REVIEW면 원문 그대로
+    new.content_clean := new.content;
+  end if;
+  
+  return new;
+end;
+$$;
+
+-- journey_responses 테이블 moderation 적용 함수 (트리거용)
+create or replace function public.apply_journey_response_moderation()
+returns trigger
+language plpgsql
+as $$
+declare
+  classification record;
+begin
+  -- content가 변경되지 않았으면 스킵
+  if tg_op = 'UPDATE' and old.content is not distinct from new.content then
+    return new;
+  end if;
+  
+  -- 판정 수행
+  select * into classification
+  from public.classify_text(new.content);
+  
+  new.moderation_status := classification.status;
+  new.moderation_reason := classification.reason;
+  new.moderated_at := now();
+  
+  -- BLOCK이면 저장 거부
+  if classification.status = 'BLOCK' then
+    raise exception 'content_blocked' using
+      message = 'This content cannot be posted due to moderation policy',
+      detail = format('reason: %s', classification.reason);
+  end if;
+  
+  -- MASK면 content_clean에 마스킹된 텍스트 저장
+  if classification.status = 'MASK' then
+    new.content_clean := public.mask_text(new.content);
+  else
+    -- ALLOW나 REVIEW면 원문 그대로
+    new.content_clean := new.content;
+  end if;
+  
+  return new;
 end;
 $$;
 

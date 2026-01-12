@@ -2,10 +2,17 @@ import 'sent_journey_detail.dart';
 import 'sent_journey_response.dart';
 
 class JourneyCreationResult {
-  JourneyCreationResult({required this.journeyId, required this.createdAt});
+  JourneyCreationResult({
+    required this.journeyId,
+    required this.createdAt,
+    this.moderationStatus,
+    this.contentClean,
+  });
 
   final String journeyId;
   final DateTime createdAt;
+  final String? moderationStatus;
+  final String? contentClean;
 }
 
 enum JourneyCreationError {
@@ -19,6 +26,7 @@ enum JourneyCreationError {
   invalidRecipientCount,
   missingCodeValue,
   invalidPayload,
+  contentBlocked, // moderation BLOCK
   serverRejected,
   network,
   unknown,
@@ -39,6 +47,7 @@ class JourneySummary {
     required this.statusCode,
     required this.filterCode,
     required this.isRewardUnlocked,
+    this.contentClean,
   });
 
   final String journeyId;
@@ -48,6 +57,10 @@ class JourneySummary {
   final String statusCode;
   final String filterCode;
   final bool isRewardUnlocked;
+  final String? contentClean; // 마스킹된 텍스트 (MASK인 경우)
+  
+  // 화면 표시용 텍스트 (content_clean이 있으면 우선 사용)
+  String get displayContent => contentClean ?? content;
 }
 
 enum JourneyListError {
@@ -74,6 +87,7 @@ class JourneyInboxItem {
     required this.createdAt,
     required this.imageCount,
     required this.recipientStatus,
+    this.contentClean,
   });
 
   final int recipientId; // journey_recipients.id (PK)
@@ -83,6 +97,10 @@ class JourneyInboxItem {
   final DateTime createdAt;
   final int imageCount;
   final String recipientStatus;
+  final String? contentClean; // 마스킹된 텍스트 (MASK인 경우)
+  
+  // 화면 표시용 텍스트 (content_clean이 있으면 우선 사용)
+  String get displayContent => contentClean ?? content;
 }
 
 class JourneyProgress {
@@ -115,12 +133,17 @@ class JourneyReplyItem {
     required this.content,
     required this.createdAt,
     required this.responderNickname,
+    this.contentClean,
   });
 
   final int responseId;
   final String content;
   final DateTime createdAt;
   final String? responderNickname;
+  final String? contentClean; // 마스킹된 텍스트 (MASK인 경우)
+  
+  // 화면 표시용 텍스트 (content_clean이 있으면 우선 사용)
+  String get displayContent => contentClean ?? content;
 }
 
 enum JourneyInboxError {
@@ -145,6 +168,7 @@ enum JourneyActionError {
   invalidPayload,
   serverRejected,
   network,
+  alreadyReported,
   unknown,
 }
 
@@ -174,6 +198,7 @@ enum JourneyReplyError {
   unauthorized,
   invalidPayload,
   unexpectedEmpty,
+  contentBlocked, // moderation BLOCK
   serverRejected,
   network,
   unknown,

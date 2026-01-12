@@ -353,6 +353,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get composeCancel => '取消';
 
   @override
+  String get composeContentBlocked => '包含无法发送的内容。';
+
+  @override
+  String get composeContentBlockedProfanity => '包含不当用语。';
+
+  @override
+  String get composeContentBlockedSexual => '禁止包含性内容。';
+
+  @override
+  String get composeContentBlockedHate => '禁止仇恨言论。';
+
+  @override
+  String get composeContentBlockedThreat => '禁止威胁性内容。';
+
+  @override
+  String get replyContentBlocked => '包含无法发送的内容。';
+
+  @override
+  String get replyContentBlockedProfanity => '包含不当用语。';
+
+  @override
+  String get replyContentBlockedSexual => '禁止包含性内容。';
+
+  @override
+  String get replyContentBlockedHate => '禁止仇恨言论。';
+
+  @override
+  String get replyContentBlockedThreat => '禁止威胁性内容。';
+
+  @override
   String get composePermissionTitle => '允许照片权限';
 
   @override
@@ -569,6 +599,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get inboxReportSuccessBody => '你的举报已提交。';
+
+  @override
+  String get inboxReportAlreadyReportedTitle => '已举报';
+
+  @override
+  String get inboxReportAlreadyReportedBody => '你已经举报过这条消息了。';
 
   @override
   String get inboxActionFailed => '无法完成此操作。';

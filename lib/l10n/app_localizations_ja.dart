@@ -353,6 +353,36 @@ class AppLocalizationsJa extends AppLocalizations {
   String get composeCancel => 'キャンセル';
 
   @override
+  String get composeContentBlocked => '送信できない表現が含まれています。';
+
+  @override
+  String get composeContentBlockedProfanity => '不適切な表現が含まれています。';
+
+  @override
+  String get composeContentBlockedSexual => '性的な表現は禁止されています。';
+
+  @override
+  String get composeContentBlockedHate => '差別的表現は禁止されています。';
+
+  @override
+  String get composeContentBlockedThreat => '脅迫的な表現は禁止されています。';
+
+  @override
+  String get replyContentBlocked => '送信できない表現が含まれています。';
+
+  @override
+  String get replyContentBlockedProfanity => '不適切な表現が含まれています。';
+
+  @override
+  String get replyContentBlockedSexual => '性的な表現は禁止されています。';
+
+  @override
+  String get replyContentBlockedHate => '差別的表現は禁止されています。';
+
+  @override
+  String get replyContentBlockedThreat => '脅迫的な表現は禁止されています。';
+
+  @override
   String get composePermissionTitle => '写真の許可';
 
   @override
@@ -569,6 +599,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get inboxReportSuccessBody => '報告を送信しました。';
+
+  @override
+  String get inboxReportAlreadyReportedTitle => '既に報告済み';
+
+  @override
+  String get inboxReportAlreadyReportedBody => 'このメッセージは既に報告されています。';
 
   @override
   String get inboxActionFailed => '操作を完了できませんでした。';

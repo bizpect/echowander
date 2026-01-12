@@ -353,6 +353,36 @@ class AppLocalizationsEs extends AppLocalizations {
   String get composeCancel => 'Cancelar';
 
   @override
+  String get composeContentBlocked => 'Este contenido no se puede enviar.';
+
+  @override
+  String get composeContentBlockedProfanity => 'No se permite lenguaje inapropiado.';
+
+  @override
+  String get composeContentBlockedSexual => 'El contenido sexual está prohibido.';
+
+  @override
+  String get composeContentBlockedHate => 'El discurso de odio está prohibido.';
+
+  @override
+  String get composeContentBlockedThreat => 'El contenido amenazante está prohibido.';
+
+  @override
+  String get replyContentBlocked => 'Este contenido no se puede enviar.';
+
+  @override
+  String get replyContentBlockedProfanity => 'No se permite lenguaje inapropiado.';
+
+  @override
+  String get replyContentBlockedSexual => 'El contenido sexual está prohibido.';
+
+  @override
+  String get replyContentBlockedHate => 'El discurso de odio está prohibido.';
+
+  @override
+  String get replyContentBlockedThreat => 'El contenido amenazante está prohibido.';
+
+  @override
   String get composePermissionTitle => 'Permitir acceso a fotos';
 
   @override
@@ -569,6 +599,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get inboxReportSuccessBody => 'Tu reporte fue enviado.';
+
+  @override
+  String get inboxReportAlreadyReportedTitle => 'Ya reportado';
+
+  @override
+  String get inboxReportAlreadyReportedBody => 'Ya has reportado este mensaje.';
 
   @override
   String get inboxActionFailed => 'No se pudo completar la acción.';

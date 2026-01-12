@@ -198,24 +198,54 @@ class SupabaseJourneyRepository implements JourneyRepository {
     final first = payload.first;
     if (first is! Map<String, dynamic>) {
       if (kDebugMode) {
-        debugPrint('compose: create_journey 응답 첫 항목 형식 오류 ($first)');
+        debugPrint('compose: create_journey 응답 형식 오류 (not Map)');
       }
-      throw const FormatException('Invalid first item format');
+      throw const FormatException('Invalid payload format');
     }
 
-    final journeyId = first['journey_id'];
-    final createdAt = first['created_at'];
-    if (journeyId is! String || createdAt is! String) {
+    // content_blocked 에러 체크
+    if (first.containsKey('code') && first['code'] == 'content_blocked') {
       if (kDebugMode) {
-        debugPrint('compose: create_journey 응답 키 누락 ($first)');
+        debugPrint('compose: content_blocked 에러');
       }
-      throw const FormatException('Missing required fields');
+      throw JourneyCreationException(JourneyCreationError.contentBlocked);
     }
 
     return JourneyCreationResult(
-      journeyId: journeyId,
-      createdAt: DateTime.parse(createdAt),
+      journeyId: first['journey_id'] as String,
+      createdAt: DateTime.parse(first['created_at'] as String),
+      moderationStatus: first['moderation_status'] as String?,
+      contentClean: first['content_clean'] as String?,
     );
+  }
+
+  /// 에러 메시지에서 에러 코드 매핑
+  JourneyCreationError? _mapErrorFromResponse(String responseBody) {
+    final errorCode = _extractErrorCode(responseBody);
+    switch (errorCode) {
+      case 'empty_content':
+        return JourneyCreationError.emptyContent;
+      case 'content_too_long':
+        return JourneyCreationError.contentTooLong;
+      case 'missing_language':
+        return JourneyCreationError.missingLanguage;
+      case 'too_many_images':
+        return JourneyCreationError.tooManyImages;
+      case 'contains_url':
+      case 'contains_email':
+      case 'contains_phone':
+        return JourneyCreationError.containsForbidden;
+      case 'content_blocked':
+        return JourneyCreationError.contentBlocked;
+      case 'invalid_recipient_count':
+        return JourneyCreationError.invalidRecipientCount;
+      case 'unauthorized':
+        return JourneyCreationError.unauthorized;
+      case 'missing_code_value':
+        return JourneyCreationError.missingCodeValue;
+      default:
+        return null;
+    }
   }
 
   @override
@@ -609,6 +639,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
           createdAt: DateTime.parse(row['created_at'] as String),
           imageCount: (row['image_count'] as num?)?.toInt() ?? 0,
           recipientStatus: row['recipient_status'] as String? ?? 'ASSIGNED',
+          contentClean: row['content_clean'] as String?,
         );
         if (kDebugMode && i == 0) {
           debugPrint(
@@ -740,9 +771,15 @@ class SupabaseJourneyRepository implements JourneyRepository {
           throw JourneyActionException(JourneyActionError.invalidPayload);
         case NetworkErrorType.serverUnavailable:
         case NetworkErrorType.serverRejected:
+          // content_blocked 에러 체크
+          final mapped = _mapReplyErrorFromResponse(error.message ?? '');
+          throw JourneyReplyException(
+            mapped ?? JourneyReplyError.serverRejected,
+          );
         case NetworkErrorType.missingConfig:
+          throw JourneyReplyException(JourneyReplyError.missingConfig);
         case NetworkErrorType.unknown:
-          throw JourneyActionException(JourneyActionError.serverRejected);
+          throw JourneyReplyException(JourneyReplyError.unknown);
       }
     }
   }
@@ -982,6 +1019,23 @@ class SupabaseJourneyRepository implements JourneyRepository {
           );
         }
       }
+      // report_journey RPC에서 중복 신고 감지
+      if (rpc == 'report_journey') {
+        final errorCode = error.parsedErrorCode;
+        final errorMessage = error.rawBody ?? '';
+        if (errorCode == '23505' ||
+            errorCode == 'already_reported' ||
+            errorMessage.toLowerCase().contains('already_reported') ||
+            errorMessage.toLowerCase().contains('unique constraint')) {
+          if (kDebugMode) {
+            debugPrint(
+              '[$_logPrefix][report_journey:journeyId=$journeyId] 중복 신고 감지: errorCode=$errorCode',
+            );
+          }
+          throw JourneyActionException(JourneyActionError.alreadyReported);
+        }
+      }
+
       switch (error.type) {
         case NetworkErrorType.network:
         case NetworkErrorType.timeout:
@@ -1476,6 +1530,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
       responseCount: (row['response_count'] as num?)?.toInt() ?? 0,
       imageCount: (row['image_count'] as num?)?.toInt() ?? 0,
       isRewardUnlocked: row['is_reward_unlocked'] as bool? ?? false,
+      contentClean: row['content_clean'] as String?,
     );
   }
 
@@ -1624,6 +1679,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
             createdAt: DateTime.parse(row['created_at'] as String),
             responderNickname: (row['responder_nickname'] as String? ?? '')
                 .trim(),
+            contentClean: row['content_clean'] as String?,
           ),
         )
         .toList();
@@ -1833,37 +1889,27 @@ class SupabaseJourneyRepository implements JourneyRepository {
     }
   }
 
-  JourneyCreationError? _mapErrorFromResponse(String body) {
-    final errorCode = _extractErrorCode(body);
-    switch (errorCode) {
-      case 'empty_content':
-        return JourneyCreationError.emptyContent;
-      case 'content_too_long':
-        return JourneyCreationError.contentTooLong;
-      case 'missing_language':
-        return JourneyCreationError.missingLanguage;
-      case 'too_many_images':
-        return JourneyCreationError.tooManyImages;
-      case 'contains_url':
-      case 'contains_email':
-      case 'contains_phone':
-        return JourneyCreationError.containsForbidden;
-      case 'invalid_recipient_count':
-        return JourneyCreationError.invalidRecipientCount;
-      case 'unauthorized':
-        return JourneyCreationError.unauthorized;
-      case 'missing_code_value':
-        return JourneyCreationError.missingCodeValue;
-      default:
-        return null;
-    }
-  }
-
   JourneyListError? _mapListErrorFromResponse(String body) {
     final errorCode = _extractErrorCode(body);
     switch (errorCode) {
       case 'unauthorized':
         return JourneyListError.unauthorized;
+      default:
+        return null;
+    }
+  }
+
+  JourneyReplyError? _mapReplyErrorFromResponse(String body) {
+    final errorCode = _extractErrorCode(body);
+    switch (errorCode) {
+      case 'empty_content':
+        return JourneyReplyError.unexpectedEmpty;
+      case 'content_too_long':
+        return JourneyReplyError.invalidPayload;
+      case 'content_blocked':
+        return JourneyReplyError.contentBlocked;
+      case 'unauthorized':
+        return JourneyReplyError.unauthorized;
       default:
         return null;
     }

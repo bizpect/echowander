@@ -7,6 +7,7 @@ class SentJourneyDetail {
     required this.responseCount,
     required this.imageCount,
     required this.isRewardUnlocked,
+    this.contentClean,
   });
 
   final String journeyId;
@@ -16,4 +17,8 @@ class SentJourneyDetail {
   final int responseCount;
   final int imageCount;
   final bool isRewardUnlocked;
+  final String? contentClean; // 마스킹된 텍스트 (MASK인 경우)
+  
+  // 화면 표시용 텍스트 (content_clean이 있으면 우선 사용)
+  String get displayContent => contentClean ?? content;
 }

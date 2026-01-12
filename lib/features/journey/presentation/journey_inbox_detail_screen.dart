@@ -606,6 +606,16 @@ class _JourneyInboxDetailScreenState
       if (!mounted) {
         return;
       }
+      // 중복 신고 에러 처리
+      if (e.error == JourneyActionError.alreadyReported) {
+        await showAppAlertDialog(
+          context: context,
+          title: l10n.inboxReportAlreadyReportedTitle,
+          message: l10n.inboxReportAlreadyReportedBody,
+          confirmLabel: l10n.composeOk,
+        );
+        return;
+      }
       await showAppAlertDialog(
         context: context,
         title: l10n.composeErrorTitle,

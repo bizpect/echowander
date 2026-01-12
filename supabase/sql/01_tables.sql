@@ -67,12 +67,28 @@ create table if not exists public.user_profiles (
     on delete cascade
 );
 
--- 금칙어 테이블
+-- 금칙어 테이블 (닉네임용)
 create table if not exists public.forbidden_words (
   word text primary key,
   is_enabled boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
+);
+
+-- UGC moderation용 금칙어 테이블
+create table if not exists public.banned_terms (
+  id bigserial primary key,
+  term text not null,
+  severity text not null, -- 'MASK' or 'BLOCK'
+  category text not null, -- 'profanity' / 'sexual' / 'hate' / 'threat'
+  is_regex boolean not null default false,
+  enabled boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint banned_terms_severity_check
+    check (severity in ('MASK', 'BLOCK')),
+  constraint banned_terms_category_check
+    check (category in ('profanity', 'sexual', 'hate', 'threat'))
 );
 
 create table if not exists public.user_blocks (
@@ -163,6 +179,11 @@ create table if not exists public.journeys (
   filter_code text not null default 'OK',
   language_tag text not null,
   content text not null,
+  -- moderation 필드
+  content_clean text,
+  moderation_status text not null default 'ALLOW',
+  moderation_reason text,
+  moderated_at timestamptz,
   requested_recipient_count integer not null default 1,
   response_target integer not null default 1,
   relay_deadline_at timestamptz not null default (now() + interval '72 hours'),
@@ -182,7 +203,9 @@ create table if not exists public.journeys (
   constraint journeys_content_length
     check (char_length(content) <= 500),
   constraint journeys_recipient_count_range
-    check (requested_recipient_count between 1 and 5)
+    check (requested_recipient_count between 1 and 5),
+  constraint journeys_moderation_status_check
+    check (moderation_status in ('ALLOW', 'MASK', 'BLOCK', 'REVIEW'))
 );
 
 
@@ -305,6 +328,11 @@ create table if not exists public.journey_responses (
   -- 스냅샷 필드: 닉네임 JOIN 없이 결과 조회 (RLS 유지)
   snapshot_nickname text,
   content text not null,
+  -- moderation 필드
+  content_clean text,
+  moderation_status text not null default 'ALLOW',
+  moderation_reason text,
+  moderated_at timestamptz,
   is_hidden boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -317,7 +345,9 @@ create table if not exists public.journey_responses (
     references public.users (user_id)
     on delete cascade,
   constraint journey_responses_length
-    check (char_length(content) <= 500)
+    check (char_length(content) <= 500),
+  constraint journey_responses_moderation_status_check
+    check (moderation_status in ('ALLOW', 'MASK', 'BLOCK', 'REVIEW'))
 );
 
 create table if not exists public.journey_reports (
@@ -338,7 +368,10 @@ create table if not exists public.journey_reports (
     on delete cascade,
   constraint journey_reports_reason_fk
     foreign key (reason_group, reason_code)
-    references public.common_codes (code_type, code_value)
+    references public.common_codes (code_type, code_value),
+  -- 유니크 신고 제약: 1인 1신고 강제
+  constraint journey_reports_unique_reporter
+    unique (journey_id, reporter_user_id)
 );
 
 create table if not exists public.journey_response_reports (
