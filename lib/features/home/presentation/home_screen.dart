@@ -14,6 +14,7 @@ import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/app_scaffold.dart';
 import '../../../core/presentation/widgets/app_skeleton.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
+import '../../../core/formatters/app_date_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../journey/application/journey_inbox_controller.dart';
@@ -691,14 +692,10 @@ class _TimelineRow extends StatelessWidget {
   }
 
   String _formatTime(AppLocalizations l10n, DateTime time) {
-    // 공통 포맷터 사용 (UTC/local 변환 중앙화, 재발 방지)
-    // 타임라인은 날짜+시간 형식 (Md + Hm)
-    // DateTime 객체이므로 formatLocalDateTime 사용
-    final pattern = DateFormat.Md(l10n.localeName).add_Hm();
-    return AnnouncementDateFormatter.formatLocalDateTime(
+    // 공통 포맷터 사용 (A안 규칙: 오늘/올해/작년 구분)
+    return AppDateFormatter.formatCardTimestamp(
       time,
       l10n.localeName,
-      pattern: pattern,
     );
   }
 }

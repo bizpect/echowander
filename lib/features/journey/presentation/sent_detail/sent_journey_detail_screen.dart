@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_radius.dart';
 import '../../../../app/theme/app_spacing.dart';
+import '../../../../core/formatters/app_date_formatter.dart';
 import '../../../../core/presentation/navigation/tab_navigation_helper.dart';
 import '../../../../core/presentation/widgets/app_button.dart';
 import '../../../../core/presentation/widgets/app_dialog.dart';
@@ -161,14 +161,13 @@ class _SentJourneyDetailScreenState
     List<SentJourneyResponse> responses,
     bool responsesLoadFailed,
   ) {
-    final dateFormat = DateFormat.yMMMd(l10n.localeName).add_Hm();
     final isCompleted = detail.statusCode == 'COMPLETED';
     final isUnlocked = detail.isRewardUnlocked;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildHeader(l10n, detail, dateFormat),
+        _buildHeader(l10n, detail),
         SizedBox(height: AppSpacing.spacing20),
         _buildContentCard(detail),
         SizedBox(height: AppSpacing.spacing20),
@@ -186,7 +185,6 @@ class _SentJourneyDetailScreenState
   Widget _buildHeader(
     AppLocalizations l10n,
     SentJourneyDetail detail,
-    DateFormat dateFormat,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +196,10 @@ class _SentJourneyDetailScreenState
             Icon(Icons.schedule, size: 14, color: AppColors.onSurfaceVariant),
             SizedBox(width: AppSpacing.spacing4),
             Text(
-              dateFormat.format(detail.createdAt.toLocal()),
+              AppDateFormatter.formatCardTimestamp(
+                detail.createdAt,
+                l10n.localeName,
+              ),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.onSurfaceVariant,
               ),
@@ -333,7 +334,6 @@ class _SentJourneyDetailScreenState
     AppLocalizations l10n,
     List<SentJourneyResponse> responses,
   ) {
-    final dateFormat = DateFormat.yMMMd(l10n.localeName).add_Hm();
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -361,7 +361,10 @@ class _SentJourneyDetailScreenState
                       ),
                     ),
                     Text(
-                      dateFormat.format(response.createdAt.toLocal()),
+                      AppDateFormatter.formatCardTimestamp(
+                        response.createdAt,
+                        l10n.localeName,
+                      ),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.onSurfaceVariant,
                       ),

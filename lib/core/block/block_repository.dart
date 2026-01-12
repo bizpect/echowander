@@ -42,5 +42,6 @@ abstract class BlockRepository {
   Future<void> unblockUser({
     required String targetUserId,
     required String accessToken,
+    String? traceId,
   });
 }

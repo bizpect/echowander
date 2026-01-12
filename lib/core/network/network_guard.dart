@@ -43,6 +43,7 @@ class NetworkGuard {
   /// [method]: HTTP 메소드 (로깅용)
   /// [meta]: 추가 메타데이터 (로깅용)
   /// [accessToken]: 액세스 토큰 (로깅용)
+  /// [onUnauthorizedRefresh]: 401 + PGRST303 발생 시 refresh 시도하는 콜백 (반환: 새 accessToken 또는 null)
   Future<T> execute<T>({
     required Future<T> Function() operation,
     RetryPolicy retryPolicy = RetryPolicy.none,
@@ -51,6 +52,7 @@ class NetworkGuard {
     String? method,
     Map<String, dynamic>? meta,
     String? accessToken,
+    Future<String?> Function()? onUnauthorizedRefresh,
   }) async {
     // nullable 파라미터를 non-nullable로 변환 (로깅용 기본값)
     final logUri = uri ?? Uri.parse('unknown://unknown');
@@ -78,6 +80,13 @@ class NetworkGuard {
         }
 
         final result = await operation();
+        // ✅ RPC 성공 시 상세 로깅 (traceId가 있으면)
+        final traceId = meta?['traceId'] as String?;
+        if (kDebugMode && traceId != null && context.contains('rpc')) {
+          debugPrint(
+            'NG[rpc] traceId=$traceId context=$context success',
+          );
+        }
         return result;
       } on SocketException catch (error) {
         lastError = error;
@@ -178,7 +187,71 @@ class NetworkGuard {
           message: lastResponseBody,
           originalError: error,
         );
-      } on NetworkRequestException {
+      } on NetworkRequestException catch (error) {
+        // ✅ RPC 에러 시 상세 로깅 (traceId가 있으면)
+        final traceId = meta?['traceId'] as String?;
+        if (kDebugMode && traceId != null && context.contains('rpc')) {
+          debugPrint(
+            'NG[rpc] traceId=$traceId status=${error.statusCode} bodyLen=${error.rawBody?.length ?? 0} code=${error.parsedErrorCode ?? "null"} msg=${error.parsedErrorMessage ?? "null"} details=${error.parsedErrorDetails ?? "null"}',
+          );
+        }
+        // ✅ 401 + PGRST303인 경우에만 refresh + 1회 retry
+        if (error.type == NetworkErrorType.unauthorized &&
+            error.statusCode == HttpStatus.unauthorized) {
+          final isPgrst303 = _isPgrst303Error(error);
+          if (isPgrst303 && onUnauthorizedRefresh != null) {
+            if (kDebugMode) {
+              debugPrint(
+                '[NetworkGuard][$traceLabel] 401 PGRST303 detected → refresh+retry(once)',
+              );
+            }
+            try {
+              // refresh 시도
+              final newAccessToken = await onUnauthorizedRefresh();
+              if (newAccessToken != null && newAccessToken.isNotEmpty) {
+                // refresh 성공 → 1회만 재시도
+                if (kDebugMode) {
+                  debugPrint(
+                    '[NetworkGuard][$traceLabel] refresh 성공 → 1회 재시도',
+                  );
+                }
+                try {
+                  final result = await operation();
+                  if (kDebugMode) {
+                    debugPrint(
+                      '[NetworkGuard][$traceLabel] retry result: success',
+                    );
+                  }
+                  return result;
+                } catch (retryError) {
+                  if (kDebugMode) {
+                    debugPrint(
+                      '[NetworkGuard][$traceLabel] retry result: failed ($retryError)',
+                    );
+                  }
+                  // 재시도 실패 시 원래 예외를 throw
+                  rethrow;
+                }
+              } else {
+                // refresh 실패 → 원래 예외를 throw
+                if (kDebugMode) {
+                  debugPrint(
+                    '[NetworkGuard][$traceLabel] refresh 실패 → 원래 예외 throw',
+                  );
+                }
+                rethrow;
+              }
+            } catch (refreshError) {
+              // refresh 중 예외 발생 → 원래 예외를 throw
+              if (kDebugMode) {
+                debugPrint(
+                  '[NetworkGuard][$traceLabel] refresh 중 예외: $refreshError → 원래 예외 throw',
+                );
+              }
+              rethrow;
+            }
+          }
+        }
         // 이미 NetworkRequestException으로 변환된 경우 재throw
         rethrow;
       } catch (error) {
@@ -228,6 +301,25 @@ class NetworkGuard {
     );
   }
 
+  /// PGRST303 에러인지 확인
+  bool _isPgrst303Error(NetworkRequestException error) {
+    // parsedErrorCode가 PGRST303인지 확인
+    if (error.parsedErrorCode == 'PGRST303') {
+      return true;
+    }
+    // rawBody에서 "PGRST303" 또는 "JWT expired" 확인
+    final rawBody = error.rawBody ?? '';
+    if (rawBody.contains('PGRST303') || rawBody.contains('JWT expired')) {
+      return true;
+    }
+    // message에서도 확인
+    final message = error.message ?? '';
+    if (message.contains('PGRST303') || message.contains('JWT expired')) {
+      return true;
+    }
+    return false;
+  }
+
   /// Supabase 에러 응답에서 error_code 추출
   String? _parseSupabaseErrorCode(String responseBody) {
     try {
@@ -261,6 +353,41 @@ class NetworkGuard {
     return null;
   }
 
+  /// PostgREST 에러 응답에서 message 필드 추출 (비즈니스 에러 키 식별용)
+  String? _parsePostgrestErrorMessage(String responseBody) {
+    try {
+      final payload = jsonDecode(responseBody) as Map<String, dynamic>;
+      // PostgREST 에러 형식: message 필드 (예: 'content_blocked')
+      final message = payload['message'] as String?;
+      if (message != null && message.isNotEmpty) {
+        return message;
+      }
+    } on FormatException {
+      return null;
+    }
+    return null;
+  }
+
+  /// PostgREST 에러 응답에서 details 필드 추출 (에러 상세 설명용)
+  String? _parsePostgrestErrorDetails(String responseBody) {
+    try {
+      final payload = jsonDecode(responseBody) as Map<String, dynamic>;
+      // PostgREST 에러 형식: details 필드 (복수형, 예: 'This content cannot be posted...')
+      final details = payload['details'] as String?;
+      if (details != null && details.isNotEmpty) {
+        return details;
+      }
+      // detail (단수형)도 확인 (호환성)
+      final detail = payload['detail'] as String?;
+      if (detail != null && detail.isNotEmpty) {
+        return detail;
+      }
+    } on FormatException {
+      return null;
+    }
+    return null;
+  }
+
   /// HTTP 응답 상태 코드를 NetworkRequestException으로 변환
   NetworkRequestException statusCodeToException({
     required int statusCode,
@@ -270,6 +397,8 @@ class NetworkGuard {
     String? rawBody,
     String? parsedErrorCode,
     String? parsedErrorDescription,
+    String? parsedErrorMessage,
+    String? parsedErrorDetails,
     String? contentType,
     bool? isHtml,
     bool? isEmpty,
@@ -278,6 +407,10 @@ class NetworkGuard {
     // ✅ parsedErrorCode가 없으면 Supabase 에러 응답에서 추출
     final errorCode = parsedErrorCode ?? _parseSupabaseErrorCode(responseBody);
     final errorDesc = parsedErrorDescription;
+    // ✅ parsedErrorMessage가 없으면 PostgREST 에러 응답에서 추출 (비즈니스 에러 키 식별용)
+    final errorMessage = parsedErrorMessage ?? _parsePostgrestErrorMessage(responseBody);
+    // ✅ parsedErrorDetails 추출 (에러 상세 설명용, 로깅/디버깅 목적)
+    final errorDetails = parsedErrorDetails ?? _parsePostgrestErrorDetails(responseBody);
 
     // 정규화된 safe 메시지 생성
     final safeMessage = errorCode != null
@@ -297,6 +430,8 @@ class NetworkGuard {
         rawBody: rawBody ?? responseBody,
         parsedErrorCode: errorCode,
         parsedErrorDescription: errorDesc,
+        parsedErrorMessage: errorMessage,
+        parsedErrorDetails: errorDetails,
         contentType: contentType,
         isHtml: isHtml,
         isEmpty: isEmpty,
@@ -313,6 +448,8 @@ class NetworkGuard {
         rawBody: rawBody ?? responseBody,
         parsedErrorCode: errorCode,
         parsedErrorDescription: errorDesc,
+        parsedErrorMessage: errorMessage,
+        parsedErrorDetails: errorDetails,
         contentType: contentType,
         isHtml: isHtml,
         isEmpty: isEmpty,
@@ -328,6 +465,8 @@ class NetworkGuard {
         rawBody: rawBody ?? responseBody,
         parsedErrorCode: errorCode,
         parsedErrorDescription: errorDesc,
+        parsedErrorMessage: errorMessage,
+        parsedErrorDetails: errorDetails,
         contentType: contentType,
         isHtml: isHtml,
         isEmpty: isEmpty,
@@ -343,6 +482,8 @@ class NetworkGuard {
         rawBody: rawBody ?? responseBody,
         parsedErrorCode: errorCode,
         parsedErrorDescription: errorDesc,
+        parsedErrorMessage: errorMessage,
+        parsedErrorDetails: errorDetails,
         contentType: contentType,
         isHtml: isHtml,
         isEmpty: isEmpty,
@@ -357,6 +498,7 @@ class NetworkGuard {
       rawBody: rawBody ?? responseBody,
       parsedErrorCode: errorCode,
       parsedErrorDescription: errorDesc,
+      parsedErrorMessage: errorMessage,
       contentType: contentType,
       isHtml: isHtml,
       isEmpty: isEmpty,

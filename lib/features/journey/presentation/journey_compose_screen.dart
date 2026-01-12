@@ -89,6 +89,17 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
     }
   }
 
+  /// ✅ controller.value를 안전하게 세팅하는 헬퍼 함수
+  /// composing을 항상 TextRange.empty로 강제하여 IME 조합 중 크래시 방지
+  void _setControllerTextSafely(String text, {int? selectionOffset}) {
+    final offset = selectionOffset ?? text.length;
+    _controller.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: offset.clamp(0, text.length)),
+      composing: TextRange.empty, // ✅ 항상 composing 비우기
+    );
+  }
+
   void _setupListeners(AppLocalizations l10n) {
     // 메시지 이벤트 처리 리스너 (1회만 등록)
     _messageSubscription?.close();
@@ -102,6 +113,8 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
           return;
         }
         _handleMessage(l10n, next.message!);
+        // ✅ clearMessage 전에 IME 조합 끊기 (크래시 방지)
+        FocusManager.instance.primaryFocus?.unfocus();
         ref.read(journeyComposeControllerProvider.notifier).clearMessage();
       },
     );
@@ -117,16 +130,21 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
         if (_isUpdatingController) {
           return;
         }
+        // ✅ IME 조합 중이면 동기화(덮어쓰기) 금지
+        final composing = _controller.value.composing;
+        final isComposing = composing.isValid && !composing.isCollapsed;
+        if (isComposing) {
+          return; // 조합이 끝난 후(사용자 입력 완료)에 자연스럽게 동기화됨
+        }
+        // ✅ 텍스트가 다를 때만 세팅
         if (_controller.text != next) {
           _isUpdatingController = true;
           final max = next.length;
           final oldOffset = _controller.selection.baseOffset;
           // selection을 항상 clamp하여 out-of-range 방지
           final clampedOffset = oldOffset.clamp(0, max);
-          _controller.value = _controller.value.copyWith(
-            text: next,
-            selection: TextSelection.collapsed(offset: clampedOffset),
-          );
+          // ✅ composing을 항상 비우는 안전한 세팅
+          _setControllerTextSafely(next, selectionOffset: clampedOffset);
           _isUpdatingController = false;
         }
       },
@@ -400,6 +418,23 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
           _inlineMessageIsError = true;
         });
         return;
+      case JourneyComposeMessage.contentBlocked:
+        // ✅ content_blocked는 재시도 의미 없음 → 모달 알럿으로 명확히 안내 후 홈으로 이동
+        final router = GoRouter.of(context); // 선캡처
+        await showAppAlertDialog(
+          context: context,
+          title: l10n.moderationBlockedTitle,
+          message: l10n.moderationContentBlockedMessage,
+          confirmLabel: l10n.commonOk,
+          onConfirm: () {
+            // 확인 버튼 클릭 시 홈으로 이동 (router는 선캡처했으므로 안전)
+            router.go(AppRoutes.home);
+          },
+        );
+        // await 이후: 다이얼로그가 외부 탭으로 닫힌 경우에도 홈으로 이동
+        // router는 선캡처했으므로 context 없이도 사용 가능
+        router.go(AppRoutes.home);
+        return;
       case JourneyComposeMessage.imageLimitExceeded:
         setState(() {
           _inlineMessage = l10n.composeImageLimit;
@@ -414,10 +449,20 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
         });
         return;
       case JourneyComposeMessage.missingSession:
-        setState(() {
-          _inlineMessage = l10n.composeSessionMissing;
-          _inlineMessageIsError = true;
-        });
+        // 세션 만료 시 다이얼로그 표시 후 로그인으로 이동
+        await showAppAlertDialog(
+          context: context,
+          title: l10n.sessionExpiredTitle,
+          message: l10n.sessionExpiredBody,
+          confirmLabel: l10n.sessionExpiredCtaLogin,
+          onConfirm: () {
+            // 로그인 화면으로 이동
+            if (context.canPop()) {
+              context.pop();
+            }
+            context.go(AppRoutes.login);
+          },
+        );
         return;
       case JourneyComposeMessage.serverMisconfigured:
         setState(() {
@@ -684,12 +729,9 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
     // 1) Focus/Keyboard 끊기
     FocusManager.instance.primaryFocus?.unfocus();
 
-    // 2) Controller 안전 초기화
+    // 2) Controller 안전 초기화 (composing 안전 처리)
     _isUpdatingController = true;
-    _controller.value = const TextEditingValue(
-      text: '',
-      selection: TextSelection.collapsed(offset: 0),
-    );
+    _setControllerTextSafely('', selectionOffset: 0);
     _isUpdatingController = false;
 
     // 3) Provider reset

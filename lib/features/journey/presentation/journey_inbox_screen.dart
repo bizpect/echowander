@@ -4,18 +4,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../app/router/app_router.dart';
-import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
-import '../../../app/theme/app_radius.dart';
+import '../../../core/formatters/app_date_formatter.dart';
 import '../../../core/presentation/navigation/tab_navigation_helper.dart';
 import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/app_empty_state.dart';
 import '../../../core/presentation/widgets/app_list_item.dart';
-import '../../../core/presentation/widgets/app_pill.dart';
 import '../../../core/presentation/widgets/app_scaffold.dart';
 import '../../../core/presentation/widgets/app_skeleton.dart';
 import '../../../core/presentation/widgets/app_segmented_tabs.dart';
@@ -347,114 +344,40 @@ class _InboxCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final dateFormat = DateFormat.yMMMd(l10n.localeName).add_Hm();
+    final theme = Theme.of(context);
+    final locale = l10n.localeName;
 
-    // recipientStatus에 따른 스타일 결정
-    final statusInfo = _getStatusInfo(item.recipientStatus);
-    final meta = item.imageCount > 0
-        ? '${dateFormat.format(item.createdAt.toLocal())} · ${l10n.inboxImageCount(item.imageCount)}'
-        : dateFormat.format(item.createdAt.toLocal());
-    final title = _getStatusLabel(l10n, item.recipientStatus);
-    final subtitle = item.recipientStatus == 'PASSED'
-        ? l10n.inboxPassedTitle
-        : item.content;
+    // ✅ 안내 문구 (다국어)
+    final title = l10n.inboxCardArrivedPrompt;
+
+    // ✅ 날짜 포맷 (공통 포맷터 사용)
+    final dateText = AppDateFormatter.formatCardTimestamp(
+      item.createdAt,
+      locale,
+    );
+
+    // ✅ subtitle: 날짜 (+ 이미지 개수)
+    final subtitle = item.imageCount > 0
+        ? '$dateText · ${l10n.inboxImageCount(item.imageCount)}'
+        : dateText;
 
     return AppListItem(
       title: title,
       subtitle: subtitle,
-      meta: meta,
-      status: AppPill(label: title, tone: statusInfo.tone),
-      leading: _ListLeadingIcon(icon: statusInfo.icon, color: statusInfo.color),
-      trailing: const Icon(
-        Icons.chevron_right,
-        color: AppColors.iconMuted,
-        size: 20,
+      meta: null, // ✅ meta 제거 (날짜는 subtitle로 이동)
+      status: null, // ✅ 상태 텍스트 제거
+      leading: null, // ✅ 벨 아이콘 제거
+      trailing: Center(
+        // ✅ chevron 세로 중앙 유지
+        child: Icon(
+          Icons.chevron_right,
+          color: theme.colorScheme.onSurfaceVariant,
+          size: 20,
+        ),
       ),
       isHighlighted: isHighlighted,
       onTap: onTap,
     );
   }
 
-  String _getStatusLabel(AppLocalizations l10n, String status) {
-    switch (status) {
-      case 'ASSIGNED':
-        return l10n.inboxStatusAssigned;
-      case 'RESPONDED':
-        return l10n.inboxStatusResponded;
-      case 'PASSED':
-        return l10n.inboxStatusPassed;
-      case 'REPORTED':
-        return l10n.inboxStatusReported;
-      default:
-        return l10n.inboxStatusUnknown;
-    }
-  }
-
-  _StatusInfo _getStatusInfo(String status) {
-    switch (status) {
-      case 'ASSIGNED':
-        return _StatusInfo(
-          icon: Icons.notifications_active,
-          color: AppColors.warning,
-          tone: AppPillTone.warning,
-        );
-      case 'RESPONDED':
-        return _StatusInfo(
-          icon: Icons.check_circle,
-          color: AppColors.success,
-          tone: AppPillTone.success,
-        );
-      case 'PASSED':
-        return _StatusInfo(
-          icon: Icons.forward,
-          color: AppColors.onSurfaceVariant,
-          tone: AppPillTone.neutral,
-        );
-      case 'REPORTED':
-        return _StatusInfo(
-          icon: Icons.flag,
-          color: AppColors.error,
-          tone: AppPillTone.danger,
-        );
-      default:
-        return _StatusInfo(
-          icon: Icons.help_outline,
-          color: AppColors.onSurfaceVariant,
-          tone: AppPillTone.neutral,
-        );
-    }
-  }
-}
-
-/// 상태 정보 (아이콘 + 색상)
-class _StatusInfo {
-  const _StatusInfo({
-    required this.icon,
-    required this.color,
-    required this.tone,
-  });
-
-  final IconData icon;
-  final Color color;
-  final AppPillTone tone;
-}
-
-class _ListLeadingIcon extends StatelessWidget {
-  const _ListLeadingIcon({required this.icon, required this.color});
-
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
-        borderRadius: AppRadius.full,
-      ),
-      child: Icon(icon, size: 18, color: color),
-    );
-  }
 }

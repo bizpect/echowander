@@ -353,6 +353,33 @@ class AppLocalizationsPt extends AppLocalizations {
   String get composeCancel => 'Cancelar';
 
   @override
+  String get sessionExpiredTitle => 'Sessão Expirada';
+
+  @override
+  String get sessionExpiredBody => 'A sua sessão expirou. Por favor, inicie sessão novamente.';
+
+  @override
+  String get sessionExpiredCtaLogin => 'Iniciar Sessão';
+
+  @override
+  String get sendFailedTitle => 'Falha no Envio';
+
+  @override
+  String get sendFailedTryAgain => 'Falha ao enviar mensagem. Por favor, tente novamente.';
+
+  @override
+  String get moderationContentBlockedMessage => 'O conteúdo da mensagem é inadequado.';
+
+  @override
+  String get moderationBlockedTitle => 'Não é possível enviar';
+
+  @override
+  String get nicknameForbiddenMessage => 'Seu apelido contém palavras proibidas.';
+
+  @override
+  String get nicknameTakenMessage => 'Este apelido já está em uso.';
+
+  @override
   String get composeContentBlocked => 'Este conteúdo não pode ser enviado.';
 
   @override
@@ -511,6 +538,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get inboxStatusUnknown => 'Desconhecido';
 
   @override
+  String get inboxCardArrivedPrompt => 'Chegou uma mensagem!\nDeixe uma resposta.';
+
+  @override
   String get inboxDetailTitle => 'Mensagem recebida';
 
   @override
@@ -608,6 +638,15 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get inboxActionFailed => 'Não foi possível concluir a ação.';
+
+  @override
+  String get actionReportMessage => 'Denunciar mensagem';
+
+  @override
+  String get actionBlockSender => 'Bloquear remetente';
+
+  @override
+  String get inboxDetailMoreTitle => 'Opções';
 
   @override
   String get journeyDetailTitle => 'Mensagem';
@@ -806,6 +845,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get blockListUnblockFailed => 'Não foi possível desbloquear o usuário.';
+
+  @override
+  String get blockUnblockedTitle => 'Concluído';
+
+  @override
+  String get blockUnblockedMessage => 'Usuário desbloqueado.';
 
   @override
   String get onboardingTitle => 'Integração';
@@ -1819,6 +1864,33 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get composeCancel => 'Cancelar';
 
   @override
+  String get sessionExpiredTitle => 'Sessão Expirada';
+
+  @override
+  String get sessionExpiredBody => 'Sua sessão expirou. Por favor, faça login novamente.';
+
+  @override
+  String get sessionExpiredCtaLogin => 'Entrar';
+
+  @override
+  String get sendFailedTitle => 'Falha no Envio';
+
+  @override
+  String get sendFailedTryAgain => 'Falha ao enviar mensagem. Por favor, tente novamente.';
+
+  @override
+  String get moderationContentBlockedMessage => 'O conteúdo da mensagem é inadequado.';
+
+  @override
+  String get moderationBlockedTitle => 'Não é possível enviar';
+
+  @override
+  String get nicknameForbiddenMessage => 'Seu apelido contém palavras proibidas.';
+
+  @override
+  String get nicknameTakenMessage => 'Este apelido já está em uso.';
+
+  @override
   String get composeContentBlocked => 'Este conteúdo não pode ser enviado.';
 
   @override
@@ -1977,6 +2049,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get inboxStatusUnknown => 'Desconhecido';
 
   @override
+  String get inboxCardArrivedPrompt => 'Chegou uma mensagem!\nDeixe uma resposta.';
+
+  @override
   String get inboxDetailTitle => 'Mensagem recebida';
 
   @override
@@ -2074,6 +2149,15 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get inboxActionFailed => 'Não foi possível concluir a ação.';
+
+  @override
+  String get actionReportMessage => 'Denunciar mensagem';
+
+  @override
+  String get actionBlockSender => 'Bloquear remetente';
+
+  @override
+  String get inboxDetailMoreTitle => 'Opções';
 
   @override
   String get journeyDetailTitle => 'Mensagem';
@@ -2272,6 +2356,12 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get blockListUnblockFailed => 'Não foi possível desbloquear o usuário.';
+
+  @override
+  String get blockUnblockedTitle => 'Concluído';
+
+  @override
+  String get blockUnblockedMessage => 'Usuário desbloqueado.';
 
   @override
   String get onboardingTitle => 'Introdução';

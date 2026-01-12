@@ -224,7 +224,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             errorMessage = l10n.profileEditImageOptimizationFailed;
             break;
           case ProfileError.nicknameForbidden:
-            errorMessage = l10n.profileEditNicknameForbidden;
+            errorMessage = l10n.nicknameForbiddenMessage;
+            break;
+          case ProfileError.nicknameTaken:
+            errorMessage = l10n.nicknameTakenMessage;
             break;
           default:
             errorMessage = l10n.profileEditSaveFailed;

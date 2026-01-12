@@ -38,9 +38,10 @@ class AppListItem extends StatelessWidget {
       ),
       borderColor: isHighlighted ? AppColors.primary : null,
       borderWidth: 1.5,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           if (leading != null) ...[
             leading!,
             const SizedBox(width: AppSpacing.md),
@@ -48,6 +49,7 @@ class AppListItem extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center, // ✅ 세로 중앙 정렬
               children: [
                 Text(
                   title,
@@ -55,21 +57,24 @@ class AppListItem extends StatelessWidget {
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  subtitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.textSecondary,
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
           const SizedBox(width: AppSpacing.md),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center, // ✅ 세로 중앙 정렬
             children: [
               if (meta != null)
                 Text(
@@ -83,12 +88,14 @@ class AppListItem extends StatelessWidget {
                 status!,
               ],
               if (trailing != null) ...[
-                const SizedBox(height: AppSpacing.sm),
+                if (status != null || meta != null)
+                  const SizedBox(height: AppSpacing.sm),
                 trailing!,
               ],
             ],
           ),
         ],
+      ),
       ),
     );
   }

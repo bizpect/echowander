@@ -8,7 +8,12 @@ import '../../../core/session/session_manager.dart';
 
 const _logPrefix = '[BlockList]';
 
-enum BlockListMessage { missingSession, loadFailed, unblockFailed }
+enum BlockListMessage {
+  missingSession,
+  loadFailed,
+  unblockFailed,
+  unblockSuccess, // ✅ 차단 해제 성공
+}
 
 class BlockListState {
   const BlockListState({
@@ -121,9 +126,17 @@ class BlockListController extends Notifier<BlockListState> {
     }
   }
 
-  Future<void> unblock(String targetUserId) async {
+  Future<void> unblock(String targetUserId, {String? traceId}) async {
+    // ✅ traceId 생성 (없으면 생성)
+    final finalTraceId = traceId ?? DateTime.now().microsecondsSinceEpoch.toString();
+    if (kDebugMode) {
+      debugPrint('block:unblock start traceId=$finalTraceId target=$targetUserId');
+    }
     final accessToken = ref.read(sessionManagerProvider).accessToken;
     if (accessToken == null || accessToken.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('block:unblock missingSession traceId=$finalTraceId');
+      }
       state = state.copyWith(message: BlockListMessage.missingSession);
       return;
     }
@@ -132,22 +145,31 @@ class BlockListController extends Notifier<BlockListState> {
       await _blockRepository.unblockUser(
         targetUserId: targetUserId,
         accessToken: accessToken,
+        traceId: finalTraceId,
       );
+      if (kDebugMode) {
+        debugPrint('block:unblock success traceId=$finalTraceId');
+      }
       final items = state.items
           .where((item) => item.userId != targetUserId)
           .toList();
-      state = state.copyWith(items: items, isLoading: false);
+      // ✅ 차단 해제 성공 메시지 설정
+      state = state.copyWith(
+        items: items,
+        isLoading: false,
+        message: BlockListMessage.unblockSuccess,
+      );
     } on BlockException catch (error) {
       if (kDebugMode) {
-        debugPrint('block: 차단 해제 실패 (${error.error})');
+        debugPrint('block:unblock failed traceId=$finalTraceId error=${error.error}');
       }
       final message = error.error == BlockError.unauthorized
           ? BlockListMessage.missingSession
           : BlockListMessage.unblockFailed;
       state = state.copyWith(isLoading: false, message: message);
-    } catch (_) {
+    } catch (error) {
       if (kDebugMode) {
-        debugPrint('block: 차단 해제 알 수 없는 오류');
+        debugPrint('block:unblock unknown error traceId=$finalTraceId error=$error');
       }
       state = state.copyWith(
         isLoading: false,

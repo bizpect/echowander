@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
+import '../../../core/formatters/app_date_formatter.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/app_scaffold.dart';
@@ -255,7 +255,6 @@ class _NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final dateFormat = DateFormat.yMMMd(l10n.localeName).add_Hm();
 
     // 읽음/미읽음 스타일 결정
     final isRead = item.isRead;
@@ -354,7 +353,10 @@ class _NotificationCard extends StatelessWidget {
                         ),
                         const SizedBox(width: AppSpacing.spacing4),
                         Text(
-                          dateFormat.format(item.createdAt.toLocal()),
+                          AppDateFormatter.formatCardTimestamp(
+                            item.createdAt,
+                            l10n.localeName,
+                          ),
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.onSurfaceVariant),
                         ),

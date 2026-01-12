@@ -42,6 +42,8 @@ class NetworkRequestException implements Exception {
     this.rawBody,
     this.parsedErrorCode,
     this.parsedErrorDescription,
+    this.parsedErrorMessage, // PostgREST 에러 바디의 message 필드 (예: 'content_blocked')
+    this.parsedErrorDetails, // PostgREST 에러 바디의 details 필드 (에러 상세 설명)
     this.contentType,
     this.isHtml,
     this.isEmpty,
@@ -56,6 +58,8 @@ class NetworkRequestException implements Exception {
   final String? rawBody;
   final String? parsedErrorCode;
   final String? parsedErrorDescription;
+  final String? parsedErrorMessage; // PostgREST 에러 바디의 message 필드 (예: 'content_blocked')
+  final String? parsedErrorDetails; // PostgREST 에러 바디의 details 필드 (에러 상세 설명)
   final String? contentType;
   final bool? isHtml;
   final bool? isEmpty;

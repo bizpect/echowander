@@ -367,7 +367,22 @@ create policy "journey_images_storage_select"
   on storage.objects
   for select
   to authenticated
-  using (bucket_id = 'journey-images' and auth.uid() = owner);
+  using (
+    bucket_id = 'journey-images'
+    and (
+      -- 발신자: 본인이 업로드한 파일
+      auth.uid() = owner
+      or
+      -- 수신자: journey_recipients의 snapshot_image_paths에 포함된 경로
+      exists (
+        select 1
+        from public.journey_recipients jr
+        where jr.recipient_user_id = auth.uid()
+          and jr.is_hidden = false
+          and jr.snapshot_image_paths @> array[storage.objects.name]
+      )
+    )
+  );
 
 create policy "journey_images_storage_delete"
   on storage.objects
@@ -455,6 +470,8 @@ grant execute on function public.list_journeys(integer, integer) to authenticate
 revoke all on function public.list_inbox_journeys(integer, integer) from public;
 grant execute on function public.list_inbox_journeys(integer, integer) to authenticated;
 grant execute on function public.list_inbox_journey_images(uuid) to authenticated;
+grant execute on function public.get_inbox_journey_snapshot_image_paths(uuid) to authenticated;
+grant execute on function public.debug_check_storage_objects(text, text[]) to authenticated;
 grant execute on function public.match_journey(uuid) to authenticated;
 grant execute on function public.match_pending_journeys(integer) to authenticated;
 grant execute on function public.respond_journey(uuid, text) to authenticated;

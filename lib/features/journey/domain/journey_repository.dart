@@ -254,8 +254,45 @@ abstract class JourneyRepository {
   /// 디버그용: auth.uid() 값 확인
   Future<String> debugAuth({required String accessToken});
 
+  /// 디버그용: Storage 객체 존재 여부 확인 (kDebugMode에서만 호출)
+  /// 
+  /// [bucket] Storage 버킷 ID
+  /// [paths] 확인할 경로 리스트
+  /// [accessToken] 액세스 토큰
+  /// 
+  /// 반환: 각 path별 exists, found_name, bucket_id 정보
+  Future<List<Map<String, dynamic>>> debugCheckStorageObjects({
+    required String bucket,
+    required List<String> paths,
+    required String accessToken,
+  });
+
   Future<List<String>> fetchInboxJourneyImageUrls({
     required String journeyId,
+    required String accessToken,
+  });
+
+  /// 받은 메시지의 이미지 objectPath 리스트 조회
+  ///
+  /// [journeyId] Journey ID
+  /// [accessToken] 액세스 토큰
+  ///
+  /// 반환: objectPath 리스트 (storage_path)
+  Future<List<String>> fetchInboxJourneyImagePaths({
+    required String journeyId,
+    required String accessToken,
+  });
+
+  /// Storage objectPath 리스트를 signedUrl 리스트로 변환
+  ///
+  /// [bucketId] Storage 버킷 ID
+  /// [paths] objectPath 리스트
+  /// [accessToken] 액세스 토큰
+  ///
+  /// 반환: signedUrl 리스트 (실패한 항목은 제외)
+  Future<List<String>> createSignedUrls({
+    required String bucketId,
+    required List<String> paths,
     required String accessToken,
   });
 

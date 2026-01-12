@@ -353,6 +353,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get composeCancel => 'Cancel';
 
   @override
+  String get sessionExpiredTitle => 'Session Expired';
+
+  @override
+  String get sessionExpiredBody => 'Your session has expired. Please sign in again.';
+
+  @override
+  String get sessionExpiredCtaLogin => 'Sign In';
+
+  @override
+  String get sendFailedTitle => 'Send Failed';
+
+  @override
+  String get sendFailedTryAgain => 'Failed to send message. Please try again.';
+
+  @override
+  String get moderationContentBlockedMessage => 'Your message contains inappropriate content.';
+
+  @override
+  String get moderationBlockedTitle => 'Cannot Send';
+
+  @override
+  String get nicknameForbiddenMessage => 'Your nickname contains prohibited words.';
+
+  @override
+  String get nicknameTakenMessage => 'This nickname is already in use.';
+
+  @override
   String get composeContentBlocked => 'This content cannot be sent.';
 
   @override
@@ -511,6 +538,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inboxStatusUnknown => 'Unknown';
 
   @override
+  String get inboxCardArrivedPrompt => 'Message arrived!\nPlease leave a reply.';
+
+  @override
   String get inboxDetailTitle => 'Inbox';
 
   @override
@@ -608,6 +638,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inboxActionFailed => 'We couldn\'t complete this action.';
+
+  @override
+  String get actionReportMessage => 'Report message';
+
+  @override
+  String get actionBlockSender => 'Block sender';
+
+  @override
+  String get inboxDetailMoreTitle => 'Options';
 
   @override
   String get journeyDetailTitle => 'Message';
@@ -806,6 +845,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get blockListUnblockFailed => 'We couldn\'t unblock this user.';
+
+  @override
+  String get blockUnblockedTitle => 'Done';
+
+  @override
+  String get blockUnblockedMessage => 'User unblocked.';
 
   @override
   String get onboardingTitle => 'Onboarding';

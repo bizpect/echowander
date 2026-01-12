@@ -300,6 +300,7 @@ create table if not exists public.journey_recipients (
   sender_user_id uuid,
   snapshot_content text,
   snapshot_image_count integer not null default 0,
+  snapshot_image_paths text[],
   -- 숨김 처리 필드: 신고/차단 등으로 수신자 기준 숨김 (soft-hide)
   is_hidden boolean not null default false,
   hidden_reason_code text,

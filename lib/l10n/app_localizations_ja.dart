@@ -353,6 +353,33 @@ class AppLocalizationsJa extends AppLocalizations {
   String get composeCancel => 'キャンセル';
 
   @override
+  String get sessionExpiredTitle => 'セッション期限切れ';
+
+  @override
+  String get sessionExpiredBody => 'セッションの有効期限が切れました。再度ログインしてください。';
+
+  @override
+  String get sessionExpiredCtaLogin => 'ログイン';
+
+  @override
+  String get sendFailedTitle => '送信失敗';
+
+  @override
+  String get sendFailedTryAgain => 'メッセージの送信に失敗しました。もう一度お試しください。';
+
+  @override
+  String get moderationContentBlockedMessage => '不適切なメッセージ内容です。';
+
+  @override
+  String get moderationBlockedTitle => '送信できません';
+
+  @override
+  String get nicknameForbiddenMessage => 'ニックネームに禁止語が含まれています。';
+
+  @override
+  String get nicknameTakenMessage => '既に使用されているニックネームです。';
+
+  @override
   String get composeContentBlocked => '送信できない表現が含まれています。';
 
   @override
@@ -511,6 +538,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get inboxStatusUnknown => '不明';
 
   @override
+  String get inboxCardArrivedPrompt => 'メッセージが届きました！\n返信を残してください。';
+
+  @override
   String get inboxDetailTitle => '受信メッセージ';
 
   @override
@@ -608,6 +638,15 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get inboxActionFailed => '操作を完了できませんでした。';
+
+  @override
+  String get actionReportMessage => 'メッセージを報告';
+
+  @override
+  String get actionBlockSender => '送信者をブロック';
+
+  @override
+  String get inboxDetailMoreTitle => 'オプション';
 
   @override
   String get journeyDetailTitle => 'メッセージ';
@@ -806,6 +845,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get blockListUnblockFailed => 'ブロック解除に失敗しました。';
+
+  @override
+  String get blockUnblockedTitle => '完了';
+
+  @override
+  String get blockUnblockedMessage => 'ブロックを解除しました。';
 
   @override
   String get onboardingTitle => 'オンボーディング';

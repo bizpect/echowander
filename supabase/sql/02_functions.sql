@@ -188,7 +188,10 @@ begin
     limit 1;
 
     if v_forbidden_word is not null then
-      raise exception 'nickname_forbidden' using message = 'Nickname contains forbidden word';
+      raise exception using
+        errcode = 'P0001',
+        message = 'nickname_forbidden',
+        detail = 'Nickname contains forbidden word';
     end if;
     
     -- 다른 사용자가 이미 사용 중인지 확인 (자신의 닉네임 제외)
@@ -198,7 +201,10 @@ begin
       where nickname_norm = v_normalized
         and user_id != auth.uid()
     ) then
-      raise exception 'nickname_taken' using message = 'Nickname is already taken';
+      raise exception using
+        errcode = 'P0001',
+        message = 'nickname_taken',
+        detail = 'Nickname is already taken';
     end if;
   end if;
 
@@ -346,23 +352,64 @@ begin
 end;
 $$;
 
+-- ✅ 반환 타입 변경을 위해 기존 함수 DROP
+drop function if exists public.unblock_user(uuid);
+
 create or replace function public.unblock_user(
   target_user_id uuid
 )
-returns void
+returns jsonb
 language plpgsql
+security definer
+set search_path = public
 as $$
+declare
+  _current_uid uuid;
+  _restored_count integer := 0;
 begin
-  if target_user_id is null then
-    raise exception 'missing_user';
-  end if;
-  if auth.uid() is null then
-    raise exception 'unauthorized';
+  -- ✅ auth.uid() 필터 강제 (데이터 노출 방지)
+  _current_uid := auth.uid();
+  if _current_uid is null then
+    raise exception using
+      errcode = 'P0001',
+      message = 'unauthorized',
+      detail = 'User must be authenticated';
   end if;
 
+  if target_user_id is null then
+    raise exception using
+      errcode = 'P0001',
+      message = 'missing_user',
+      detail = 'target_user_id is required';
+  end if;
+
+  -- 1) user_blocks에서 차단 기록 삭제
   delete from public.user_blocks
-  where blocker_user_id = auth.uid()
+  where blocker_user_id = _current_uid
     and blocked_user_id = target_user_id;
+
+  -- 2) block 사유로 숨겨진 journey_recipients 복구
+  -- ✅ 조건: recipient_user_id = 현재 사용자 AND sender_user_id = 차단 해제 대상
+  -- ✅ hidden_reason_code = 'HIDE_BLOCKED'인 것만 복구 (moderation/report 등 다른 사유는 복구하지 않음)
+  -- ✅ RLS 때문에 JOIN 불가하므로 snapshot 필드(sender_user_id)만 사용
+  update public.journey_recipients
+  set is_hidden = false,
+      hidden_reason_code = null,
+      hidden_at = null,
+      updated_at = now()
+  where recipient_user_id = _current_uid
+    and sender_user_id = target_user_id
+    and is_hidden = true
+    and hidden_reason_code = 'HIDE_BLOCKED';
+
+  -- 복구된 row 수 확인
+  get diagnostics _restored_count = row_count;
+
+  -- ✅ jsonb로 반환 (운영/검증 가능)
+  return jsonb_build_object(
+    'ok', true,
+    'restored_count', _restored_count
+  );
 end;
 $$;
 
@@ -857,6 +904,107 @@ begin
 end;
 $$;
 
+-- 인박스 journey의 snapshot_image_paths 조회 (전용 RPC)
+-- 반환: jsonb { ok, journey_id, recipient_user_id, snapshot_image_count, snapshot_image_paths }
+create or replace function public.get_inbox_journey_snapshot_image_paths(
+  p_journey_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  _journey_id uuid;
+  _recipient_user_id uuid;
+  _snapshot_image_count integer;
+  _snapshot_image_paths text[];
+begin
+  if p_journey_id is null then
+    raise exception using errcode='P0001', message='missing_journey';
+  end if;
+
+  -- auth.uid() 필터 강제 (데이터 노출 방지)
+  if auth.uid() is null then
+    raise exception using errcode='P0001', message='unauthorized';
+  end if;
+
+  -- journey_recipients에서 snapshot_image_paths 조회
+  select
+    journey_recipients.journey_id,
+    journey_recipients.recipient_user_id,
+    journey_recipients.snapshot_image_count,
+    journey_recipients.snapshot_image_paths
+  into
+    _journey_id,
+    _recipient_user_id,
+    _snapshot_image_count,
+    _snapshot_image_paths
+  from public.journey_recipients
+  where journey_recipients.journey_id = p_journey_id
+    and journey_recipients.recipient_user_id = auth.uid();
+
+  if not found then
+    raise exception using
+      errcode='P0001',
+      message='inbox_not_found',
+      detail=format('journey_id=%s, recipient_user_id=%s', p_journey_id, auth.uid());
+  end if;
+
+  -- jsonb 반환
+  return jsonb_build_object(
+    'ok', true,
+    'journey_id', _journey_id,
+    'recipient_user_id', _recipient_user_id,
+    'snapshot_image_count', coalesce(_snapshot_image_count, 0),
+    'snapshot_image_paths', coalesce(_snapshot_image_paths, array[]::text[])
+  );
+end;
+$$;
+
+-- 디버그용: Storage 객체 존재 여부 확인 (로컬 디버깅 전용)
+-- kDebugMode에서만 호출하도록 클라이언트에서 가드 필요
+create or replace function public.debug_check_storage_objects(
+  p_bucket text,
+  p_paths text[]
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, storage
+as $$
+declare
+  _result jsonb := '[]'::jsonb;
+  _path text;
+  _obj_record record;
+begin
+  if p_bucket is null or p_paths is null or array_length(p_paths, 1) is null then
+    raise exception using errcode='P0001', message='invalid_arguments';
+  end if;
+
+  -- 각 path별로 storage.objects 조회
+  foreach _path in array p_paths loop
+    select
+      exists(select 1 from storage.objects where bucket_id = p_bucket and name = _path) as exists,
+      (select name from storage.objects where bucket_id = p_bucket and name = _path limit 1) as found_name,
+      p_bucket as bucket_id
+    into _obj_record;
+
+    _result := _result || jsonb_build_array(
+      jsonb_build_object(
+        'path', _path,
+        'exists', coalesce(_obj_record.exists, false),
+        'found_name', _obj_record.found_name,
+        'bucket_id', _obj_record.bucket_id
+      )
+    );
+  end loop;
+
+  return _result;
+end;
+$$;
+
+-- 기존 함수는 유지 (하위 호환성)
 create or replace function public.list_inbox_journey_images(
   target_journey_id uuid
 )
@@ -865,6 +1013,8 @@ returns table (
 )
 language plpgsql
 as $$
+declare
+  _image_paths text[];
 begin
   if target_journey_id is null then
     raise exception 'missing_journey';
@@ -872,25 +1022,42 @@ begin
   if auth.uid() is null then
     raise exception 'unauthorized';
   end if;
-  if not exists (
-    select 1
-    from public.journey_recipients
-    where journey_recipients.journey_id = target_journey_id
-      and journey_recipients.recipient_user_id = auth.uid()
-  ) and not exists (
-    select 1
-    from public.journeys
-    where journeys.id = target_journey_id
-      and journeys.user_id = auth.uid()
-  ) then
-    raise exception 'unauthorized';
+
+  -- recipients의 snapshot_image_paths 조회 (JOIN 없이 RLS 우회)
+  select journey_recipients.snapshot_image_paths
+  into _image_paths
+  from public.journey_recipients
+  where journey_recipients.journey_id = target_journey_id
+    and journey_recipients.recipient_user_id = auth.uid();
+
+  if not found then
+    -- 수신자가 아닌 경우 발신자인지 확인 (자신이 보낸 메시지 조회)
+    if exists (
+      select 1
+      from public.journeys
+      where journeys.id = target_journey_id
+        and journeys.user_id = auth.uid()
+    ) then
+      -- 발신자인 경우 journey_images에서 직접 조회
+      return query
+      select journey_images.storage_path
+      from public.journey_images
+      where journey_images.journey_id = target_journey_id
+      order by journey_images.created_at asc;
+      return;
+    else
+      raise exception 'unauthorized';
+    end if;
   end if;
 
+  -- snapshot_image_paths가 null이거나 비어있으면 빈 결과 반환
+  if _image_paths is null or array_length(_image_paths, 1) is null then
+    return;
+  end if;
+
+  -- 배열을 행으로 변환하여 반환
   return query
-  select journey_images.storage_path
-  from public.journey_images
-  where journey_images.journey_id = target_journey_id
-  order by journey_images.created_at asc;
+  select unnest(_image_paths) as storage_path;
 end;
 $$;
 
@@ -1125,6 +1292,11 @@ begin
       from public.journey_images
       where journey_images.journey_id = _journey.id
     ),
+    journey_image_paths as (
+      select array_agg(storage_path order by created_at asc) as paths
+      from public.journey_images
+      where journey_images.journey_id = _journey.id
+    ),
     inserted as (
       insert into public.journey_recipients (
         journey_id,
@@ -1132,7 +1304,8 @@ begin
         recipient_locale_tag,
         sender_user_id,
         snapshot_content,
-        snapshot_image_count
+        snapshot_image_count,
+        snapshot_image_paths
       )
       select
         _journey.id,
@@ -1140,7 +1313,8 @@ begin
         candidates.locale_tag,
         _journey.user_id,
         _journey.content,
-        (select cnt from journey_image_count)
+        (select cnt from journey_image_count),
+        (select paths from journey_image_paths)
       from candidates
       returning journey_recipients.recipient_user_id, journey_recipients.id
     )
@@ -1155,6 +1329,7 @@ begin
   set status_code = 'PASSED',
       snapshot_content = '[패스한 메시지]',
       snapshot_image_count = 0,
+      snapshot_image_paths = null,
       updated_at = _passed_at
   where id = _recipient_id;
 
@@ -1449,6 +1624,11 @@ begin
       from public.journey_images
       where journey_images.journey_id = _journey.id
     ),
+    journey_image_paths as (
+      select array_agg(storage_path order by created_at asc) as paths
+      from public.journey_images
+      where journey_images.journey_id = _journey.id
+    ),
     inserted as (
       insert into public.journey_recipients (
         journey_id,
@@ -1456,7 +1636,8 @@ begin
         recipient_locale_tag,
         sender_user_id,
         snapshot_content,
-        snapshot_image_count
+        snapshot_image_count,
+        snapshot_image_paths
       )
       select
         _journey.id,
@@ -1464,7 +1645,8 @@ begin
         candidates.locale_tag,
         _journey.user_id,
         _journey.content,
-        (select cnt from journey_image_count)
+        (select cnt from journey_image_count),
+        (select paths from journey_image_paths)
       from candidates
       returning journey_recipients.recipient_user_id, journey_recipients.id
     )
@@ -2098,9 +2280,14 @@ begin
     order by random()
     limit _remaining
   ),
-  -- 스냅샷용 이미지 개수 계산
+  -- 스냅샷용 이미지 개수 및 경로 계산
   journey_image_count as (
     select count(*)::integer as cnt
+    from public.journey_images
+    where journey_images.journey_id = _journey.id
+  ),
+  journey_image_paths as (
+    select array_agg(storage_path order by created_at asc) as paths
     from public.journey_images
     where journey_images.journey_id = _journey.id
   ),
@@ -2112,7 +2299,8 @@ begin
       -- 스냅샷 필드: journeys JOIN 없이 인박스 조회 가능 (RLS 유지)
       sender_user_id,
       snapshot_content,
-      snapshot_image_count
+      snapshot_image_count,
+      snapshot_image_paths
     )
     select
       _journey.id,
@@ -2120,7 +2308,8 @@ begin
       candidates.locale_tag,
       _journey.user_id,
       _journey.content,
-      (select cnt from journey_image_count)
+      (select cnt from journey_image_count),
+      (select paths from journey_image_paths)
     from candidates
     returning journey_recipients.recipient_user_id
   ),
@@ -2710,9 +2899,10 @@ begin
   
   -- BLOCK이면 저장 거부
   if classification.status = 'BLOCK' then
-    raise exception 'content_blocked' using
-      message = 'This content cannot be posted due to moderation policy',
-      detail = format('reason: %s', classification.reason);
+    raise exception using
+      errcode = 'P0001',
+      message = 'content_blocked',
+      detail = format('This content cannot be posted due to moderation policy (reason: %s)', classification.reason);
   end if;
   
   -- MASK면 content_clean에 마스킹된 텍스트 저장
@@ -2750,9 +2940,10 @@ begin
   
   -- BLOCK이면 저장 거부
   if classification.status = 'BLOCK' then
-    raise exception 'content_blocked' using
-      message = 'This content cannot be posted due to moderation policy',
-      detail = format('reason: %s', classification.reason);
+    raise exception using
+      errcode = 'P0001',
+      message = 'content_blocked',
+      detail = format('This content cannot be posted due to moderation policy (reason: %s)', classification.reason);
   end if;
   
   -- MASK면 content_clean에 마스킹된 텍스트 저장

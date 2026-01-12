@@ -1,18 +1,21 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
+import '../../../core/formatters/app_date_formatter.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../core/presentation/widgets/empty_state.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../journey/application/journey_inbox_controller.dart';
+import '../../journey/application/journey_list_controller.dart';
 import '../application/block_list_controller.dart';
 
 /// 차단 목록 화면
@@ -93,7 +96,6 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
     }
 
     // 정상 상태 - 차단 목록
-    final dateFormat = DateFormat.yMMMd(l10n.localeName).add_Hm();
 
     return RefreshIndicator(
       onRefresh: () => ref.read(blockListControllerProvider.notifier).load(),
@@ -141,7 +143,10 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
                             ),
                             const SizedBox(width: AppSpacing.spacing4),
                             Text(
-                              dateFormat.format(item.createdAt.toLocal()),
+                              AppDateFormatter.formatCardTimestamp(
+                                item.createdAt,
+                                l10n.localeName,
+                              ),
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: AppColors.onSurfaceVariant),
                             ),
@@ -182,7 +187,14 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
     if (confirmed != true) {
       return;
     }
-    await ref.read(blockListControllerProvider.notifier).unblock(targetUserId);
+    // ✅ traceId 생성 및 전파
+    final traceId = DateTime.now().microsecondsSinceEpoch.toString();
+    if (kDebugMode) {
+      debugPrint('block:unblock tap traceId=$traceId target=$targetUserId');
+    }
+    await ref
+        .read(blockListControllerProvider.notifier)
+        .unblock(targetUserId, traceId: traceId);
   }
 
   Future<void> _handleMessage(
@@ -213,6 +225,30 @@ class _BlockListScreenState extends ConsumerState<BlockListScreen> {
           message: l10n.blockListUnblockFailed,
           confirmLabel: l10n.composeOk,
         );
+        return;
+      case BlockListMessage.unblockSuccess:
+        // ✅ 차단 해제 성공 알럿 표시
+        await showAppAlertDialog(
+          context: context,
+          title: l10n.blockUnblockedTitle,
+          message: l10n.blockUnblockedMessage,
+          confirmLabel: l10n.commonOk,
+          onConfirm: () {
+            // ✅ 알럿 확인 후 provider invalidate로 숨김 메시지 복구
+            // invalidate만으로도 provider가 자동으로 재생성되고, watch하는 화면이 자동으로 재조회됨
+            if (!context.mounted) return;
+            // 차단 목록 갱신
+            ref.invalidate(blockListControllerProvider);
+            // 메시지 리스트 갱신 (차단 필터가 변경되었으므로 재조회)
+            ref.invalidate(journeyInboxControllerProvider);
+            ref.invalidate(journeyListControllerProvider);
+          },
+        );
+        // await 이후: 다이얼로그가 외부 탭으로 닫힌 경우에도 갱신
+        if (!context.mounted) return;
+        ref.invalidate(blockListControllerProvider);
+        ref.invalidate(journeyInboxControllerProvider);
+        ref.invalidate(journeyListControllerProvider);
         return;
     }
   }

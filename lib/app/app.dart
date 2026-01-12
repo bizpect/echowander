@@ -9,6 +9,7 @@ import '../core/push/push_coordinator.dart';
 import '../core/push/push_payload.dart';
 import '../core/push/push_state.dart';
 import '../core/session/auth_executor.dart';
+import '../core/session/ensure_session_mode.dart';
 import '../core/session/session_invalidation_targets.dart';
 import '../core/session/session_manager.dart';
 import '../core/session/session_state.dart';
@@ -22,9 +23,6 @@ import '../l10n/app_localizations.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-/// 세션 준비 모드
-enum EnsureSessionMode { blocking, silent }
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});

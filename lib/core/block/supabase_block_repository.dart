@@ -198,7 +198,15 @@ class SupabaseBlockRepository implements BlockRepository {
   Future<void> unblockUser({
     required String targetUserId,
     required String accessToken,
+    String? traceId,
   }) async {
+    // ✅ traceId 로깅
+    final finalTraceId = traceId ?? DateTime.now().microsecondsSinceEpoch.toString();
+    if (kDebugMode) {
+      debugPrint(
+        'block:unblock rpc call traceId=$finalTraceId fn=unblock_user args={target_user_id: $targetUserId}',
+      );
+    }
     // 사전 검증
     if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
       throw BlockException(BlockError.missingConfig);
@@ -211,20 +219,37 @@ class SupabaseBlockRepository implements BlockRepository {
 
     try {
       // NetworkGuard를 통한 요청 실행 (재시도 없음: 커밋 액션)
-      await _networkGuard.execute<void>(
+      // ✅ unblock_user는 이제 jsonb를 반환하므로 Map<String, dynamic>으로 처리
+      final result = await _networkGuard.execute<Map<String, dynamic>>(
         operation: () => _executeRpcPost(
           uri: uri,
           payload: {'target_user_id': targetUserId},
           accessToken: accessToken,
+          traceId: finalTraceId,
         ),
         retryPolicy: RetryPolicy.none,
         context: 'unblock_user',
         uri: uri,
         method: 'POST',
-        meta: {'target_user_id': targetUserId},
+        meta: {
+          'target_user_id': targetUserId,
+          'traceId': finalTraceId,
+        },
         accessToken: accessToken,
       );
+      // ✅ restored_count 로깅 (운영/검증)
+      if (kDebugMode) {
+        final restoredCount = result['restored_count'] as int? ?? 0;
+        debugPrint(
+          'block:unblock restored_count=$restoredCount traceId=$finalTraceId',
+        );
+      }
     } on NetworkRequestException catch (error) {
+      if (kDebugMode) {
+        debugPrint(
+          'block:unblock rpc error traceId=$finalTraceId status=${error.statusCode} type=${error.type}',
+        );
+      }
       // NetworkRequestException을 BlockException으로 변환
       switch (error.type) {
         case NetworkErrorType.network:
@@ -246,10 +271,12 @@ class SupabaseBlockRepository implements BlockRepository {
   }
 
   /// RPC POST 요청 실제 실행 (NetworkGuard가 호출)
-  Future<void> _executeRpcPost({
+  /// unblock_user는 jsonb를 반환하므로 Map[String, dynamic]으로 파싱
+  Future<Map<String, dynamic>> _executeRpcPost({
     required Uri uri,
     required Map<String, dynamic> payload,
     required String accessToken,
+    String? traceId,
   }) async {
     final request = await _client.postUrl(uri);
     request.headers.set(
@@ -263,16 +290,51 @@ class SupabaseBlockRepository implements BlockRepository {
     final response = await request.close();
     final body = await response.transform(utf8.decoder).join();
 
-    if (response.statusCode != HttpStatus.ok) {
+    // ✅ 200 OK는 jsonb 응답, 204 No Content는 빈 응답 (하위 호환성)
+    if (response.statusCode == HttpStatus.ok) {
       if (kDebugMode) {
-        debugPrint('block: RPC 실패 ${response.statusCode} $body');
+        debugPrint(
+          'block:unblock rpc success traceId=$traceId status=${response.statusCode} bodyLen=${body.length}',
+        );
       }
+      // ✅ jsonb 응답 파싱
+      if (body.isNotEmpty) {
+        try {
+          final result = jsonDecode(body) as Map<String, dynamic>;
+          return result;
+        } on FormatException {
+          // 파싱 실패 시 빈 맵 반환 (하위 호환성)
+          if (kDebugMode) {
+            debugPrint(
+              'block:unblock rpc parse failed traceId=$traceId body=$body',
+            );
+          }
+          return {};
+        }
+      }
+      return {}; // 빈 응답 (하위 호환성)
+    }
 
-      // NetworkGuard가 처리할 수 있도록 NetworkRequestException 발생
-      throw _networkGuard.statusCodeToException(
-        statusCode: response.statusCode,
-        responseBody: body,
+    if (response.statusCode == HttpStatus.noContent) {
+      // ✅ 204는 빈 응답 (하위 호환성, void 반환 함수)
+      if (kDebugMode) {
+        debugPrint(
+          'block:unblock rpc success (204) traceId=$traceId bodyLen=${body.length}',
+        );
+      }
+      return {}; // 빈 맵 반환
+    }
+
+    if (kDebugMode) {
+      debugPrint(
+        'block:unblock rpc failed traceId=$traceId status=${response.statusCode} bodyLen=${body.length}',
       );
     }
+
+    // NetworkGuard가 처리할 수 있도록 NetworkRequestException 발생
+    throw _networkGuard.statusCodeToException(
+      statusCode: response.statusCode,
+      responseBody: body,
+    );
   }
 }

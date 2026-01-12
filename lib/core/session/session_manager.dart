@@ -6,7 +6,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/app_config.dart';
+import 'auth_executor.dart';
 import 'auth_rpc_client.dart';
+import 'ensure_session_mode.dart';
 import 'session_state.dart';
 import 'session_tokens.dart';
 import 'token_store.dart';
@@ -892,6 +894,156 @@ class SessionManager extends Notifier<SessionState> {
 
   void clearMessage() {
     state = state.copyWith(resetMessage: true);
+  }
+
+  /// 세션 준비 보장 (전송 직전 등에서 호출)
+  ///
+  /// [mode]: silent 모드면 조용히 refresh만 시도, blocking 모드면 restoreSession 호출
+  ///
+  /// 반환: true면 세션 준비 완료, false면 세션 만료/실패
+  Future<bool> ensureSessionReady({EnsureSessionMode mode = EnsureSessionMode.silent}) async {
+    if (kDebugMode) {
+      debugPrint('$_logPrefix ensureSessionReady 시작 (mode=$mode)');
+    }
+
+    // ✅ unauthenticated 상태에서는 바로 false 반환
+    if (state.status == SessionStatus.unauthenticated) {
+      if (kDebugMode) {
+        debugPrint(
+          '$_logPrefix ensureSessionReady 차단: 이미 unauthenticated 상태',
+        );
+      }
+      return false;
+    }
+
+    // ✅ SSOT: restoreInFlight가 존재하면 그 Future만 await
+    final inFlight = restoreInFlight;
+    if (inFlight != null) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix ensureSessionReady: inFlight exists → await');
+      }
+      try {
+        await inFlight;
+        // await 후 상태 확인
+        final currentState = state;
+        if (currentState.status == SessionStatus.unauthenticated) {
+          if (kDebugMode) {
+            debugPrint('$_logPrefix ensureSessionReady: inFlight 완료 후 unauthenticated');
+          }
+          return false;
+        }
+        if (currentState.accessToken == null || currentState.accessToken!.isEmpty) {
+          if (kDebugMode) {
+            debugPrint('$_logPrefix ensureSessionReady: inFlight 완료 후 accessToken 없음');
+          }
+          return false;
+        }
+        if (kDebugMode) {
+          debugPrint('$_logPrefix ensureSessionReady: inFlight 완료 후 세션 준비 완료');
+        }
+        return true;
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('$_logPrefix ensureSessionReady: inFlight 실패: $e');
+        }
+        return false;
+      }
+    }
+
+    final accessToken = state.accessToken;
+    final hasToken = accessToken != null && accessToken.isNotEmpty;
+    final isExpiring = hasToken &&
+        JwtUtils.isExpiringSoon(accessToken, thresholdSeconds: 60);
+    final needsRestore = !hasToken || isExpiring;
+
+    if (!needsRestore) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix ensureSessionReady: 세션 준비 완료 (토큰 유효)');
+      }
+      return true;
+    }
+
+    if (mode == EnsureSessionMode.silent && hasToken) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix ensureSessionReady: silent 모드 → silentRefreshIfNeeded');
+      }
+      try {
+        await silentRefreshIfNeeded(reason: 'ensureSessionReady');
+        final newState = state;
+        if (newState.status == SessionStatus.unauthenticated) {
+          if (kDebugMode) {
+            debugPrint('$_logPrefix ensureSessionReady: silentRefresh 후 unauthenticated');
+          }
+          return false;
+        }
+        if (newState.accessToken == null || newState.accessToken!.isEmpty) {
+          if (kDebugMode) {
+            debugPrint('$_logPrefix ensureSessionReady: silentRefresh 후 accessToken 없음');
+          }
+          return false;
+        }
+        if (kDebugMode) {
+          debugPrint('$_logPrefix ensureSessionReady: silentRefresh 성공');
+        }
+        return true;
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('$_logPrefix ensureSessionReady: silentRefresh 실패: $e');
+        }
+        return false;
+      }
+    }
+
+    // blocking 모드 또는 accessToken 없음: restoreSession 호출
+    if (kDebugMode) {
+      if (!hasToken) {
+        debugPrint('$_logPrefix ensureSessionReady: accessToken 없음 → restoreSession');
+      } else {
+        debugPrint('$_logPrefix ensureSessionReady: blocking 모드 → restoreSession');
+      }
+    }
+    try {
+      await restoreSession();
+      final newState = state;
+      if (newState.status == SessionStatus.unauthenticated) {
+        if (kDebugMode) {
+          debugPrint('$_logPrefix ensureSessionReady: restoreSession 후 unauthenticated');
+        }
+        return false;
+      }
+      if (newState.accessToken == null || newState.accessToken!.isEmpty) {
+        if (kDebugMode) {
+          debugPrint('$_logPrefix ensureSessionReady: restoreSession 후 accessToken 없음');
+        }
+        return false;
+      }
+      if (kDebugMode) {
+        debugPrint('$_logPrefix ensureSessionReady: restoreSession 성공');
+      }
+      return true;
+    } on RestoreSessionFailedException {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix ensureSessionReady: restoreSession 인증 실패');
+      }
+      return false;
+    } on RestoreSessionBlockedException {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix ensureSessionReady: restoreSession 쿨다운 중');
+      }
+      // 쿨다운 중이면 기존 토큰으로 진행 시도
+      return hasToken;
+    } on RestoreSessionTransientException {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix ensureSessionReady: restoreSession 일시 장애');
+      }
+      // 일시 장애면 기존 토큰으로 진행 시도
+      return hasToken;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix ensureSessionReady: restoreSession 예외: $e');
+      }
+      return false;
+    }
   }
 
   SessionMessage _mapLoginError(AuthRpcLoginError? error) {

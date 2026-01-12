@@ -353,6 +353,33 @@ class AppLocalizationsKo extends AppLocalizations {
   String get composeCancel => '취소';
 
   @override
+  String get sessionExpiredTitle => '세션 만료';
+
+  @override
+  String get sessionExpiredBody => '세션이 만료되었습니다. 다시 로그인해 주세요.';
+
+  @override
+  String get sessionExpiredCtaLogin => '로그인';
+
+  @override
+  String get sendFailedTitle => '전송 실패';
+
+  @override
+  String get sendFailedTryAgain => '메시지 전송에 실패했습니다. 다시 시도해 주세요.';
+
+  @override
+  String get moderationContentBlockedMessage => '부적절한 메시지 내용입니다.';
+
+  @override
+  String get moderationBlockedTitle => '전송할 수 없어요';
+
+  @override
+  String get nicknameForbiddenMessage => '닉네임에 금칙어가 포함되어 있어요.';
+
+  @override
+  String get nicknameTakenMessage => '이미 사용 중인 닉네임이에요.';
+
+  @override
   String get composeContentBlocked => '전송할 수 없는 표현이 포함되어 있어요.';
 
   @override
@@ -511,6 +538,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get inboxStatusUnknown => '알 수 없음';
 
   @override
+  String get inboxCardArrivedPrompt => '메시지 도착!\n답변을 남겨주세요.';
+
+  @override
   String get inboxDetailTitle => '받은 메시지';
 
   @override
@@ -608,6 +638,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get inboxActionFailed => '처리를 완료하지 못했어요.';
+
+  @override
+  String get actionReportMessage => '메세지 신고';
+
+  @override
+  String get actionBlockSender => '발신자 차단';
+
+  @override
+  String get inboxDetailMoreTitle => '옵션';
 
   @override
   String get journeyDetailTitle => '메시지';
@@ -806,6 +845,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get blockListUnblockFailed => '차단 해제를 완료하지 못했어요.';
+
+  @override
+  String get blockUnblockedTitle => '완료';
+
+  @override
+  String get blockUnblockedMessage => '차단 해제했습니다.';
 
   @override
   String get onboardingTitle => '온보딩';

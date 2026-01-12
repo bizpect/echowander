@@ -778,6 +778,60 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get composeCancel;
 
+  /// No description provided for @sessionExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Session Expired'**
+  String get sessionExpiredTitle;
+
+  /// No description provided for @sessionExpiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has expired. Please sign in again.'**
+  String get sessionExpiredBody;
+
+  /// No description provided for @sessionExpiredCtaLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In'**
+  String get sessionExpiredCtaLogin;
+
+  /// No description provided for @sendFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Failed'**
+  String get sendFailedTitle;
+
+  /// No description provided for @sendFailedTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send message. Please try again.'**
+  String get sendFailedTryAgain;
+
+  /// No description provided for @moderationContentBlockedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your message contains inappropriate content.'**
+  String get moderationContentBlockedMessage;
+
+  /// No description provided for @moderationBlockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot Send'**
+  String get moderationBlockedTitle;
+
+  /// No description provided for @nicknameForbiddenMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your nickname contains prohibited words.'**
+  String get nicknameForbiddenMessage;
+
+  /// No description provided for @nicknameTakenMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This nickname is already in use.'**
+  String get nicknameTakenMessage;
+
   /// No description provided for @composeContentBlocked.
   ///
   /// In en, this message translates to:
@@ -1090,6 +1144,12 @@ abstract class AppLocalizations {
   /// **'Unknown'**
   String get inboxStatusUnknown;
 
+  /// No description provided for @inboxCardArrivedPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Message arrived!\nPlease leave a reply.'**
+  String get inboxCardArrivedPrompt;
+
   /// No description provided for @inboxDetailTitle.
   ///
   /// In en, this message translates to:
@@ -1287,6 +1347,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'We couldn\'t complete this action.'**
   String get inboxActionFailed;
+
+  /// No description provided for @actionReportMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Report message'**
+  String get actionReportMessage;
+
+  /// No description provided for @actionBlockSender.
+  ///
+  /// In en, this message translates to:
+  /// **'Block sender'**
+  String get actionBlockSender;
+
+  /// No description provided for @inboxDetailMoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Options'**
+  String get inboxDetailMoreTitle;
 
   /// No description provided for @journeyDetailTitle.
   ///
@@ -1683,6 +1761,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'We couldn\'t unblock this user.'**
   String get blockListUnblockFailed;
+
+  /// No description provided for @blockUnblockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get blockUnblockedTitle;
+
+  /// No description provided for @blockUnblockedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'User unblocked.'**
+  String get blockUnblockedMessage;
 
   /// No description provided for @onboardingTitle.
   ///

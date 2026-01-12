@@ -6,9 +6,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/errors/business_error_mapper.dart';
+import '../../../core/logging/log_sanitizer.dart';
 import '../../../core/logging/server_error_logger.dart';
+import '../../../core/media/storage_url_normalizer.dart';
 import '../../../core/network/network_error.dart';
 import '../../../core/network/network_guard.dart';
+import '../../../core/session/session_manager.dart';
+import '../../../core/session/session_state.dart';
 import '../domain/journey_repository.dart';
 import '../domain/sent_journey_detail.dart';
 import '../domain/sent_journey_response.dart';
@@ -17,7 +22,10 @@ import '../domain/journey_storage_repository.dart';
 const _journeyImagesBucketId = 'journey-images';
 
 final journeyRepositoryProvider = Provider<JourneyRepository>((ref) {
-  return SupabaseJourneyRepository(config: AppConfigStore.current);
+  return SupabaseJourneyRepository(
+    config: AppConfigStore.current,
+    ref: ref,
+  );
 });
 
 final journeyStorageRepositoryProvider = Provider<JourneyStorageRepository>((
@@ -29,15 +37,19 @@ final journeyStorageRepositoryProvider = Provider<JourneyStorageRepository>((
 class SupabaseJourneyRepository implements JourneyRepository {
   static const String _logPrefix = '📦[JourneyRepo]';
 
-  SupabaseJourneyRepository({required AppConfig config})
-    : _config = config,
-      _errorLogger = ServerErrorLogger(config: config),
-      _networkGuard = NetworkGuard(
-        errorLogger: ServerErrorLogger(config: config),
-      ),
-      _client = HttpClient();
+  SupabaseJourneyRepository({
+    required AppConfig config,
+    required Ref ref,
+  })  : _config = config,
+        _ref = ref,
+        _errorLogger = ServerErrorLogger(config: config),
+        _networkGuard = NetworkGuard(
+          errorLogger: ServerErrorLogger(config: config),
+        ),
+        _client = HttpClient();
 
   final AppConfig _config;
+  final Ref _ref;
   final ServerErrorLogger _errorLogger;
   final NetworkGuard _networkGuard;
   final HttpClient _client;
@@ -66,8 +78,15 @@ class SupabaseJourneyRepository implements JourneyRepository {
 
     final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/create_journey');
 
+    // 최신 accessToken을 동적으로 가져오는 클로저
+    String getCurrentAccessToken() {
+      final sessionState = _ref.read(sessionManagerProvider);
+      return sessionState.accessToken ?? accessToken;
+    }
+
     try {
       // NetworkGuard를 통한 요청 실행 (재시도 없음: 커밋 액션)
+      // PGRST303 발생 시 refresh + 1회 retry를 위해 onUnauthorizedRefresh 콜백 제공
       final result = await _networkGuard.execute<JourneyCreationResult>(
         operation: () => _executeCreateJourney(
           uri: uri,
@@ -75,7 +94,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
           languageTag: languageTag,
           imagePaths: imagePaths,
           recipientCount: recipientCount,
-          accessToken: accessToken,
+          accessToken: getCurrentAccessToken(),
         ),
         retryPolicy: RetryPolicy.none,
         context: 'create_journey',
@@ -87,6 +106,30 @@ class SupabaseJourneyRepository implements JourneyRepository {
           'image_count': imagePaths.length,
         },
         accessToken: accessToken,
+        onUnauthorizedRefresh: () async {
+          // 401 + PGRST303 발생 시 refresh 시도
+          if (kDebugMode) {
+            debugPrint('$_logPrefix create_journey: PGRST303 → refresh 시도');
+          }
+          final sessionManager = _ref.read(sessionManagerProvider.notifier);
+          await sessionManager.handleUnauthorized(
+            reason: 'PGRST303',
+            source: 'create_journey',
+          );
+          final newState = _ref.read(sessionManagerProvider);
+          if (newState.status == SessionStatus.authenticated &&
+              newState.accessToken != null &&
+              newState.accessToken!.isNotEmpty) {
+            if (kDebugMode) {
+              debugPrint('$_logPrefix create_journey: refresh 성공');
+            }
+            return newState.accessToken;
+          }
+          if (kDebugMode) {
+            debugPrint('$_logPrefix create_journey: refresh 실패');
+          }
+          return null;
+        },
       );
 
       return result;
@@ -110,6 +153,30 @@ class SupabaseJourneyRepository implements JourneyRepository {
         case NetworkErrorType.invalidPayload:
           throw JourneyCreationException(JourneyCreationError.invalidPayload);
         case NetworkErrorType.serverRejected:
+          // ✅ 공통 비즈니스 에러 매퍼 사용
+          final businessError = BusinessErrorMapper.fromPostgrest(
+            statusCode: error.statusCode,
+            code: error.parsedErrorCode,
+            message: error.parsedErrorMessage,
+          );
+          if (businessError != null) {
+            // 비즈니스 에러 키를 도메인 에러로 변환
+            switch (businessError) {
+              case BusinessErrorKey.contentBlocked:
+                if (kDebugMode) {
+                  debugPrint(
+                    'compose: content_blocked 비즈니스 에러 감지 (P0001)',
+                  );
+                }
+                throw JourneyCreationException(
+                  JourneyCreationError.contentBlocked,
+                );
+              case BusinessErrorKey.nicknameForbidden:
+              case BusinessErrorKey.nicknameTaken:
+                // journey 생성에서는 발생하지 않는 에러
+                break;
+            }
+          }
           // 서버 거부 메시지에서 상세 에러 코드 추출 시도
           final mapped = _mapErrorFromResponse(error.message ?? '');
           throw JourneyCreationException(
@@ -701,23 +768,151 @@ class SupabaseJourneyRepository implements JourneyRepository {
     if (accessToken.isEmpty) {
       return [];
     }
-    final paths = await _fetchInboxJourneyImagePaths(
+    final paths = await fetchInboxJourneyImagePaths(
       journeyId: journeyId,
       accessToken: accessToken,
     );
     if (paths.isEmpty) {
       return [];
     }
-    final signedUrls = <String>[];
-    for (final path in paths) {
-      final signed = await _signStoragePath(
-        storagePath: path,
-        accessToken: accessToken,
+    // createSignedUrls로 일괄 변환 (NetworkGuard 경유)
+    return await createSignedUrls(
+      bucketId: _journeyImagesBucketId,
+      paths: paths,
+      accessToken: accessToken,
+    );
+  }
+
+  @override
+  Future<List<String>> createSignedUrls({
+    required String bucketId,
+    required List<String> paths,
+    required String accessToken,
+  }) async {
+    // bucketId/path 정규화 검증
+    final normalizedBucketId = bucketId.trim();
+    if (normalizedBucketId.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix createSignedUrls: bucketId가 비어있음');
+      }
+      throw NetworkRequestException(
+        type: NetworkErrorType.invalidPayload,
+        message: 'bucketId is empty',
       );
-      if (signed != null) {
-        signedUrls.add(signed);
+    }
+    if (normalizedBucketId.contains('_')) {
+      if (kDebugMode) {
+        debugPrint(
+          '$_logPrefix createSignedUrls [WARN] bucketId에 언더스코어 포함: $normalizedBucketId (일반적으로 하이픈 사용)',
+        );
       }
     }
+
+    if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix createSignedUrls: 설정 누락');
+      }
+      throw NetworkRequestException(
+        type: NetworkErrorType.missingConfig,
+        message: 'Supabase config is missing',
+      );
+    }
+    if (accessToken.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix createSignedUrls: accessToken 없음');
+      }
+      throw NetworkRequestException(
+        type: NetworkErrorType.unauthorized,
+        message: 'accessToken is empty',
+      );
+    }
+    if (paths.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix createSignedUrls: paths가 비어있음');
+      }
+      return [];
+    }
+
+    // 요청 전 로그
+    if (kDebugMode) {
+      final pathsPreview = paths.take(2).map((p) => LogSanitizer.previewPath(p)).join(',');
+      debugPrint(
+        '$_logPrefix createSignedUrls 요청: bucketId=$normalizedBucketId expiresIn=3600 pathsCount=${paths.length} preview=[$pathsPreview]',
+      );
+    }
+
+    final signedUrls = <String>[];
+    final failedPaths = <String>[];
+    NetworkRequestException? lastException;
+
+    for (final path in paths) {
+      // path 정규화 검증
+      final normalizedPath = LogSanitizer.normalizePath(path);
+      if (!normalizedPath.startsWith('journeys/')) {
+        if (kDebugMode) {
+          debugPrint(
+            '$_logPrefix createSignedUrls [WARN] path가 journeys/로 시작하지 않음: $normalizedPath',
+          );
+        }
+      }
+      // 중복 prefix 제거 (journey-images/journeys/... 같은 경우)
+      final cleanPath = normalizedPath.replaceFirst(RegExp(r'^journey-images/'), '');
+
+      try {
+        final signed = await _signStoragePathWithGuard(
+          bucketId: normalizedBucketId,
+          storagePath: cleanPath,
+          accessToken: accessToken,
+        );
+        if (signed != null) {
+          signedUrls.add(signed);
+        } else {
+          failedPaths.add(cleanPath);
+        }
+      } on NetworkRequestException catch (e) {
+        lastException = e;
+        failedPaths.add(cleanPath);
+        if (kDebugMode) {
+          debugPrint(
+            '$_logPrefix createSignedUrls path 실패: path=$cleanPath errorType=${e.type} statusCode=${e.statusCode} parsedErrorCode=${e.parsedErrorCode} parsedErrorMessage=${e.parsedErrorMessage}',
+          );
+        }
+      }
+    }
+
+    // 응답 후 로그
+    if (kDebugMode) {
+      final bodyPreview = lastException?.rawBody != null
+          ? (lastException!.rawBody!.length > 200
+              ? '${lastException.rawBody!.substring(0, 200)}...'
+              : lastException.rawBody!)
+          : 'N/A';
+      debugPrint(
+        '$_logPrefix createSignedUrls 응답: returnedCount=${signedUrls.length} failedCount=${failedPaths.length}',
+      );
+      if (lastException != null) {
+        debugPrint(
+          '$_logPrefix createSignedUrls 마지막 에러: statusCode=${lastException.statusCode} parsedErrorCode=${lastException.parsedErrorCode} parsedErrorMessage=${lastException.parsedErrorMessage} parsedErrorDetails=${lastException.parsedErrorDetails} bodyLength=${lastException.rawBody?.length ?? 0} bodyPreview=$bodyPreview',
+        );
+      }
+    }
+
+    // 빈 결과를 예외로 처리
+    if (signedUrls.isEmpty && paths.isNotEmpty) {
+      final errorMessage = failedPaths.isEmpty
+          ? 'createSignedUrls returned empty (no errors logged)'
+          : 'createSignedUrls returned empty (${failedPaths.length} paths failed)';
+      throw NetworkRequestException(
+        type: NetworkErrorType.serverRejected,
+        statusCode: lastException?.statusCode,
+        message: errorMessage,
+        parsedErrorCode: lastException?.parsedErrorCode,
+        parsedErrorMessage: lastException?.parsedErrorMessage,
+        parsedErrorDetails: lastException?.parsedErrorDetails,
+        rawBody: lastException?.rawBody,
+      );
+    }
+
     return signedUrls;
   }
 
@@ -1738,12 +1933,13 @@ class SupabaseJourneyRepository implements JourneyRepository {
         .toList();
   }
 
-  Future<List<String>> _fetchInboxJourneyImagePaths({
+  @override
+  Future<List<String>> fetchInboxJourneyImagePaths({
     required String journeyId,
     required String accessToken,
   }) async {
     final uri = Uri.parse(
-      '${_config.supabaseUrl}/rest/v1/rpc/list_inbox_journey_images',
+      '${_config.supabaseUrl}/rest/v1/rpc/get_inbox_journey_snapshot_image_paths',
     );
 
     try {
@@ -1755,7 +1951,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
           accessToken: accessToken,
         ),
         retryPolicy: RetryPolicy.short,
-        context: 'list_inbox_journey_images',
+        context: 'get_inbox_journey_snapshot_image_paths',
         uri: uri,
         method: 'POST',
         meta: {'journey_id': journeyId},
@@ -1781,13 +1977,20 @@ class SupabaseJourneyRepository implements JourneyRepository {
     );
     request.headers.set('apikey', _config.supabaseAnonKey);
     request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
-    request.add(utf8.encode(jsonEncode({'target_journey_id': journeyId})));
+    request.add(utf8.encode(jsonEncode({'p_journey_id': journeyId})));
     final response = await request.close();
     final body = await response.transform(utf8.decoder).join();
 
+    // 디버그 로그: 응답 원문 (민감정보 제외)
+    if (kDebugMode) {
+      debugPrint(
+        '[InboxDetail][Images][RPC] journeyId=$journeyId status=${response.statusCode}',
+      );
+    }
+
     if (response.statusCode != HttpStatus.ok) {
       await _errorLogger.logHttpFailure(
-        context: 'list_inbox_journey_images',
+        context: 'get_inbox_journey_snapshot_image_paths',
         uri: uri,
         method: 'POST',
         statusCode: response.statusCode,
@@ -1799,94 +2002,247 @@ class SupabaseJourneyRepository implements JourneyRepository {
       throw _networkGuard.statusCodeToException(
         statusCode: response.statusCode,
         responseBody: body,
-        context: 'list_inbox_journey_images',
+        context: 'get_inbox_journey_snapshot_image_paths',
+      );
+    }
+
+    // jsonb 응답 파싱
+    final payload = jsonDecode(body);
+    if (payload is! Map<String, dynamic>) {
+      if (kDebugMode) {
+        debugPrint(
+          '[InboxDetail][Images][RPC] Invalid payload format: ${payload.runtimeType}',
+        );
+      }
+      throw const FormatException('Invalid payload format: expected jsonb object');
+    }
+
+    // 디버그 로그: 응답 키 목록
+    if (kDebugMode) {
+      final keys = payload.keys.toList();
+      debugPrint('[InboxDetail][Images][RPC] keys=$keys');
+    }
+
+    // snapshot_image_paths 추출 (text[] 또는 jsonb array)
+    final snapshotImagePaths = payload['snapshot_image_paths'];
+    final snapshotImageCount = (payload['snapshot_image_count'] as num?)?.toInt() ?? 0;
+
+    List<String> paths = [];
+    if (snapshotImagePaths != null) {
+      if (snapshotImagePaths is List) {
+        // jsonb array 형태
+        paths = snapshotImagePaths
+            .whereType<String>()
+            .toList();
+      } else if (snapshotImagePaths is String) {
+        // 단일 문자열인 경우 (예외 케이스)
+        paths = [snapshotImagePaths];
+      }
+    }
+
+    // 디버그 로그: 최종 파싱 결과
+    if (kDebugMode) {
+      final pathsPreview = paths.take(3).map((p) => LogSanitizer.previewPath(p)).join(',');
+      debugPrint(
+        '[InboxDetail][Images][RPC] countFromDB=$snapshotImageCount pathsLen=${paths.length} preview=[$pathsPreview]',
+      );
+    }
+
+    return paths;
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> debugCheckStorageObjects({
+    required String bucket,
+    required List<String> paths,
+    required String accessToken,
+  }) async {
+    if (!kDebugMode) {
+      throw StateError('debugCheckStorageObjects should only be called in debug mode');
+    }
+    if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
+      return [];
+    }
+    if (accessToken.isEmpty) {
+      return [];
+    }
+    if (paths.isEmpty) {
+      return [];
+    }
+
+    final uri = Uri.parse(
+      '${_config.supabaseUrl}/rest/v1/rpc/debug_check_storage_objects',
+    );
+
+    try {
+      final result = await _networkGuard.execute<List<Map<String, dynamic>>>(
+        operation: () => _executeDebugCheckStorageObjects(
+          uri: uri,
+          bucket: bucket,
+          paths: paths,
+          accessToken: accessToken,
+        ),
+        retryPolicy: RetryPolicy.short,
+        context: 'debug_check_storage_objects',
+        uri: uri,
+        method: 'POST',
+        meta: {'bucket': bucket, 'paths_count': paths.length},
+        accessToken: accessToken,
+      );
+      return result;
+    } on NetworkRequestException catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _executeDebugCheckStorageObjects({
+    required Uri uri,
+    required String bucket,
+    required List<String> paths,
+    required String accessToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(utf8.encode(jsonEncode({
+      'p_bucket': bucket,
+      'p_paths': paths,
+    })));
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      await _errorLogger.logHttpFailure(
+        context: 'debug_check_storage_objects',
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: {'bucket': bucket, 'paths_count': paths.length},
+        accessToken: accessToken,
+      );
+
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'debug_check_storage_objects',
       );
     }
 
     final payload = jsonDecode(body);
     if (payload is! List) {
-      throw const FormatException('Invalid payload format');
+      throw const FormatException('Invalid payload format: expected array');
     }
 
     return payload
         .whereType<Map<String, dynamic>>()
-        .map((row) => row['storage_path'] as String?)
-        .whereType<String>()
         .toList();
   }
 
-  Future<String?> _signStoragePath({
+  /// Storage 경로를 signedUrl로 변환 (NetworkGuard 경유)
+  Future<String?> _signStoragePathWithGuard({
+    required String bucketId,
     required String storagePath,
     required String accessToken,
   }) async {
     final uri = Uri.parse(
-      '${_config.supabaseUrl}/storage/v1/object/sign/$_journeyImagesBucketId/$storagePath',
+      '${_config.supabaseUrl}/storage/v1/object/sign/$bucketId/$storagePath',
     );
+
     try {
-      final request = await _client.postUrl(uri);
-      request.headers.set(
-        HttpHeaders.contentTypeHeader,
-        'application/json; charset=utf-8',
-      );
-      request.headers.set('apikey', _config.supabaseAnonKey);
-      request.headers.set(
-        HttpHeaders.authorizationHeader,
-        'Bearer $accessToken',
-      );
-      request.add(utf8.encode(jsonEncode({'expiresIn': 3600})));
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      if (response.statusCode != HttpStatus.ok) {
-        await _errorLogger.logHttpFailure(
-          context: 'sign_journey_image',
+      final result = await _networkGuard.execute<String?>(
+        operation: () => _executeSignStoragePath(
           uri: uri,
-          method: 'POST',
-          statusCode: response.statusCode,
-          errorMessage: body,
-          meta: {'storage_path': storagePath},
+          storagePath: storagePath,
           accessToken: accessToken,
-        );
-        return null;
-      }
-      final payload = jsonDecode(body);
-      if (payload is Map<String, dynamic>) {
-        final signed = payload['signedURL'];
-        if (signed is String && signed.isNotEmpty) {
-          return '${_config.supabaseUrl}$signed';
-        }
-      }
-      return null;
-    } on SocketException catch (error) {
-      await _errorLogger.logException(
+        ),
+        retryPolicy: RetryPolicy.short,
         context: 'sign_journey_image',
         uri: uri,
         method: 'POST',
-        error: error,
-        meta: {'storage_path': storagePath},
+        meta: {'storage_path': storagePath, 'bucket_id': bucketId},
         accessToken: accessToken,
       );
-      return null;
-    } on HttpException catch (error) {
-      await _errorLogger.logException(
-        context: 'sign_journey_image',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {'storage_path': storagePath},
-        accessToken: accessToken,
-      );
-      return null;
-    } on FormatException catch (error) {
-      await _errorLogger.logException(
-        context: 'sign_journey_image',
-        uri: uri,
-        method: 'POST',
-        error: error,
-        meta: {'storage_path': storagePath},
-        accessToken: accessToken,
-      );
-      return null;
+      return result;
+    } on NetworkRequestException {
+      // 에러 정보를 상위로 전달하기 위해 예외를 재throw
+      // (createSignedUrls에서 빈 결과 처리)
+      rethrow;
     }
+  }
+
+  /// _signStoragePath 실제 실행 (NetworkGuard가 호출)
+  Future<String?> _executeSignStoragePath({
+    required Uri uri,
+    required String storagePath,
+    required String accessToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(
+      HttpHeaders.authorizationHeader,
+      'Bearer $accessToken',
+    );
+    request.add(utf8.encode(jsonEncode({'expiresIn': 3600})));
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      await _errorLogger.logHttpFailure(
+        context: 'sign_journey_image',
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: {'storage_path': storagePath},
+        accessToken: accessToken,
+      );
+
+      final exception = _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'sign_journey_image',
+      );
+
+      // 디버그 로그: 응답 원문 (민감정보 제외)
+      if (kDebugMode) {
+        final bodyPreview = body.length > 200 ? '${body.substring(0, 200)}...' : body;
+        debugPrint(
+          '$_logPrefix _signStoragePathWithGuard 응답: statusCode=${response.statusCode} parsedErrorCode=${exception.parsedErrorCode} parsedErrorMessage=${exception.parsedErrorMessage} parsedErrorDetails=${exception.parsedErrorDetails} bodyLength=${body.length} bodyPreview=$bodyPreview',
+        );
+      }
+
+      throw exception;
+    }
+
+    final payload = jsonDecode(body);
+    if (payload is Map<String, dynamic>) {
+      final signed = payload['signedURL'];
+      if (signed is String && signed.isNotEmpty) {
+        // signedURL 정규화: 상대경로(`/object/sign/...`)일 때 `/storage/v1` 포함 보장
+        final normalizedUrl = StorageUrlNormalizer.normalizeSignedUrl(
+          supabaseUrl: _config.supabaseUrl,
+          signedUrlOrPath: signed,
+        );
+        if (kDebugMode) {
+          final rawSanitized = LogSanitizer.sanitizeUrlForLog(signed);
+          final normalizedSanitized = LogSanitizer.sanitizeUrlForLog(normalizedUrl);
+          debugPrint(
+            '$_logPrefix _executeSignStoragePath signedURL 정규화: raw=$rawSanitized → normalized=$normalizedSanitized',
+          );
+        }
+        return normalizedUrl;
+      }
+    }
+    return null;
   }
 
   JourneyListError? _mapListErrorFromResponse(String body) {

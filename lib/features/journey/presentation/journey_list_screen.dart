@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../app/router/app_router.dart';
 import '../../../app/theme/app_colors.dart';
@@ -12,6 +11,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../core/ads/ad_reward_constants.dart';
 import '../../../core/ads/rewarded_ad_gate.dart';
+import '../../../core/formatters/app_date_formatter.dart';
 import '../../../core/presentation/navigation/tab_navigation_helper.dart';
 import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/app_empty_state.dart';
@@ -68,7 +68,6 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
     final state = ref.watch(journeyListControllerProvider);
     final controller = ref.read(journeyListControllerProvider.notifier);
     final selectedTab = ref.watch(sentTabProvider);
-    final dateFormat = DateFormat.yMMMd(l10n.localeName).add_Hm();
 
     ref.listen<JourneyListState>(journeyListControllerProvider, (
       previous,
@@ -149,7 +148,6 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
                         context: context,
                         l10n: l10n,
                         state: state,
-                        dateFormat: dateFormat,
                         selectedTab: selectedTab,
                       ),
                     ),
@@ -171,7 +169,6 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
     required BuildContext context,
     required AppLocalizations l10n,
     required JourneyListState state,
-    required DateFormat dateFormat,
     required SentTab selectedTab,
   }) {
     final filteredItems = _filterItems(state.items, selectedTab);
@@ -231,7 +228,10 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
                   return const SizedBox(height: AppSpacing.md);
                 }
                 final item = filteredItems[itemIndex];
-                final meta = dateFormat.format(item.createdAt.toLocal());
+                final meta = AppDateFormatter.formatCardTimestamp(
+                  item.createdAt,
+                  l10n.localeName,
+                );
                 final status = _buildStatusPills(
                   l10n: l10n,
                   statusCode: item.statusCode,

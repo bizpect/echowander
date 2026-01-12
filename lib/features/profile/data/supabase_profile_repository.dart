@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/errors/business_error_mapper.dart';
+import '../../../core/logging/log_sanitizer.dart';
 import '../../../core/logging/server_error_logger.dart';
 import '../../../core/network/network_error.dart';
 import '../../../core/network/network_guard.dart';
@@ -149,7 +151,36 @@ class SupabaseProfileRepository implements ProfileRepository {
         debugPrint('$_logPrefix updateProfile NetworkRequestException: $error');
       }
 
-      // 서버 에러 바디에서 에러 코드 확인
+      // ✅ 공통 비즈니스 에러 매퍼 사용
+      final businessError = BusinessErrorMapper.fromPostgrest(
+        statusCode: error.statusCode,
+        code: error.parsedErrorCode,
+        message: error.parsedErrorMessage,
+      );
+      if (businessError != null) {
+        // 비즈니스 에러 키를 도메인 에러로 변환
+        switch (businessError) {
+          case BusinessErrorKey.nicknameForbidden:
+            if (kDebugMode) {
+              debugPrint(
+                '$_logPrefix nickname_forbidden 비즈니스 에러 감지 (P0001)',
+              );
+            }
+            throw ProfileException(ProfileError.nicknameForbidden);
+          case BusinessErrorKey.nicknameTaken:
+            if (kDebugMode) {
+              debugPrint(
+                '$_logPrefix nickname_taken 비즈니스 에러 감지 (P0001)',
+              );
+            }
+            throw ProfileException(ProfileError.nicknameTaken);
+          case BusinessErrorKey.contentBlocked:
+            // 프로필 업데이트에서는 발생하지 않는 에러
+            break;
+        }
+      }
+
+      // 기존 에러 코드 추출 방식 (하위 호환성)
       final errorCode = _extractErrorCode(error.originalError?.toString() ?? '');
       if (errorCode == 'nickname_taken') {
         throw ProfileException(ProfileError.nicknameTaken);
@@ -513,8 +544,9 @@ class SupabaseProfileRepository implements ProfileRepository {
         if (signed.startsWith('http://') || signed.startsWith('https://')) {
           // 이미 full URL이면 그대로 사용
           if (kDebugMode) {
+            final sanitized = LogSanitizer.sanitizeUrlForLog(signed);
             debugPrint(
-              '$_logPrefix signed URL (full): $signed',
+              '$_logPrefix signed URL (full): $sanitized',
             );
           }
           return signed;

@@ -353,6 +353,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get composeCancel => '取消';
 
   @override
+  String get sessionExpiredTitle => '会话已过期';
+
+  @override
+  String get sessionExpiredBody => '您的会话已过期，请重新登录。';
+
+  @override
+  String get sessionExpiredCtaLogin => '登录';
+
+  @override
+  String get sendFailedTitle => '发送失败';
+
+  @override
+  String get sendFailedTryAgain => '消息发送失败，请重试。';
+
+  @override
+  String get moderationContentBlockedMessage => '消息内容不当。';
+
+  @override
+  String get moderationBlockedTitle => '无法发送';
+
+  @override
+  String get nicknameForbiddenMessage => '昵称包含禁用词。';
+
+  @override
+  String get nicknameTakenMessage => '该昵称已被使用。';
+
+  @override
   String get composeContentBlocked => '包含无法发送的内容。';
 
   @override
@@ -511,6 +538,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get inboxStatusUnknown => '未知';
 
   @override
+  String get inboxCardArrivedPrompt => '消息已到达！\n请留下回复。';
+
+  @override
   String get inboxDetailTitle => '收到的消息';
 
   @override
@@ -608,6 +638,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get inboxActionFailed => '无法完成此操作。';
+
+  @override
+  String get actionReportMessage => '举报消息';
+
+  @override
+  String get actionBlockSender => '屏蔽发送者';
+
+  @override
+  String get inboxDetailMoreTitle => '选项';
 
   @override
   String get journeyDetailTitle => '消息';
@@ -806,6 +845,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get blockListUnblockFailed => '无法解除屏蔽。';
+
+  @override
+  String get blockUnblockedTitle => '完成';
+
+  @override
+  String get blockUnblockedMessage => '已解除屏蔽。';
 
   @override
   String get onboardingTitle => '新手引导';

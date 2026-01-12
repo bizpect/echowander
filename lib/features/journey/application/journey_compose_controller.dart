@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../core/permissions/app_permission_service.dart';
+import '../../../core/session/ensure_session_mode.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../core/validation/text_rules.dart';
 import '../application/compose_image_pipeline.dart';
@@ -22,6 +23,7 @@ enum JourneyComposeMessage {
   invalidContent,
   tooLong,
   forbidden,
+  contentBlocked, // moderation BLOCK
   imageLimitExceeded,
   permissionDenied,
   missingSession,
@@ -255,6 +257,26 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
       }
       return;
     }
+
+    // ✅ 전송 직전 세션 선검증/갱신 강제 (이미지 유무와 상관없이)
+    if (kDebugMode) {
+      debugPrint('compose: ensureSessionReady 시작');
+    }
+    final sessionManager = ref.read(sessionManagerProvider.notifier);
+    final sessionReady = await sessionManager.ensureSessionReady(
+      mode: EnsureSessionMode.silent,
+    );
+    if (!sessionReady) {
+      if (kDebugMode) {
+        debugPrint('compose: ensureSessionReady 실패 → 세션 만료');
+      }
+      state = state.copyWith(message: JourneyComposeMessage.missingSession);
+      return;
+    }
+    if (kDebugMode) {
+      debugPrint('compose: ensureSessionReady 성공');
+    }
+
     final accessToken = ref.read(sessionManagerProvider).accessToken;
     if (accessToken == null || accessToken.isEmpty) {
       state = state.copyWith(message: JourneyComposeMessage.missingSession);
@@ -395,6 +417,8 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
         return JourneyComposeMessage.imageLimitExceeded;
       case JourneyCreationError.containsForbidden:
         return JourneyComposeMessage.forbidden;
+      case JourneyCreationError.contentBlocked:
+        return JourneyComposeMessage.contentBlocked;
       case JourneyCreationError.missingCodeValue:
         return JourneyComposeMessage.serverMisconfigured;
       case JourneyCreationError.invalidRecipientCount:
