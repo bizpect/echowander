@@ -431,6 +431,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sentTabCompleted => '완료';
 
   @override
+  String inboxSentOngoingForwardedCountLabel(Object count) {
+    return '$count명에게 전송';
+  }
+
+  @override
+  String inboxSentOngoingRespondedCountLabel(Object count) {
+    return '$count명 답변완료';
+  }
+
+  @override
   String get sentEmptyInProgressTitle => '진행중인 메시지가 없어요';
 
   @override
@@ -577,25 +587,40 @@ class AppLocalizationsKo extends AppLocalizations {
   String get inboxBlockMissing => '보낸 사람 정보를 찾지 못했어요.';
 
   @override
-  String get inboxRespondLabel => '답장';
+  String get inboxRespondLabel => '메시지';
 
   @override
-  String get inboxRespondHint => '답장을 입력하세요...';
+  String get inboxRespondHint => '메시지를 입력하세요...';
 
   @override
-  String get inboxRespondCta => '답장 보내기';
+  String get inboxRespondCta => '메시지 보내기';
 
   @override
-  String get inboxRespondEmpty => '답장을 입력해 주세요.';
+  String get inboxRespondEmpty => '메시지를 입력해 주세요.';
 
   @override
-  String get inboxRespondSuccessTitle => '답장 완료';
+  String get inboxRespondConfirmTitle => '메시지 전송';
 
   @override
-  String get inboxRespondSuccessBody => '답장을 보냈어요.';
+  String get inboxRespondConfirmMessage => '메시지를 전송하시겠습니까?';
+
+  @override
+  String get inboxRespondSuccessTitle => '메시지 전송 완료';
+
+  @override
+  String get inboxRespondSuccessBody => '메시지를 보냈어요.';
 
   @override
   String get inboxPassCta => '패스';
+
+  @override
+  String get inboxPassConfirmTitle => '패스 확인';
+
+  @override
+  String get inboxPassConfirmMessage => '정말 이 메시지를 패스할까요?';
+
+  @override
+  String get inboxPassConfirmAction => '패스하기';
 
   @override
   String get inboxPassSuccessTitle => '패스 완료';
@@ -608,6 +633,18 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get inboxPassedDetailUnavailable => '패스 처리되어 내용을 볼 수 없습니다.';
+
+  @override
+  String get inboxPassedMessageTitle => '패스한 메시지입니다.';
+
+  @override
+  String get inboxRespondedMessageTitle => '답글을 보낸 메시지입니다.';
+
+  @override
+  String get inboxRespondedDetailSectionTitle => '내가 보낸 메시지';
+
+  @override
+  String get inboxRespondedDetailReplyUnavailable => '보낸 메시지를 불러올 수 없습니다.';
 
   @override
   String get inboxReportCta => '신고';

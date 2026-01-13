@@ -17,6 +17,7 @@ import '../../../core/presentation/widgets/app_card.dart';
 import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
 import '../../../core/presentation/widgets/app_scaffold.dart';
+import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../core/validation/text_rules.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/journey_compose_controller.dart';
@@ -57,6 +58,9 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
   String? _inlineMessage;
   bool _inlineMessageIsError = true;
   bool _showPhotoSettingsCta = false;
+
+  // 사진 선택/등록 중 로딩 상태
+  bool _isPickingImages = false;
 
   @override
   void initState() {
@@ -230,8 +234,10 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
         ),
         bodyPadding: EdgeInsets.zero,
         resizeToAvoidBottomInset: true,
-        body: Stack(
-          children: [
+        body: LoadingOverlay(
+          isLoading: _isPickingImages || state.isSubmitting,
+          child: Stack(
+            children: [
             // 배경 데코 (토큰 기반 글로우 색상 사용)
             Positioned.fill(
               child: IgnorePointer(
@@ -371,6 +377,7 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
               ],
             ),
           ],
+        ),
         ),
       ),
     );
@@ -612,16 +619,29 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
               child: ComposeAttachmentGrid(
                 images: state.images,
                 onAddImage: () async {
-                  // await 이후 context 사용 금지: 상태만 업데이트 후 mounted 체크
-                  final status = await ref
-                      .read(journeyComposeControllerProvider.notifier)
-                      .pickImages();
-                  if (!mounted) {
-                    return;
-                  }
+                  // 사진 등록 중 로딩 시작
                   setState(() {
-                    _showPhotoSettingsCta = status.isPermanentlyDenied;
+                    _isPickingImages = true;
                   });
+                  try {
+                    // await 이후 context 사용 금지: 상태만 업데이트 후 mounted 체크
+                    final status = await ref
+                        .read(journeyComposeControllerProvider.notifier)
+                        .pickImages();
+                    if (!mounted) {
+                      return;
+                    }
+                    setState(() {
+                      _showPhotoSettingsCta = status.isPermanentlyDenied;
+                    });
+                  } finally {
+                    // 로딩 종료
+                    if (mounted) {
+                      setState(() {
+                        _isPickingImages = false;
+                      });
+                    }
+                  }
                 },
                 onRemoveImage: (index) => ref
                     .read(journeyComposeControllerProvider.notifier)

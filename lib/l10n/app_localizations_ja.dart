@@ -431,6 +431,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sentTabCompleted => '完了';
 
   @override
+  String inboxSentOngoingForwardedCountLabel(Object count) {
+    return '$count人に送信';
+  }
+
+  @override
+  String inboxSentOngoingRespondedCountLabel(Object count) {
+    return '$count人返信完了';
+  }
+
+  @override
   String get sentEmptyInProgressTitle => '進行中のメッセージはありません';
 
   @override
@@ -577,25 +587,40 @@ class AppLocalizationsJa extends AppLocalizations {
   String get inboxBlockMissing => '送信者情報が見つかりません。';
 
   @override
-  String get inboxRespondLabel => '返信';
+  String get inboxRespondLabel => 'メッセージ';
 
   @override
-  String get inboxRespondHint => '返信を書いてください...';
+  String get inboxRespondHint => 'メッセージを書いてください...';
 
   @override
-  String get inboxRespondCta => '返信を送信';
+  String get inboxRespondCta => 'メッセージを送信';
 
   @override
-  String get inboxRespondEmpty => '返信を入力してください。';
+  String get inboxRespondEmpty => 'メッセージを入力してください。';
 
   @override
-  String get inboxRespondSuccessTitle => '返信完了';
+  String get inboxRespondConfirmTitle => 'メッセージ送信';
 
   @override
-  String get inboxRespondSuccessBody => '返信を送信しました。';
+  String get inboxRespondConfirmMessage => 'メッセージを送信しますか?';
+
+  @override
+  String get inboxRespondSuccessTitle => '送信完了';
+
+  @override
+  String get inboxRespondSuccessBody => 'メッセージを送信しました。';
 
   @override
   String get inboxPassCta => 'パス';
+
+  @override
+  String get inboxPassConfirmTitle => 'パス確認';
+
+  @override
+  String get inboxPassConfirmMessage => '本当にこのメッセージをパスしますか?';
+
+  @override
+  String get inboxPassConfirmAction => 'パスする';
 
   @override
   String get inboxPassSuccessTitle => 'パス完了';
@@ -608,6 +633,18 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get inboxPassedDetailUnavailable => 'パス処理により内容を閲覧できません。';
+
+  @override
+  String get inboxPassedMessageTitle => 'パスしたメッセージです。';
+
+  @override
+  String get inboxRespondedMessageTitle => '返信を送ったメッセージです。';
+
+  @override
+  String get inboxRespondedDetailSectionTitle => '私が送ったメッセージ';
+
+  @override
+  String get inboxRespondedDetailReplyUnavailable => '送ったメッセージを読み込めません。';
 
   @override
   String get inboxReportCta => '報告';

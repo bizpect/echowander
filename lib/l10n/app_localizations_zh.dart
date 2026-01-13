@@ -431,6 +431,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sentTabCompleted => '已完成';
 
   @override
+  String inboxSentOngoingForwardedCountLabel(Object count) {
+    return '已发送给 $count 人';
+  }
+
+  @override
+  String inboxSentOngoingRespondedCountLabel(Object count) {
+    return '$count 人已回复';
+  }
+
+  @override
   String get sentEmptyInProgressTitle => '暂无进行中的消息';
 
   @override
@@ -577,25 +587,40 @@ class AppLocalizationsZh extends AppLocalizations {
   String get inboxBlockMissing => '无法识别发送者。';
 
   @override
-  String get inboxRespondLabel => '回复';
+  String get inboxRespondLabel => '消息';
 
   @override
-  String get inboxRespondHint => '写下你的回复...';
+  String get inboxRespondHint => '写下你的消息...';
 
   @override
-  String get inboxRespondCta => '发送回复';
+  String get inboxRespondCta => '发送消息';
 
   @override
-  String get inboxRespondEmpty => '请输入回复。';
+  String get inboxRespondEmpty => '请输入消息。';
 
   @override
-  String get inboxRespondSuccessTitle => '回复已发送';
+  String get inboxRespondConfirmTitle => '发送消息';
 
   @override
-  String get inboxRespondSuccessBody => '你的回复已发送。';
+  String get inboxRespondConfirmMessage => '确定要发送此消息吗?';
+
+  @override
+  String get inboxRespondSuccessTitle => '消息已发送';
+
+  @override
+  String get inboxRespondSuccessBody => '你的消息已发送。';
 
   @override
   String get inboxPassCta => '跳过';
+
+  @override
+  String get inboxPassConfirmTitle => '确认跳过';
+
+  @override
+  String get inboxPassConfirmMessage => '您确定要跳过这条消息吗?';
+
+  @override
+  String get inboxPassConfirmAction => '跳过';
 
   @override
   String get inboxPassSuccessTitle => '已跳过';
@@ -608,6 +633,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get inboxPassedDetailUnavailable => '此消息已跳过，内容不可查看。';
+
+  @override
+  String get inboxPassedMessageTitle => '此消息已被跳过。';
+
+  @override
+  String get inboxRespondedMessageTitle => '您已回复此消息。';
+
+  @override
+  String get inboxRespondedDetailSectionTitle => '我的回复';
+
+  @override
+  String get inboxRespondedDetailReplyUnavailable => '无法加载您的回复。';
 
   @override
   String get inboxReportCta => '举报';

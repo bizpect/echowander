@@ -286,10 +286,20 @@ class _JourneyInboxScreenState extends ConsumerState<JourneyInboxScreen> {
     List<JourneyInboxItem> items,
     ReceivedTab selectedTab,
   ) {
+    // Completed 탭: 응답 완료 + Pass 처리된 메시지
     if (selectedTab == ReceivedTab.completed) {
-      return items.where((item) => item.recipientStatus == 'RESPONDED').toList();
+      return items
+          .where((item) =>
+              item.recipientStatus == 'RESPONDED' ||
+              item.recipientStatus == 'PASSED')
+          .toList();
     }
-    return items.where((item) => item.recipientStatus != 'RESPONDED').toList();
+    // Pending 탭: 응답 대기 중인 메시지만 (ASSIGNED 등)
+    return items
+        .where((item) =>
+            item.recipientStatus != 'RESPONDED' &&
+            item.recipientStatus != 'PASSED')
+        .toList();
   }
 
   Future<void> _handleMessage(
@@ -347,8 +357,12 @@ class _InboxCard extends StatelessWidget {
     final theme = Theme.of(context);
     final locale = l10n.localeName;
 
-    // ✅ 안내 문구 (다국어)
-    final title = l10n.inboxCardArrivedPrompt;
+    // ✅ 안내 문구 (다국어): PASSED/RESPONDED 상태별 타이틀 표시
+    final title = item.recipientStatus == 'PASSED'
+        ? l10n.inboxPassedMessageTitle
+        : item.recipientStatus == 'RESPONDED'
+            ? l10n.inboxRespondedMessageTitle
+            : l10n.inboxCardArrivedPrompt;
 
     // ✅ 날짜 포맷 (공통 포맷터 사용)
     final dateText = AppDateFormatter.formatCardTimestamp(

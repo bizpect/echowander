@@ -810,7 +810,9 @@ returns table (
   image_count integer,
   status_code text,
   filter_code text,
-  is_reward_unlocked boolean
+  is_reward_unlocked boolean,
+  sent_count integer,
+  responded_count integer
 )
 language plpgsql
 as $$
@@ -821,30 +823,41 @@ begin
 
   return query
   select
-    journeys.id as journey_id,
-    journeys.content,
-    journeys.created_at,
+    j.id as journey_id,
+    j.content,
+    j.created_at,
     (
       select count(*)
-      from public.journey_images
-      where journey_images.journey_id = journeys.id
+      from public.journey_images ji
+      where ji.journey_id = j.id
     )::integer as image_count,
-    journeys.status_code,
-    journeys.filter_code,
+    j.status_code,
+    j.filter_code,
     (
-      journeys.status_code = 'COMPLETED'
+      j.status_code = 'COMPLETED'
       and exists (
         select 1
-        from public.reward_unlocks
-        where reward_unlocks.user_id = auth.uid()
-          and reward_unlocks.journey_id = journeys.id
+        from public.reward_unlocks ru
+        where ru.user_id = auth.uid()
+          and ru.journey_id = j.id
       )
-    ) as is_reward_unlocked
-  from public.journeys
-  where journeys.user_id = auth.uid()
+    ) as is_reward_unlocked,
+    (
+      select count(*)
+      from public.journey_recipients jr
+      where jr.journey_id = j.id
+    )::integer as sent_count,
+    (
+      select count(*)
+      from public.journey_responses jresp
+      where jresp.journey_id = j.id
+        and jresp.is_hidden = false
+    )::integer as responded_count
+  from public.journeys j
+  where j.user_id = auth.uid()
     -- 소프트삭제된 여정 제외
-    and journeys.filter_code <> 'REMOVED'
-  order by journeys.created_at desc
+    and j.filter_code <> 'REMOVED'
+  order by j.created_at desc
   limit least(coalesce(page_size, 20), 50)
   offset greatest(coalesce(page_offset, 0), 0);
 end;
@@ -1159,20 +1172,20 @@ begin
 
   select count(*)
   into _response_count
-  from public.journey_responses
-  where journey_responses.journey_id = target_journey_id;
+  from public.journey_responses jr
+  where jr.journey_id = target_journey_id;
 
   -- 트리거가 moderation을 적용한 후 조회
   declare
     _moderation_status text;
     _content_clean text;
   begin
-    select moderation_status, content_clean
+    select jr.moderation_status, jr.content_clean
     into _moderation_status, _content_clean
-    from public.journey_responses
-    where journey_id = target_journey_id
-      and responder_user_id = auth.uid()
-    order by created_at desc
+    from public.journey_responses jr
+    where jr.journey_id = target_journey_id
+      and jr.responder_user_id = auth.uid()
+    order by jr.created_at desc
     limit 1;
 
     if _response_count >= _target then
@@ -1209,10 +1222,12 @@ set search_path = public
 as $$
 declare
   _recipient_id bigint;
+  _current_status text;
   _journey public.journeys%rowtype;
   _remaining integer;
   _forwarded_recipient_id uuid;
   _passed_at timestamptz := now();
+  _already_processed boolean := false;
 begin
   if auth.uid() is null then
     raise exception 'unauthorized';
@@ -1221,17 +1236,32 @@ begin
     raise exception 'missing_journey';
   end if;
 
-  -- 1) journey_recipient 조회 및 권한 체크
-  select jr.id
-  into _recipient_id
+  -- 1) journey_recipient 조회 및 권한 체크 (idempotency: 이미 처리된 경우 감지)
+  select jr.id, jr.status_code
+  into _recipient_id, _current_status
   from public.journey_recipients jr
   where jr.journey_id = target_journey_id
-    and jr.recipient_user_id = auth.uid()
-    and jr.status_code = 'ASSIGNED';
+    and jr.recipient_user_id = auth.uid();
 
+  -- 권한 체크: 해당 recipient가 없으면 unauthorized
   if _recipient_id is null then
     raise exception 'unauthorized';
   end if;
+
+  -- Idempotency: 이미 PASSED 또는 RESPONDED 상태면 forward 건너뛰고 즉시 반환
+  if _current_status in ('PASSED', 'RESPONDED') then
+    _already_processed := true;
+    -- 이미 처리된 경우 passed_at을 현재 시간이 아닌 기존 updated_at 반환
+    select jr.updated_at into _passed_at
+    from public.journey_recipients jr
+    where jr.id = _recipient_id;
+
+    return query
+    select true as success, _passed_at as passed_at, null::uuid as forwarded_recipient_id;
+    return;
+  end if;
+
+  -- 여기부터는 status_code = 'ASSIGNED'인 경우만 도달 (첫 실행)
 
   -- journey 조회 (rowtype 변수는 별도 SELECT 필요)
   select * into _journey
@@ -1325,13 +1355,15 @@ begin
 
   -- 4) 현재 journey_recipient의 snapshot_content를 placeholder로 redaction
   --    (보안: passed된 메시지는 내용을 볼 수 없도록)
+  --    경쟁 조건 방지: status_code가 ASSIGNED인 경우에만 업데이트
   update public.journey_recipients
   set status_code = 'PASSED',
       snapshot_content = '[패스한 메시지]',
       snapshot_image_count = 0,
       snapshot_image_paths = null,
       updated_at = _passed_at
-  where id = _recipient_id;
+  where id = _recipient_id
+    and status_code = 'ASSIGNED';
 
   -- 5) 반환
   return query
@@ -2088,6 +2120,56 @@ begin
   where journey_responses.journey_id = target_journey_id
     and journey_responses.is_hidden = false
   order by journey_responses.created_at asc;
+end;
+$$;
+
+-- 받은 메시지 상세에서 내가 보낸 최신 답글 조회
+create or replace function public.get_my_latest_response(
+  p_journey_id uuid
+)
+returns table (
+  response_id bigint,
+  content text,
+  content_clean text,
+  created_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid := auth.uid();
+begin
+  if v_user_id is null then
+    raise exception 'unauthorized';
+  end if;
+  if p_journey_id is null then
+    raise exception 'missing_journey';
+  end if;
+
+  -- journey_recipients에서 현재 사용자가 수신자인지 확인
+  if not exists (
+    select 1
+    from public.journey_recipients jr
+    where jr.journey_id = p_journey_id
+      and jr.recipient_user_id = v_user_id
+  ) then
+    raise exception 'unauthorized';
+  end if;
+
+  -- 현재 사용자가 보낸 최신 답글 조회
+  return query
+  select
+    jr.id as response_id,
+    jr.content,
+    jr.content_clean,
+    jr.created_at
+  from public.journey_responses jr
+  where jr.journey_id = p_journey_id
+    and jr.responder_user_id = v_user_id
+    and jr.is_hidden = false
+  order by jr.created_at desc
+  limit 1;
 end;
 $$;
 

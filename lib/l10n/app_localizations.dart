@@ -934,6 +934,18 @@ abstract class AppLocalizations {
   /// **'Completed'**
   String get sentTabCompleted;
 
+  /// No description provided for @inboxSentOngoingForwardedCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent to {count}'**
+  String inboxSentOngoingForwardedCountLabel(Object count);
+
+  /// No description provided for @inboxSentOngoingRespondedCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} responded'**
+  String inboxSentOngoingRespondedCountLabel(Object count);
+
   /// No description provided for @sentEmptyInProgressTitle.
   ///
   /// In en, this message translates to:
@@ -1225,37 +1237,49 @@ abstract class AppLocalizations {
   /// No description provided for @inboxRespondLabel.
   ///
   /// In en, this message translates to:
-  /// **'Reply'**
+  /// **'Message'**
   String get inboxRespondLabel;
 
   /// No description provided for @inboxRespondHint.
   ///
   /// In en, this message translates to:
-  /// **'Write your reply...'**
+  /// **'Write your message...'**
   String get inboxRespondHint;
 
   /// No description provided for @inboxRespondCta.
   ///
   /// In en, this message translates to:
-  /// **'Send reply'**
+  /// **'Send message'**
   String get inboxRespondCta;
 
   /// No description provided for @inboxRespondEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter a reply.'**
+  /// **'Please enter a message.'**
   String get inboxRespondEmpty;
+
+  /// No description provided for @inboxRespondConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Message'**
+  String get inboxRespondConfirmTitle;
+
+  /// No description provided for @inboxRespondConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to send this message?'**
+  String get inboxRespondConfirmMessage;
 
   /// No description provided for @inboxRespondSuccessTitle.
   ///
   /// In en, this message translates to:
-  /// **'Reply sent'**
+  /// **'Message sent'**
   String get inboxRespondSuccessTitle;
 
   /// No description provided for @inboxRespondSuccessBody.
   ///
   /// In en, this message translates to:
-  /// **'Your reply was sent.'**
+  /// **'Your message was sent.'**
   String get inboxRespondSuccessBody;
 
   /// No description provided for @inboxPassCta.
@@ -1263,6 +1287,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pass'**
   String get inboxPassCta;
+
+  /// No description provided for @inboxPassConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Pass'**
+  String get inboxPassConfirmTitle;
+
+  /// No description provided for @inboxPassConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to pass this message?'**
+  String get inboxPassConfirmMessage;
+
+  /// No description provided for @inboxPassConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Pass'**
+  String get inboxPassConfirmAction;
 
   /// No description provided for @inboxPassSuccessTitle.
   ///
@@ -1287,6 +1329,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This message was passed and content is unavailable.'**
   String get inboxPassedDetailUnavailable;
+
+  /// No description provided for @inboxPassedMessageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This message was passed.'**
+  String get inboxPassedMessageTitle;
+
+  /// No description provided for @inboxRespondedMessageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You replied to this message.'**
+  String get inboxRespondedMessageTitle;
+
+  /// No description provided for @inboxRespondedDetailSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My Reply'**
+  String get inboxRespondedDetailSectionTitle;
+
+  /// No description provided for @inboxRespondedDetailReplyUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load your reply.'**
+  String get inboxRespondedDetailReplyUnavailable;
 
   /// No description provided for @inboxReportCta.
   ///

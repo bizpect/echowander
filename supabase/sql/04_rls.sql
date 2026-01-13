@@ -485,6 +485,7 @@ grant execute on function public.list_journey_results(uuid) to authenticated;
 grant execute on function public.get_sent_journey_detail(uuid) to authenticated;
 grant execute on function public.list_sent_journey_responses(uuid, integer, integer) to authenticated;
 grant execute on function public.list_sent_journey_replies(uuid) to authenticated;
+grant execute on function public.get_my_latest_response(uuid) to authenticated;
 grant execute on function public.complete_due_journeys(integer) to authenticated;
 grant execute on function public.log_ad_reward_event(uuid, text, text, text, text, text, jsonb) to authenticated;
 grant execute on function public.upsert_reward_unlock(uuid) to authenticated;

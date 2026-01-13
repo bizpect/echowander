@@ -154,6 +154,18 @@
   "journeyListTitle": "보낸 메시지",
   "sentTabInProgress": "진행중",
   "sentTabCompleted": "완료",
+  "inboxSentOngoingForwardedCountLabel": "{count}명에게 전송",
+  "@inboxSentOngoingForwardedCountLabel": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "inboxSentOngoingRespondedCountLabel": "{count}명 답변완료",
+  "@inboxSentOngoingRespondedCountLabel": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "sentEmptyInProgressTitle": "진행중인 메시지가 없어요",
   "sentEmptyInProgressDescription": "새로운 릴레이 메시지를 시작해 보세요.",
   "sentEmptyCompletedTitle": "완료된 메시지가 없어요",
@@ -207,17 +219,26 @@
   "inboxBlockSuccessBody": "사용자를 차단했어요.",
   "inboxBlockFailed": "차단을 완료하지 못했어요.",
   "inboxBlockMissing": "보낸 사람 정보를 찾지 못했어요.",
-  "inboxRespondLabel": "답장",
-  "inboxRespondHint": "답장을 입력하세요...",
-  "inboxRespondCta": "답장 보내기",
-  "inboxRespondEmpty": "답장을 입력해 주세요.",
-  "inboxRespondSuccessTitle": "답장 완료",
-  "inboxRespondSuccessBody": "답장을 보냈어요.",
+  "inboxRespondLabel": "메시지",
+  "inboxRespondHint": "메시지를 입력하세요...",
+  "inboxRespondCta": "메시지 보내기",
+  "inboxRespondEmpty": "메시지를 입력해 주세요.",
+  "inboxRespondConfirmTitle": "메시지 전송",
+  "inboxRespondConfirmMessage": "메시지를 전송하시겠습니까?",
+  "inboxRespondSuccessTitle": "메시지 전송 완료",
+  "inboxRespondSuccessBody": "메시지를 보냈어요.",
   "inboxPassCta": "패스",
+  "inboxPassConfirmTitle": "패스 확인",
+  "inboxPassConfirmMessage": "정말 이 메시지를 패스할까요?",
+  "inboxPassConfirmAction": "패스하기",
   "inboxPassSuccessTitle": "패스 완료",
   "inboxPassSuccessBody": "이번 메시지는 패스했어요.",
   "inboxPassedTitle": "패스한 메시지",
   "inboxPassedDetailUnavailable": "패스 처리되어 내용을 볼 수 없습니다.",
+  "inboxPassedMessageTitle": "패스한 메시지입니다.",
+  "inboxRespondedMessageTitle": "답글을 보낸 메시지입니다.",
+  "inboxRespondedDetailSectionTitle": "내가 보낸 메시지",
+  "inboxRespondedDetailReplyUnavailable": "보낸 메시지를 불러올 수 없습니다.",
   "inboxReportCta": "신고",
   "inboxReportTitle": "신고 사유",
   "inboxReportSpam": "스팸",

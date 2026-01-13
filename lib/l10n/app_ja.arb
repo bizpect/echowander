@@ -154,6 +154,18 @@
   "journeyListTitle": "送信したメッセージ",
   "sentTabInProgress": "進行中",
   "sentTabCompleted": "完了",
+  "inboxSentOngoingForwardedCountLabel": "{count}人に送信",
+  "@inboxSentOngoingForwardedCountLabel": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "inboxSentOngoingRespondedCountLabel": "{count}人返信完了",
+  "@inboxSentOngoingRespondedCountLabel": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "sentEmptyInProgressTitle": "進行中のメッセージはありません",
   "sentEmptyInProgressDescription": "新しいリレーメッセージを開始してください。",
   "sentEmptyCompletedTitle": "完了したメッセージはありません",
@@ -201,17 +213,26 @@
   "inboxBlockSuccessBody": "ユーザーをブロックしました。",
   "inboxBlockFailed": "ブロックに失敗しました。",
   "inboxBlockMissing": "送信者情報が見つかりません。",
-  "inboxRespondLabel": "返信",
-  "inboxRespondHint": "返信を書いてください...",
-  "inboxRespondCta": "返信を送信",
-  "inboxRespondEmpty": "返信を入力してください。",
-  "inboxRespondSuccessTitle": "返信完了",
-  "inboxRespondSuccessBody": "返信を送信しました。",
+  "inboxRespondLabel": "メッセージ",
+  "inboxRespondHint": "メッセージを書いてください...",
+  "inboxRespondCta": "メッセージを送信",
+  "inboxRespondEmpty": "メッセージを入力してください。",
+  "inboxRespondConfirmTitle": "メッセージ送信",
+  "inboxRespondConfirmMessage": "メッセージを送信しますか?",
+  "inboxRespondSuccessTitle": "送信完了",
+  "inboxRespondSuccessBody": "メッセージを送信しました。",
   "inboxPassCta": "パス",
+  "inboxPassConfirmTitle": "パス確認",
+  "inboxPassConfirmMessage": "本当にこのメッセージをパスしますか?",
+  "inboxPassConfirmAction": "パスする",
   "inboxPassSuccessTitle": "パス完了",
   "inboxPassSuccessBody": "このメッセージをパスしました。",
   "inboxPassedTitle": "パスしたメッセージ",
   "inboxPassedDetailUnavailable": "パス処理により内容を閲覧できません。",
+  "inboxPassedMessageTitle": "パスしたメッセージです。",
+  "inboxRespondedMessageTitle": "返信を送ったメッセージです。",
+  "inboxRespondedDetailSectionTitle": "私が送ったメッセージ",
+  "inboxRespondedDetailReplyUnavailable": "送ったメッセージを読み込めません。",
   "inboxReportCta": "報告",
   "inboxReportTitle": "報告理由",
   "inboxReportSpam": "スパム",

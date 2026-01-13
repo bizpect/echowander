@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../core/formatters/app_date_formatter.dart';
 import '../../../core/logging/log_sanitizer.dart';
@@ -40,6 +39,15 @@ class _JourneyInboxDetailScreenState
   late final JourneyImageUrlResolver _imageResolver;
   final Set<String> _retriedImagePaths = {}; // 재시도된 경로 추적
 
+  // 인라인 답장 입력 컨트롤러
+  final TextEditingController _replyController = TextEditingController();
+  final FocusNode _replyFocusNode = FocusNode();
+
+  // RESPONDED 상태일 때 내가 보낸 답글 정보
+  MyLatestResponse? _myResponse;
+  bool _isResponseLoading = false;
+  bool _responseLoadFailed = false;
+
   static const String _journeyImagesBucketId = 'journey-images';
 
   @override
@@ -48,7 +56,21 @@ class _JourneyInboxDetailScreenState
     _imageResolver = JourneyImageUrlResolver(
       repository: ref.read(journeyRepositoryProvider),
     );
-    _loadImages();
+    // PASSED 상태일 때는 이미지 로드하지 않음 (불필요한 네트워크 작업 방지)
+    if (widget.item?.recipientStatus != 'PASSED') {
+      _loadImages();
+    }
+    // RESPONDED 상태일 때는 내가 보낸 답글 로드
+    if (widget.item?.recipientStatus == 'RESPONDED') {
+      _loadMyResponse();
+    }
+  }
+
+  @override
+  void dispose() {
+    _replyController.dispose();
+    _replyFocusNode.dispose();
+    super.dispose();
   }
 
   Future<void> _loadImages() async {
@@ -238,7 +260,8 @@ class _JourneyInboxDetailScreenState
           leadingSemanticLabel: MaterialLocalizations.of(
             context,
           ).backButtonTooltip,
-          trailingWidget: widget.item?.recipientStatus != 'PASSED'
+          trailingWidget: widget.item?.recipientStatus != 'PASSED' &&
+                  widget.item?.recipientStatus != 'RESPONDED'
               ? IconButton(
                   icon: const Icon(Icons.more_vert),
                   onPressed: () => _showMoreBottomSheet(context),
@@ -247,111 +270,114 @@ class _JourneyInboxDetailScreenState
               : null,
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
-        resizeToAvoidBottomInset: false,
+        resizeToAvoidBottomInset: true, // 키보드가 올라올 때 입력칸 보이도록
         body: SafeArea(
           child: LoadingOverlay(
-            isLoading: _isLoading || _isActionLoading,
+            isLoading: _isLoading || _isActionLoading || _isResponseLoading,
             child: widget.item == null
                 ? Center(child: Text(l10n.inboxDetailMissing))
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.screenPaddingHorizontal,
-                      AppSpacing.screenPaddingTop,
-                      AppSpacing.screenPaddingHorizontal,
-                      AppSpacing.screenPaddingBottom,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 날짜 (우측 정렬)
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            AppDateFormatter.formatDetailTimestamp(
-                              widget.item!.createdAt,
-                              l10n.localeName,
-                            ),
-                            style: Theme.of(context).textTheme.labelLarge,
+                // PASSED 상태일 때는 화면 정중앙에 안내 UI만 표시
+                : widget.item!.recipientStatus == 'PASSED'
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.screenPaddingHorizontal,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.visibility_off_outlined,
+                                size: 80,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+                              Text(
+                                l10n.inboxPassedDetailUnavailable,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.md),
-                        // 연한 구분선
-                        Divider(
-                          height: AppSpacing.lg,
-                          thickness: 1,
-                          color: Theme.of(context).colorScheme.outlineVariant,
+                      )
+                    // PASSED가 아닌 경우 기존 상세 화면 표시
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.screenPaddingHorizontal,
+                          AppSpacing.screenPaddingTop,
+                          AppSpacing.screenPaddingHorizontal,
+                          AppSpacing.screenPaddingBottom,
                         ),
-                        // PASSED 상태일 때는 내용 차단
-                        if (widget.item!.recipientStatus == 'PASSED') ...[
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 48,
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.forward,
-                                    size: 64,
-                                    color: AppColors.onSurfaceVariant,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    l10n.inboxPassedTitle,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge
-                                        ?.copyWith(
-                                          color: AppColors.onSurfaceVariant,
-                                        ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    l10n.inboxPassedDetailUnavailable,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: AppColors.onSurfaceVariant,
-                                        ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ] else ...[
-                          // 메시지 내용
-                          Text(
-                            widget.item!.content,
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                          // 사진 영역 (메시지 내용 아래)
-                          if (_loadFailed)
-                            Padding(
-                              padding: const EdgeInsets.only(top: AppSpacing.md),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // 날짜 (우측 정렬)
+                            Align(
+                              alignment: Alignment.centerRight,
                               child: Text(
-                                l10n.inboxImagesLoadFailed,
-                                style: Theme.of(context).textTheme.bodyMedium,
+                                AppDateFormatter.formatDetailTimestamp(
+                                  widget.item!.createdAt,
+                                  l10n.localeName,
+                                ),
+                                style: Theme.of(context).textTheme.labelLarge,
                               ),
                             ),
-                          JourneyImagesSection(
-                            imageUrls: _imageUrls.whereType<String>().toList(),
-                            onImageLoadFailed: _handleImageLoadFailed,
-                            onImageTap: _openViewer,
-                            traceIdPrefix: widget.item != null
-                                ? 'imgtrace-${widget.item!.journeyId}'
-                                : null,
-                            journeyId: widget.item?.journeyId,
-                          ),
-                        ],
-                      ],
+                            const SizedBox(height: AppSpacing.md),
+                            // 연한 구분선
+                            Divider(
+                              height: AppSpacing.lg,
+                              thickness: 1,
+                              color:
+                                  Theme.of(context).colorScheme.outlineVariant,
+                            ),
+                            // 메시지 내용
+                            Text(
+                              widget.item!.content,
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                            // 사진 영역 (메시지 내용 아래)
+                            if (_loadFailed)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(top: AppSpacing.md),
+                                child: Text(
+                                  l10n.inboxImagesLoadFailed,
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ),
+                            JourneyImagesSection(
+                              imageUrls: _imageUrls.whereType<String>().toList(),
+                              onImageLoadFailed: _handleImageLoadFailed,
+                              onImageTap: _openViewer,
+                              traceIdPrefix: widget.item != null
+                                  ? 'imgtrace-${widget.item!.journeyId}'
+                                  : null,
+                              journeyId: widget.item?.journeyId,
+                            ),
+                            // RESPONDED 상태일 때는 답글 표시, 아닐 때는 입력 UI
+                            if (widget.item!.recipientStatus == 'RESPONDED')
+                              _buildMyResponseSection(context)
+                            else ...[
+                              const SizedBox(height: AppSpacing.lg),
+                              _buildInlineReplySection(context),
+                            ],
+                          ],
                     ),
                   ),
           ),
         ),
-        bottomNavigationBar: widget.item?.recipientStatus != 'PASSED'
+        bottomNavigationBar: widget.item?.recipientStatus != 'PASSED' &&
+                widget.item?.recipientStatus != 'RESPONDED'
             ? SafeArea(
                 child: Container(
                   padding: const EdgeInsets.fromLTRB(
@@ -371,10 +397,11 @@ class _JourneyInboxDetailScreenState
                   ),
                   child: Row(
                     children: [
+                      // Pass 버튼 (5:5 비율 중 왼쪽)
                       Expanded(
+                        flex: 5,
                         child: OutlinedButton(
-                          onPressed:
-                              _isActionLoading ? null : _handlePass,
+                          onPressed: _isActionLoading ? null : _handlePass,
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size(0, AppSpacing.minTouchTarget),
                           ),
@@ -382,15 +409,16 @@ class _JourneyInboxDetailScreenState
                         ),
                       ),
                       const SizedBox(width: AppSpacing.md),
+                      // 보내기 버튼 (5:5 비율 중 오른쪽)
                       Expanded(
-                        child: FilledButton(
-                          onPressed: _isActionLoading
-                              ? null
-                              : () => _showReplyDialog(context),
+                        flex: 5,
+                        child: FilledButton.icon(
+                          onPressed: _isActionLoading ? null : _handleInlineReplySubmit,
+                          icon: const Icon(Icons.send),
+                          label: Text(l10n.inboxRespondCta),
                           style: FilledButton.styleFrom(
                             minimumSize: const Size(0, AppSpacing.minTouchTarget),
                           ),
-                          child: Text(l10n.inboxRespondCta),
                         ),
                       ),
                     ],
@@ -399,6 +427,191 @@ class _JourneyInboxDetailScreenState
               )
             : null,
       ),
+    );
+  }
+
+  /// 내가 보낸 답글 로드
+  Future<void> _loadMyResponse() async {
+    final item = widget.item;
+    if (item == null) {
+      return;
+    }
+    final accessToken = ref.read(sessionManagerProvider).accessToken;
+    if (accessToken == null || accessToken.isEmpty) {
+      return;
+    }
+    setState(() {
+      _isResponseLoading = true;
+      _responseLoadFailed = false;
+    });
+    try {
+      final response = await ref
+          .read(journeyRepositoryProvider)
+          .fetchMyLatestResponse(
+            journeyId: item.journeyId,
+            accessToken: accessToken,
+          );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _myResponse = response;
+        _isResponseLoading = false;
+        _responseLoadFailed = response == null;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isResponseLoading = false;
+        _responseLoadFailed = true;
+      });
+    }
+  }
+
+  /// 내가 보낸 답글 표시 UI
+  Widget _buildMyResponseSection(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    if (_isResponseLoading) {
+      return const Padding(
+        padding: EdgeInsets.only(top: AppSpacing.lg),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_responseLoadFailed || _myResponse == null) {
+      return Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.lg),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(AppSpacing.sm),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: colorScheme.error,
+                size: 20,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  l10n.inboxRespondedDetailReplyUnavailable,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final response = _myResponse!;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.lg),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(AppSpacing.sm),
+          border: Border.all(
+            color: colorScheme.primary.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.send_outlined,
+                  size: 18,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  l10n.inboxRespondedDetailSectionTitle,
+                  style: textTheme.labelLarge?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              response.displayContent,
+              style: textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                AppDateFormatter.formatDetailTimestamp(
+                  response.createdAt,
+                  l10n.localeName,
+                ),
+                style: textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 인라인 메시지 입력 UI 구현 (자동 확장 입력칸만)
+  Widget _buildInlineReplySection(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppSpacing.md),
+        // 자동 확장 입력 필드
+        TextField(
+          controller: _replyController,
+          focusNode: _replyFocusNode,
+          maxLength: 500,
+          maxLines: null, // 자동 확장
+          minLines: 3,
+          textInputAction: TextInputAction.newline,
+          decoration: InputDecoration(
+            hintText: l10n.inboxRespondHint,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.sm),
+              borderSide: BorderSide(color: colorScheme.outline),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.sm),
+              borderSide: BorderSide(color: colorScheme.outline),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.sm),
+              borderSide: BorderSide(color: colorScheme.primary, width: 2),
+            ),
+            contentPadding: const EdgeInsets.all(AppSpacing.md),
+          ),
+          style: textTheme.bodyLarge,
+          enabled: !_isActionLoading,
+        ),
+      ],
     );
   }
 
@@ -439,12 +652,14 @@ class _JourneyInboxDetailScreenState
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) {
+        // bottom safe area 명시적 추가 (갤럭시 제스처/물리키 영역 방지)
+        final bottomPadding = MediaQuery.of(sheetContext).padding.bottom;
         return Padding(
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             AppSpacing.lg,
             AppSpacing.md,
             AppSpacing.lg,
-            AppSpacing.xl,
+            AppSpacing.xl + bottomPadding,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -530,46 +745,41 @@ class _JourneyInboxDetailScreenState
     );
   }
 
-  Future<void> _showReplyDialog(BuildContext context) async {
+  /// 인라인 답장 전송 (빈 메시지 알럿 + 컨펌)
+  Future<void> _handleInlineReplySubmit() async {
     final l10n = AppLocalizations.of(context)!;
-    final controller = TextEditingController();
-    final result = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.inboxRespondLabel),
-          content: TextField(
-            controller: controller,
-            maxLength: 500,
-            maxLines: 6,
-            minLines: 4,
-            textInputAction: TextInputAction.newline,
-            decoration: InputDecoration(
-              hintText: l10n.inboxRespondHint,
-            ),
-            autofocus: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(l10n.composeCancel),
-            ),
-            FilledButton(
-              onPressed: () {
-                final text = controller.text.trim();
-                if (text.isNotEmpty) {
-                  Navigator.of(dialogContext).pop(text);
-                }
-              },
-              child: Text(l10n.inboxRespondCta),
-            ),
-          ],
-        );
-      },
-    );
-    if (result != null && result.isNotEmpty) {
-      await _handleRespond(result);
+    final text = _replyController.text.trim();
+
+    // 1) 빈 메시지 체크
+    if (text.isEmpty) {
+      await showAppAlertDialog(
+        context: context,
+        title: l10n.errorTitle,
+        message: l10n.inboxRespondEmpty,
+        confirmLabel: l10n.commonOk,
+      );
+      // 알럿 닫힌 후 포커스 복귀
+      if (mounted) {
+        _replyFocusNode.requestFocus();
+      }
+      return;
     }
+
+    // 2) 전송 컨펌
+    final confirmed = await showAppConfirmDialog(
+      context: context,
+      title: l10n.inboxRespondConfirmTitle,
+      message: l10n.inboxRespondConfirmMessage,
+      confirmLabel: l10n.commonOk,
+      cancelLabel: l10n.composeCancel,
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    // 3) 전송 로직 실행
+    await _handleRespond(text);
   }
 
   Future<void> _handleRespond(String text) async {
@@ -747,6 +957,20 @@ class _JourneyInboxDetailScreenState
     if (item == null) {
       return;
     }
+
+    // 확인 다이얼로그 표시
+    final confirmed = await showAppConfirmDialog(
+      context: context,
+      title: l10n.inboxPassConfirmTitle,
+      message: l10n.inboxPassConfirmMessage,
+      confirmLabel: l10n.inboxPassConfirmAction,
+      cancelLabel: l10n.composeCancel,
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
     final accessToken = ref.read(sessionManagerProvider).accessToken;
     if (accessToken == null || accessToken.isEmpty) {
       return;
@@ -761,11 +985,20 @@ class _JourneyInboxDetailScreenState
       if (!mounted) {
         return;
       }
+
+      // 성공 알럿 표시 후 리스트로 이동
       await showAppAlertDialog(
         context: context,
         title: l10n.inboxPassSuccessTitle,
         message: l10n.inboxPassSuccessBody,
         confirmLabel: l10n.composeOk,
+        onConfirm: () {
+          // 알럿이 닫힌 후 실행됨
+          // 받은메세지 탭 루트로 복귀
+          if (mounted) {
+            TabNavigationHelper.goToInboxRoot(context, ref);
+          }
+        },
       );
     } on JourneyActionException {
       if (!mounted) {

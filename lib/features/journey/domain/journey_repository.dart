@@ -1,6 +1,23 @@
 import 'sent_journey_detail.dart';
 import 'sent_journey_response.dart';
 
+class MyLatestResponse {
+  MyLatestResponse({
+    required this.responseId,
+    required this.content,
+    required this.createdAt,
+    this.contentClean,
+  });
+
+  final int responseId;
+  final String content;
+  final DateTime createdAt;
+  final String? contentClean; // 마스킹된 텍스트 (MASK인 경우)
+  
+  // 화면 표시용 텍스트 (content_clean이 있으면 우선 사용)
+  String get displayContent => contentClean ?? content;
+}
+
 class JourneyCreationResult {
   JourneyCreationResult({
     required this.journeyId,
@@ -48,6 +65,8 @@ class JourneySummary {
     required this.filterCode,
     required this.isRewardUnlocked,
     this.contentClean,
+    required this.sentCount,
+    required this.respondedCount,
   });
 
   final String journeyId;
@@ -58,6 +77,8 @@ class JourneySummary {
   final String filterCode;
   final bool isRewardUnlocked;
   final String? contentClean; // 마스킹된 텍스트 (MASK인 경우)
+  final int sentCount; // 전송된 대상 수
+  final int respondedCount; // 답변 완료 수
   
   // 화면 표시용 텍스트 (content_clean이 있으면 우선 사용)
   String get displayContent => contentClean ?? content;
@@ -345,6 +366,17 @@ abstract class JourneyRepository {
   Future<void> reportJourneyResponse({
     required int responseId,
     required String reasonCode,
+    required String accessToken,
+  });
+
+  /// 받은 메시지 상세에서 내가 보낸 최신 답글 조회
+  ///
+  /// [journeyId] Journey ID
+  /// [accessToken] 액세스 토큰
+  ///
+  /// 반환: 답글 정보 (없으면 null)
+  Future<MyLatestResponse?> fetchMyLatestResponse({
+    required String journeyId,
     required String accessToken,
   });
 }

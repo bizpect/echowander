@@ -154,6 +154,18 @@
   "journeyListTitle": "已发送消息",
   "sentTabInProgress": "进行中",
   "sentTabCompleted": "已完成",
+  "inboxSentOngoingForwardedCountLabel": "已发送给 {count} 人",
+  "@inboxSentOngoingForwardedCountLabel": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "inboxSentOngoingRespondedCountLabel": "{count} 人已回复",
+  "@inboxSentOngoingRespondedCountLabel": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "sentEmptyInProgressTitle": "暂无进行中的消息",
   "sentEmptyInProgressDescription": "开始新的接力消息后会显示在这里。",
   "sentEmptyCompletedTitle": "暂无已完成的消息",
@@ -201,17 +213,26 @@
   "inboxBlockSuccessBody": "已屏蔽该用户。",
   "inboxBlockFailed": "无法屏蔽该用户。",
   "inboxBlockMissing": "无法识别发送者。",
-  "inboxRespondLabel": "回复",
-  "inboxRespondHint": "写下你的回复...",
-  "inboxRespondCta": "发送回复",
-  "inboxRespondEmpty": "请输入回复。",
-  "inboxRespondSuccessTitle": "回复已发送",
-  "inboxRespondSuccessBody": "你的回复已发送。",
+  "inboxRespondLabel": "消息",
+  "inboxRespondHint": "写下你的消息...",
+  "inboxRespondCta": "发送消息",
+  "inboxRespondEmpty": "请输入消息。",
+  "inboxRespondConfirmTitle": "发送消息",
+  "inboxRespondConfirmMessage": "确定要发送此消息吗?",
+  "inboxRespondSuccessTitle": "消息已发送",
+  "inboxRespondSuccessBody": "你的消息已发送。",
   "inboxPassCta": "跳过",
+  "inboxPassConfirmTitle": "确认跳过",
+  "inboxPassConfirmMessage": "您确定要跳过这条消息吗?",
+  "inboxPassConfirmAction": "跳过",
   "inboxPassSuccessTitle": "已跳过",
   "inboxPassSuccessBody": "你已跳过这条消息。",
   "inboxPassedTitle": "已跳过的消息",
   "inboxPassedDetailUnavailable": "此消息已跳过，内容不可查看。",
+  "inboxPassedMessageTitle": "此消息已被跳过。",
+  "inboxRespondedMessageTitle": "您已回复此消息。",
+  "inboxRespondedDetailSectionTitle": "我的回复",
+  "inboxRespondedDetailReplyUnavailable": "无法加载您的回复。",
   "inboxReportCta": "举报",
   "inboxReportTitle": "举报原因",
   "inboxReportSpam": "垃圾信息",

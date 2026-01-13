@@ -146,6 +146,8 @@ class JourneyListController extends Notifier<JourneyListState> {
                   statusCode: item.statusCode,
                   filterCode: item.filterCode,
                   isRewardUnlocked: true,
+                  sentCount: item.sentCount,
+                  respondedCount: item.respondedCount,
                 )
               : item,
         )

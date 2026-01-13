@@ -154,6 +154,18 @@
   "journeyListTitle": "Mensagens enviadas",
   "sentTabInProgress": "Em andamento",
   "sentTabCompleted": "Concluído",
+  "inboxSentOngoingForwardedCountLabel": "Enviado para {count}",
+  "@inboxSentOngoingForwardedCountLabel": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "inboxSentOngoingRespondedCountLabel": "{count} responderam",
+  "@inboxSentOngoingRespondedCountLabel": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "sentEmptyInProgressTitle": "Nenhuma mensagem em andamento",
   "sentEmptyInProgressDescription": "Inicie uma nova mensagem para vê-la aqui.",
   "sentEmptyCompletedTitle": "Nenhuma mensagem concluída",
@@ -201,17 +213,26 @@
   "inboxBlockSuccessBody": "O usuário foi bloqueado.",
   "inboxBlockFailed": "Não foi possível bloquear o usuário.",
   "inboxBlockMissing": "Não foi possível identificar o remetente.",
-  "inboxRespondLabel": "Responder",
-  "inboxRespondHint": "Escreva sua resposta...",
-  "inboxRespondCta": "Enviar resposta",
-  "inboxRespondEmpty": "Digite uma resposta.",
-  "inboxRespondSuccessTitle": "Resposta enviada",
-  "inboxRespondSuccessBody": "Sua resposta foi enviada.",
+  "inboxRespondLabel": "Mensagem",
+  "inboxRespondHint": "Escreva sua mensagem...",
+  "inboxRespondCta": "Enviar mensagem",
+  "inboxRespondEmpty": "Digite uma mensagem.",
+  "inboxRespondConfirmTitle": "Enviar mensagem",
+  "inboxRespondConfirmMessage": "Deseja enviar esta mensagem?",
+  "inboxRespondSuccessTitle": "Mensagem enviada",
+  "inboxRespondSuccessBody": "Sua mensagem foi enviada.",
   "inboxPassCta": "Passar",
+  "inboxPassConfirmTitle": "Confirmar passagem",
+  "inboxPassConfirmMessage": "Tem certeza de que deseja passar esta mensagem?",
+  "inboxPassConfirmAction": "Passar",
   "inboxPassSuccessTitle": "Passado",
   "inboxPassSuccessBody": "Você passou esta mensagem.",
   "inboxPassedTitle": "Mensagem passada",
   "inboxPassedDetailUnavailable": "Esta mensagem foi passada e o conteúdo não está disponível.",
+  "inboxPassedMessageTitle": "Esta mensagem foi passada.",
+  "inboxRespondedMessageTitle": "Você respondeu a esta mensagem.",
+  "inboxRespondedDetailSectionTitle": "Minha resposta",
+  "inboxRespondedDetailReplyUnavailable": "Não foi possível carregar sua resposta.",
   "inboxReportCta": "Denunciar",
   "inboxReportTitle": "Motivo da denúncia",
   "inboxReportSpam": "Spam",

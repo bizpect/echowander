@@ -154,6 +154,18 @@
   "journeyListTitle": "Sent Messages",
   "sentTabInProgress": "In progress",
   "sentTabCompleted": "Completed",
+  "inboxSentOngoingForwardedCountLabel": "Sent to {count}",
+  "@inboxSentOngoingForwardedCountLabel": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "inboxSentOngoingRespondedCountLabel": "{count} responded",
+  "@inboxSentOngoingRespondedCountLabel": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "sentEmptyInProgressTitle": "No messages in progress",
   "sentEmptyInProgressDescription": "Start a new relay message to see it here.",
   "sentEmptyCompletedTitle": "No completed messages",
@@ -207,17 +219,26 @@
   "inboxBlockSuccessBody": "The user has been blocked.",
   "inboxBlockFailed": "We couldn't block this user.",
   "inboxBlockMissing": "We couldn't identify the sender.",
-  "inboxRespondLabel": "Reply",
-  "inboxRespondHint": "Write your reply...",
-  "inboxRespondCta": "Send reply",
-  "inboxRespondEmpty": "Please enter a reply.",
-  "inboxRespondSuccessTitle": "Reply sent",
-  "inboxRespondSuccessBody": "Your reply was sent.",
+  "inboxRespondLabel": "Message",
+  "inboxRespondHint": "Write your message...",
+  "inboxRespondCta": "Send message",
+  "inboxRespondEmpty": "Please enter a message.",
+  "inboxRespondConfirmTitle": "Send Message",
+  "inboxRespondConfirmMessage": "Do you want to send this message?",
+  "inboxRespondSuccessTitle": "Message sent",
+  "inboxRespondSuccessBody": "Your message was sent.",
   "inboxPassCta": "Pass",
+  "inboxPassConfirmTitle": "Confirm Pass",
+  "inboxPassConfirmMessage": "Are you sure you want to pass this message?",
+  "inboxPassConfirmAction": "Pass",
   "inboxPassSuccessTitle": "Passed",
   "inboxPassSuccessBody": "You've passed this message.",
   "inboxPassedTitle": "Passed message",
   "inboxPassedDetailUnavailable": "This message was passed and content is unavailable.",
+  "inboxPassedMessageTitle": "This message was passed.",
+  "inboxRespondedMessageTitle": "You replied to this message.",
+  "inboxRespondedDetailSectionTitle": "My Reply",
+  "inboxRespondedDetailReplyUnavailable": "Unable to load your reply.",
   "inboxReportCta": "Report",
   "inboxReportTitle": "Report reason",
   "inboxReportSpam": "Spam",

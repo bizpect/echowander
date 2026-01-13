@@ -528,6 +528,8 @@ class SupabaseJourneyRepository implements JourneyRepository {
             statusCode: row['status_code'] as String? ?? 'CREATED',
             filterCode: row['filter_code'] as String? ?? 'OK',
             isRewardUnlocked: row['is_reward_unlocked'] as bool? ?? false,
+            sentCount: (row['sent_count'] as num?)?.toInt() ?? 0,
+            respondedCount: (row['responded_count'] as num?)?.toInt() ?? 0,
           ),
         )
         .toList();
@@ -2292,6 +2294,113 @@ class SupabaseJourneyRepository implements JourneyRepository {
       return null;
     }
     return null;
+  }
+
+  @override
+  Future<MyLatestResponse?> fetchMyLatestResponse({
+    required String journeyId,
+    required String accessToken,
+  }) async {
+    // 사전 검증
+    if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
+      throw JourneyActionException(JourneyActionError.missingConfig);
+    }
+    if (accessToken.isEmpty) {
+      throw JourneyActionException(JourneyActionError.unauthorized);
+    }
+
+    final uri = Uri.parse('${_config.supabaseUrl}/rest/v1/rpc/get_my_latest_response');
+
+    try {
+      final result = await _networkGuard.execute<MyLatestResponse?>(
+        operation: () => _executeFetchMyLatestResponse(
+          uri: uri,
+          journeyId: journeyId,
+          accessToken: accessToken,
+        ),
+        retryPolicy: RetryPolicy.short,
+        context: 'get_my_latest_response',
+        uri: uri,
+        method: 'POST',
+        meta: {'journey_id': journeyId},
+        accessToken: accessToken,
+      );
+      return result;
+    } on NetworkRequestException catch (error) {
+      if (kDebugMode) {
+        debugPrint(
+          '[InboxDetail][MyResponse] fetchMyLatestResponse NetworkRequestException: $error',
+        );
+      }
+
+      switch (error.type) {
+        case NetworkErrorType.network:
+        case NetworkErrorType.timeout:
+          throw JourneyActionException(JourneyActionError.network);
+        case NetworkErrorType.unauthorized:
+          throw JourneyActionException(JourneyActionError.unauthorized);
+        case NetworkErrorType.forbidden:
+          throw JourneyActionException(JourneyActionError.unauthorized);
+        case NetworkErrorType.invalidPayload:
+          throw JourneyActionException(JourneyActionError.invalidPayload);
+        case NetworkErrorType.serverUnavailable:
+        case NetworkErrorType.serverRejected:
+          // 답글이 없는 경우는 null 반환 (에러가 아님)
+          if (error.statusCode == 404 || 
+              (error.message?.contains('unauthorized') ?? false)) {
+            return null;
+          }
+          throw JourneyActionException(JourneyActionError.serverRejected);
+        case NetworkErrorType.missingConfig:
+          throw JourneyActionException(JourneyActionError.missingConfig);
+        case NetworkErrorType.unknown:
+          throw JourneyActionException(JourneyActionError.unknown);
+      }
+    }
+  }
+
+  Future<MyLatestResponse?> _executeFetchMyLatestResponse({
+    required Uri uri,
+    required String journeyId,
+    required String accessToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(utf8.encode(jsonEncode({'p_journey_id': journeyId})));
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    if (response.statusCode == HttpStatus.notFound) {
+      // 답글이 없는 경우 null 반환
+      return null;
+    }
+
+    if (response.statusCode != HttpStatus.ok) {
+      throw NetworkRequestException(
+        type: NetworkErrorType.serverRejected,
+        statusCode: response.statusCode,
+        message: body,
+      );
+    }
+
+    final payload = jsonDecode(body);
+    if (payload is! List || payload.isEmpty) {
+      // 빈 배열이면 답글이 없음
+      return null;
+    }
+
+    final row = payload[0] as Map<String, dynamic>;
+    return MyLatestResponse(
+      responseId: (row['response_id'] as num?)?.toInt() ?? 0,
+      content: row['content'] as String? ?? '',
+      contentClean: row['content_clean'] as String?,
+      createdAt: DateTime.parse(row['created_at'] as String),
+    );
   }
 }
 

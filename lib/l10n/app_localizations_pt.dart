@@ -431,6 +431,16 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sentTabCompleted => 'Concluído';
 
   @override
+  String inboxSentOngoingForwardedCountLabel(Object count) {
+    return 'Enviado para $count';
+  }
+
+  @override
+  String inboxSentOngoingRespondedCountLabel(Object count) {
+    return '$count responderam';
+  }
+
+  @override
   String get sentEmptyInProgressTitle => 'Nenhuma mensagem em andamento';
 
   @override
@@ -577,25 +587,40 @@ class AppLocalizationsPt extends AppLocalizations {
   String get inboxBlockMissing => 'Não foi possível identificar o remetente.';
 
   @override
-  String get inboxRespondLabel => 'Responder';
+  String get inboxRespondLabel => 'Mensagem';
 
   @override
-  String get inboxRespondHint => 'Escreva sua resposta...';
+  String get inboxRespondHint => 'Escreva sua mensagem...';
 
   @override
-  String get inboxRespondCta => 'Enviar resposta';
+  String get inboxRespondCta => 'Enviar mensagem';
 
   @override
-  String get inboxRespondEmpty => 'Digite uma resposta.';
+  String get inboxRespondEmpty => 'Digite uma mensagem.';
 
   @override
-  String get inboxRespondSuccessTitle => 'Resposta enviada';
+  String get inboxRespondConfirmTitle => 'Enviar mensagem';
 
   @override
-  String get inboxRespondSuccessBody => 'Sua resposta foi enviada.';
+  String get inboxRespondConfirmMessage => 'Deseja enviar esta mensagem?';
+
+  @override
+  String get inboxRespondSuccessTitle => 'Mensagem enviada';
+
+  @override
+  String get inboxRespondSuccessBody => 'Sua mensagem foi enviada.';
 
   @override
   String get inboxPassCta => 'Passar';
+
+  @override
+  String get inboxPassConfirmTitle => 'Confirmar passagem';
+
+  @override
+  String get inboxPassConfirmMessage => 'Tem certeza de que deseja passar esta mensagem?';
+
+  @override
+  String get inboxPassConfirmAction => 'Passar';
 
   @override
   String get inboxPassSuccessTitle => 'Passado';
@@ -608,6 +633,18 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get inboxPassedDetailUnavailable => 'Esta mensagem foi passada e o conteúdo não está disponível.';
+
+  @override
+  String get inboxPassedMessageTitle => 'Esta mensagem foi passada.';
+
+  @override
+  String get inboxRespondedMessageTitle => 'Você respondeu a esta mensagem.';
+
+  @override
+  String get inboxRespondedDetailSectionTitle => 'Minha resposta';
+
+  @override
+  String get inboxRespondedDetailReplyUnavailable => 'Não foi possível carregar sua resposta.';
 
   @override
   String get inboxReportCta => 'Denunciar';
@@ -1942,6 +1979,16 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get sentTabCompleted => 'Concluído';
 
   @override
+  String inboxSentOngoingForwardedCountLabel(Object count) {
+    return 'Enviado para $count';
+  }
+
+  @override
+  String inboxSentOngoingRespondedCountLabel(Object count) {
+    return '$count responderam';
+  }
+
+  @override
   String get sentEmptyInProgressTitle => 'Nenhuma mensagem em andamento';
 
   @override
@@ -2088,25 +2135,40 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get inboxBlockMissing => 'Não foi possível identificar o remetente.';
 
   @override
-  String get inboxRespondLabel => 'Responder';
+  String get inboxRespondLabel => 'Mensagem';
 
   @override
-  String get inboxRespondHint => 'Escreva sua resposta...';
+  String get inboxRespondHint => 'Escreva sua mensagem...';
 
   @override
-  String get inboxRespondCta => 'Enviar resposta';
+  String get inboxRespondCta => 'Enviar mensagem';
 
   @override
-  String get inboxRespondEmpty => 'Digite uma resposta.';
+  String get inboxRespondEmpty => 'Digite uma mensagem.';
 
   @override
-  String get inboxRespondSuccessTitle => 'Resposta enviada';
+  String get inboxRespondConfirmTitle => 'Enviar mensagem';
 
   @override
-  String get inboxRespondSuccessBody => 'Sua resposta foi enviada.';
+  String get inboxRespondConfirmMessage => 'Deseja enviar esta mensagem?';
+
+  @override
+  String get inboxRespondSuccessTitle => 'Mensagem enviada';
+
+  @override
+  String get inboxRespondSuccessBody => 'Sua mensagem foi enviada.';
 
   @override
   String get inboxPassCta => 'Passar';
+
+  @override
+  String get inboxPassConfirmTitle => 'Confirmar passagem';
+
+  @override
+  String get inboxPassConfirmMessage => 'Tem certeza de que deseja passar esta mensagem?';
+
+  @override
+  String get inboxPassConfirmAction => 'Passar';
 
   @override
   String get inboxPassSuccessTitle => 'Passado';
@@ -2119,6 +2181,18 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get inboxPassedDetailUnavailable => 'Esta mensagem foi passada e o conteúdo não está disponível.';
+
+  @override
+  String get inboxPassedMessageTitle => 'Esta mensagem foi passada.';
+
+  @override
+  String get inboxRespondedMessageTitle => 'Você respondeu a esta mensagem.';
+
+  @override
+  String get inboxRespondedDetailSectionTitle => 'Minha resposta';
+
+  @override
+  String get inboxRespondedDetailReplyUnavailable => 'Não foi possível carregar sua resposta.';
 
   @override
   String get inboxReportCta => 'Denunciar';

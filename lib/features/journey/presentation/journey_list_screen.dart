@@ -18,6 +18,7 @@ import '../../../core/presentation/widgets/app_empty_state.dart';
 import '../../../core/presentation/widgets/app_list_item.dart';
 import '../../../core/presentation/widgets/app_pill.dart';
 import '../../../core/presentation/widgets/app_scaffold.dart';
+import '../../../core/presentation/widgets/app_card.dart';
 import '../../../core/presentation/widgets/app_skeleton.dart';
 import '../../../core/presentation/widgets/app_segmented_tabs.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
@@ -228,6 +229,17 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
                   return const SizedBox(height: AppSpacing.md);
                 }
                 final item = filteredItems[itemIndex];
+                final isOngoing = item.statusCode != 'COMPLETED';
+                
+                // 진행중 카드는 전용 위젯 사용
+                if (isOngoing) {
+                  return _OngoingJourneyCard(
+                    item: item,
+                    l10n: l10n,
+                  );
+                }
+                
+                // 완료 카드는 기존 로직 유지
                 final meta = AppDateFormatter.formatCardTimestamp(
                   item.createdAt,
                   l10n.localeName,
@@ -243,18 +255,14 @@ class _JourneyListScreenState extends ConsumerState<JourneyListScreen> {
                   meta: meta,
                   status: status,
                   leading: _ListLeadingIcon(
-                    icon: item.statusCode == 'COMPLETED'
-                        ? Icons.check_circle
-                        : Icons.schedule,
+                    icon: Icons.check_circle,
                   ),
                   trailing: const Icon(
                     Icons.chevron_right,
                     color: AppColors.iconMuted,
                     size: 20,
                   ),
-                  onTap: item.statusCode == 'COMPLETED'
-                      ? () => _handleCompletedTap(item)
-                      : null,
+                  onTap: () => _handleCompletedTap(item),
                 );
               },
               childCount: filteredItems.isEmpty
@@ -479,6 +487,80 @@ class _ListLeadingIcon extends StatelessWidget {
         borderRadius: AppRadius.full,
       ),
       child: Icon(icon, size: 18, color: AppColors.iconPrimary),
+    );
+  }
+}
+
+/// 진행중 카드 전용 위젯
+class _OngoingJourneyCard extends StatelessWidget {
+  const _OngoingJourneyCard({
+    required this.item,
+    required this.l10n,
+  });
+
+  final JourneySummary item;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return AppCard(
+      onTap: null, // 진행중 카드는 탭 비활성
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.lg,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 메시지 내용 (1줄만, ellipsis)
+          Text(
+            item.content,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
+            style: textTheme.bodyLarge?.copyWith(
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          // 하단 노란 보더라인 영역
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: AppColors.warning.withValues(alpha: 0.5),
+                width: 1,
+              ),
+              borderRadius: BorderRadius.circular(AppSpacing.sm),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  l10n.inboxSentOngoingForwardedCountLabel(item.sentCount),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                Text(
+                  l10n.inboxSentOngoingRespondedCountLabel(item.respondedCount),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

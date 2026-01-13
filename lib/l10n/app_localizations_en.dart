@@ -431,6 +431,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sentTabCompleted => 'Completed';
 
   @override
+  String inboxSentOngoingForwardedCountLabel(Object count) {
+    return 'Sent to $count';
+  }
+
+  @override
+  String inboxSentOngoingRespondedCountLabel(Object count) {
+    return '$count responded';
+  }
+
+  @override
   String get sentEmptyInProgressTitle => 'No messages in progress';
 
   @override
@@ -577,25 +587,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inboxBlockMissing => 'We couldn\'t identify the sender.';
 
   @override
-  String get inboxRespondLabel => 'Reply';
+  String get inboxRespondLabel => 'Message';
 
   @override
-  String get inboxRespondHint => 'Write your reply...';
+  String get inboxRespondHint => 'Write your message...';
 
   @override
-  String get inboxRespondCta => 'Send reply';
+  String get inboxRespondCta => 'Send message';
 
   @override
-  String get inboxRespondEmpty => 'Please enter a reply.';
+  String get inboxRespondEmpty => 'Please enter a message.';
 
   @override
-  String get inboxRespondSuccessTitle => 'Reply sent';
+  String get inboxRespondConfirmTitle => 'Send Message';
 
   @override
-  String get inboxRespondSuccessBody => 'Your reply was sent.';
+  String get inboxRespondConfirmMessage => 'Do you want to send this message?';
+
+  @override
+  String get inboxRespondSuccessTitle => 'Message sent';
+
+  @override
+  String get inboxRespondSuccessBody => 'Your message was sent.';
 
   @override
   String get inboxPassCta => 'Pass';
+
+  @override
+  String get inboxPassConfirmTitle => 'Confirm Pass';
+
+  @override
+  String get inboxPassConfirmMessage => 'Are you sure you want to pass this message?';
+
+  @override
+  String get inboxPassConfirmAction => 'Pass';
 
   @override
   String get inboxPassSuccessTitle => 'Passed';
@@ -608,6 +633,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inboxPassedDetailUnavailable => 'This message was passed and content is unavailable.';
+
+  @override
+  String get inboxPassedMessageTitle => 'This message was passed.';
+
+  @override
+  String get inboxRespondedMessageTitle => 'You replied to this message.';
+
+  @override
+  String get inboxRespondedDetailSectionTitle => 'My Reply';
+
+  @override
+  String get inboxRespondedDetailReplyUnavailable => 'Unable to load your reply.';
 
   @override
   String get inboxReportCta => 'Report';
