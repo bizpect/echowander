@@ -338,25 +338,19 @@ begin
     end loop;
   end if;
 
-  -- ✅ dispatch job 생성 (outbox)
-  insert into public.journey_dispatch_jobs (
-    journey_id,
-    status,
-    attempt_count,
-    next_run_at
-  )
-  values (
-    _journey_id,
-    'pending',
-    0,
-    now()
-  )
-  on conflict (journey_id) do update
-  set status = 'pending',
-      attempt_count = 0,
-      next_run_at = now(),
-      last_error = null,
-      updated_at = now();
+-- ✅ dispatch job 생성 (outbox)
+insert into public.journey_dispatch_jobs (
+  journey_id, status, attempt_count, next_run_at, last_error, created_at, updated_at
+)
+values (
+  _journey_id, 'pending', 0, now(), null, now(), now()
+)
+on conflict on constraint journey_dispatch_jobs_pkey do update
+set status = 'pending',
+    attempt_count = 0,
+    next_run_at = now(),
+    last_error = null,
+    updated_at = now();
 
   -- 트리거가 moderation을 적용한 후 조회
   return query

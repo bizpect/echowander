@@ -54,6 +54,23 @@ class SupabaseJourneyRepository implements JourneyRepository {
   final NetworkGuard _networkGuard;
   final HttpClient _client;
 
+  /// ✅ 키 호환 헬퍼: created_at 또는 journey_created_at에서 DateTime 추출
+  /// RPC 함수가 컬럼명을 변경해도 클라이언트가 깨지지 않도록 방어
+  DateTime _parseCreatedAt(Map<String, dynamic> row, String context) {
+    final createdAtRaw = row['created_at'] ?? row['journey_created_at'];
+    if (createdAtRaw == null) {
+      throw FormatException(
+        '[$context] Missing required field: created_at (or journey_created_at)',
+      );
+    }
+    if (createdAtRaw is! String) {
+      throw FormatException(
+        '[$context] createdAt field is not String: ${createdAtRaw.runtimeType}',
+      );
+    }
+    return DateTime.parse(createdAtRaw);
+  }
+
   @override
   Future<JourneyCreationResult> createJourney({
     required String content,
@@ -253,21 +270,38 @@ class SupabaseJourneyRepository implements JourneyRepository {
       debugPrint('compose: create_journey 응답 $body');
     }
 
-    // 응답 파싱
+    // 응답 파싱 (관측성 강화)
     final payload = jsonDecode(body);
+
+    if (kDebugMode) {
+      debugPrint('compose: payload type=${payload.runtimeType}');
+      if (payload is List) {
+        debugPrint('compose: payload is List, length=${payload.length}');
+        if (payload.isNotEmpty) {
+          final first = payload.first;
+          debugPrint('compose: first element type=${first.runtimeType}');
+          if (first is Map<String, dynamic>) {
+            debugPrint('compose: first keys=${first.keys.toList()}');
+          }
+        }
+      } else if (payload is Map) {
+        debugPrint('compose: payload is Map, keys=${payload.keys.toList()}');
+      }
+    }
+
     if (payload is! List || payload.isEmpty) {
       if (kDebugMode) {
-        debugPrint('compose: create_journey 응답 형식 오류 ($payload)');
+        debugPrint('compose: create_journey 응답 형식 오류 (expected non-empty List, got ${payload.runtimeType})');
       }
-      throw const FormatException('Invalid payload format');
+      throw const FormatException('Invalid payload format: expected non-empty List');
     }
 
     final first = payload.first;
     if (first is! Map<String, dynamic>) {
       if (kDebugMode) {
-        debugPrint('compose: create_journey 응답 형식 오류 (not Map)');
+        debugPrint('compose: create_journey 응답 형식 오류 (first element is not Map, got ${first.runtimeType})');
       }
-      throw const FormatException('Invalid payload format');
+      throw const FormatException('Invalid payload format: first element is not Map');
     }
 
     // content_blocked 에러 체크
@@ -278,12 +312,58 @@ class SupabaseJourneyRepository implements JourneyRepository {
       throw JourneyCreationException(JourneyCreationError.contentBlocked);
     }
 
-    return JourneyCreationResult(
-      journeyId: first['journey_id'] as String,
-      createdAt: DateTime.parse(first['created_at'] as String),
-      moderationStatus: first['moderation_status'] as String?,
-      contentClean: first['content_clean'] as String?,
-    );
+    // 필수 필드 존재 여부 확인
+    if (!first.containsKey('journey_id')) {
+      if (kDebugMode) {
+        debugPrint('compose: Missing required field: journey_id');
+      }
+      throw const FormatException('Missing required field: journey_id');
+    }
+
+    // 각 필드 파싱 시도 (관측성 강화)
+    try {
+      if (kDebugMode) {
+        debugPrint('compose: Parsing journey_id...');
+      }
+      final journeyId = first['journey_id'] as String;
+
+      if (kDebugMode) {
+        debugPrint('compose: Parsing createdAt (source key: ${first.containsKey('created_at') ? 'created_at' : 'journey_created_at'})...');
+      }
+      final createdAt = _parseCreatedAt(first, 'create_journey');
+
+      if (kDebugMode) {
+        debugPrint('compose: Parsing moderation_status...');
+      }
+      final moderationStatus = first['moderation_status'] as String?;
+
+      if (kDebugMode) {
+        debugPrint('compose: Parsing content_clean...');
+      }
+      final contentClean = first['content_clean'] as String?;
+
+      if (kDebugMode) {
+        debugPrint('compose: All fields parsed successfully');
+      }
+
+      return JourneyCreationResult(
+        journeyId: journeyId,
+        createdAt: createdAt,
+        moderationStatus: moderationStatus,
+        contentClean: contentClean,
+      );
+    } on TypeError catch (e, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('compose: TypeError during field parsing: $e');
+        debugPrint('compose: StackTrace: ${stackTrace.toString().split('\n').take(10).join('\n')}');
+      }
+      throw FormatException('Field type mismatch: $e');
+    } on FormatException catch (e) {
+      if (kDebugMode) {
+        debugPrint('compose: FormatException during date parsing: $e');
+      }
+      throw FormatException('Date parsing failed: $e');
+    }
   }
 
   /// 에러 메시지에서 에러 코드 매핑
@@ -523,7 +603,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
           (row) => JourneySummary(
             journeyId: row['journey_id'] as String,
             content: row['content'] as String,
-            createdAt: DateTime.parse(row['created_at'] as String),
+            createdAt: _parseCreatedAt(row, 'list_journeys'),
             imageCount: (row['image_count'] as num?)?.toInt() ?? 0,
             statusCode: row['status_code'] as String? ?? 'CREATED',
             filterCode: row['filter_code'] as String? ?? 'OK',
@@ -705,7 +785,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
           journeyId: row['journey_id'] as String,
           senderUserId: row['sender_user_id'] as String? ?? '',
           content: row['content'] as String,
-          createdAt: DateTime.parse(row['created_at'] as String),
+          createdAt: _parseCreatedAt(row, 'fetch_inbox_journeys'),
           imageCount: (row['image_count'] as num?)?.toInt() ?? 0,
           recipientStatus: row['recipient_status'] as String? ?? 'ASSIGNED',
           contentClean: row['content_clean'] as String?,
@@ -1722,7 +1802,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
     return SentJourneyDetail(
       journeyId: row['journey_id'] as String,
       content: row['content'] as String? ?? '',
-      createdAt: DateTime.parse(row['created_at'] as String),
+      createdAt: _parseCreatedAt(row, 'get_sent_journey_detail'),
       statusCode: row['status_code'] as String? ?? 'CREATED',
       responseCount: (row['response_count'] as num?)?.toInt() ?? 0,
       imageCount: (row['image_count'] as num?)?.toInt() ?? 0,
@@ -1873,7 +1953,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
           (row) => SentJourneyResponse(
             responseId: (row['response_id'] as num?)?.toInt() ?? 0,
             content: row['content'] as String? ?? '',
-            createdAt: DateTime.parse(row['created_at'] as String),
+            createdAt: _parseCreatedAt(row, 'get_sent_journey_responses'),
             responderNickname: (row['responder_nickname'] as String? ?? '')
                 .trim(),
             contentClean: row['content_clean'] as String?,
@@ -1928,7 +2008,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
           (row) => JourneyReplyItem(
             responseId: (row['reply_id'] as num?)?.toInt() ?? 0,
             content: row['content'] as String? ?? '',
-            createdAt: DateTime.parse(row['created_at'] as String),
+            createdAt: _parseCreatedAt(row, 'get_journey_replies'),
             responderNickname: row['responder_nickname'] as String?,
           ),
         )
@@ -2399,7 +2479,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
       responseId: (row['response_id'] as num?)?.toInt() ?? 0,
       content: row['content'] as String? ?? '',
       contentClean: row['content_clean'] as String?,
-      createdAt: DateTime.parse(row['created_at'] as String),
+      createdAt: _parseCreatedAt(row, 'get_my_latest_response'),
     );
   }
 }

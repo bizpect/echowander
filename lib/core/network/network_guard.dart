@@ -254,12 +254,19 @@ class NetworkGuard {
         }
         // 이미 NetworkRequestException으로 변환된 경우 재throw
         rethrow;
-      } catch (error) {
+      } catch (error, stackTrace) {
         lastError = error;
+
+        // ✅ 상세 에러 로깅 (타입, 메시지, 스택트레이스)
         if (kDebugMode) {
           debugPrint(
-            '[NetworkGuard][$traceLabel] Unknown error: $error, type=${error.runtimeType}',
+            '[NetworkGuard][$traceLabel] Unknown error caught:',
           );
+          debugPrint('  Type: ${error.runtimeType}');
+          debugPrint('  Error: $error');
+          debugPrint('  StackTrace (first 30 lines):');
+          final stackLines = stackTrace.toString().split('\n').take(30).join('\n');
+          debugPrint(stackLines);
         }
 
         // 에러 로거가 있으면 로깅 (null이면 스킵 - 순환 의존성 방지)
@@ -273,13 +280,30 @@ class NetworkGuard {
             'attempt': attempt,
             'response_status': lastStatusCode,
             'response_body': lastResponseBody,
+            'error_type': error.runtimeType.toString(),
+            'stack_trace': stackTrace.toString().split('\n').take(30).join('\n'),
           },
           accessToken: accessToken,
         );
 
+        // ✅ TypeError, NoSuchMethodError → clientParseError로 분리
+        if (error is TypeError || error is NoSuchMethodError) {
+          if (kDebugMode) {
+            debugPrint(
+              '[NetworkGuard][$traceLabel] Client parse error detected: ${error.runtimeType}',
+            );
+          }
+          throw NetworkRequestException(
+            type: NetworkErrorType.invalidPayload,
+            message: 'Client parse error: ${error.runtimeType}',
+            originalError: error,
+          );
+        }
+
         // 알 수 없는 에러는 재시도하지 않음
         throw NetworkRequestException(
           type: NetworkErrorType.unknown,
+          message: 'Unknown error: ${error.runtimeType}',
           originalError: error,
         );
       }
