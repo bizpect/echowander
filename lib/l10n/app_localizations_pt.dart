@@ -444,6 +444,11 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String sentDispatchInProgressTitle(Object n) {
+    return 'Enviando para $n pessoas aleatórias!';
+  }
+
+  @override
   String get sentEmptyInProgressTitle => 'Nenhuma mensagem em andamento';
 
   @override
@@ -1992,6 +1997,11 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String inboxSentOngoingRespondedCountLabel(Object count) {
     return '$count responderam';
+  }
+
+  @override
+  String sentDispatchInProgressTitle(Object n) {
+    return 'Enviando para $n pessoas aleatórias!';
   }
 
   @override

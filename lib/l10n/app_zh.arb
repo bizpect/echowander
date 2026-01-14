@@ -167,6 +167,12 @@
       "count": {}
     }
   },
+  "sentDispatchInProgressTitle": "正在发送给 {n} 位随机用户！",
+  "@sentDispatchInProgressTitle": {
+    "placeholders": {
+      "n": {}
+    }
+  },
   "sentEmptyInProgressTitle": "暂无进行中的消息",
   "sentEmptyInProgressDescription": "开始新的接力消息后会显示在这里。",
   "sentEmptyCompletedTitle": "暂无已完成的消息",

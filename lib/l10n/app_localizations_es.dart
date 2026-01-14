@@ -444,6 +444,11 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String sentDispatchInProgressTitle(Object n) {
+    return '¡Enviando a $n personas aleatorias!';
+  }
+
+  @override
   String get sentEmptyInProgressTitle => 'No hay mensajes en curso';
 
   @override

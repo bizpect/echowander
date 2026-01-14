@@ -114,3 +114,7 @@ create index if not exists board_posts_board_type_status_published_idx
 
 create index if not exists board_posts_board_pinned_published_idx
   on public.board_posts (board_id, is_pinned desc, published_at desc);
+
+create index if not exists journey_dispatch_jobs_status_next_run_idx
+  on public.journey_dispatch_jobs (status, next_run_at)
+  where status in ('pending', 'failed');

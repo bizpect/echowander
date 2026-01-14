@@ -541,26 +541,50 @@ class _OngoingJourneyCard extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(AppSpacing.sm),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  l10n.inboxSentOngoingForwardedCountLabel(item.sentCount),
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                Text(
-                  l10n.inboxSentOngoingRespondedCountLabel(item.respondedCount),
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
+            child: _buildBottomContent(item, l10n, textTheme, colorScheme),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildBottomContent(
+    JourneySummary item,
+    AppLocalizations l10n,
+    TextTheme textTheme,
+    ColorScheme colorScheme,
+  ) {
+    // 분배 진행중: assignedCount < requestedRecipientCount
+    final isDispatchInProgress =
+        item.assignedCount < item.requestedRecipientCount;
+
+    if (isDispatchInProgress) {
+      // 분배 대기 중: "랜덤 N명에게 전송 중!" 표시
+      return Text(
+        l10n.sentDispatchInProgressTitle(item.requestedRecipientCount),
+        style: textTheme.bodySmall?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
+      );
+    }
+
+    // 분배 완료: 기존 카운트 UI 표시
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          l10n.inboxSentOngoingForwardedCountLabel(item.sentCount),
+          style: textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+        Text(
+          l10n.inboxSentOngoingRespondedCountLabel(item.respondedCount),
+          style: textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }

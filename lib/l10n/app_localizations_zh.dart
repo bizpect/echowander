@@ -444,6 +444,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String sentDispatchInProgressTitle(Object n) {
+    return '正在发送给 $n 位随机用户！';
+  }
+
+  @override
   String get sentEmptyInProgressTitle => '暂无进行中的消息';
 
   @override

@@ -167,6 +167,12 @@
       "count": {}
     }
   },
+  "sentDispatchInProgressTitle": "랜덤 {n}명에게 전송 중!",
+  "@sentDispatchInProgressTitle": {
+    "placeholders": {
+      "n": {}
+    }
+  },
   "sentEmptyInProgressTitle": "진행중인 메시지가 없어요",
   "sentEmptyInProgressDescription": "새로운 릴레이 메시지를 시작해 보세요.",
   "sentEmptyCompletedTitle": "완료된 메시지가 없어요",

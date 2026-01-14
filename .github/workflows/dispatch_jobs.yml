@@ -6,7 +6,7 @@ name: Journey Dispatch Jobs Processor
 on:
   schedule:
     # UTC 기준 매 1분 (실제로는 GitHub 부하에 따라 최대 5분 지연 가능)
-    - cron: '*/1 * * * *'
+    - cron: '*/5 * * * *'
 
   # 수동 실행 지원 (디버깅/테스트용)
   workflow_dispatch:

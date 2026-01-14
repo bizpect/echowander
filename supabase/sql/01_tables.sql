@@ -208,6 +208,23 @@ create table if not exists public.journeys (
     check (moderation_status in ('ALLOW', 'MASK', 'BLOCK', 'REVIEW'))
 );
 
+-- 여정 분배 outbox 테이블
+create table if not exists public.journey_dispatch_jobs (
+  journey_id uuid primary key,
+  status text not null default 'pending',
+  attempt_count integer not null default 0,
+  next_run_at timestamptz not null default now(),
+  last_error text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint journey_dispatch_jobs_journey_fk
+    foreign key (journey_id)
+    references public.journeys (id)
+    on delete cascade,
+  constraint journey_dispatch_jobs_status_check
+    check (status in ('pending', 'processing', 'done', 'failed'))
+);
+
 
 create table if not exists public.ad_reward_logs (
   id uuid primary key default gen_random_uuid(),

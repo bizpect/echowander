@@ -575,18 +575,18 @@ begin
   end if;
   if not exists (
     select 1
-    from public.common_codes
-    where code_type = 'report_reason'
-      and code_value = reason_code
+    from public.common_codes as cc
+    where cc.code_type = 'report_reason'
+      and cc.code_value = reason_code
   ) then
     raise exception 'missing_code_value';
   end if;
 
-  select journey_responses.journey_id,
-         journey_responses.responder_user_id
+  select jr.journey_id,
+         jr.responder_user_id
   into _journey_id, _response_owner
-  from public.journey_responses
-  where journey_responses.id = target_response_id;
+  from public.journey_responses as jr
+  where jr.id = target_response_id;
 
   if _journey_id is null then
     raise exception 'response_not_found';
@@ -597,14 +597,14 @@ begin
 
   if not exists (
     select 1
-    from public.journeys
-    where journeys.id = _journey_id
-      and journeys.user_id = auth.uid()
+    from public.journeys as j
+    where j.id = _journey_id
+      and j.user_id = auth.uid()
   ) then
     raise exception 'unauthorized';
   end if;
 
-  insert into public.journey_response_reports (
+  insert into public.journey_response_reports as jrr (
     response_id,
     reporter_user_id,
     reason_code
@@ -618,31 +618,31 @@ begin
 
   select count(*)
   into _response_report_count
-  from public.journey_response_reports
-  where response_id = target_response_id;
+  from public.journey_response_reports as jrr
+  where jrr.response_id = target_response_id;
 
   if _response_report_count >= 2 then
-    update public.journey_responses
+    update public.journey_responses as jr
     set is_hidden = true,
         updated_at = now()
-    where id = target_response_id;
+    where jr.id = target_response_id;
   end if;
 
   select count(*)
   into _user_report_count
-  from public.journey_response_reports reports
-  join public.journey_responses responses
+  from public.journey_response_reports as reports
+  join public.journey_responses as responses
     on responses.id = reports.response_id
   where responses.responder_user_id = _response_owner;
 
   if _user_report_count >= 5 then
-    update public.users
+    update public.users as u
     set response_suspended_until = greatest(
-          coalesce(response_suspended_until, now()),
+          coalesce(u.response_suspended_until, now()),
           now() + interval '7 days'
         ),
         updated_at = now()
-    where user_id = _response_owner;
+    where u.user_id = _response_owner;
   end if;
 end;
 $$;
@@ -683,7 +683,7 @@ begin
 end;
 $$;
 
-drop function if exists public.create_journey(text, text, text[]);
+drop function if exists public.create_journey(text, text, text[], integer);
 
 create or replace function public.create_journey(
   content text,
@@ -693,15 +693,16 @@ create or replace function public.create_journey(
 )
 returns table (
   journey_id uuid,
-  created_at timestamptz,
+  journey_created_at timestamptz,
   moderation_status text,
   content_clean text
 )
 language plpgsql
+security definer
+set search_path = public
 as $$
 declare
   _journey_id uuid;
-  _created_at timestamptz;
   _image_path text;
 begin
   if auth.uid() is null then
@@ -724,17 +725,17 @@ begin
   end if;
   if not exists (
     select 1
-    from public.common_codes
-    where code_type = 'journey_status'
-      and code_value = 'WAITING'
+    from public.common_codes as cc
+    where cc.code_type = 'journey_status'
+      and cc.code_value = 'WAITING'
   ) then
     raise exception 'missing_code_value';
   end if;
   if not exists (
     select 1
-    from public.common_codes
-    where code_type = 'journey_filter_status'
-      and code_value = 'OK'
+    from public.common_codes as cc
+    where cc.code_type = 'journey_filter_status'
+      and cc.code_value = 'OK'
   ) then
     raise exception 'missing_code_value';
   end if;
@@ -748,7 +749,7 @@ begin
     raise exception 'contains_phone';
   end if;
 
-  insert into public.journeys (
+  insert into public.journeys as j (
     user_id,
     status_code,
     filter_code,
@@ -768,11 +769,11 @@ begin
     recipient_count,
     now() + interval '72 hours'
   )
-  returning id, public.journeys.created_at into _journey_id, _created_at;
+  returning j.id into _journey_id;
 
   if image_paths is not null then
     foreach _image_path in array image_paths loop
-      insert into public.journey_images (
+      insert into public.journey_images as ji (
         journey_id,
         user_id,
         storage_path
@@ -785,15 +786,220 @@ begin
     end loop;
   end if;
 
-  -- 트리거가 moderation을 적용한 후 조회
+  insert into public.journey_dispatch_jobs as jdj (
+    journey_id, status, attempt_count, next_run_at, last_error, created_at, updated_at
+  )
+  values (
+    _journey_id, 'pending', 0, now(), null, now(), now()
+  )
+  on conflict on constraint journey_dispatch_jobs_pkey do update
+  set status = 'pending',
+      attempt_count = 0,
+      next_run_at = now(),
+      last_error = null,
+      updated_at = now();
+
   return query
-  select 
+  select
     j.id as journey_id,
-    j.created_at as created_at,
+    j.created_at as journey_created_at,
     j.moderation_status,
     j.content_clean
-  from public.journeys j
+  from public.journeys as j
   where j.id = _journey_id;
+end;
+$$;
+
+drop function if exists public.process_journey_dispatch_jobs(integer);
+
+create or replace function public.process_journey_dispatch_jobs(
+  p_batch integer default 20
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_batch integer;
+  v_job_id uuid;
+  v_journey record;
+  v_assigned_count integer;
+  v_processed_count integer := 0;
+  v_failed_count integer := 0;
+  v_error_message text;
+begin
+  if auth.role() <> 'service_role' then
+    raise exception using
+      errcode = 'P0001',
+      message = 'unauthorized',
+      detail = 'This function can only be called by service_role';
+  end if;
+
+  v_batch := greatest(least(coalesce(p_batch, 20), 100), 1);
+
+  for v_job_id in
+    select jdj.journey_id
+    from public.journey_dispatch_jobs as jdj
+    where jdj.status in ('pending', 'failed')
+      and jdj.next_run_at <= now()
+    order by jdj.next_run_at asc
+    limit v_batch
+    for update skip locked
+  loop
+    begin
+      update public.journey_dispatch_jobs as jdj
+      set status = 'processing',
+          updated_at = now()
+      where jdj.journey_id = v_job_id;
+
+      select j.* into v_journey
+      from public.journeys as j
+      where j.id = v_job_id;
+
+      if not found then
+        update public.journey_dispatch_jobs as jdj
+        set status = 'done',
+            updated_at = now()
+        where jdj.journey_id = v_job_id;
+
+        v_processed_count := v_processed_count + 1;
+        continue;
+      end if;
+
+      select count(*) into v_assigned_count
+      from public.journey_recipients as jr
+      where jr.journey_id = v_job_id;
+
+      if v_assigned_count >= v_journey.requested_recipient_count then
+        update public.journey_dispatch_jobs as jdj
+        set status = 'done',
+            last_error = null,
+            updated_at = now()
+        where jdj.journey_id = v_job_id;
+
+        update public.journeys as j
+        set status_code = 'CREATED',
+            updated_at = now()
+        where j.id = v_job_id
+          and j.status_code = 'WAITING';
+
+        v_processed_count := v_processed_count + 1;
+        continue;
+      end if;
+
+      perform public.match_journey(v_job_id);
+
+      select count(*) into v_assigned_count
+      from public.journey_recipients as jr
+      where jr.journey_id = v_job_id;
+
+      if v_assigned_count > 0 then
+        update public.journey_dispatch_jobs as jdj
+        set status = 'done',
+            last_error = null,
+            updated_at = now()
+        where jdj.journey_id = v_job_id;
+
+        update public.journeys as j
+        set status_code = 'CREATED',
+            updated_at = now()
+        where j.id = v_job_id
+          and j.status_code = 'WAITING';
+
+        v_processed_count := v_processed_count + 1;
+      else
+        update public.journey_dispatch_jobs as jdj
+        set status = 'failed',
+            attempt_count = jdj.attempt_count + 1,
+            last_error = 'no_recipients_found',
+            next_run_at = least(
+              now() + (power(2, (jdj.attempt_count + 1))::integer * interval '30 seconds'),
+              now() + interval '30 minutes'
+            ),
+            updated_at = now()
+        where jdj.journey_id = v_job_id;
+
+        v_failed_count := v_failed_count + 1;
+      end if;
+    exception
+      when others then
+        get stacked diagnostics v_error_message = message_text;
+
+        update public.journey_dispatch_jobs as jdj
+        set status = 'failed',
+            attempt_count = jdj.attempt_count + 1,
+            last_error = v_error_message,
+            next_run_at = least(
+              now() + (power(2, (jdj.attempt_count + 1))::integer * interval '30 seconds'),
+              now() + interval '30 minutes'
+            ),
+            updated_at = now()
+        where jdj.journey_id = v_job_id;
+
+        v_failed_count := v_failed_count + 1;
+    end;
+  end loop;
+
+  return jsonb_build_object(
+    'ok', true,
+    'processed', v_processed_count,
+    'failed', v_failed_count,
+    'batch_size', v_batch
+  );
+end;
+$$;
+
+drop function if exists public.repair_missing_dispatch_jobs(integer);
+
+create or replace function public.repair_missing_dispatch_jobs(
+  p_limit integer default 500
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_limit integer;
+  v_inserted integer;
+begin
+  v_limit := greatest(least(coalesce(p_limit, 500), 2000), 1);
+
+  with missing_jobs as (
+    select
+      j.id as journey_id
+    from public.journeys as j
+    where j.status_code = 'WAITING'
+      and not exists (
+        select 1
+        from public.journey_dispatch_jobs as jdj
+        where jdj.journey_id = j.id
+      )
+    order by j.created_at desc
+    limit v_limit
+  )
+  insert into public.journey_dispatch_jobs as jdj (
+    journey_id, status, attempt_count, next_run_at, last_error, created_at, updated_at
+  )
+  select
+    mj.journey_id,
+    'pending',
+    0,
+    now(),
+    null,
+    now(),
+    now()
+  from missing_jobs as mj
+  on conflict on constraint journey_dispatch_jobs_pkey do nothing;
+
+  get diagnostics v_inserted = row_count;
+
+  return jsonb_build_object(
+    'ok', true,
+    'inserted', v_inserted,
+    'limit', v_limit
+  );
 end;
 $$;
 
@@ -812,7 +1018,9 @@ returns table (
   filter_code text,
   is_reward_unlocked boolean,
   sent_count integer,
-  responded_count integer
+  responded_count integer,
+  requested_recipient_count integer,
+  assigned_count integer
 )
 language plpgsql
 as $$
@@ -852,7 +1060,14 @@ begin
       from public.journey_responses jresp
       where jresp.journey_id = j.id
         and jresp.is_hidden = false
-    )::integer as responded_count
+    )::integer as responded_count,
+    j.requested_recipient_count::integer as requested_recipient_count,
+    (
+      select count(*)
+      from public.journey_recipients jr
+      where jr.journey_id = j.id
+        and jr.status_code = 'ASSIGNED'
+    )::integer as assigned_count
   from public.journeys j
   where j.user_id = auth.uid()
     -- 소프트삭제된 여정 제외
@@ -1868,27 +2083,35 @@ begin
   end if;
   if not exists (
     select 1
-    from public.journeys
-    where journeys.id = target_journey_id
-      and journeys.user_id = auth.uid()
+    from public.journeys as j
+    where j.id = target_journey_id
+      and j.user_id = auth.uid()
   ) then
     raise exception 'unauthorized';
   end if;
 
   return query
   select
-    journeys.id,
-    journeys.status_code,
-    journeys.response_target,
-    (select count(*) from public.journey_recipients
-      where journey_id = journeys.id and status_code = 'RESPONDED'),
-    (select count(*) from public.journey_recipients
-      where journey_id = journeys.id and status_code = 'ASSIGNED'),
-    (select count(*) from public.journey_recipients
-      where journey_id = journeys.id and status_code = 'PASSED'),
-    (select count(*) from public.journey_recipients
-      where journey_id = journeys.id and status_code = 'REPORTED'),
-    journeys.relay_deadline_at,
+    j.id,
+    j.status_code,
+    j.response_target,
+    (select count(*)
+     from public.journey_recipients as jr
+     where jr.journey_id = j.id
+       and jr.status_code = 'RESPONDED'),
+    (select count(*)
+     from public.journey_recipients as jr
+     where jr.journey_id = j.id
+       and jr.status_code = 'ASSIGNED'),
+    (select count(*)
+     from public.journey_recipients as jr
+     where jr.journey_id = j.id
+       and jr.status_code = 'PASSED'),
+    (select count(*)
+     from public.journey_recipients as jr
+     where jr.journey_id = j.id
+       and jr.status_code = 'REPORTED'),
+    j.relay_deadline_at,
     (select array_agg(distinct
         coalesce(
           nullif(split_part(recipient_locale_tag, '-', 2), ''),
@@ -1896,11 +2119,11 @@ begin
           recipient_locale_tag
         )
       )
-     from public.journey_recipients
-     where journey_id = journeys.id
-       and recipient_locale_tag is not null)
-  from public.journeys
-  where journeys.id = target_journey_id;
+     from public.journey_recipients as jr
+     where jr.journey_id = j.id
+       and jr.recipient_locale_tag is not null)
+  from public.journeys as j
+  where j.id = target_journey_id;
 end;
 $$;
 

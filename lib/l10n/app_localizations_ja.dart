@@ -444,6 +444,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String sentDispatchInProgressTitle(Object n) {
+    return 'ランダム$n人に送信中！';
+  }
+
+  @override
   String get sentEmptyInProgressTitle => '進行中のメッセージはありません';
 
   @override

@@ -167,6 +167,12 @@
       "count": {}
     }
   },
+  "sentDispatchInProgressTitle": "ランダム{n}人に送信中！",
+  "@sentDispatchInProgressTitle": {
+    "placeholders": {
+      "n": {}
+    }
+  },
   "sentEmptyInProgressTitle": "進行中のメッセージはありません",
   "sentEmptyInProgressDescription": "新しいリレーメッセージを開始してください。",
   "sentEmptyCompletedTitle": "完了したメッセージはありません",

@@ -444,6 +444,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String sentDispatchInProgressTitle(Object n) {
+    return '랜덤 $n명에게 전송 중!';
+  }
+
+  @override
   String get sentEmptyInProgressTitle => '진행중인 메시지가 없어요';
 
   @override

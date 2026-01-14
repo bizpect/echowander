@@ -67,6 +67,8 @@ class JourneySummary {
     this.contentClean,
     required this.sentCount,
     required this.respondedCount,
+    required this.requestedRecipientCount,
+    required this.assignedCount,
   });
 
   final String journeyId;
@@ -79,6 +81,8 @@ class JourneySummary {
   final String? contentClean; // 마스킹된 텍스트 (MASK인 경우)
   final int sentCount; // 전송된 대상 수
   final int respondedCount; // 답변 완료 수
+  final int requestedRecipientCount; // 요청한 수신자 수
+  final int assignedCount; // ASSIGNED 상태인 수신자 수
   
   // 화면 표시용 텍스트 (content_clean이 있으면 우선 사용)
   String get displayContent => contentClean ?? content;

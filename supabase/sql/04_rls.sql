@@ -20,6 +20,7 @@ alter table public.journey_responses enable row level security;
 alter table public.journey_reports enable row level security;
 alter table public.journey_response_reports enable row level security;
 alter table public.journey_actions enable row level security;
+alter table public.journey_dispatch_jobs enable row level security;
 alter table public.boards enable row level security;
 alter table public.board_posts enable row level security;
 
@@ -71,6 +72,8 @@ drop policy if exists "boards_select_active" on public.boards;
 drop policy if exists "boards_admin_write" on public.boards;
 drop policy if exists "board_posts_select_published" on public.board_posts;
 drop policy if exists "board_posts_admin_write" on public.board_posts;
+drop policy if exists "service_role can manage all jobs" on public.journey_dispatch_jobs;
+drop policy if exists "users can view their own jobs" on public.journey_dispatch_jobs;
 
 create policy "common_codes_select_all"
   on public.common_codes
@@ -305,6 +308,26 @@ create policy "journey_actions_insert_own"
     )
   );
 
+create policy "service_role can manage all jobs"
+  on public.journey_dispatch_jobs
+  for all
+  to service_role
+  using (true)
+  with check (true);
+
+create policy "users can view their own jobs"
+  on public.journey_dispatch_jobs
+  for select
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.journeys j
+      where j.id = journey_dispatch_jobs.journey_id
+        and j.user_id = auth.uid()
+    )
+  );
+
 create policy "boards_select_active"
   on public.boards
   for select
@@ -455,6 +478,8 @@ grant select on public.board_posts to authenticated;
 grant insert on public.client_error_logs to anon, authenticated;
 grant insert on public.ad_reward_logs to authenticated;
 grant select, insert on public.reward_unlocks to authenticated;
+grant select on public.journey_dispatch_jobs to authenticated;
+grant select, insert, update, delete on public.journey_dispatch_jobs to service_role;
 
 grant execute on function public.create_or_get_user(text, text, text) to authenticated;
 grant execute on function public.log_login_attempt(text, text) to anon, authenticated;
@@ -465,6 +490,8 @@ grant execute on function public.update_my_notification_setting(boolean) to auth
 grant execute on function public.upsert_device_token(text, text, text) to authenticated;
 grant execute on function public.deactivate_device_token(text) to authenticated;
 grant execute on function public.create_journey(text, text, text[], integer) to authenticated;
+grant execute on function public.process_journey_dispatch_jobs(integer) to service_role;
+grant execute on function public.repair_missing_dispatch_jobs(integer) to service_role;
 grant execute on function public.list_journeys(integer, integer) to authenticated;
 -- ✅ 권한 최소화: PUBLIC에서 모든 권한 제거, authenticated에게만 EXECUTE 허용
 revoke all on function public.list_inbox_journeys(integer, integer) from public;

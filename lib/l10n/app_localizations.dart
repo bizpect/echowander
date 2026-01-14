@@ -952,6 +952,12 @@ abstract class AppLocalizations {
   /// **'{count} responded'**
   String inboxSentOngoingRespondedCountLabel(Object count);
 
+  /// No description provided for @sentDispatchInProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending to {n} random people!'**
+  String sentDispatchInProgressTitle(Object n);
+
   /// No description provided for @sentEmptyInProgressTitle.
   ///
   /// In en, this message translates to:

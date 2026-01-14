@@ -167,6 +167,12 @@
       "count": {}
     }
   },
+  "sentDispatchInProgressTitle": "Sending to {n} random people!",
+  "@sentDispatchInProgressTitle": {
+    "placeholders": {
+      "n": {}
+    }
+  },
   "sentEmptyInProgressTitle": "No messages in progress",
   "sentEmptyInProgressDescription": "Start a new relay message to see it here.",
   "sentEmptyCompletedTitle": "No completed messages",

@@ -167,6 +167,12 @@
       "count": {}
     }
   },
+  "sentDispatchInProgressTitle": "Enviando para {n} pessoas aleatórias!",
+  "@sentDispatchInProgressTitle": {
+    "placeholders": {
+      "n": {}
+    }
+  },
   "sentEmptyInProgressTitle": "Nenhuma mensagem em andamento",
   "sentEmptyInProgressDescription": "Inicie uma nova mensagem para vê-la aqui.",
   "sentEmptyCompletedTitle": "Nenhuma mensagem concluída",

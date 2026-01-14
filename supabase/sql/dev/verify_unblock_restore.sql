@@ -2,26 +2,26 @@
 -- 배포 후 실행하여 "왜 안 보였는지"를 확정
 
 -- A) unblock 직후 blocks row가 남는지 확인
-select *
-from public.user_blocks
-where blocker_user_id = auth.uid()
-  and blocked_user_id = '<TARGET_UUID>'::uuid;
+select ub.*
+from public.user_blocks as ub
+where ub.blocker_user_id = auth.uid()
+  and ub.blocked_user_id = '<TARGET_UUID>'::uuid;
 -- 기대: 0 rows (차단 해제 완료)
 
 -- B) "숨김 플래그"가 남아있는지 확인
 select 
-  id, 
-  journey_id,
-  recipient_user_id,
-  sender_user_id,
-  is_hidden, 
-  hidden_reason_code, 
-  hidden_at,
-  created_at
-from public.journey_recipients
-where recipient_user_id = auth.uid()
-  and sender_user_id = '<TARGET_UUID>'::uuid
-order by created_at desc
+  jr.id, 
+  jr.journey_id,
+  jr.recipient_user_id,
+  jr.sender_user_id,
+  jr.is_hidden, 
+  jr.hidden_reason_code, 
+  jr.hidden_at,
+  jr.created_at
+from public.journey_recipients as jr
+where jr.recipient_user_id = auth.uid()
+  and jr.sender_user_id = '<TARGET_UUID>'::uuid
+order by jr.created_at desc
 limit 20;
 -- 기대: is_hidden = false, hidden_reason_code = null (복구 완료)
 
@@ -32,18 +32,18 @@ select public.unblock_user('<TARGET_UUID>'::uuid);
 -- D) 복구 전후 비교 (실제 테스트 시)
 -- 1) 차단 전: 메시지 확인
 select count(*) as visible_count
-from public.journey_recipients
-where recipient_user_id = auth.uid()
-  and sender_user_id = '<TARGET_UUID>'::uuid
-  and is_hidden = false;
+from public.journey_recipients as jr
+where jr.recipient_user_id = auth.uid()
+  and jr.sender_user_id = '<TARGET_UUID>'::uuid
+  and jr.is_hidden = false;
 
 -- 2) 차단 후: 숨김 확인
 select count(*) as hidden_count
-from public.journey_recipients
-where recipient_user_id = auth.uid()
-  and sender_user_id = '<TARGET_UUID>'::uuid
-  and is_hidden = true
-  and hidden_reason_code = 'HIDE_BLOCKED';
+from public.journey_recipients as jr
+where jr.recipient_user_id = auth.uid()
+  and jr.sender_user_id = '<TARGET_UUID>'::uuid
+  and jr.is_hidden = true
+  and jr.hidden_reason_code = 'HIDE_BLOCKED';
 
 -- 3) 차단 해제 후: 복구 확인
 select public.unblock_user('<TARGET_UUID>'::uuid) as result;
@@ -51,7 +51,7 @@ select public.unblock_user('<TARGET_UUID>'::uuid) as result;
 
 -- 4) 복구 후: 다시 보이는지 확인
 select count(*) as restored_count
-from public.journey_recipients
-where recipient_user_id = auth.uid()
-  and sender_user_id = '<TARGET_UUID>'::uuid
-  and is_hidden = false;
+from public.journey_recipients as jr
+where jr.recipient_user_id = auth.uid()
+  and jr.sender_user_id = '<TARGET_UUID>'::uuid
+  and jr.is_hidden = false;

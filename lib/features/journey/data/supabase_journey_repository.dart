@@ -610,6 +610,8 @@ class SupabaseJourneyRepository implements JourneyRepository {
             isRewardUnlocked: row['is_reward_unlocked'] as bool? ?? false,
             sentCount: (row['sent_count'] as num?)?.toInt() ?? 0,
             respondedCount: (row['responded_count'] as num?)?.toInt() ?? 0,
+            requestedRecipientCount: (row['requested_recipient_count'] as num?)?.toInt() ?? 0,
+            assignedCount: (row['assigned_count'] as num?)?.toInt() ?? 0,
           ),
         )
         .toList();
