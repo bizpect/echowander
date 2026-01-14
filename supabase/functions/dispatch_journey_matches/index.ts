@@ -95,31 +95,26 @@ serve(async (request) => {
           body: text.body,
           route,
         });
-        await insertNotificationLog({
+        // ✅ FCM 발송 성공 → notification_logs UPDATE (트리거가 이미 INSERT 했음)
+        await updateNotificationFcmResult({
           userId: recipientUserId,
-          title: text.title,
-          body: text.body,
-          route,
-          data: {
-            type: "journey_assigned",
-            journey_id: journeyId,
-            fcm_status: "success",
-          },
+          journeyId,
+          fcmStatus: "SENT",
+          fcmError: null,
+          fcmMessageId: null,
         });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.error(`[dispatch] FCM failed for journey=${journeyId}, user=${recipientUserId}: ${errorMessage}`);
-        await insertNotificationLog({
+        // ✅ FCM 발송 실패 → notification_logs UPDATE
+        // UNREGISTERED 토큰인 경우 별도 상태로 기록
+        const fcmStatus = errorMessage.includes("UNREGISTERED") ? "UNREGISTERED" : "FAILED";
+        await updateNotificationFcmResult({
           userId: recipientUserId,
-          title: text.title,
-          body: text.body,
-          route,
-          data: {
-            type: "journey_assigned",
-            journey_id: journeyId,
-            fcm_status: "failed",
-            fcm_error: errorMessage,
-          },
+          journeyId,
+          fcmStatus,
+          fcmError: errorMessage,
+          fcmMessageId: null,
         });
         throw error;
       }
@@ -320,31 +315,28 @@ async function dispatchCompletion({
             body: text.body,
             route,
           });
-          await insertNotificationLog({
+          // ✅ 결과 푸시 성공 → notification_logs UPDATE
+          // 주의: 결과 푸시는 recipients INSERT가 아니므로 트리거가 로그를 안 만들 수 있음
+          // 이 경우 UPDATE가 실패하지만 best-effort로 처리됨
+          await updateNotificationFcmResult({
             userId,
-            title: text.title,
-            body: text.body,
-            route,
-            data: {
-              type: "journey_result",
-              journey_id: journeyId,
-              fcm_status: "success",
-            },
+            journeyId,
+            fcmStatus: "SENT",
+            fcmError: null,
+            fcmMessageId: null,
           });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
           console.error(`[dispatch] Result FCM failed for journey=${journeyId}, user=${userId}: ${errorMessage}`);
-          await insertNotificationLog({
+          // ✅ 결과 푸시 실패 → notification_logs UPDATE
+          // UNREGISTERED 토큰인 경우 별도 상태로 기록
+          const fcmStatus = errorMessage.includes("UNREGISTERED") ? "UNREGISTERED" : "FAILED";
+          await updateNotificationFcmResult({
             userId,
-            title: text.title,
-            body: text.body,
-            route,
-            data: {
-              type: "journey_result",
-              journey_id: journeyId,
-              fcm_status: "failed",
-              fcm_error: errorMessage,
-            },
+            journeyId,
+            fcmStatus,
+            fcmError: errorMessage,
+            fcmMessageId: null,
           });
           throw error;
         }
@@ -495,24 +487,24 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
   });
 }
 
-async function insertNotificationLog({
+async function updateNotificationFcmResult({
   userId,
-  title,
-  body,
-  route,
-  data,
+  journeyId,
+  fcmStatus,
+  fcmError,
+  fcmMessageId,
 }: {
   userId: string;
-  title: string;
-  body: string;
-  route: string;
-  data: Record<string, unknown>;
+  journeyId: string;
+  fcmStatus: string;
+  fcmError: string | null;
+  fcmMessageId: string | null;
 }) {
   if (!serviceRoleKey) {
     return;
   }
   const response = await fetch(
-    `${supabaseUrl}/rest/v1/rpc/insert_notification_log`,
+    `${supabaseUrl}/rest/v1/rpc/update_notification_fcm_result`,
     {
       method: "POST",
       headers: {
@@ -521,18 +513,18 @@ async function insertNotificationLog({
         Authorization: `Bearer ${serviceRoleKey}`,
       },
       body: JSON.stringify({
-        _user_id: userId,
-        _title: title,
-        _body: body,
-        _route: route,
-        _data: data,
+        p_user_id: userId,
+        p_journey_id: journeyId,
+        p_fcm_status: fcmStatus,
+        p_fcm_error: fcmError,
+        p_fcm_message_id: fcmMessageId,
       }),
     },
   );
   if (!response.ok) {
     const bodyText = await response.text();
-    console.error(`[dispatch] notification_log insert failed: ${response.status} - ${bodyText}`);
-    throw new Error(`notification_log_failed:${response.status}:${bodyText}`);
+    // best-effort: 실패해도 경고만 출력 (트리거가 로그를 안 만들었을 수 있음)
+    console.warn(`[dispatch] notification_fcm_result update failed: ${response.status} - ${bodyText}`);
   }
 }
 

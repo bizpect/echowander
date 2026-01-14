@@ -135,6 +135,11 @@ create table if not exists public.notification_logs (
   data jsonb,
   read_at timestamptz,
   delete_yn boolean not null default false,
+  -- FCM 발송 결과 추적 컬럼
+  fcm_status text,  -- 'SENT', 'FAILED', 'UNREGISTERED'
+  fcm_sent_at timestamptz,
+  fcm_error text,
+  fcm_message_id text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint notification_logs_user_fk
@@ -142,6 +147,22 @@ create table if not exists public.notification_logs (
     references public.users (user_id)
     on delete cascade
   );
+
+-- ✅ 중복 알림 방지 (멱등성 보장)
+create unique index if not exists notification_logs_user_journey_unique
+  on public.notification_logs (user_id, ((data->>'journey_id')::uuid))
+  where data is not null and data->>'journey_id' is not null;
+
+comment on index public.notification_logs_user_journey_unique is
+  '동일 사용자에게 동일 여정에 대한 중복 알림 방지 (멱등성 보장)';
+
+-- 조회 성능 인덱스
+create index if not exists notification_logs_user_created_at_idx
+  on public.notification_logs (user_id, created_at desc);
+
+create index if not exists notification_logs_fcm_status_idx
+  on public.notification_logs (fcm_status)
+  where fcm_status is not null;
 
 create table if not exists public.login_logs (
   id bigserial primary key,

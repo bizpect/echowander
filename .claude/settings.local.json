@@ -22,7 +22,8 @@
       "Bash(/mnt/c/etc/flutter/bin/cache/dart-sdk/bin/dart analyze --no-fatal-infos)",
       "Bash(/mnt/c/etc/flutter/bin/dart analyze:*)",
       "Bash(/usr/bin/flutter analyze:*)",
-      "Bash(git rev-parse:*)"
+      "Bash(git rev-parse:*)",
+      "Bash(grep:*)"
     ]
   }
 }

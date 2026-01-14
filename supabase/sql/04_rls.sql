@@ -23,6 +23,7 @@ alter table public.journey_actions enable row level security;
 alter table public.journey_dispatch_jobs enable row level security;
 alter table public.boards enable row level security;
 alter table public.board_posts enable row level security;
+alter table public.notification_logs enable row level security;
 
 drop policy if exists "common_codes_select_all" on public.common_codes;
 drop policy if exists "forbidden_words_select_all" on public.forbidden_words;
@@ -541,3 +542,19 @@ grant usage, select on sequence public.journey_reports_id_seq to authenticated;
 grant usage, select on sequence public.journey_response_reports_id_seq to authenticated;
 grant usage, select on sequence public.journey_actions_id_seq to authenticated;
 grant usage, select on sequence public.client_error_logs_id_seq to anon, authenticated;
+-- notification_logs_id_seq는 authenticated에게 부여하지 않음 (INSERT 권한 없으므로 불필요)
+
+-- ============================================================================
+-- notification_logs RLS 정책
+-- ============================================================================
+
+drop policy if exists "notification_logs_select_own" on public.notification_logs;
+
+-- 사용자는 자신의 알림만 조회 가능
+create policy notification_logs_select_own
+  on public.notification_logs
+  for select
+  using (auth.uid() = user_id);
+
+-- INSERT/UPDATE/DELETE는 service_role 전용 (트리거/RPC 통해서만)
+-- 별도 정책 불필요 (기본적으로 거부됨)

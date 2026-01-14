@@ -449,6 +449,49 @@ begin
 end;
 $$;
 
+-- ============================================================================
+-- FCM 발송 결과 UPDATE 함수
+-- ============================================================================
+create or replace function public.update_notification_fcm_result(
+  p_user_id uuid,
+  p_journey_id uuid,
+  p_fcm_status text,
+  p_fcm_error text default null,
+  p_fcm_message_id text default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- notification_logs를 (user_id, journey_id)로 찾아 FCM 결과를 UPDATE
+  update public.notification_logs nl
+  set
+    fcm_status = p_fcm_status,
+    fcm_sent_at = now(),
+    fcm_error = p_fcm_error,
+    fcm_message_id = p_fcm_message_id,
+    updated_at = now()
+  where
+    nl.user_id = p_user_id
+    and (nl.data->>'journey_id') = p_journey_id::text;
+
+  -- row가 없어도 예외 없이 종료 (best-effort)
+exception
+  when others then
+    raise warning '[update_notification_fcm_result] Failed for user=%, journey=%: %',
+      p_user_id, p_journey_id, sqlerrm;
+end;
+$$;
+
+comment on function public.update_notification_fcm_result(uuid, uuid, text, text, text) is
+  'Edge Function이 FCM 발송 후 결과를 notification_logs에 UPDATE.
+  세션 독립(service_role 전용), best-effort 정책.';
+
+-- service_role이 함수 실행 가능하도록 권한 부여
+grant execute on function public.update_notification_fcm_result(uuid, uuid, text, text, text) to service_role;
+
 create or replace function public.list_my_notifications(
   page_size integer,
   page_offset integer,
