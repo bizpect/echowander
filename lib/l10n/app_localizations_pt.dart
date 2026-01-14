@@ -324,6 +324,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get composeSubmitSuccess => 'A sua mensagem foi enviada.';
 
   @override
+  String get composeSendRequestAccepted => 'Sua solicitação de envio foi recebida.';
+
+  @override
   String get composeRecipientCountLabel => 'Quantidade de relés';
 
   @override
@@ -1870,6 +1873,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get composeSubmitSuccess => 'Sua mensagem foi enviada.';
+
+  @override
+  String get composeSendRequestAccepted => 'Sua solicitação de envio foi recebida.';
 
   @override
   String get composeRecipientCountLabel => 'Quantidade de relés';

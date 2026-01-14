@@ -114,6 +114,7 @@
   "composeSubmitFailed": "Impossible d'envoyer le message. Réessayez.",
   "composeServerMisconfigured": "Le service n'est pas encore configuré. Réessayez plus tard.",
   "composeSubmitSuccess": "Votre message a été envoyé.",
+  "composeSendRequestAccepted": "Votre demande d'envoi a été acceptée.",
   "composeRecipientCountLabel": "Nombre de relais",
   "composeRecipientCountHint": "Sélectionnez de 1 à 5 personnes.",
   "composeRecipientCountOption": "{count} personnes",

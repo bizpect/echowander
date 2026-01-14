@@ -324,6 +324,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get composeSubmitSuccess => '메시지를 보냈어요.';
 
   @override
+  String get composeSendRequestAccepted => '전송 요청이 접수되었습니다.';
+
+  @override
   String get composeRecipientCountLabel => '릴레이 인원';
 
   @override

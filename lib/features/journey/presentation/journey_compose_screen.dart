@@ -510,7 +510,7 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
         return;
       case JourneyComposeMessage.submitSuccess:
         setState(() {
-          _inlineMessage = l10n.composeSubmitSuccess;
+          _inlineMessage = l10n.composeSendRequestAccepted;
           _inlineMessageIsError = false;
           _stepIndex = 2;
         });
@@ -523,7 +523,7 @@ class _JourneyComposeScreenState extends ConsumerState<JourneyComposeScreen> {
         // 성공 알럿 표시 (확인 클릭 시 보낸메세지 탭으로 이동)
         await showAppAlertDialog(
           context: context,
-          title: l10n.composeSubmitSuccess,
+          title: l10n.composeSendRequestAccepted,
           message: '', // 제목만으로 충분
           confirmLabel: l10n.composeOk,
           onConfirm: () {

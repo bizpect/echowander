@@ -114,6 +114,7 @@
   "composeSubmitFailed": "送信に失敗しました。もう一度お試しください。",
   "composeServerMisconfigured": "サービス設定が完了していません。しばらくしてからお試しください。",
   "composeSubmitSuccess": "メッセージを送信しました。",
+  "composeSendRequestAccepted": "送信リクエストが受け付けられました。",
   "composeRecipientCountLabel": "リレー人数",
   "composeRecipientCountHint": "1〜5人を選択してください。",
   "composeRecipientCountOption": "{count}人",

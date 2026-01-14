@@ -324,6 +324,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get composeSubmitSuccess => 'Votre message a été envoyé.';
 
   @override
+  String get composeSendRequestAccepted => 'Votre demande d\'envoi a été acceptée.';
+
+  @override
   String get composeRecipientCountLabel => 'Nombre de relais';
 
   @override

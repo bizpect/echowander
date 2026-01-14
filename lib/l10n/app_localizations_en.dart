@@ -324,6 +324,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get composeSubmitSuccess => 'Your message was sent.';
 
   @override
+  String get composeSendRequestAccepted => 'Your message has been queued for delivery.';
+
+  @override
   String get composeRecipientCountLabel => 'Relay count';
 
   @override

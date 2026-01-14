@@ -324,6 +324,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get composeSubmitSuccess => 'メッセージを送信しました。';
 
   @override
+  String get composeSendRequestAccepted => '送信リクエストが受け付けられました。';
+
+  @override
   String get composeRecipientCountLabel => 'リレー人数';
 
   @override

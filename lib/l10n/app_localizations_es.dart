@@ -324,6 +324,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get composeSubmitSuccess => 'Tu mensaje fue enviado.';
 
   @override
+  String get composeSendRequestAccepted => 'Tu solicitud de envío ha sido recibida.';
+
+  @override
   String get composeRecipientCountLabel => 'Cantidad de relés';
 
   @override

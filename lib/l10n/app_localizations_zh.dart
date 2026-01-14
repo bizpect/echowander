@@ -324,6 +324,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get composeSubmitSuccess => '消息已发送。';
 
   @override
+  String get composeSendRequestAccepted => '发送请求已接受。';
+
+  @override
   String get composeRecipientCountLabel => '接收人数';
 
   @override

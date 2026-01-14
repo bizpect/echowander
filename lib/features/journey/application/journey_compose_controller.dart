@@ -314,22 +314,16 @@ class JourneyComposeController extends Notifier<JourneyComposeState> {
           'images=${uploadedPaths.length}, lang=$languageTag)',
         );
       }
-      final result = await _createJourneyWithRetry(
+      await _createJourneyWithRetry(
         content: content,
         languageTag: languageTag,
         imagePaths: uploadedPaths,
         recipientCount: recipientCount,
       );
-      // dispatch도 동일한 방식으로 재시도 가능하도록 새 토큰 가져오기
-      final currentAccessToken =
-          ref.read(sessionManagerProvider).accessToken ?? accessToken;
-      final journeyRepository = ref.read(journeyRepositoryProvider);
-      await journeyRepository.dispatchJourneyMatch(
-        journeyId: result.journeyId,
-        accessToken: currentAccessToken,
-      );
+      // ✅ dispatch는 백엔드 워커가 자동 처리 (GitHub Actions cron)
+      // 클라이언트에서 별도 호출 불필요
       if (kDebugMode) {
-        debugPrint('compose: RPC 호출 완료');
+        debugPrint('compose: RPC 호출 완료 (dispatch는 백엔드 워커가 처리)');
       }
       // 성공 시 임시 파일 정리
       if (sessionId != null) {

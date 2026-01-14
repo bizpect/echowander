@@ -724,6 +724,12 @@ abstract class AppLocalizations {
   /// **'Your message was sent.'**
   String get composeSubmitSuccess;
 
+  /// No description provided for @composeSendRequestAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Your message has been queued for delivery.'**
+  String get composeSendRequestAccepted;
+
   /// No description provided for @composeRecipientCountLabel.
   ///
   /// In en, this message translates to:

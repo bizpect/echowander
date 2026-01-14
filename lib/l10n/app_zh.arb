@@ -114,6 +114,7 @@
   "composeSubmitFailed": "发送失败，请重试。",
   "composeServerMisconfigured": "服务尚未配置完成，请稍后再试。",
   "composeSubmitSuccess": "消息已发送。",
+  "composeSendRequestAccepted": "发送请求已接受。",
   "composeRecipientCountLabel": "接收人数",
   "composeRecipientCountHint": "请选择 1 到 5 人。",
   "composeRecipientCountOption": "{count} 人",
