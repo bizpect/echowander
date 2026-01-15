@@ -568,5 +568,7 @@
   "profileEditCropComplete": "Concluir",
   "profileEditCropFailedTitle": "Falha ao editar foto",
   "profileEditCropFailedMessage": "Ocorreu um erro ao editar a foto. Por favor, tente novamente.",
-  "profileEditCropFailedAction": "OK"
+  "profileEditCropFailedAction": "OK",
+  "chatBubbleMyMessageLabel": "Minha mensagem: {message}",
+  "chatBubbleOtherMessageLabel": "Mensagem do outro: {message}"
 }

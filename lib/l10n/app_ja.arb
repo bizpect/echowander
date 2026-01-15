@@ -568,5 +568,7 @@
   "profileEditCropComplete": "完了",
   "profileEditCropFailedTitle": "写真編集に失敗しました",
   "profileEditCropFailedMessage": "写真の編集中にエラーが発生しました。もう一度お試しください。",
-  "profileEditCropFailedAction": "OK"
+  "profileEditCropFailedAction": "OK",
+  "chatBubbleMyMessageLabel": "私のメッセージ: {message}",
+  "chatBubbleOtherMessageLabel": "相手のメッセージ: {message}"
 }

@@ -1558,4 +1558,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get profileEditCropFailedAction => 'OK';
+
+  @override
+  String chatBubbleMyMessageLabel(Object message) {
+    return 'Mi mensaje: $message';
+  }
+
+  @override
+  String chatBubbleOtherMessageLabel(Object message) {
+    return 'Mensaje del otro: $message';
+  }
 }

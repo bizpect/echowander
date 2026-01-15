@@ -3123,6 +3123,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'OK'**
   String get profileEditCropFailedAction;
+
+  /// No description provided for @chatBubbleMyMessageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'My message: {message}'**
+  String chatBubbleMyMessageLabel(Object message);
+
+  /// No description provided for @chatBubbleOtherMessageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Other\'s message: {message}'**
+  String chatBubbleOtherMessageLabel(Object message);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

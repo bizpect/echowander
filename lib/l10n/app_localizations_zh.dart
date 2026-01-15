@@ -1558,4 +1558,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get profileEditCropFailedAction => '确定';
+
+  @override
+  String chatBubbleMyMessageLabel(Object message) {
+    return '我的消息：$message';
+  }
+
+  @override
+  String chatBubbleOtherMessageLabel(Object message) {
+    return '对方的消息：$message';
+  }
 }

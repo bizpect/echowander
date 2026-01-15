@@ -1123,7 +1123,7 @@ $$;
 
 drop function if exists public.list_inbox_journeys(integer, integer);
 
--- 인박스 조회: journey_recipients 스냅샷 필드 사용 (journeys JOIN 제거, RLS 유지)
+-- 인박스 조회: journey_recipients 스냅샷 + user_profiles JOIN으로 닉네임 실시간 반영
 -- SECURITY DEFINER: 함수 내부에서 auth.uid() 필터 강제로 RLS 우회하되 데이터 노출 방지
 create or replace function public.list_inbox_journeys(
   page_size integer,
@@ -1133,6 +1133,7 @@ returns table (
   recipient_id bigint,
   journey_id uuid,
   sender_user_id uuid,
+  sender_nickname text,
   content text,
   created_at timestamptz,
   image_count integer,
@@ -1157,11 +1158,14 @@ begin
     jr.id as recipient_id,  -- 명시적 alias로 ambiguous 방지
     jr.journey_id,
     jr.sender_user_id,
+    up.nickname as sender_nickname,
     jr.snapshot_content as content,
     jr.created_at,
     jr.snapshot_image_count as image_count,
     jr.status_code as recipient_status
   from public.journey_recipients jr
+  left join public.user_profiles up
+    on up.user_id = jr.sender_user_id
   where jr.recipient_user_id = current_user_id  -- 반드시 현재 사용자가 수신자인 row만
     -- 스냅샷 필드가 존재하는 경우만 (마이그레이션 이전 데이터 제외)
     and jr.sender_user_id is not null
@@ -1172,6 +1176,69 @@ begin
   offset greatest(coalesce(page_offset, 0), 0);
   
   -- 보장: 반환된 모든 row의 recipient_id는 반드시 current_user_id가 recipient_user_id인 journey_recipients.id입니다
+end;
+$$;
+
+drop function if exists public.get_inbox_journey_detail(uuid);
+
+-- 인박스 상세 조회: 닉네임 실시간 JOIN + 수신자 권한 봉인
+create or replace function public.get_inbox_journey_detail(
+  p_journey_id uuid
+)
+returns table (
+  recipient_id bigint,
+  journey_id uuid,
+  sender_user_id uuid,
+  sender_nickname text,
+  content text,
+  created_at timestamptz,
+  image_count integer,
+  recipient_status text
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_user_id uuid;
+begin
+  if p_journey_id is null then
+    raise exception using errcode='P0001', message='missing_journey';
+  end if;
+
+  current_user_id := auth.uid();
+  if current_user_id is null then
+    raise exception 'unauthorized';
+  end if;
+
+  if not exists (
+    select
+      1
+    from public.journey_recipients jr
+    where jr.recipient_user_id = current_user_id
+      and jr.journey_id = p_journey_id
+      and jr.is_hidden = false
+  ) then
+    raise exception using errcode='P0001', message='inbox_not_found';
+  end if;
+
+  return query
+  select
+    jr.id as recipient_id,
+    jr.journey_id,
+    jr.sender_user_id,
+    up.nickname as sender_nickname,
+    jr.snapshot_content as content,
+    jr.created_at,
+    jr.snapshot_image_count as image_count,
+    jr.status_code as recipient_status
+  from public.journey_recipients jr
+  left join public.user_profiles up
+    on up.user_id = jr.sender_user_id
+  where jr.recipient_user_id = current_user_id
+    and jr.journey_id = p_journey_id
+    and jr.sender_user_id is not null
+    and jr.is_hidden = false;
 end;
 $$;
 

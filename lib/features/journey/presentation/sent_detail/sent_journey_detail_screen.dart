@@ -10,13 +10,14 @@ import '../../../../core/presentation/widgets/app_button.dart';
 import '../../../../core/presentation/widgets/app_dialog.dart';
 import '../../../../core/presentation/widgets/app_header.dart';
 import '../../../../core/presentation/widgets/app_scaffold.dart';
-import '../../../../core/presentation/widgets/chat_date_divider.dart';
 import '../../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../../core/session/session_manager.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../application/sent_journey_detail_controller.dart';
 import '../../domain/sent_journey_detail.dart';
 import '../../domain/sent_journey_response.dart';
+import '../widgets/chat_thread/chat_item.dart';
+import '../widgets/chat_thread/chat_thread_view.dart';
 
 class SentJourneyDetailScreen extends ConsumerStatefulWidget {
   const SentJourneyDetailScreen({
@@ -338,176 +339,30 @@ class _SentJourneyDetailScreenState
       return const SizedBox.shrink();
     }
 
-    // 채팅 아이템 모델 (내 메시지 + 답글들)
-    final chatItems = <_ChatItem>[
-      _ChatItem(
+    // 공통 ChatItem 모델로 변환
+    final chatItems = <ChatItem>[
+      // 내 메시지 (보낸 원문)
+      ChatItem(
+        id: 'sent-${detail.journeyId}',
+        speaker: ChatSpeaker.me,
+        message: detail.displayContent,
         createdAt: detail.createdAt,
-        isMyMessage: true,
-        detail: detail,
       ),
+      // 답글들 (상대방)
       ...responses.map(
-        (response) => _ChatItem(
+        (response) => ChatItem(
+          id: 'response-${response.responseId}',
+          speaker: ChatSpeaker.other,
+          message: response.displayContent,
           createdAt: response.createdAt,
-          isMyMessage: false,
-          response: response,
+          displayName: response.responderNickname,
         ),
       ),
     ];
 
-    // createdAt 오름차순 정렬 (과거 → 현재)
-    chatItems.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-
-    // 위젯 리스트 생성: 날짜 구분선 + 채팅 버블
-    final widgets = <Widget>[];
-    DateTime? previousDate;
-
-    for (var i = 0; i < chatItems.length; i++) {
-      final item = chatItems[i];
-      // UTC → 로컬 변환 (날짜 비교용)
-      final localTime = item.createdAt.isUtc
-          ? item.createdAt.toLocal()
-          : item.createdAt;
-      final currentDate = DateTime(
-        localTime.year,
-        localTime.month,
-        localTime.day,
-      );
-
-      // 첫 아이템이거나 날짜가 바뀌면 구분선 삽입
-      if (previousDate == null || currentDate != previousDate) {
-        final dateText = AppDateFormatter.formatChatDateDivider(
-          item.createdAt,
-          l10n.localeName,
-        );
-        widgets.add(ChatDateDivider(dateText: dateText));
-        previousDate = currentDate;
-      }
-
-      // 채팅 버블
-      if (item.isMyMessage) {
-        widgets.add(_buildMyChatBubble(item.detail!, l10n));
-      } else {
-        widgets.add(_buildOtherChatBubble(item.response!, l10n));
-      }
-
-      // 버블 간 spacing (마지막 아이템 제외)
-      if (i < chatItems.length - 1) {
-        widgets.add(SizedBox(height: AppSpacing.spacing12));
-      }
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: widgets,
-    );
-  }
-
-  /// 내 메시지 버블 (오른쪽 정렬, primary 계열)
-  Widget _buildMyChatBubble(SentJourneyDetail detail, AppLocalizations l10n) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Align(
-      alignment: Alignment.centerRight,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        child: Container(
-          padding: EdgeInsets.all(AppSpacing.spacing16),
-          decoration: BoxDecoration(
-            color: colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: colorScheme.primary.withValues(alpha: 0.3),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                detail.displayContent,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onPrimaryContainer,
-                  height: 1.5,
-                ),
-              ),
-              SizedBox(height: AppSpacing.spacing4),
-              Text(
-                AppDateFormatter.formatCardTimestamp(
-                  detail.createdAt,
-                  l10n.localeName,
-                ),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 상대 답글 버블 (왼쪽 정렬, surface 계열)
-  Widget _buildOtherChatBubble(SentJourneyResponse response, AppLocalizations l10n) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        child: Container(
-          padding: EdgeInsets.all(AppSpacing.spacing16),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: colorScheme.outline.withValues(alpha: 0.3),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 닉네임
-              Text(
-                response.responderNickname,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              SizedBox(height: AppSpacing.spacing8),
-              // 답글 내용
-              Text(
-                response.displayContent,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurface,
-                  height: 1.5,
-                ),
-              ),
-              SizedBox(height: AppSpacing.spacing4),
-              // 시간
-              Text(
-                AppDateFormatter.formatCardTimestamp(
-                  response.createdAt,
-                  l10n.localeName,
-                ),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return ChatThreadView(
+      items: chatItems,
+      locale: l10n.localeName,
     );
   }
 
@@ -555,19 +410,4 @@ class _SentJourneyDetailScreenState
         return l10n.journeyStatusUnknown;
     }
   }
-}
-
-/// 채팅 아이템 헬퍼 클래스 (날짜 그룹화용)
-class _ChatItem {
-  _ChatItem({
-    required this.createdAt,
-    required this.isMyMessage,
-    this.detail,
-    this.response,
-  });
-
-  final DateTime createdAt;
-  final bool isMyMessage;
-  final SentJourneyDetail? detail; // 내 메시지인 경우
-  final SentJourneyResponse? response; // 답글인 경우
 }

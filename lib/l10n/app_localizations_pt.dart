@@ -1558,6 +1558,16 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get profileEditCropFailedAction => 'OK';
+
+  @override
+  String chatBubbleMyMessageLabel(Object message) {
+    return 'Minha mensagem: $message';
+  }
+
+  @override
+  String chatBubbleOtherMessageLabel(Object message) {
+    return 'Mensagem do outro: $message';
+  }
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -3114,4 +3124,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get profileEditCropFailedAction => 'OK';
+
+  @override
+  String chatBubbleMyMessageLabel(Object message) {
+    return 'Minha mensagem: $message';
+  }
+
+  @override
+  String chatBubbleOtherMessageLabel(Object message) {
+    return 'Mensagem do outro: $message';
+  }
 }

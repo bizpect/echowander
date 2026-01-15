@@ -497,6 +497,8 @@ grant execute on function public.list_journeys(integer, integer) to authenticate
 -- ✅ 권한 최소화: PUBLIC에서 모든 권한 제거, authenticated에게만 EXECUTE 허용
 revoke all on function public.list_inbox_journeys(integer, integer) from public;
 grant execute on function public.list_inbox_journeys(integer, integer) to authenticated;
+revoke all on function public.get_inbox_journey_detail(uuid) from public;
+grant execute on function public.get_inbox_journey_detail(uuid) to authenticated;
 grant execute on function public.list_inbox_journey_images(uuid) to authenticated;
 grant execute on function public.get_inbox_journey_snapshot_image_paths(uuid) to authenticated;
 grant execute on function public.debug_check_storage_objects(text, text[]) to authenticated;

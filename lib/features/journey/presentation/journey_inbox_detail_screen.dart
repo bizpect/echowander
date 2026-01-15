@@ -5,18 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/app_spacing.dart';
-import '../../../core/formatters/app_date_formatter.dart';
 import '../../../core/logging/log_sanitizer.dart';
 import '../../../core/media/journey_image_url_resolver.dart';
 import '../../../core/presentation/navigation/tab_navigation_helper.dart';
-import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/app_dialog.dart';
+import '../../../core/presentation/widgets/app_header.dart';
 import '../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../core/session/session_manager.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/journey_inbox_controller.dart';
 import '../data/supabase_journey_repository.dart';
 import '../domain/journey_repository.dart';
+import 'widgets/chat_thread/chat_item.dart';
+import 'widgets/chat_thread/chat_thread_view.dart';
 import 'widgets/journey_images_section.dart';
 
 class JourneyInboxDetailScreen extends ConsumerStatefulWidget {
@@ -46,7 +47,6 @@ class _JourneyInboxDetailScreenState
   // RESPONDED 상태일 때 내가 보낸 답글 정보
   MyLatestResponse? _myResponse;
   bool _isResponseLoading = false;
-  bool _responseLoadFailed = false;
 
   static const String _journeyImagesBucketId = 'journey-images';
 
@@ -310,7 +310,7 @@ class _JourneyInboxDetailScreenState
                           ),
                         ),
                       )
-                    // PASSED가 아닌 경우 기존 상세 화면 표시
+                    // PASSED가 아닌 경우 채팅 UI 표시
                     : SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(
                           AppSpacing.screenPaddingHorizontal,
@@ -321,30 +321,8 @@ class _JourneyInboxDetailScreenState
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // 날짜 (우측 정렬)
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                AppDateFormatter.formatDetailTimestamp(
-                                  widget.item!.createdAt,
-                                  l10n.localeName,
-                                ),
-                                style: Theme.of(context).textTheme.labelLarge,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                            // 연한 구분선
-                            Divider(
-                              height: AppSpacing.lg,
-                              thickness: 1,
-                              color:
-                                  Theme.of(context).colorScheme.outlineVariant,
-                            ),
-                            // 메시지 내용
-                            Text(
-                              widget.item!.content,
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
+                            // 채팅 쓰레드 (상대 원문 + 내 답글)
+                            _buildChatThreadView(l10n),
                             // 사진 영역 (메시지 내용 아래)
                             if (_loadFailed)
                               Padding(
@@ -364,16 +342,14 @@ class _JourneyInboxDetailScreenState
                                   : null,
                               journeyId: widget.item?.journeyId,
                             ),
-                            // RESPONDED 상태일 때는 답글 표시, 아닐 때는 입력 UI
-                            if (widget.item!.recipientStatus == 'RESPONDED')
-                              _buildMyResponseSection(context)
-                            else ...[
+                            // RESPONDED가 아닐 때만 입력 UI 표시
+                            if (widget.item!.recipientStatus != 'RESPONDED') ...[
                               const SizedBox(height: AppSpacing.lg),
                               _buildInlineReplySection(context),
                             ],
                           ],
-                    ),
-                  ),
+                        ),
+                      ),
           ),
         ),
         bottomNavigationBar: widget.item?.recipientStatus != 'PASSED' &&
@@ -429,6 +405,39 @@ class _JourneyInboxDetailScreenState
     );
   }
 
+  /// 채팅 쓰레드 UI: 상대 원문(왼쪽) + 내 답글(오른쪽, RESPONDED 시)
+  Widget _buildChatThreadView(AppLocalizations l10n) {
+    final item = widget.item;
+    if (item == null) {
+      return const SizedBox.shrink();
+    }
+
+    // 공통 ChatItem 모델로 변환
+    final chatItems = <ChatItem>[
+      // 상대가 보낸 원문 (내가 받은 메시지)
+      ChatItem(
+        id: 'inbox-${item.journeyId}',
+        speaker: ChatSpeaker.other,
+        message: item.content,
+        createdAt: item.createdAt,
+        displayName: item.senderNickname.isNotEmpty ? item.senderNickname : null,
+      ),
+      // RESPONDED 상태일 때만 내 답글 추가
+      if (item.recipientStatus == 'RESPONDED' && _myResponse != null)
+        ChatItem(
+          id: 'reply-${_myResponse!.responseId}',
+          speaker: ChatSpeaker.me,
+          message: _myResponse!.displayContent,
+          createdAt: _myResponse!.createdAt,
+        ),
+    ];
+
+    return ChatThreadView(
+      items: chatItems,
+      locale: l10n.localeName,
+    );
+  }
+
   /// 내가 보낸 답글 로드
   Future<void> _loadMyResponse() async {
     final item = widget.item;
@@ -441,7 +450,6 @@ class _JourneyInboxDetailScreenState
     }
     setState(() {
       _isResponseLoading = true;
-      _responseLoadFailed = false;
     });
     try {
       final response = await ref
@@ -456,7 +464,6 @@ class _JourneyInboxDetailScreenState
       setState(() {
         _myResponse = response;
         _isResponseLoading = false;
-        _responseLoadFailed = response == null;
       });
     } catch (_) {
       if (!mounted) {
@@ -464,113 +471,8 @@ class _JourneyInboxDetailScreenState
       }
       setState(() {
         _isResponseLoading = false;
-        _responseLoadFailed = true;
       });
     }
-  }
-
-  /// 내가 보낸 답글 표시 UI
-  Widget _buildMyResponseSection(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    if (_isResponseLoading) {
-      return const Padding(
-        padding: EdgeInsets.only(top: AppSpacing.lg),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_responseLoadFailed || _myResponse == null) {
-      return Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.lg),
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(AppSpacing.sm),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.error_outline,
-                color: colorScheme.error,
-                size: 20,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  l10n.inboxRespondedDetailReplyUnavailable,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final response = _myResponse!;
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.lg),
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(AppSpacing.sm),
-          border: Border.all(
-            color: colorScheme.primary.withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.send_outlined,
-                  size: 18,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  l10n.inboxRespondedDetailSectionTitle,
-                  style: textTheme.labelLarge?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              response.displayContent,
-              style: textTheme.bodyLarge?.copyWith(
-                color: colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                AppDateFormatter.formatDetailTimestamp(
-                  response.createdAt,
-                  l10n.localeName,
-                ),
-                style: textTheme.labelSmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   /// 인라인 메시지 입력 UI 구현 (자동 확장 입력칸만)

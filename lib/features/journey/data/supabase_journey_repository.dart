@@ -786,6 +786,7 @@ class SupabaseJourneyRepository implements JourneyRepository {
           recipientId: (recipientIdRaw as num).toInt(),
           journeyId: row['journey_id'] as String,
           senderUserId: row['sender_user_id'] as String? ?? '',
+          senderNickname: (row['sender_nickname'] as String?)?.trim() ?? '',
           content: row['content'] as String,
           createdAt: _parseCreatedAt(row, 'fetch_inbox_journeys'),
           imageCount: (row['image_count'] as num?)?.toInt() ?? 0,

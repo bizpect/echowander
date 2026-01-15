@@ -108,6 +108,7 @@ class JourneyInboxItem {
     required this.recipientId,
     required this.journeyId,
     required this.senderUserId,
+    required this.senderNickname,
     required this.content,
     required this.createdAt,
     required this.imageCount,
@@ -118,6 +119,7 @@ class JourneyInboxItem {
   final int recipientId; // journey_recipients.id (PK)
   final String journeyId;
   final String senderUserId;
+  final String senderNickname; // 표시용 닉네임 (빈 문자열 가능)
   final String content;
   final DateTime createdAt;
   final int imageCount;

@@ -10,20 +10,35 @@ const fcmPrivateKey = Deno.env.get("FCM_PRIVATE_KEY") ?? "";
 const dispatchJobSecret = Deno.env.get("DISPATCH_JOB_SECRET") ?? "";
 
 serve(async (request) => {
+  // === 진입 로그 (디버깅용) ===
+  const requestId = crypto.randomUUID().substring(0, 8);
+  const startTime = Date.now();
+  console.log(`[dispatch][${requestId}] ========== Edge Function Started ==========`);
+  console.log(`[dispatch][${requestId}] Timestamp: ${new Date().toISOString()}`);
+  console.log(`[dispatch][${requestId}] Method: ${request.method}`);
+  console.log(`[dispatch][${requestId}] Has Authorization: ${!!request.headers.get("Authorization")}`);
+  console.log(`[dispatch][${requestId}] Has x-dispatch-secret: ${!!request.headers.get("x-dispatch-secret")}`);
+
+  // === 환경 검증 ===
   if (!supabaseUrl || !anonKey) {
-    return jsonResponse({ error: "missing_supabase_config" }, 500);
+    console.error(`[dispatch][${requestId}] Missing Supabase config: url=${!!supabaseUrl}, anonKey=${!!anonKey}`);
+    return jsonResponse({ error: "missing_supabase_config", requestId }, 500);
   }
   if (!fcmProjectId || !fcmClientEmail || !fcmPrivateKey) {
-    return jsonResponse({ error: "missing_fcm_config" }, 500);
+    console.error(`[dispatch][${requestId}] Missing FCM config: projectId=${!!fcmProjectId}, clientEmail=${!!fcmClientEmail}, privateKey=${!!fcmPrivateKey}`);
+    return jsonResponse({ error: "missing_fcm_config", requestId }, 500);
   }
   if (request.method !== "POST") {
-    return jsonResponse({ error: "method_not_allowed" }, 405);
+    console.warn(`[dispatch][${requestId}] Method not allowed: ${request.method}`);
+    return jsonResponse({ error: "method_not_allowed", requestId }, 405);
   }
   if (dispatchJobSecret) {
     const headerSecret = request.headers.get("x-dispatch-secret") ?? "";
     if (headerSecret !== dispatchJobSecret) {
-      return jsonResponse({ error: "invalid_dispatch_secret" }, 401);
+      console.warn(`[dispatch][${requestId}] Invalid dispatch secret`);
+      return jsonResponse({ error: "invalid_dispatch_secret", requestId }, 401);
     }
+    console.log(`[dispatch][${requestId}] Dispatch secret verified`);
   }
 
   const body = await request.json().catch(() => ({}));
@@ -36,7 +51,7 @@ serve(async (request) => {
     ? { target_journey_id: journeyId }
     : { batch_size: batchSize };
 
-  console.log(`[dispatch] Starting: rpc=${rpcName}, journey_id=${journeyId || 'batch'}, batch_size=${batchSize}`);
+  console.log(`[dispatch][${requestId}] Starting: rpc=${rpcName}, journey_id=${journeyId || 'batch'}, batch_size=${batchSize}`);
 
   const authHeader = request.headers.get("Authorization") ?? "";
   const authToUse =
@@ -131,16 +146,23 @@ serve(async (request) => {
   const completionResult = await dispatchCompletion({
     batchSize: completeBatchSize,
     projectId: fcmProjectId,
+    requestId,
   });
 
+  const elapsedMs = Date.now() - startTime;
   const responseData = {
+    requestId,
     matched: rows.length,
     pushTargets: targets.length,
     pushSuccess: successCount,
+    pushFailed: failedResults.length,
     completion: completionResult,
+    elapsedMs,
   };
 
-  console.log(`[dispatch] Completed: ${JSON.stringify(responseData)}`);
+  console.log(`[dispatch][${requestId}] ========== Edge Function Completed ==========`);
+  console.log(`[dispatch][${requestId}] Result: ${JSON.stringify(responseData)}`);
+  console.log(`[dispatch][${requestId}] Elapsed: ${elapsedMs}ms`);
 
   return jsonResponse(responseData, 200);
 });
@@ -273,9 +295,11 @@ function normalizeLocaleTag(tag?: string) {
 async function dispatchCompletion({
   batchSize,
   projectId,
+  requestId = "unknown",
 }: {
   batchSize: number;
   projectId: string;
+  requestId?: string;
 }) {
   if (!serviceRoleKey) {
     return { skipped: true, reason: "missing_service_role" };

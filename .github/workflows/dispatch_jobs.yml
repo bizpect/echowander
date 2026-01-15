@@ -27,7 +27,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Call Supabase RPC
+      # Step 1: RPC로 job 상태 관리 + 매칭 수행
+      - name: Call Supabase RPC (Job Management)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -44,7 +45,7 @@ jobs:
             exit 1
           fi
 
-          echo "Calling process_journey_dispatch_jobs RPC..."
+          echo "=== Step 1: Calling process_journey_dispatch_jobs RPC ==="
           echo "Batch size: $BATCH_SIZE"
 
           # RPC 호출
@@ -70,3 +71,56 @@ jobs:
 
           # 정리
           rm -f response.json
+
+      # Step 2: Edge Function 호출로 FCM 발송 + notification_logs 갱신
+      - name: Call Edge Function (FCM Dispatch)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DISPATCH_JOB_SECRET: ${{ secrets.APP_DISPATCH_JOB_SECRET }}
+          BATCH_SIZE: ${{ github.event.inputs.batch_size || '20' }}
+        run: |
+          echo "=== Step 2: Calling dispatch_journey_matches Edge Function ==="
+          echo "Batch size: $BATCH_SIZE"
+
+          # Edge Function URL 구성
+          EDGE_URL="${SUPABASE_URL}/functions/v1/dispatch_journey_matches"
+          echo "Edge Function URL: $EDGE_URL"
+
+          # 헤더 구성 (DISPATCH_JOB_SECRET이 있으면 추가)
+          HEADERS="-H \"apikey: ${SUPABASE_SERVICE_ROLE_KEY}\" \
+                   -H \"Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}\" \
+                   -H \"Content-Type: application/json\""
+
+          if [ -n "$DISPATCH_JOB_SECRET" ]; then
+            HEADERS="$HEADERS -H \"x-dispatch-secret: ${DISPATCH_JOB_SECRET}\""
+          fi
+
+          # Edge Function 호출
+          HTTP_CODE=$(curl -s -o edge_response.json -w "%{http_code}" \
+            -X POST \
+            "$EDGE_URL" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            ${DISPATCH_JOB_SECRET:+-H "x-dispatch-secret: ${DISPATCH_JOB_SECRET}"} \
+            -d "{\"batch_size\": ${BATCH_SIZE}, \"complete_batch_size\": ${BATCH_SIZE}}")
+
+          echo "Edge Function HTTP Code: $HTTP_CODE"
+
+          # HTTP 상태 코드 확인
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "ERROR: Edge Function returned HTTP $HTTP_CODE"
+            echo "Response:"
+            cat edge_response.json
+            # Edge Function 실패해도 전체 실패로 처리하지 않음 (best-effort)
+            # RPC는 이미 성공했으므로 매칭은 완료됨
+            echo "WARNING: FCM dispatch may have failed, but matching completed successfully"
+          else
+            echo "SUCCESS: Edge Function HTTP $HTTP_CODE"
+            echo "Response:"
+            cat edge_response.json
+          fi
+
+          # 정리
+          rm -f edge_response.json

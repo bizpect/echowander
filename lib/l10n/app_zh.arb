@@ -568,5 +568,7 @@
   "profileEditCropComplete": "完成",
   "profileEditCropFailedTitle": "照片编辑失败",
   "profileEditCropFailedMessage": "编辑照片时发生错误。请重试。",
-  "profileEditCropFailedAction": "确定"
+  "profileEditCropFailedAction": "确定",
+  "chatBubbleMyMessageLabel": "我的消息：{message}",
+  "chatBubbleOtherMessageLabel": "对方的消息：{message}"
 }
