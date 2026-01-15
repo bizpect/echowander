@@ -601,10 +601,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get inboxRespondHint => '메시지를 입력하세요...';
 
   @override
-  String get inboxRespondCta => '메시지 보내기';
+  String get inboxRespondCta => '답글 보내기';
 
   @override
-  String get inboxRespondEmpty => '메시지를 입력해 주세요.';
+  String get inboxRespondEmpty => '답글을 작성해주세요.';
 
   @override
   String get inboxRespondConfirmTitle => '메시지 전송';

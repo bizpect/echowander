@@ -412,13 +412,12 @@ class _JourneyInboxDetailScreenState
                       // 보내기 버튼 (5:5 비율 중 오른쪽)
                       Expanded(
                         flex: 5,
-                        child: FilledButton.icon(
+                        child: FilledButton(
                           onPressed: _isActionLoading ? null : _handleInlineReplySubmit,
-                          icon: const Icon(Icons.send),
-                          label: Text(l10n.inboxRespondCta),
                           style: FilledButton.styleFrom(
                             minimumSize: const Size(0, AppSpacing.minTouchTarget),
                           ),
+                          child: Text(l10n.inboxRespondCta),
                         ),
                       ),
                     ],

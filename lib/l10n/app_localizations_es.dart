@@ -601,10 +601,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get inboxRespondHint => 'Escribe tu mensaje...';
 
   @override
-  String get inboxRespondCta => 'Enviar mensaje';
+  String get inboxRespondCta => 'Enviar respuesta';
 
   @override
-  String get inboxRespondEmpty => 'Ingresa un mensaje.';
+  String get inboxRespondEmpty => 'Por favor, escribe una respuesta.';
 
   @override
   String get inboxRespondConfirmTitle => 'Enviar mensaje';

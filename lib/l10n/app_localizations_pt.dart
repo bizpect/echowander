@@ -601,10 +601,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get inboxRespondHint => 'Escreva sua mensagem...';
 
   @override
-  String get inboxRespondCta => 'Enviar mensagem';
+  String get inboxRespondCta => 'Enviar resposta';
 
   @override
-  String get inboxRespondEmpty => 'Digite uma mensagem.';
+  String get inboxRespondEmpty => 'Por favor, escreva uma resposta.';
 
   @override
   String get inboxRespondConfirmTitle => 'Enviar mensagem';
@@ -2157,10 +2157,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get inboxRespondHint => 'Escreva sua mensagem...';
 
   @override
-  String get inboxRespondCta => 'Enviar mensagem';
+  String get inboxRespondCta => 'Enviar resposta';
 
   @override
-  String get inboxRespondEmpty => 'Digite uma mensagem.';
+  String get inboxRespondEmpty => 'Por favor, escreva uma resposta.';
 
   @override
   String get inboxRespondConfirmTitle => 'Enviar mensagem';

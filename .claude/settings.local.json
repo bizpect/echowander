@@ -23,7 +23,11 @@
       "Bash(/mnt/c/etc/flutter/bin/dart analyze:*)",
       "Bash(/usr/bin/flutter analyze:*)",
       "Bash(git rev-parse:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(powershell.exe -Command \"flutter gen-l10n\")",
+      "Bash(powershell.exe -Command \"flutter analyze --no-fatal-infos\")",
+      "Bash(/mnt/c/etc/flutter/bin/flutter analyze:*)",
+      "Bash(dos2unix:*)"
     ]
   }
 }

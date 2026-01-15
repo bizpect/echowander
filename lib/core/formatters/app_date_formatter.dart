@@ -118,4 +118,40 @@ class AppDateFormatter {
       return dateTime.toString();
     }
   }
+
+  /// 채팅 날짜 구분선용 날짜 포맷 (날짜만, 시간 제외)
+  ///
+  /// [dateTime] DateTime 객체 (UTC 또는 로컬)
+  /// [locale] 로케일 문자열 (예: 'ko', 'en', 'ja')
+  ///
+  /// 반환: 포맷된 날짜 문자열 (시간 제외)
+  /// - ko: yyyy년 MM월 dd일
+  /// - 그 외: yMMMd (예: Jan 15, 2026)
+  ///
+  /// 변환 규칙:
+  /// - 입력 DateTime이 UTC인 경우 로컬로 변환
+  static String formatChatDateDivider(
+    DateTime dateTime,
+    String locale,
+  ) {
+    try {
+      // UTC인 경우에만 toLocal() 적용, 이미 로컬이면 그대로 사용
+      final localTime = dateTime.isUtc ? dateTime.toLocal() : dateTime;
+
+      if (locale == 'ko') {
+        // ko: yyyy년 MM월 dd일
+        final format = DateFormat('yyyy년 MM월 dd일', locale);
+        return format.format(localTime);
+      } else {
+        // 그 외: yMMMd (예: Jan 15, 2026)
+        final format = DateFormat.yMMMd(locale);
+        return format.format(localTime);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 날짜 포맷팅 실패: $e, dateTime: $dateTime');
+      }
+      return dateTime.toString();
+    }
+  }
 }

@@ -1261,13 +1261,13 @@ abstract class AppLocalizations {
   /// No description provided for @inboxRespondCta.
   ///
   /// In en, this message translates to:
-  /// **'Send message'**
+  /// **'Send reply'**
   String get inboxRespondCta;
 
   /// No description provided for @inboxRespondEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter a message.'**
+  /// **'Please write a reply.'**
   String get inboxRespondEmpty;
 
   /// No description provided for @inboxRespondConfirmTitle.

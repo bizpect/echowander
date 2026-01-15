@@ -601,10 +601,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get inboxRespondHint => 'メッセージを書いてください...';
 
   @override
-  String get inboxRespondCta => 'メッセージを送信';
+  String get inboxRespondCta => '返信を送信';
 
   @override
-  String get inboxRespondEmpty => 'メッセージを入力してください。';
+  String get inboxRespondEmpty => '返信を入力してください。';
 
   @override
   String get inboxRespondConfirmTitle => 'メッセージ送信';

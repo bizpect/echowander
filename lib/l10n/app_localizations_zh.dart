@@ -601,10 +601,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get inboxRespondHint => '写下你的消息...';
 
   @override
-  String get inboxRespondCta => '发送消息';
+  String get inboxRespondCta => '发送回复';
 
   @override
-  String get inboxRespondEmpty => '请输入消息。';
+  String get inboxRespondEmpty => '请填写回复内容。';
 
   @override
   String get inboxRespondConfirmTitle => '发送消息';
