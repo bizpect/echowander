@@ -16,6 +16,7 @@ import 'chat_item.dart';
 ///     ChatItem(id: '2', speaker: ChatSpeaker.other, message: '반가워', createdAt: ...),
 ///   ],
 ///   locale: 'ko',
+///   onImageTap: (item) { ... },
 /// )
 /// ```
 class ChatThreadView extends StatelessWidget {
@@ -23,6 +24,7 @@ class ChatThreadView extends StatelessWidget {
     super.key,
     required this.items,
     required this.locale,
+    this.onImageTap,
   });
 
   /// 채팅 아이템 리스트 (createdAt 오름차순 정렬 권장)
@@ -30,6 +32,9 @@ class ChatThreadView extends StatelessWidget {
 
   /// 로케일 (날짜 포맷팅용, 예: 'ko', 'en')
   final String locale;
+
+  /// 이미지 탭 콜백 (ChatItem 전달)
+  final ValueChanged<ChatItem>? onImageTap;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +70,14 @@ class ChatThreadView extends StatelessWidget {
       }
 
       // 채팅 버블
-      widgets.add(ChatBubble(item: item, locale: locale));
+      widgets.add(
+        ChatBubble(
+          item: item,
+          locale: locale,
+          onImageTap:
+              onImageTap != null ? () => onImageTap!(item) : null,
+        ),
+      );
 
       // 버블 간 spacing (마지막 아이템 제외)
       if (i < sortedItems.length - 1) {

@@ -3373,5 +3373,47 @@ begin
 end;
 $$;
 
+-- 보낸 메시지의 이미지 storage_path 리스트 조회
+-- 발신자 본인만 조회 가능
+create or replace function public.list_sent_journey_images(
+  target_journey_id uuid
+)
+returns table (
+  storage_path text
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid := auth.uid();
+begin
+  if v_user_id is null then
+    raise exception 'unauthorized';
+  end if;
+  if target_journey_id is null then
+    raise exception 'missing_journey';
+  end if;
+
+  -- 본인이 보낸 메시지인지 확인
+  if not exists (
+    select 1
+    from public.journeys
+    where journeys.id = target_journey_id
+      and journeys.user_id = v_user_id
+      and journeys.deleted_at is null
+  ) then
+    raise exception 'unauthorized';
+  end if;
+
+  -- journey_images에서 storage_path 반환
+  return query
+  select journey_images.storage_path
+  from public.journey_images
+  where journey_images.journey_id = target_journey_id
+  order by journey_images.created_at asc;
+end;
+$$;
+
 -- PostgREST schema cache 리로드 (함수 시그니처 변경 후 필수)
 notify pgrst, 'reload schema';

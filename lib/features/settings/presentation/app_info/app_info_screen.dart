@@ -129,9 +129,9 @@ class AppInfoOpenLicenseTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return AppCardRow(
       title: l10n.appInfoOpenLicenseTitle,
-      leading: const AppIconBadge(
+      leading: AppIconBadge(
         icon: Icons.library_books_outlined,
-        backgroundColor: AppColors.surfaceVariant,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         iconColor: AppColors.onSurfaceVariant,
         size: 40,
       ),
@@ -211,9 +211,9 @@ class _RelatedAppRow extends StatelessWidget {
     return AppCardRow(
       title: item.title,
       subtitle: item.description,
-      leading: const AppIconBadge(
+      leading: AppIconBadge(
         icon: Icons.apps,
-        backgroundColor: AppColors.surfaceVariant,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         iconColor: AppColors.onSurfaceVariant,
         size: 40,
       ),

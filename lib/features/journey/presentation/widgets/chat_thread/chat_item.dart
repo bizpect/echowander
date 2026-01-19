@@ -7,6 +7,7 @@ class ChatItem {
     required this.createdAt,
     this.displayName,
     this.avatarUrl,
+    this.imageUrl,
   });
 
   /// 안정적인 키 (날짜 그룹화/위젯 트리 최적화용)
@@ -26,6 +27,9 @@ class ChatItem {
 
   /// 아바타 이미지 URL (speaker == other일 때만 사용, signed URL 또는 null)
   final String? avatarUrl;
+
+  /// 이미지 URL (메시지에 첨부된 이미지, signed URL 또는 null)
+  final String? imageUrl;
 }
 
 /// 발화자 구분

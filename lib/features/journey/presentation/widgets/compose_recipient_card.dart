@@ -98,7 +98,7 @@ class ComposeRecipientCard extends StatelessWidget {
                   vertical: AppSpacing.spacing4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: AppRadius.small,
                   border: Border.all(color: AppColors.outlineVariant),
                 ),
@@ -156,7 +156,7 @@ class _RecipientChip extends StatelessWidget {
             decoration: BoxDecoration(
               color: isSelected
                   ? AppColors.secondaryContainer
-                  : AppColors.surfaceVariant,
+                  : Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: AppRadius.full,
               border: Border.all(
                 color: isSelected

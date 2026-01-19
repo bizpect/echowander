@@ -59,7 +59,7 @@ class AppSegmentedTabs extends StatelessWidget {
               borderRadius: AppRadius.large,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: AppRadius.large,
                   border: Border.all(
                     color: AppColors.borderSubtle,

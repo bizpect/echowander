@@ -385,4 +385,15 @@ abstract class JourneyRepository {
     required String journeyId,
     required String accessToken,
   });
+
+  /// 보낸 메시지의 이미지 URL 리스트 조회
+  ///
+  /// [journeyId] Journey ID
+  /// [accessToken] 액세스 토큰
+  ///
+  /// 반환: 이미지 URL 리스트 (signedUrl)
+  Future<List<String>> fetchSentJourneyImageUrls({
+    required String journeyId,
+    required String accessToken,
+  });
 }

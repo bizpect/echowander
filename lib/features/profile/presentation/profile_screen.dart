@@ -123,7 +123,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 _SettingsMenuItem(
                   icon: Icons.info_outline,
-                  iconBackground: AppColors.surfaceVariant,
+                  iconBackground: AppColors.surface,
                   iconColor: AppColors.onSurfaceVariant,
                   title: l10n.profileMenuAppInfo,
                   onTap: () => context.push(AppRoutes.appInfo),
@@ -292,8 +292,8 @@ class _ProfileAvatar extends StatelessWidget {
       return Container(
         width: 64,
         height: 64,
-        decoration: const BoxDecoration(
-          color: AppColors.surfaceVariant,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           shape: BoxShape.circle,
         ),
         clipBehavior: Clip.antiAlias,

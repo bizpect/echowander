@@ -10,6 +10,7 @@ class SentJourneyDetailState {
   const SentJourneyDetailState({
     required this.detail,
     required this.responses,
+    required this.imageUrls,
     required this.isLoading,
     required this.loadFailed,
     required this.responsesLoadFailed,
@@ -18,6 +19,7 @@ class SentJourneyDetailState {
 
   final SentJourneyDetail? detail;
   final List<SentJourneyResponse> responses;
+  final List<String> imageUrls;
   final bool isLoading;
   final bool loadFailed;
   final bool responsesLoadFailed;
@@ -26,6 +28,7 @@ class SentJourneyDetailState {
   SentJourneyDetailState copyWith({
     SentJourneyDetail? detail,
     List<SentJourneyResponse>? responses,
+    List<String>? imageUrls,
     bool? isLoading,
     bool? loadFailed,
     bool? responsesLoadFailed,
@@ -34,6 +37,7 @@ class SentJourneyDetailState {
     return SentJourneyDetailState(
       detail: detail ?? this.detail,
       responses: responses ?? this.responses,
+      imageUrls: imageUrls ?? this.imageUrls,
       isLoading: isLoading ?? this.isLoading,
       loadFailed: loadFailed ?? this.loadFailed,
       responsesLoadFailed: responsesLoadFailed ?? this.responsesLoadFailed,
@@ -56,6 +60,7 @@ class SentJourneyDetailController extends Notifier<SentJourneyDetailState> {
     return const SentJourneyDetailState(
       detail: null,
       responses: [],
+      imageUrls: [],
       isLoading: false,
       loadFailed: false,
       responsesLoadFailed: false,
@@ -126,9 +131,33 @@ class SentJourneyDetailController extends Notifier<SentJourneyDetailState> {
         }
       }
 
+      // 이미지 URL 로딩 (WAITING/CREATED 상태에서만 - 진행 중일 때)
+      var imageUrls = <String>[];
+      if (detail.imageCount > 0 && detail.statusCode != 'COMPLETED') {
+        try {
+          imageUrls = await _journeyRepository.fetchSentJourneyImageUrls(
+            journeyId: journeyId,
+            accessToken: accessToken,
+          );
+          if (kDebugMode) {
+            debugPrint(
+              '[SentDetail] images reqId=$reqId count=${imageUrls.length}',
+            );
+          }
+        } catch (error) {
+          if (kDebugMode) {
+            debugPrint(
+              '[SentDetail] images load failed reqId=$reqId error=$error',
+            );
+          }
+          // 이미지 로딩 실패는 빈 배열로 처리 (비블로킹)
+        }
+      }
+
       state = state.copyWith(
         detail: detail,
         responses: responses,
+        imageUrls: imageUrls,
         isLoading: false,
         responsesLoadFailed: responsesFailed,
         responsesMissing: responsesMissing,

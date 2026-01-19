@@ -10,6 +10,7 @@ import '../../../../core/presentation/widgets/app_button.dart';
 import '../../../../core/presentation/widgets/app_dialog.dart';
 import '../../../../core/presentation/widgets/app_header.dart';
 import '../../../../core/presentation/widgets/app_scaffold.dart';
+import '../../../../core/presentation/widgets/fullscreen_image_viewer.dart';
 import '../../../../core/presentation/widgets/loading_overlay.dart';
 import '../../../../core/session/session_manager.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -225,6 +226,9 @@ class _SentJourneyDetailScreenState
   }
 
   Widget _buildContentCard(SentJourneyDetail detail) {
+    final state = ref.watch(sentJourneyDetailControllerProvider);
+    final imageUrls = state.imageUrls;
+
     return Card(
       color: AppColors.surface,
       elevation: 2,
@@ -242,7 +246,13 @@ class _SentJourneyDetailScreenState
                 height: 1.5,
               ),
             ),
-            if (detail.imageCount > 0) ...[
+            // 이미지 슬라이더 (진행 중 상태 + 이미지 URL이 있을 때만 표시)
+            if (imageUrls.isNotEmpty) ...[
+              SizedBox(height: AppSpacing.spacing16),
+              _buildImageCarousel(imageUrls),
+            ],
+            // 이미지 개수 표시 (이미지가 있지만 URL 로딩 실패했을 때)
+            if (detail.imageCount > 0 && imageUrls.isEmpty) ...[
               SizedBox(height: AppSpacing.spacing12),
               Row(
                 children: [
@@ -264,6 +274,14 @@ class _SentJourneyDetailScreenState
           ],
         ),
       ),
+    );
+  }
+
+  /// 이미지 캐러셀 (슬라이더)
+  Widget _buildImageCarousel(List<String> imageUrls) {
+    return _ImageCarousel(
+      imageUrls: imageUrls,
+      fromNotification: widget.fromNotification,
     );
   }
 
@@ -363,6 +381,21 @@ class _SentJourneyDetailScreenState
     return ChatThreadView(
       items: chatItems,
       locale: l10n.localeName,
+      onImageTap: (item) => _handleImageTap(item),
+    );
+  }
+
+  /// 이미지 탭 처리 (풀스크린 뷰어로 이동)
+  void _handleImageTap(ChatItem item) {
+    if (item.imageUrl == null || item.imageUrl!.isEmpty) {
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => FullscreenImageViewer(imageUrl: item.imageUrl!),
+      ),
     );
   }
 
@@ -409,5 +442,142 @@ class _SentJourneyDetailScreenState
       default:
         return l10n.journeyStatusUnknown;
     }
+  }
+}
+
+/// 이미지 캐러셀 위젯 (PageController 메모리 누수 방지를 위한 StatefulWidget)
+class _ImageCarousel extends StatefulWidget {
+  const _ImageCarousel({
+    required this.imageUrls,
+    this.fromNotification = false,
+  });
+
+  final List<String> imageUrls;
+  final bool fromNotification;
+
+  @override
+  State<_ImageCarousel> createState() => _ImageCarouselState();
+}
+
+class _ImageCarouselState extends State<_ImageCarousel> {
+  late final PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _pageController.addListener(_onPageChanged);
+  }
+
+  @override
+  void dispose() {
+    _pageController.removeListener(_onPageChanged);
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged() {
+    if (_pageController.hasClients && _pageController.page != null) {
+      final newPage = _pageController.page!.round();
+      if (newPage != _currentPage) {
+        setState(() {
+          _currentPage = newPage;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 200,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: widget.imageUrls.length,
+            itemBuilder: (context, index) {
+              final imageUrl = widget.imageUrls[index];
+              return GestureDetector(
+                onTap: () {
+                  if (!mounted) {
+                    return;
+                  }
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      fullscreenDialog: true,
+                      builder: (_) => FullscreenImageViewer(
+                        imageUrl: imageUrl,
+                        initialIndex: index,
+                        imageUrls: widget.imageUrls,
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  margin: EdgeInsets.symmetric(horizontal: AppSpacing.spacing8),
+                  decoration: BoxDecoration(
+                    borderRadius: AppRadius.medium,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) {
+                        return child;
+                      }
+                      return Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                          color: AppColors.primary,
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Center(
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          size: 48,
+                          color: AppColors.onSurfaceVariant.withValues(
+                            alpha: 0.5,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        // 페이지 인디케이터 (이미지가 2개 이상일 때만 표시)
+        if (widget.imageUrls.length > 1) ...[
+          SizedBox(height: AppSpacing.spacing8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              widget.imageUrls.length,
+              (index) => Container(
+                width: 6,
+                height: 6,
+                margin: EdgeInsets.symmetric(horizontal: AppSpacing.spacing4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _currentPage == index
+                      ? AppColors.primary
+                      : AppColors.onSurfaceVariant.withValues(alpha: 0.3),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
   }
 }

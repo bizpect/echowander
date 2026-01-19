@@ -119,6 +119,32 @@ class AppDateFormatter {
     }
   }
 
+  /// 시간만 포맷 (HH:mm)
+  ///
+  /// [dateTime] DateTime 객체 (UTC 또는 로컬)
+  /// [locale] 로케일 문자열 (예: 'ko', 'en', 'ja')
+  ///
+  /// 반환: HH:mm 형식 문자열
+  ///
+  /// 변환 규칙:
+  /// - 입력 DateTime이 UTC인 경우 로컬로 변환
+  static String formatTime(
+    DateTime dateTime,
+    String locale,
+  ) {
+    try {
+      // UTC인 경우에만 toLocal() 적용, 이미 로컬이면 그대로 사용
+      final localTime = dateTime.isUtc ? dateTime.toLocal() : dateTime;
+      final timeFormat = DateFormat.Hm(locale);
+      return timeFormat.format(localTime);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('$_logPrefix 시간 포맷팅 실패: $e, dateTime: $dateTime');
+      }
+      return dateTime.toString();
+    }
+  }
+
   /// 채팅 날짜 구분선용 날짜 포맷 (날짜만, 시간 제외)
   ///
   /// [dateTime] DateTime 객체 (UTC 또는 로컬)

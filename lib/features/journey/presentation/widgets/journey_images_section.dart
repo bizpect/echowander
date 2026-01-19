@@ -64,7 +64,7 @@ class JourneyImagesSection extends StatelessWidget {
                   return Container(
                     width: double.infinity,
                     height: 200,
-                    color: AppColors.surfaceVariant,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     child: Center(
                       child: Icon(
                         Icons.broken_image_outlined,
@@ -116,7 +116,7 @@ class JourneyImagesSection extends StatelessWidget {
                         return Container(
                           width: double.infinity,
                           height: 300,
-                          color: AppColors.surfaceVariant,
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
                           child: Center(
                             child: Icon(
                               Icons.broken_image_outlined,

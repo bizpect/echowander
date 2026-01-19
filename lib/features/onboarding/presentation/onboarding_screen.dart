@@ -707,7 +707,7 @@ class _AgreementCheckbox extends ConsumerWidget {
       decoration: BoxDecoration(
         color: isAgreed
             ? iconColor.withValues(alpha: 0.1)
-            : AppColors.surfaceVariant,
+            : Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: AppRadius.medium,
         border: Border.all(
           color: isAgreed ? iconColor : AppColors.outline,

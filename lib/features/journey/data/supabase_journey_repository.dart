@@ -2485,6 +2485,127 @@ class SupabaseJourneyRepository implements JourneyRepository {
       createdAt: _parseCreatedAt(row, 'get_my_latest_response'),
     );
   }
+
+  @override
+  Future<List<String>> fetchSentJourneyImageUrls({
+    required String journeyId,
+    required String accessToken,
+  }) async {
+    if (_config.supabaseUrl.isEmpty || _config.supabaseAnonKey.isEmpty) {
+      return [];
+    }
+    if (accessToken.isEmpty) {
+      return [];
+    }
+
+    // RPC로 storage_path 리스트 조회
+    final uri = Uri.parse(
+      '${_config.supabaseUrl}/rest/v1/rpc/list_sent_journey_images',
+    );
+
+    List<String> paths;
+    try {
+      paths = await _networkGuard.execute<List<String>>(
+        operation: () => _executeFetchSentJourneyImagePaths(
+          uri: uri,
+          journeyId: journeyId,
+          accessToken: accessToken,
+        ),
+        retryPolicy: RetryPolicy.short,
+        context: 'list_sent_journey_images',
+        uri: uri,
+        method: 'POST',
+        meta: {'journey_id': journeyId},
+        accessToken: accessToken,
+      );
+    } on NetworkRequestException catch (_) {
+      // 이미지 경로 조회 실패는 빈 배열 반환 (비블로킹)
+      return [];
+    }
+
+    if (paths.isEmpty) {
+      return [];
+    }
+
+    // createSignedUrls로 일괄 변환 (NetworkGuard 경유)
+    return await createSignedUrls(
+      bucketId: _journeyImagesBucketId,
+      paths: paths,
+      accessToken: accessToken,
+    );
+  }
+
+  /// _fetchSentJourneyImagePaths RPC 실제 실행 (NetworkGuard가 호출)
+  Future<List<String>> _executeFetchSentJourneyImagePaths({
+    required Uri uri,
+    required String journeyId,
+    required String accessToken,
+  }) async {
+    final request = await _client.postUrl(uri);
+    request.headers.set(
+      HttpHeaders.contentTypeHeader,
+      'application/json; charset=utf-8',
+    );
+    request.headers.set('apikey', _config.supabaseAnonKey);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $accessToken');
+    request.add(utf8.encode(jsonEncode({'target_journey_id': journeyId})));
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    // 디버그 로그
+    if (kDebugMode) {
+      debugPrint(
+        '[SentDetail][Images][RPC] journeyId=$journeyId status=${response.statusCode}',
+      );
+    }
+
+    if (response.statusCode != HttpStatus.ok) {
+      await _errorLogger.logHttpFailure(
+        context: 'list_sent_journey_images',
+        uri: uri,
+        method: 'POST',
+        statusCode: response.statusCode,
+        errorMessage: body,
+        meta: {'journey_id': journeyId},
+        accessToken: accessToken,
+      );
+
+      throw _networkGuard.statusCodeToException(
+        statusCode: response.statusCode,
+        responseBody: body,
+        context: 'list_sent_journey_images',
+      );
+    }
+
+    // 배열 형태 응답 파싱 [{"storage_path": "..."}, ...]
+    final payload = jsonDecode(body);
+    if (payload is! List) {
+      if (kDebugMode) {
+        debugPrint(
+          '[SentDetail][Images][RPC] Invalid payload format: ${payload.runtimeType}',
+        );
+      }
+      throw const FormatException('Expected list of objects');
+    }
+
+    final paths = <String>[];
+    for (final item in payload) {
+      if (item is Map<String, dynamic>) {
+        final path = item['storage_path'] as String?;
+        if (path != null && path.isNotEmpty) {
+          paths.add(path);
+        }
+      }
+    }
+
+    if (kDebugMode) {
+      debugPrint(
+        '[SentDetail][Images][RPC] Parsed ${paths.length} paths',
+      );
+    }
+
+    return paths;
+  }
 }
 
 class SupabaseJourneyStorageRepository implements JourneyStorageRepository {
